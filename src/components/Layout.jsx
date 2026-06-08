@@ -33,7 +33,7 @@ const s = {
   logoutBtn: { display:'flex', alignItems:'center', gap:7, fontSize:12, color:'rgba(255,255,255,0.32)', cursor:'pointer', background:'none', border:'none' },
   version: { fontSize:10, color:'rgba(255,255,255,0.18)' },
   main: { flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'#F5F3EF' },
-  mobilebar: { display:'none', background:'#111111', padding:'0 16px', height:52, alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  mobilebar: { background:'#111111', padding:'0 16px', height:52, alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   hamburger: { background:'none', border:'none', color:'white', fontSize:22, display:'flex', alignItems:'center' },
 }
 
@@ -85,7 +85,8 @@ export default function Layout() {
         {profile?.role === 'admin' && (
           <>
             <div style={s.navSection}>Admin</div>
-            <NavLink to="/admin" onClick={() => setMobileOpen(false)}
+            <NavLink to="/admin"
+              onClick={() => setMobileOpen(false)}
               style={({ isActive }) => ({
                 ...s.navItem,
                 background: isActive ? '#D4570A' : 'transparent',
@@ -93,6 +94,16 @@ export default function Layout() {
               })}>
               <i className="ti ti-settings" style={{fontSize:17,flexShrink:0}} />
               Pannello admin
+            </NavLink>
+            <NavLink to="/importa"
+              onClick={() => setMobileOpen(false)}
+              style={({ isActive }) => ({
+                ...s.navItem,
+                background: isActive ? '#D4570A' : 'transparent',
+                color: isActive ? 'white' : 'rgba(255,255,255,0.52)',
+              })}>
+              <i className="ti ti-file-upload" style={{fontSize:17,flexShrink:0}} />
+              Importa piano
             </NavLink>
           </>
         )}
@@ -108,21 +119,16 @@ export default function Layout() {
 
   return (
     <div style={s.shell}>
-      {/* Desktop sidebar */}
       {!isMobile && (
         <div style={s.sidebar}><SidebarContent /></div>
       )}
-
-      {/* Mobile overlay sidebar */}
       {isMobile && mobileOpen && (
         <>
           <div style={s.overlay} onClick={() => setMobileOpen(false)} />
           <div style={s.sidebarMobile}><SidebarContent /></div>
         </>
       )}
-
       <div style={s.main}>
-        {/* Mobile topbar */}
         {isMobile && (
           <div style={{...s.mobilebar, display:'flex'}}>
             <button style={s.hamburger} onClick={() => setMobileOpen(true)}>
