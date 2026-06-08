@@ -9,6 +9,7 @@ import TrackerProgressi from './pages/TrackerProgressi'
 import ListaSpesa from './pages/ListaSpesa'
 import AssistenteAI from './pages/AssistenteAI'
 import AdminPanel from './pages/AdminPanel'
+import ImportaPiano from './pages/ImportaPiano'
 import Layout from './components/Layout'
 
 export const AuthContext = createContext(null)
@@ -93,6 +94,7 @@ export default function App() {
             <Route path="spesa" element={<ListaSpesa />} />
             <Route path="ai" element={<AssistenteAI />} />
             <Route path="admin" element={profile?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
+            <Route path="importa" element={profile?.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
       </BrowserRouter>
