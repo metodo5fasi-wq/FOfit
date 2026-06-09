@@ -93,8 +93,8 @@ export default function App() {
             <Route path="progressi" element={<TrackerProgressi />} />
             <Route path="spesa" element={<ListaSpesa />} />
             <Route path="ai" element={<AssistenteAI />} />
-            <Route path="admin" element={profile?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
-            <Route path="importa" element={profile?.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
+           <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
+<Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
       </BrowserRouter>
