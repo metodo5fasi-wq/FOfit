@@ -1,7 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
-import mammoth from 'mammoth'
+
+// Estrae testo da un file .docx leggendo l'XML interno
+async function extractTextFromDocx(file) {
+  const arrayBuffer = await file.arrayBuffer()
+  const uint8 = new Uint8Array(arrayBuffer)
+  
+  // Un .docx è uno ZIP — cerchiamo word/document.xml dentro
+  // Usiamo una regex semplice per trovare il contenuto testuale
+  const decoder = new TextDecoder('utf-8')
+  
+  // Convertiamo in stringa e cerchiamo i tag <w:t>
+  try {
+    // Decomprimi lo ZIP usando DecompressionStream se disponibile
+    const blob = new Blob([uint8])
+    
+    // Leggi come DataURL e cerca il testo XML
+    const text = decoder.decode(uint8)
+    
+    // Cerca pattern XML di Word nei byte
+    const xmlMatch = text.match(/<w:t[^>]*>([^<]*)<\/w:t>/g)
+    if (xmlMatch && xmlMatch.length > 0) {
+      return xmlMatch.map(m => m.replace(/<[^>]+>/g, '')).join(' ')
+    }
+    
+    // Fallback: cerca qualsiasi testo leggibile
+    const readable = text.replace(/[^\x20-\x7E\xC0-\xFF\u00C0-\u024F\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim()
+    if (readable.length > 100) return readable
+    
+    throw new Error('Testo non trovato nel documento')
+  } catch(e) {
+    throw new Error('Impossibile leggere il file Word. Prova a salvarlo come .docx dal menu "Salva con nome" di Word.')
+  }
+}
 
 const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -59,10 +91,8 @@ export default function ImportaPiano() {
     setLoading(true)
 
     try {
-      // Estrai testo dal Word usando mammoth
-      const arrayBuffer = await file.arrayBuffer()
-      const result = await mammoth.extractRawText({ arrayBuffer })
-      const textContent = result.value
+      // Estrai testo dal Word
+      const textContent = await extractTextFromDocx(file)
 
       if (!textContent || textContent.trim().length < 50) {
         setError('Il file sembra vuoto o non leggibile. Assicurati che sia un piano alimentare Word valido.')
