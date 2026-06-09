@@ -75,7 +75,17 @@ export default function ImportaPiano() {
 
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Errore API')
-      const plan = result.plan
+      
+      let plan = result.plan
+      if (!plan) {
+        // Prova a fare il parse se è una stringa
+        if (typeof result === 'string') {
+          const clean = result.replace(/```json|```/g, '').trim()
+          plan = JSON.parse(clean)
+        } else {
+          throw new Error('Risposta vuota dal server. Riprova.')
+        }
+      }
 
       setParsedPlan(plan)
       setPlanTitle(plan.titolo || 'Piano alimentare')
