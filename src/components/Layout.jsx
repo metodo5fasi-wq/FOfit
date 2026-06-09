@@ -42,6 +42,8 @@ export default function Layout() {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = window.innerWidth < 768
+  const [, forceUpdate] = React.useState(0)
+React.useEffect(() => { if (profile) forceUpdate(n => n + 1) }, [profile?.role])
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
