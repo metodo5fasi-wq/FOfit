@@ -66,86 +66,16 @@ export default function ImportaPiano() {
         r.readAsDataURL(file)
       })
 
-      // Manda all'AI per l'estrazione
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Manda all'API serverless di Vercel
+      const response = await fetch('/api/parse-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', data: base64 }
-              },
-              {
-                type: 'text',
-                text: `Analizza questo piano alimentare Word e restituisci SOLO un JSON valido, senza testo aggiuntivo, senza backtick, senza markdown.
-
-Il JSON deve avere questa struttura ESATTA:
-{
-  "titolo": "string",
-  "kcal_totali": number,
-  "proteine_g": number,
-  "carboidrati_g": number,
-  "grassi_g": number,
-  "note_generali": "string",
-  "giorni": [
-    {
-      "giorno": "Lunedì",
-      "giorno_numero": 1,
-      "nota_giorno": "string",
-      "kcal_giorno": number,
-      "pasti": [
-        {
-          "nome": "Colazione",
-          "tipo": "colazione",
-          "orario": "07:30",
-          "kcal": number,
-          "alimenti": [
-            {
-              "nome": "string",
-              "marca": "string o vuoto",
-              "quantita_g": number,
-              "kcal": number,
-              "proteine_g": number,
-              "carboidrati_g": number,
-              "grassi_g": number
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Tipi pasto validi: colazione, spuntino, pranzo, pre-workout, cena, merenda, altro.
-Giorni: usa sempre giorno_numero da 1 (lunedì) a 7 (domenica).
-Se un valore numerico non è presente nel documento, usa 0.
-Se il piano è uguale per tutti i giorni, replicalo per tutti e 7 i giorni.
-Se il piano ha giorni distinti, includili tutti.
-Rispondi SOLO con il JSON, nient'altro.`
-              }
-            ]
-          }]
-        })
+        body: JSON.stringify({ base64, mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
       })
 
-      const data = await response.json()
-      const rawText = data.content?.[0]?.text || ''
-
-      // Parsing JSON
-      let plan
-      try {
-        const clean = rawText.replace(/```json|```/g, '').trim()
-        plan = JSON.parse(clean)
-      } catch(e) {
-        setError('Impossibile leggere il piano. Assicurati che il documento sia un piano alimentare strutturato.')
-        setLoading(false)
-        return
-      }
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Errore API')
+      const plan = result.plan
 
       setParsedPlan(plan)
       setPlanTitle(plan.titolo || 'Piano alimentare')
