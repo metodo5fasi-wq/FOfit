@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import mammoth from 'mammoth'
 
 const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -58,19 +59,22 @@ export default function ImportaPiano() {
     setLoading(true)
 
     try {
-      // Leggi il file come base64
-      const base64 = await new Promise((res, rej) => {
-        const r = new FileReader()
-        r.onload = () => res(r.result.split(',')[1])
-        r.onerror = rej
-        r.readAsDataURL(file)
-      })
+      // Estrai testo dal Word usando mammoth
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      const textContent = result.value
 
-      // Manda all'API serverless di Vercel
+      if (!textContent || textContent.trim().length < 50) {
+        setError('Il file sembra vuoto o non leggibile. Assicurati che sia un piano alimentare Word valido.')
+        setLoading(false)
+        return
+      }
+
+      // Manda il testo all'API serverless
       const response = await fetch('/api/parse-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base64, mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+        body: JSON.stringify({ textContent })
       })
 
       const result = await response.json()
