@@ -1,144 +1,82 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
-// Estrae testo da un file .docx leggendo l'XML interno
-async function extractTextFromDocx(file) {
-  const arrayBuffer = await file.arrayBuffer()
-  const uint8 = new Uint8Array(arrayBuffer)
-  
-  // Un .docx è uno ZIP — cerchiamo word/document.xml dentro
-  // Usiamo una regex semplice per trovare il contenuto testuale
-  const decoder = new TextDecoder('utf-8')
-  
-  // Convertiamo in stringa e cerchiamo i tag <w:t>
-  try {
-    // Decomprimi lo ZIP usando DecompressionStream se disponibile
-    const blob = new Blob([uint8])
-    
-    // Leggi come DataURL e cerca il testo XML
-    const text = decoder.decode(uint8)
-    
-    // Cerca pattern XML di Word nei byte
-    const xmlMatch = text.match(/<w:t[^>]*>([^<]*)<\/w:t>/g)
-    if (xmlMatch && xmlMatch.length > 0) {
-      return xmlMatch.map(m => m.replace(/<[^>]+>/g, '')).join(' ')
-    }
-    
-    // Fallback: cerca qualsiasi testo leggibile
-    const readable = text.replace(/[^\x20-\x7E\xC0-\xFF\u00C0-\u024F\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim()
-    if (readable.length > 100) return readable
-    
-    throw new Error('Testo non trovato nel documento')
-  } catch(e) {
-    throw new Error('Impossibile leggere il file Word. Prova a salvarlo come .docx dal menu "Salva con nome" di Word.')
-  }
-}
+const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
 
 const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'white', borderRadius:10, border:'0.5px solid #E0DDD6', padding:'18px', marginBottom:14 },
   cardTitle: { fontSize:13, fontWeight:500, color:'#111', display:'flex', alignItems:'center', gap:7, marginBottom:14 },
-  btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'9px 18px', fontSize:13, fontWeight:500, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'9px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 20px', fontSize:13, fontWeight:500, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
+  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'10px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   label: { fontSize:11, color:'#888780', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
+  textarea: { width:'100%', padding:'12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 },
   mealCard: { border:'0.5px solid #E0DDD6', borderRadius:10, overflow:'hidden', marginBottom:10 },
   mealHeader: { background:'#FEF0E7', padding:'10px 14px', display:'flex', alignItems:'center', gap:10 },
-  mealTitle: { fontSize:13, fontWeight:500, color:'#D4570A', flex:1 },
-  mealKcal: { fontSize:12, color:'#F4894A', fontWeight:500 },
   foodRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 14px', borderBottom:'0.5px solid #F5F3EF' },
-  foodName: { flex:1, fontSize:13, color:'#111' },
-  foodMacro: { fontSize:11, color:'#888780' },
   tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500 },
-}
-
-const MEAL_ICONS = {
-  colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2',
-  'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle'
+  step: { display:'flex', alignItems:'flex-start', gap:12, marginBottom:16 },
+  stepNum: { width:28, height:28, borderRadius:'50%', background:'#D4570A', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:500, color:'white', flexShrink:0 },
 }
 
 export default function ImportaPiano() {
   const { profile } = useAuth()
   const [clients, setClients] = useState([])
-  const [step, setStep] = useState(1) // 1=carica, 2=anteprima, 3=successo
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [fileText, setFileText] = useState('')
-  const [fileName, setFileName] = useState('')
+  const [rawText, setRawText] = useState('')
   const [parsedPlan, setParsedPlan] = useState(null)
   const [selectedClient, setSelectedClient] = useState('')
   const [weekNumber, setWeekNumber] = useState(1)
   const [planTitle, setPlanTitle] = useState('Piano alimentare')
   const [planNotes, setPlanNotes] = useState('')
-  const fileRef = useRef()
 
   useEffect(() => {
     supabase.from('profiles').select('*').eq('role','client').order('full_name')
       .then(({data}) => setClients(data||[]))
   }, [])
 
-  async function handleFile(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    if (!file.name.endsWith('.docx')) { setError('Carica un file Word (.docx)'); return }
-    setFileName(file.name)
-    setError('')
+  async function elabora() {
+    if (!rawText.trim() || rawText.trim().length < 50) {
+      setError('Incolla il testo del piano alimentare prima di procedere.')
+      return
+    }
     setLoading(true)
+    setError('')
 
     try {
-      // Estrai testo dal Word
-      const textContent = await extractTextFromDocx(file)
-
-      if (!textContent || textContent.trim().length < 50) {
-        setError('Il file sembra vuoto o non leggibile. Assicurati che sia un piano alimentare Word valido.')
-        setLoading(false)
-        return
-      }
-
-      // Manda il testo all'API serverless
       const response = await fetch('/api/parse-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ textContent })
+        body: JSON.stringify({ textContent: rawText })
       })
-
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Errore API')
-      
-      let plan = result.plan
-      if (!plan) {
-        // Prova a fare il parse se è una stringa
-        if (typeof result === 'string') {
-          const clean = result.replace(/```json|```/g, '').trim()
-          plan = JSON.parse(clean)
-        } else {
-          throw new Error('Risposta vuota dal server. Riprova.')
-        }
-      }
+      if (!result.plan) throw new Error('Nessun piano ricevuto dal server')
 
-      setParsedPlan(plan)
-      setPlanTitle(plan.titolo || 'Piano alimentare')
-      setPlanNotes(plan.note_generali || '')
+      setParsedPlan(result.plan)
+      setPlanTitle(result.plan.titolo || 'Piano alimentare')
+      setPlanNotes(result.plan.note_generali || '')
       setStep(2)
     } catch(e) {
-      setError('Errore nel caricamento: ' + e.message)
+      setError('Errore: ' + e.message)
     }
     setLoading(false)
   }
 
   async function savePlan() {
     if (!selectedClient) { setError('Seleziona un cliente'); return }
-    if (!parsedPlan) return
     setSaving(true)
     setError('')
 
     try {
-      // 1. Crea il piano
       const { data: planData, error: planErr } = await supabase.from('meal_plans').insert({
         client_id: selectedClient,
         created_by: profile.id,
@@ -154,73 +92,67 @@ export default function ImportaPiano() {
 
       if (planErr) throw planErr
 
-      // 2. Per ogni giorno e pasto, crea i record
       for (const giorno of parsedPlan.giorni || []) {
-        for (const pasto of giorno.pasti || []) {
+        for (let idx = 0; idx < (giorno.pasti || []).length; idx++) {
+          const pasto = giorno.pasti[idx]
           const { data: mealData, error: mealErr } = await supabase.from('plan_meals').insert({
             plan_id: planData.id,
             day_of_week: giorno.giorno_numero,
             meal_type: pasto.tipo || 'altro',
-            meal_order: ['colazione','spuntino','pranzo','pre-workout','cena'].indexOf(pasto.tipo),
+            meal_order: idx,
             coach_note: giorno.nota_giorno || '',
           }).select().single()
 
           if (mealErr) throw mealErr
 
-          // 3. Alimenti del pasto
           if (pasto.alimenti?.length > 0) {
-            const foods = pasto.alimenti.map((a, idx) => ({
+            const foods = pasto.alimenti.map((a, i) => ({
               plan_meal_id: mealData.id,
-              food_name: a.nome,
+              food_name: a.nome || 'Alimento',
               brand: a.marca || '',
               quantity_g: a.quantita_g || 100,
               kcal: a.kcal || 0,
               protein_g: a.proteine_g || 0,
               carbs_g: a.carboidrati_g || 0,
               fat_g: a.grassi_g || 0,
-              sort_order: idx,
+              sort_order: i,
             }))
             const { error: foodErr } = await supabase.from('plan_meal_foods').insert(foods)
             if (foodErr) throw foodErr
           }
         }
       }
-
       setStep(3)
     } catch(e) {
-      setError('Errore nel salvataggio: ' + e.message)
+      setError('Errore salvataggio: ' + e.message)
     }
     setSaving(false)
   }
 
   function reset() {
-    setStep(1); setParsedPlan(null); setFileName(''); setError('')
+    setStep(1); setParsedPlan(null); setRawText(''); setError('')
     setSelectedClient(''); setWeekNumber(1); setPlanTitle('Piano alimentare'); setPlanNotes('')
-    if (fileRef.current) fileRef.current.value = ''
   }
-
-  const totalMeals = parsedPlan?.giorni?.[0]?.pasti?.length || 0
-  const totalFoods = parsedPlan?.giorni?.[0]?.pasti?.reduce((s,p) => s+(p.alimenti?.length||0), 0) || 0
 
   return (
     <>
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:500,color:'#111'}}>Importa piano alimentare</div>
-          <div style={{fontSize:12,color:'#888780'}}>Carica il Word della dottoressa — l'AI lo struttura automaticamente</div>
+          <div style={{fontSize:12,color:'#888780'}}>Incolla il testo del Word — l'AI lo struttura automaticamente</div>
         </div>
-        {step === 2 && <button style={s.btnGray} onClick={reset}>← Ricomincia</button>}
+        {step===2 && <button style={s.btnGray} onClick={reset}>← Ricomincia</button>}
       </div>
 
       <div style={s.page}>
 
         {/* STEP INDICATOR */}
         <div style={{display:'flex',alignItems:'center',gap:0,marginBottom:20}}>
-          {[{n:1,label:'Carica file'},{n:2,label:'Anteprima'},{n:3,label:'Pubblicato'}].map((st,i)=>(
+          {[{n:1,label:'Incolla testo'},{n:2,label:'Anteprima'},{n:3,label:'Pubblicato'}].map((st,i)=>(
             <React.Fragment key={st.n}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
                 <div style={{width:28,height:28,borderRadius:'50%',background:step>=st.n?'#D4570A':'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:500,color:'white'}}>
-                  {step>st.n ? <i className="ti ti-check" style={{fontSize:13}}/> : st.n}
+                  {step>st.n?<i className="ti ti-check" style={{fontSize:13}}/>:st.n}
                 </div>
                 <span style={{fontSize:12,fontWeight:step===st.n?500:400,color:step>=st.n?'#111':'#888780'}}>{st.label}</span>
               </div>
@@ -229,70 +161,65 @@ export default function ImportaPiano() {
           ))}
         </div>
 
-        {/* STEP 1: CARICA */}
-        {step === 1 && (
+        {/* STEP 1 */}
+        {step===1 && (
           <div style={s.card}>
-            <div style={s.cardTitle}><i className="ti ti-upload" style={{fontSize:16,color:'#D4570A'}}/> Carica il file Word</div>
+            <div style={s.cardTitle}><i className="ti ti-clipboard-text" style={{fontSize:16,color:'#D4570A'}}/> Incolla il piano alimentare</div>
 
-            <div
-              style={{border:'2px dashed #E0DDD6',borderRadius:10,padding:'40px 20px',textAlign:'center',cursor:'pointer',marginBottom:16,transition:'all 0.2s'}}
-              onClick={()=>fileRef.current?.click()}
-              onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#D4570A'}}
-              onDragLeave={e=>e.currentTarget.style.borderColor='#E0DDD6'}
-              onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#E0DDD6';const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);fileRef.current.files=dt.files;handleFile({target:{files:[f]}})}}}>
-              <input ref={fileRef} type="file" accept=".docx" style={{display:'none'}} onChange={handleFile}/>
-              <i className="ti ti-file-word" style={{fontSize:48,color:loading?'#D4570A':'#E0DDD6',display:'block',marginBottom:12}}/>
-              {loading ? (
-                <div>
-                  <div style={{fontSize:14,fontWeight:500,color:'#D4570A',marginBottom:6}}>L'AI sta leggendo il piano...</div>
-                  <div style={{fontSize:12,color:'#888780'}}>Riconosce pasti, alimenti, grammature e calorie</div>
-                  <div style={{display:'flex',justifyContent:'center',gap:4,marginTop:12}}>
-                    {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:'50%',background:'#D4570A',animation:'bounce 1.2s infinite',animationDelay:`${i*0.2}s`}}/>)}
-                  </div>
+            <div style={{marginBottom:20}}>
+              {[
+                'Apri il file Word della dottoressa',
+                'Seleziona tutto il testo (Ctrl+A)',
+                'Copia (Ctrl+C)',
+                'Incolla qui sotto (Ctrl+V) e clicca "Elabora con AI"'
+              ].map((t,i)=>(
+                <div key={i} style={s.step}>
+                  <div style={s.stepNum}>{i+1}</div>
+                  <div style={{fontSize:13,color:'#111',paddingTop:4,lineHeight:1.5}}>{t}</div>
                 </div>
-              ) : fileName ? (
-                <div>
-                  <div style={{fontSize:14,fontWeight:500,color:'#111',marginBottom:4}}>{fileName}</div>
-                  <div style={{fontSize:12,color:'#888780'}}>File caricato — elaborazione in corso</div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{fontSize:14,fontWeight:500,color:'#111',marginBottom:6}}>Trascina qui il file Word</div>
-                  <div style={{fontSize:12,color:'#888780',marginBottom:14}}>oppure clicca per selezionarlo dal tuo PC</div>
-                  <div style={{display:'inline-block',background:'#D4570A',color:'white',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:500}}>Seleziona file .docx</div>
-                </div>
-              )}
+              ))}
+            </div>
+
+            <div style={{marginBottom:14}}>
+              <label style={s.label}>Testo del piano alimentare *</label>
+              <textarea
+                style={{...s.textarea, height:280}}
+                placeholder="Incolla qui il testo copiato dal Word della dottoressa...
+
+Esempio:
+LUNEDÌ
+Colazione: fiocchi d'avena 80g, latte 200ml, banana
+Pranzo: petto di pollo 200g, riso 80g, verdure
+Cena: salmone 180g, patate dolci 200g..."
+                value={rawText}
+                onChange={e=>setRawText(e.target.value)}
+              />
+              <div style={{fontSize:11,color:'#888780',marginTop:4,textAlign:'right'}}>{rawText.length} caratteri</div>
             </div>
 
             {error && <div style={{background:'#FEE2E2',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9B1C1C',marginBottom:12}}>{error}</div>}
 
-            <div style={{background:'#F5F3EF',borderRadius:8,padding:'12px 14px'}}>
-              <div style={{fontSize:12,fontWeight:500,color:'#111',marginBottom:6}}>Come funziona:</div>
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                {['Carica il piano Word che ti manda la dottoressa','L\'AI riconosce automaticamente pasti, alimenti e calorie','Rivedi l\'anteprima e assegna il piano al cliente','Il cliente vede il piano già formattato nell\'app'].map((t,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:12,color:'#888780'}}>
-                    <div style={{width:18,height:18,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:500,color:'white',flexShrink:0,marginTop:1}}>{i+1}</div>
-                    {t}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <button style={{...s.btn, width:'100%', justifyContent:'center'}} onClick={elabora} disabled={loading||rawText.trim().length<50}>
+              {loading ? (
+                <><div style={{width:16,height:16,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'white',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/> L'AI sta elaborando il piano...</>
+              ) : (
+                <><i className="ti ti-sparkles" style={{fontSize:15}}/> Elabora con AI</>
+              )}
+            </button>
           </div>
         )}
 
-        {/* STEP 2: ANTEPRIMA */}
-        {step === 2 && parsedPlan && (
+        {/* STEP 2 */}
+        {step===2 && parsedPlan && (
           <>
-            {/* Riepilogo lettura AI */}
             <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:10,padding:'12px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
               <i className="ti ti-sparkles" style={{fontSize:20,color:'#3B6D11',flexShrink:0}}/>
               <div>
-                <div style={{fontSize:13,fontWeight:500,color:'#3B6D11'}}>Piano letto con successo!</div>
-                <div style={{fontSize:12,color:'#3B6D11',opacity:0.8}}>{parsedPlan.giorni?.length||0} giorni · {totalMeals} pasti al giorno · {totalFoods} alimenti per pasto · {parsedPlan.kcal_totali||0} kcal/giorno</div>
+                <div style={{fontSize:13,fontWeight:500,color:'#3B6D11'}}>Piano elaborato con successo!</div>
+                <div style={{fontSize:12,color:'#3B6D11',opacity:0.8}}>{parsedPlan.giorni?.length||0} giorni · {parsedPlan.kcal_totali||0} kcal/giorno</div>
               </div>
             </div>
 
-            {/* Configurazione */}
             <div style={s.card}>
               <div style={s.cardTitle}><i className="ti ti-settings" style={{fontSize:16,color:'#D4570A'}}/> Configurazione</div>
               <div style={s.grid2}>
@@ -312,38 +239,38 @@ export default function ImportaPiano() {
                   <input style={s.input} value={planTitle} onChange={e=>setPlanTitle(e.target.value)}/>
                 </div>
                 <div style={{marginBottom:12}}>
-                  <label style={s.label}>Kcal/giorno (rilevate)</label>
-                  <div style={{padding:'9px 12px',background:'#FEF0E7',borderRadius:8,fontSize:13,color:'#D4570A',fontWeight:500}}>{parsedPlan.kcal_totali||0} kcal · P{parsedPlan.proteine_g||0}g C{parsedPlan.carboidrati_g||0}g G{parsedPlan.grassi_g||0}g</div>
+                  <label style={s.label}>Kcal/giorno rilevate</label>
+                  <div style={{padding:'9px 12px',background:'#FEF0E7',borderRadius:8,fontSize:13,color:'#D4570A',fontWeight:500}}>
+                    {parsedPlan.kcal_totali||0} kcal · P{parsedPlan.proteine_g||0}g C{parsedPlan.carboidrati_g||0}g G{parsedPlan.grassi_g||0}g
+                  </div>
                 </div>
               </div>
               <div>
-                <label style={s.label}>Note del coach per il cliente</label>
-                <textarea style={{...s.input,height:60,resize:'vertical'}} value={planNotes} onChange={e=>setPlanNotes(e.target.value)} placeholder="Aggiungi note generali per il cliente..."/>
+                <label style={s.label}>Note del coach</label>
+                <textarea style={{...s.textarea,height:60}} value={planNotes} onChange={e=>setPlanNotes(e.target.value)} placeholder="Note generali per il cliente..."/>
               </div>
             </div>
 
-            {/* Anteprima pasti — mostra il primo giorno */}
             <div style={s.card}>
-              <div style={s.cardTitle}><i className="ti ti-eye" style={{fontSize:16,color:'#D4570A'}}/> Anteprima — {parsedPlan.giorni?.[0]?.giorno || 'Giorno 1'}</div>
-              <div style={{fontSize:12,color:'#888780',marginBottom:14}}>Ecco come vedrà il piano il cliente nell'app. Tutti i {parsedPlan.giorni?.length} giorni sono stati importati.</div>
-
-              {parsedPlan.giorni?.[0]?.pasti?.map((pasto, pi) => (
+              <div style={s.cardTitle}><i className="ti ti-eye" style={{fontSize:16,color:'#D4570A'}}/> Anteprima — {parsedPlan.giorni?.[0]?.giorno||'Giorno 1'}</div>
+              <div style={{fontSize:12,color:'#888780',marginBottom:14}}>Tutti i {parsedPlan.giorni?.length} giorni sono stati importati.</div>
+              {parsedPlan.giorni?.[0]?.pasti?.map((pasto,pi)=>(
                 <div key={pi} style={s.mealCard}>
                   <div style={s.mealHeader}>
                     <i className={`ti ${MEAL_ICONS[pasto.tipo]||'ti-circle'}`} style={{fontSize:16,color:'#D4570A'}}/>
-                    <div style={s.mealTitle}>{pasto.nome}</div>
-                    {pasto.orario && <span style={{fontSize:11,color:'#F4894A',background:'rgba(244,137,74,0.15)',padding:'2px 8px',borderRadius:10}}>{pasto.orario}</span>}
-                    <span style={s.mealKcal}>{pasto.kcal||0} kcal</span>
+                    <div style={{flex:1,fontSize:13,fontWeight:500,color:'#D4570A',textTransform:'capitalize'}}>{pasto.nome}</div>
+                    {pasto.orario&&<span style={{fontSize:11,color:'#F4894A',background:'rgba(244,137,74,0.15)',padding:'2px 8px',borderRadius:10}}>{pasto.orario}</span>}
+                    <span style={{fontSize:12,color:'#D4570A',fontWeight:500}}>{pasto.kcal||0} kcal</span>
                   </div>
-                  {pasto.alimenti?.map((al, ai) => (
+                  {pasto.alimenti?.map((al,ai)=>(
                     <div key={ai} style={s.foodRow}>
                       <div style={{width:6,height:6,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
-                      <div style={s.foodName}>
-                        {al.nome}
-                        {al.marca && <span style={{fontSize:11,color:'#888780',marginLeft:6}}>{al.marca}</span>}
+                      <div style={{flex:1}}>
+                        <span style={{fontSize:13,color:'#111'}}>{al.nome}</span>
+                        {al.marca&&<span style={{fontSize:11,color:'#888780',marginLeft:6}}>{al.marca}</span>}
                       </div>
-                      <div style={s.foodMacro}>{al.quantita_g}g</div>
-                      <div style={{display:'flex',gap:4,marginLeft:8}}>
+                      <div style={{fontSize:12,color:'#888780',marginRight:8}}>{al.quantita_g}g</div>
+                      <div style={{display:'flex',gap:4}}>
                         <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A'}}>P{al.proteine_g}g</span>
                         <span style={{...s.tag,background:'#FEF0E7',color:'#F4894A'}}>C{al.carboidrati_g}g</span>
                         <span style={{...s.tag,background:'#F5F3EF',color:'#888780'}}>G{al.grassi_g}g</span>
@@ -354,40 +281,35 @@ export default function ImportaPiano() {
               ))}
             </div>
 
-            {error && <div style={{background:'#FEE2E2',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9B1C1C',marginBottom:12}}>{error}</div>}
+            {error&&<div style={{background:'#FEE2E2',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9B1C1C',marginBottom:12}}>{error}</div>}
 
             <div style={{display:'flex',gap:10}}>
               <button style={s.btn} onClick={savePlan} disabled={saving||!selectedClient}>
-                <i className="ti ti-rocket" style={{fontSize:15}}/> {saving?'Pubblicazione in corso...':'Pubblica il piano'}
+                <i className="ti ti-rocket" style={{fontSize:15}}/> {saving?'Pubblicazione...':'Pubblica il piano'}
               </button>
               <button style={s.btnGray} onClick={reset}>Annulla</button>
             </div>
           </>
         )}
 
-        {/* STEP 3: SUCCESSO */}
-        {step === 3 && (
+        {/* STEP 3 */}
+        {step===3 && (
           <div style={{...s.card,textAlign:'center',padding:'50px 30px'}}>
             <div style={{width:64,height:64,borderRadius:'50%',background:'#EAF3DE',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
               <i className="ti ti-circle-check" style={{fontSize:36,color:'#3B6D11'}}/>
             </div>
             <div style={{fontSize:18,fontWeight:500,color:'#111',marginBottom:8}}>Piano pubblicato!</div>
-            <div style={{fontSize:13,color:'#888780',marginBottom:6}}>
-              Il piano è ora visibile al cliente nell'app FOfit.
-            </div>
+            <div style={{fontSize:13,color:'#888780',marginBottom:6}}>Il piano è ora visibile al cliente nell'app FOfit.</div>
             <div style={{fontSize:12,color:'#888780',marginBottom:28}}>
               {parsedPlan?.giorni?.length||0} giorni · {parsedPlan?.kcal_totali||0} kcal/giorno · {clients.find(c=>c.id===selectedClient)?.full_name}
             </div>
-            <div style={{display:'flex',gap:10,justifyContent:'center'}}>
-              <button style={s.btn} onClick={reset}>
-                <i className="ti ti-upload" style={{fontSize:15}}/> Importa un altro piano
-              </button>
-            </div>
+            <button style={s.btn} onClick={reset}>
+              <i className="ti ti-plus" style={{fontSize:15}}/> Importa un altro piano
+            </button>
           </div>
         )}
-
       </div>
-      <style>{`@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }
