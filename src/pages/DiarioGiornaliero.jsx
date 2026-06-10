@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
-// Database locale per risultati immediati mentre aspetta l'API
+import { searchFoods } from '../lib/foodDatabase'
 const LOCAL_DB = [
   { name:'Fiocchi d\'avena', brand:'Quaker', kcal100:375, p:13, c:62, g:7 },
   { name:'Yogurt greco 0%', brand:'Fage', kcal100:57, p:10, c:4, g:0 },
@@ -82,9 +82,14 @@ export default function DiarioGiornaliero() {
   const searchTimeout = useRef(null)
   const [searching, setSearching] = useState(false)
 
-  function handleSearch(val) {
-    setSearch(val)
-    if (val.length < 2) { setResults([]); return }
+ function handleSearch(val) {
+  setSearch(val)
+  if (val.length < 2) { setResults([]); return }
+  clearTimeout(searchTimeout.current)
+  searchTimeout.current = setTimeout(() => {
+    setResults(searchFoods(val))
+  }, 150)
+}
 
     // Risultati locali immediati
     const q = val.toLowerCase()
