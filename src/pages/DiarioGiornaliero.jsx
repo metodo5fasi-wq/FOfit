@@ -1,35 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
-
 import { searchFoods } from '../lib/foodDatabase'
-const LOCAL_DB = [
-  { name:'Fiocchi d\'avena', brand:'Quaker', kcal100:375, p:13, c:62, g:7 },
-  { name:'Yogurt greco 0%', brand:'Fage', kcal100:57, p:10, c:4, g:0 },
-  { name:'Petto di pollo', brand:'—', kcal100:108, p:22, c:0, g:2 },
-  { name:'Riso basmati', brand:'Scotti', kcal100:354, p:7, c:78, g:1 },
-  { name:'Pasta di semola', brand:'Barilla', kcal100:352, p:12, c:71, g:2 },
-  { name:'Pane integrale', brand:'Mulino Bianco', kcal100:242, p:9, c:43, g:4 },
-  { name:'Tonno al naturale', brand:'Rio Mare', kcal100:103, p:24, c:0, g:1 },
-  { name:'Salmone fresco', brand:'—', kcal100:208, p:20, c:0, g:14 },
-  { name:'Uova intere', brand:'—', kcal100:155, p:13, c:1, g:11 },
-  { name:'Albume d\'uovo', brand:'—', kcal100:52, p:11, c:1, g:0 },
-  { name:'Latte parz. scremato', brand:'Granarolo', kcal100:46, p:3, c:5, g:2 },
-  { name:'Banana', brand:'—', kcal100:89, p:1, c:23, g:0 },
-  { name:'Mela', brand:'—', kcal100:52, p:0, c:14, g:0 },
-  { name:'Patate dolci', brand:'—', kcal100:86, p:2, c:20, g:0 },
-  { name:'Olio EVO', brand:'Monini', kcal100:899, p:0, c:0, g:100 },
-  { name:'Whey protein', brand:'Myprotein', kcal100:396, p:74, c:9, g:7 },
-  { name:'Bresaola', brand:'Negroni', kcal100:151, p:32, c:0, g:2 },
-  { name:'Mandorle', brand:'Noberasco', kcal100:579, p:21, c:9, g:50 },
-  { name:'Ricotta light', brand:'Galbani', kcal100:105, p:9, c:4, g:6 },
-  { name:'Spinaci', brand:'—', kcal100:23, p:3, c:4, g:0 },
-  { name:'Broccoli', brand:'—', kcal100:34, p:3, c:7, g:0 },
-  { name:'Zucchine', brand:'—', kcal100:17, p:1, c:3, g:0 },
-  { name:'Verdure miste', brand:'—', kcal100:25, p:2, c:5, g:0 },
-  { name:'Burro di arachidi', brand:'Whole Earth', kcal100:598, p:25, c:15, g:51 },
-  { name:'Miele', brand:'Mielizia', kcal100:304, p:0, c:82, g:0 },
-]
 
 const MEAL_SLOTS = ['Colazione','Spuntino','Pranzo','Pre-workout','Cena']
 const TARGET = { kcal:2200, p:180, c:240, g:70 }
@@ -55,6 +27,7 @@ export default function DiarioGiornaliero() {
   const [qty, setQty] = useState(100)
   const [selectedMeal, setSelectedMeal] = useState('Colazione')
   const [loading, setLoading] = useState(true)
+  const searchTimeout = useRef(null)
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
@@ -79,41 +52,13 @@ export default function DiarioGiornaliero() {
     setLoading(false)
   }
 
-  const searchTimeout = useRef(null)
-  const [searching, setSearching] = useState(false)
-
- function handleSearch(val) {
-  setSearch(val)
-  if (val.length < 2) { setResults([]); return }
-  clearTimeout(searchTimeout.current)
-  searchTimeout.current = setTimeout(() => {
-    setResults(searchFoods(val))
-  }, 150)
-}
-
-    // Risultati locali immediati
-    const q = val.toLowerCase()
-    const local = LOCAL_DB.filter(f => f.name.toLowerCase().includes(q) || f.brand.toLowerCase().includes(q))
-    setResults(local)
-
+  function handleSearch(val) {
+    setSearch(val)
+    if (val.length < 2) { setResults([]); return }
     clearTimeout(searchTimeout.current)
-    searchTimeout.current = setTimeout(async () => {
-      setSearching(true)
-      try {
-        const res = await fetch(`/api/search-food?q=${encodeURIComponent(val)}`)
-        const data = await res.json()
-        if (data.foods?.length > 0) {
-          const combined = [...local]
-          data.foods.forEach(f => {
-            if (!combined.find(c => c.name.toLowerCase() === f.name.toLowerCase() && c.brand === f.brand)) {
-              combined.push(f)
-            }
-          })
-          setResults(combined.slice(0, 25))
-        }
-      } catch(e) {}
-      setSearching(false)
-    }, 500)
+    searchTimeout.current = setTimeout(() => {
+      setResults(searchFoods(val))
+    }, 150)
   }
 
   function selectFood(food) {
@@ -169,8 +114,6 @@ export default function DiarioGiornaliero() {
       </div>
 
       <div style={s.page}>
-
-        {/* BARRA CALORIE */}
         <div style={{...s.card, marginBottom:14}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
             <span style={{fontSize:22,fontWeight:500,color:'#111'}}>{totKcal.toLocaleString('it-IT')}<span style={{fontSize:13,color:'#888780',fontWeight:400}}> / {target.kcal.toLocaleString('it-IT')} kcal</span></span>
@@ -196,7 +139,6 @@ export default function DiarioGiornaliero() {
         </div>
 
         <div style={s.two}>
-          {/* PASTI */}
           <div>
             {MEAL_SLOTS.map(meal => {
               const foods = diary[meal] || []
@@ -228,7 +170,6 @@ export default function DiarioGiornaliero() {
             })}
           </div>
 
-          {/* CERCA E AGGIUNGI */}
           <div style={{position:'sticky',top:0}}>
             <div style={s.card}>
               <div style={{fontSize:13,fontWeight:500,color:'#111',marginBottom:12,display:'flex',alignItems:'center',gap:7}}>
@@ -236,7 +177,6 @@ export default function DiarioGiornaliero() {
                 Cerca alimento
               </div>
 
-              {/* Seleziona pasto */}
               <div style={{marginBottom:10}}>
                 <div style={{fontSize:11,color:'#888780',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em'}}>Aggiungi a</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
@@ -252,17 +192,14 @@ export default function DiarioGiornaliero() {
                 </div>
               </div>
 
-              {/* Search input */}
               <div style={{display:'flex',alignItems:'center',gap:8,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
                 <i className="ti ti-search" style={{fontSize:14,color:'#888780'}}/>
                 <input style={{border:'none',background:'transparent',outline:'none',fontSize:13,color:'#111',width:'100%',fontFamily:'inherit'}}
-                  placeholder="Cerca tra milioni di prodotti..." value={search} onChange={e=>handleSearch(e.target.value)}/>
-                {searching && <div style={{width:14,height:14,border:'2px solid #E0DDD6',borderTopColor:'#D4570A',borderRadius:'50%',animation:'spin 0.8s linear infinite',flexShrink:0}}/>}
+                  placeholder="Cerca alimento (es. pasta, pollo, yogurt...)" value={search} onChange={e=>handleSearch(e.target.value)}/>
               </div>
 
-              {/* Risultati ricerca */}
               {results.length > 0 && (
-                <div style={{maxHeight:180,overflowY:'auto',marginBottom:8}}>
+                <div style={{maxHeight:220,overflowY:'auto',marginBottom:8}}>
                   {results.map((f,i)=>(
                     <div key={i} onClick={()=>selectFood(f)}
                       style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:3,background:'#F5F3EF'}}>
@@ -276,7 +213,6 @@ export default function DiarioGiornaliero() {
                 </div>
               )}
 
-              {/* Alimento selezionato */}
               {selectedFood && (
                 <div style={{background:'#FEF0E7',borderRadius:8,padding:'12px',marginBottom:10}}>
                   <div style={{fontSize:13,fontWeight:500,color:'#D4570A',marginBottom:8}}>{selectedFood.name} ({selectedFood.brand})</div>
@@ -305,7 +241,6 @@ export default function DiarioGiornaliero() {
                 </div>
               )}
 
-              {/* Idratazione */}
               <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #F5F3EF'}}>
                 <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Idratazione</div>
                 <div style={{display:'flex',gap:4}}>
@@ -319,6 +254,7 @@ export default function DiarioGiornaliero() {
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </>
   )
 }
