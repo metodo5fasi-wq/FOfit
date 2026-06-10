@@ -52,7 +52,8 @@ export default function AdminPanel() {
 
   async function fetchAll() {
     setLoading(true)
-    const { data: prof } = await supabase.from('profiles').select('*').eq('role','client').order('created_at',{ascending:false})
+    const { data: prof } = await supabase.from('profiles').select('*')
+      .neq('role','admin').order('created_at',{ascending:false})
     setClients(prof||[])
     const { data: pl } = await supabase.from('meal_plans').select('*, profiles(full_name)').order('created_at',{ascending:false})
     setPlans(pl||[])
