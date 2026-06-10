@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/parse-plan.js": { "maxDuration": 60 },
+    "api/create-user.js": { "maxDuration": 30 }
+  }
+}
