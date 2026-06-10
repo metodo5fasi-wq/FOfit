@@ -13,7 +13,6 @@ const s = {
   item: { display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'0.5px solid #F5F3EF', cursor:'pointer' },
 }
 
-// Mappa categoria → icona e colore
 const CAT_META = {
   'Carne e pesce': { icon:'ti-meat', color:'#E24B4A' },
   'Latticini e uova': { icon:'ti-cheese', color:'#FAC775' },
@@ -28,8 +27,7 @@ const CAT_META = {
   'Altro': { icon:'ti-shopping-cart', color:'#888780' },
 }
 
-// Assegna categoria in base al tipo pasto e nome alimento
-function getCategory(foodName, mealType) {
+function getCategory(foodName) {
   const n = (foodName || '').toLowerCase()
   if (n.match(/pollo|tacchino|manzo|vitello|maiale|salmone|tonno|merluzzo|orata|branzino|pesce|gamberetti|bresaola|prosciutto|salame|wurstel|hamburger/)) return 'Carne e pesce'
   if (n.match(/yogurt|latte|ricotta|fiocchi|mozzarella|parmigiano|grana|pecorino|philadelphia|skyr|uov|albume|tuorlo/)) return 'Latticini e uova'
@@ -50,6 +48,7 @@ export default function ListaSpesa() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [plan, setPlan] = useState(null)
+  const [newItem, setNewItem] = useState('')
 
   useEffect(() => { if (profile) { fetchItems(); fetchPlan() } }, [profile])
 
@@ -70,47 +69,25 @@ export default function ListaSpesa() {
   async function generateList() {
     if (!plan) return
     setGenerating(true)
-
-    // Prendi tutti gli alimenti del piano
     const { data: meals } = await supabase
-      .from('plan_meals')
-      .select('*, plan_meal_foods(*)')
+      .from('plan_meals').select('*, plan_meal_foods(*)')
       .eq('plan_id', plan.id)
-
     if (!meals || meals.length === 0) { setGenerating(false); return }
-
-    // Aggrega gli alimenti sommando le quantità per tutta la settimana
     const foodMap = {}
     meals.forEach(meal => {
       ;(meal.plan_meal_foods || []).forEach(food => {
         const key = `${food.food_name}__${food.brand || ''}`
         if (!foodMap[key]) {
-          foodMap[key] = {
-            food_name: food.food_name,
-            brand: food.brand || null,
-            quantity_g: 0,
-            category: getCategory(food.food_name, meal.meal_type),
-          }
+          foodMap[key] = { food_name: food.food_name, brand: food.brand || null, quantity_g: 0, category: getCategory(food.food_name) }
         }
         foodMap[key].quantity_g += food.quantity_g || 0
       })
     })
-
-    // Cancella lista esistente e reinserisci
     await supabase.from('shopping_list_items').delete().eq('client_id', profile.id)
-
     const newItems = Object.values(foodMap).map(item => ({
-      ...item,
-      client_id: profile.id,
-      plan_id: plan.id,
-      is_checked: false,
-      quantity_g: Math.round(item.quantity_g),
+      ...item, client_id: profile.id, plan_id: plan.id, is_checked: false, quantity_g: Math.round(item.quantity_g)
     }))
-
-    if (newItems.length > 0) {
-      await supabase.from('shopping_list_items').insert(newItems)
-    }
-
+    if (newItems.length > 0) await supabase.from('shopping_list_items').insert(newItems)
     fetchItems()
     setGenerating(false)
   }
@@ -125,26 +102,24 @@ export default function ListaSpesa() {
     fetchItems()
   }
 
-  const [newItem, setNewItem] = useState('')
-
-  async function addManualItem() {
-    if (!newItem.trim()) return
-    const item = {
-      client_id: profile.id,
-      food_name: newItem.trim(),
-      category: getCategory(newItem.trim(), ''),
-      is_checked: false,
-      quantity_g: null,
-    }
-    await supabase.from('shopping_list_items').insert(item)
-    setNewItem('')
-    fetchItems()
-  }
+  async function clearAll() {
     await supabase.from('shopping_list_items').delete().eq('client_id', profile.id)
     setItems([])
   }
 
-  // Raggruppa per categoria
+  async function addManualItem() {
+    if (!newItem.trim()) return
+    await supabase.from('shopping_list_items').insert({
+      client_id: profile.id,
+      food_name: newItem.trim(),
+      category: getCategory(newItem.trim()),
+      is_checked: false,
+      quantity_g: null,
+    })
+    setNewItem('')
+    fetchItems()
+  }
+
   const byCategory = {}
   items.forEach(item => {
     const cat = item.category || 'Altro'
@@ -178,7 +153,6 @@ export default function ListaSpesa() {
 
       <div style={s.page}>
 
-        {/* Barra progresso */}
         {total > 0 && (
           <div style={{...s.card, marginBottom:14}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
@@ -192,13 +166,12 @@ export default function ListaSpesa() {
           </div>
         )}
 
-        {/* Lista vuota */}
         {!loading && total === 0 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-shopping-cart" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
             <div style={{fontSize:15,fontWeight:500,color:'#111',marginBottom:8}}>Lista vuota</div>
             <div style={{fontSize:13,color:'#888780',marginBottom:20,lineHeight:1.6}}>
-              {plan ? 'Clicca "Genera dal piano" per creare automaticamente la lista della spesa dal tuo piano alimentare.' : 'Non hai un piano alimentare attivo. Contatta il tuo coach!'}
+              {plan ? 'Clicca "Genera dal piano" per creare la lista automaticamente.' : 'Non hai un piano attivo. Contatta il tuo coach!'}
             </div>
             {plan && (
               <button style={{...s.btn,margin:'0 auto'}} onClick={generateList} disabled={generating}>
@@ -209,7 +182,6 @@ export default function ListaSpesa() {
           </div>
         )}
 
-        {/* Items raggruppati per categoria */}
         {Object.entries(byCategory).map(([cat, catItems]) => {
           const meta = CAT_META[cat] || CAT_META['Altro']
           const catChecked = catItems.filter(i => i.is_checked).length
@@ -251,7 +223,6 @@ export default function ListaSpesa() {
           )
         })}
 
-        {/* Aggiungi manualmente */}
         <div style={s.card}>
           <div style={{fontSize:13,fontWeight:500,color:'#111',marginBottom:10,display:'flex',alignItems:'center',gap:7}}>
             <i className="ti ti-plus" style={{fontSize:14,color:'#D4570A'}}/>
@@ -271,7 +242,6 @@ export default function ListaSpesa() {
           </div>
         </div>
 
-        {/* Svuota tutto */}
         {total > 0 && (
           <div style={{textAlign:'center',marginTop:8,marginBottom:20}}>
             <button onClick={clearAll} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:'#888780',fontFamily:'inherit'}}>
