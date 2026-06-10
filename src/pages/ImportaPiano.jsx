@@ -57,9 +57,12 @@ export default function ImportaPiano() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ textContent: rawText })
       })
-      const result = await response.json()
+      const text = await response.text()
+      if (!text || text.trim() === '') throw new Error('Risposta vuota. Riprova.')
+      let result
+      try { result = JSON.parse(text) } catch(e) { throw new Error('Risposta non valida. Riprova.') }
       if (!response.ok) throw new Error(result.error || 'Errore API')
-      if (!result.plan) throw new Error('Nessun piano ricevuto dal server')
+      if (!result.plan) throw new Error('Nessun piano ricevuto. Riprova.')
 
       setParsedPlan(result.plan)
       setPlanTitle(result.plan.titolo || 'Piano alimentare')
