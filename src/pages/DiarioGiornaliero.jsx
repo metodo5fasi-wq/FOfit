@@ -80,6 +80,7 @@ export default function DiarioGiornaliero() {
   }
 
   const searchTimeout = useRef(null)
+  const [searching, setSearching] = useState(false)
 
   function handleSearch(val) {
     setSearch(val)
@@ -87,29 +88,42 @@ export default function DiarioGiornaliero() {
 
     // Risultati locali immediati
     const q = val.toLowerCase()
-    const local = LOCAL_DB.filter(f => f.name.toLowerCase().includes(q) || f.brand.toLowerCase().includes(q)).slice(0, 5)
+    const local = LOCAL_DB.filter(f => f.name.toLowerCase().includes(q) || f.brand.toLowerCase().includes(q))
     setResults(local)
 
-    // Poi cerca su Open Food Facts
+    // Cerca direttamente su Open Food Facts dal browser
     clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(async () => {
+      setSearching(true)
       try {
-        const res = await fetch(`/api/search-food?q=${encodeURIComponent(val)}`)
+        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(val)}&search_simple=1&action=process&json=1&page_size=24&lc=it&fields=product_name,brands,nutriments`
+        const res = await fetch(url)
         const data = await res.json()
-        if (data.foods && data.foods.length > 0) {
-          // Unisci risultati locali e API, rimuovi duplicati
-          const combined = [...local]
-          data.foods.forEach(f => {
-            if (!combined.find(c => c.name.toLowerCase() === f.name.toLowerCase() && c.brand === f.brand)) {
-              combined.push(f)
-            }
-          })
-          setResults(combined.slice(0, 15))
-        }
+        const apiResults = (data.products || [])
+          .filter(p => p.product_name && p.nutriments && (p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal']) > 0)
+          .map(p => ({
+            name: p.product_name,
+            brand: p.brands ? p.brands.split(',')[0].trim() : '—',
+            kcal100: Math.round(p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal'] || 0),
+            p: Math.round((p.nutriments['proteins_100g'] || 0) * 10) / 10,
+            c: Math.round((p.nutriments['carbohydrates_100g'] || 0) * 10) / 10,
+            g: Math.round((p.nutriments['fat_100g'] || 0) * 10) / 10,
+          }))
+          .filter(f => f.kcal100 > 0 && f.name.length < 80)
+
+        // Unisci locali + API senza duplicati
+        const combined = [...local]
+        apiResults.forEach(f => {
+          if (!combined.find(c => c.name.toLowerCase() === f.name.toLowerCase())) {
+            combined.push(f)
+          }
+        })
+        setResults(combined.slice(0, 20))
       } catch(e) {
-        // Fallback silenzioso ai risultati locali
+        // fallback silenzioso
       }
-    }, 500)
+      setSearching(false)
+    }, 600)
   }
 
   function selectFood(food) {
@@ -252,7 +266,8 @@ export default function DiarioGiornaliero() {
               <div style={{display:'flex',alignItems:'center',gap:8,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
                 <i className="ti ti-search" style={{fontSize:14,color:'#888780'}}/>
                 <input style={{border:'none',background:'transparent',outline:'none',fontSize:13,color:'#111',width:'100%',fontFamily:'inherit'}}
-                  placeholder="Es. pollo, riso, yogurt..." value={search} onChange={e=>handleSearch(e.target.value)}/>
+                  placeholder="Cerca tra milioni di prodotti..." value={search} onChange={e=>handleSearch(e.target.value)}/>
+                {searching && <div style={{width:14,height:14,border:'2px solid #E0DDD6',borderTopColor:'#D4570A',borderRadius:'50%',animation:'spin 0.8s linear infinite',flexShrink:0}}/>}
               </div>
 
               {/* Risultati ricerca */}
