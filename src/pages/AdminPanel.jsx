@@ -62,12 +62,31 @@ export default function AdminPanel() {
   async function createClient() {
     if (!newClient.email||!newClient.password||!newClient.full_name) { setMsg('Compila tutti i campi obbligatori'); return }
     setSaving(true)
-    const { error } = await supabase.auth.signUp({ email:newClient.email, password:newClient.password, options:{ data:{ full_name:newClient.full_name, role:'client' } } })
-    if (error) { setMsg('Errore: '+error.message); setSaving(false); return }
-    setMsg('Cliente creato! Comunicagli email e password.')
-    setShowNewClient(false)
-    setNewClient({ email:'', password:'', full_name:'', goal:'dimagrimento', phone:'', height_cm:'', notes:'' })
-    setTimeout(() => { setMsg(''); fetchAll() }, 3000)
+
+    // Usa la API route per creare il cliente senza fare login automatico
+    try {
+      const res = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newClient.email,
+          password: newClient.password,
+          full_name: newClient.full_name,
+          goal: newClient.goal,
+          phone: newClient.phone,
+          height_cm: newClient.height_cm,
+          notes: newClient.notes,
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Errore creazione')
+      setMsg('Cliente creato! Comunicagli email e password.')
+      setShowNewClient(false)
+      setNewClient({ email:'', password:'', full_name:'', goal:'dimagrimento', phone:'', height_cm:'', notes:'' })
+      setTimeout(() => { setMsg(''); fetchAll() }, 2000)
+    } catch(e) {
+      setMsg('Errore: ' + e.message)
+    }
     setSaving(false)
   }
 
