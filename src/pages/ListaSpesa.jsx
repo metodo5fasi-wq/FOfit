@@ -125,7 +125,21 @@ export default function ListaSpesa() {
     fetchItems()
   }
 
-  async function clearAll() {
+  const [newItem, setNewItem] = useState('')
+
+  async function addManualItem() {
+    if (!newItem.trim()) return
+    const item = {
+      client_id: profile.id,
+      food_name: newItem.trim(),
+      category: getCategory(newItem.trim(), ''),
+      is_checked: false,
+      quantity_g: null,
+    }
+    await supabase.from('shopping_list_items').insert(item)
+    setNewItem('')
+    fetchItems()
+  }
     await supabase.from('shopping_list_items').delete().eq('client_id', profile.id)
     setItems([])
   }
@@ -236,6 +250,26 @@ export default function ListaSpesa() {
             </div>
           )
         })}
+
+        {/* Aggiungi manualmente */}
+        <div style={s.card}>
+          <div style={{fontSize:13,fontWeight:500,color:'#111',marginBottom:10,display:'flex',alignItems:'center',gap:7}}>
+            <i className="ti ti-plus" style={{fontSize:14,color:'#D4570A'}}/>
+            Aggiungi prodotto
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <input
+              style={{flex:1,padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit'}}
+              placeholder="Es. detersivo, carta igienica, latte..."
+              value={newItem}
+              onChange={e=>setNewItem(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&addManualItem()}
+            />
+            <button style={s.btn} onClick={addManualItem} disabled={!newItem.trim()}>
+              <i className="ti ti-plus" style={{fontSize:14}}/>
+            </button>
+          </div>
+        </div>
 
         {/* Svuota tutto */}
         {total > 0 && (
