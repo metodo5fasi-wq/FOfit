@@ -91,39 +91,24 @@ export default function DiarioGiornaliero() {
     const local = LOCAL_DB.filter(f => f.name.toLowerCase().includes(q) || f.brand.toLowerCase().includes(q))
     setResults(local)
 
-    // Cerca direttamente su Open Food Facts dal browser
     clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(async () => {
       setSearching(true)
       try {
-        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(val)}&search_simple=1&action=process&json=1&page_size=24&lc=it&fields=product_name,brands,nutriments`
-        const res = await fetch(url)
+        const res = await fetch(`/api/search-food?q=${encodeURIComponent(val)}`)
         const data = await res.json()
-        const apiResults = (data.products || [])
-          .filter(p => p.product_name && p.nutriments && (p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal']) > 0)
-          .map(p => ({
-            name: p.product_name,
-            brand: p.brands ? p.brands.split(',')[0].trim() : '—',
-            kcal100: Math.round(p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal'] || 0),
-            p: Math.round((p.nutriments['proteins_100g'] || 0) * 10) / 10,
-            c: Math.round((p.nutriments['carbohydrates_100g'] || 0) * 10) / 10,
-            g: Math.round((p.nutriments['fat_100g'] || 0) * 10) / 10,
-          }))
-          .filter(f => f.kcal100 > 0 && f.name.length < 80)
-
-        // Unisci locali + API senza duplicati
-        const combined = [...local]
-        apiResults.forEach(f => {
-          if (!combined.find(c => c.name.toLowerCase() === f.name.toLowerCase())) {
-            combined.push(f)
-          }
-        })
-        setResults(combined.slice(0, 20))
-      } catch(e) {
-        // fallback silenzioso
-      }
+        if (data.foods?.length > 0) {
+          const combined = [...local]
+          data.foods.forEach(f => {
+            if (!combined.find(c => c.name.toLowerCase() === f.name.toLowerCase() && c.brand === f.brand)) {
+              combined.push(f)
+            }
+          })
+          setResults(combined.slice(0, 25))
+        }
+      } catch(e) {}
       setSearching(false)
-    }, 600)
+    }, 500)
   }
 
   function selectFood(food) {
