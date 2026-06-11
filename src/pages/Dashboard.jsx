@@ -4,10 +4,11 @@ import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 
 const QUICK_LINKS = [
-  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'Visualizza i tuoi pasti', color:'#D4570A', bg:'#FEF0E7' },
+  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
   { to:'/diario', icon:'ti-pencil', label:'Diario di oggi', sub:'Registra quello che mangi', color:'#E8803A', bg:'#FEF3EC' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', sub:'Peso e misurazioni', color:'#3B8C5A', bg:'#EAF3DE' },
-  { to:'/ai', icon:'ti-robot', label:'FO Coach AI', sub:'Chiedi consiglio', color:'#9B59B6', bg:'#F5EEF8' },
+  { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', sub:'Generata dal tuo piano', color:'#4A90D4', bg:'#EBF3FD' },
+  { to:'/ai', icon:'ti-robot', label:'FO Coach AI', sub:'Sostituzioni e consigli', color:'#9B59B6', bg:'#F5EEF8' },
 ]
 
 // Cerchio SVG calorie animato
@@ -186,16 +187,16 @@ export default function Dashboard() {
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             {QUICK_LINKS.map(link => (
               <Link key={link.to} to={link.to} style={{
-                background:'white', borderRadius:12, padding:'14px', textDecoration:'none',
-                border:'0.5px solid #E0DDD6', display:'flex', flexDirection:'column', gap:8,
-                boxShadow:'0 1px 3px rgba(0,0,0,0.04)'
+                background:'white', borderRadius:14, padding:'16px 14px', textDecoration:'none',
+                border:'0.5px solid #E0DDD6', display:'flex', flexDirection:'column', gap:10,
+                boxShadow:'0 2px 6px rgba(0,0,0,0.06)'
               }}>
-                <div style={{width:36,height:36,borderRadius:10,background:link.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <i className={`ti ${link.icon}`} style={{fontSize:18,color:link.color}}/>
+                <div style={{width:44,height:44,borderRadius:12,background:link.bg,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 2px 8px ${link.color}22`}}>
+                  <i className={`ti ${link.icon}`} style={{fontSize:22,color:link.color}}/>
                 </div>
                 <div>
-                  <div style={{fontSize:13,fontWeight:500,color:'#111'}}>{link.label}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{link.sub}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#111'}}>{link.label}</div>
+                  <div style={{fontSize:11,color:'#888780',marginTop:2}}>{link.sub}</div>
                 </div>
               </Link>
             ))}
