@@ -122,25 +122,22 @@ export default function TrackerProgressi() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingPhoto(true)
-
     try {
-      const ext = file.name.split('.').pop()
+      const ext = file.name.split('.').pop().toLowerCase() || 'jpg'
       const fileName = `${profile.id}/${Date.now()}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('progress-photos')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('progress-photos').upload(fileName, file, { cacheControl: '3600', upsert: false })
 
       if (uploadError) throw uploadError
 
-      const { data: urlData } = supabase.storage
-        .from('progress-photos')
-        .getPublicUrl(fileName)
+      // Costruisci URL manualmente per sicurezza
+      const publicUrl = `https://hdgiwrwcxfbojqfeyrxn.supabase.co/storage/v1/object/public/progress-photos/${fileName}`
 
       await supabase.from('progress_photos').insert({
         client_id: profile.id,
         photo_date: new Date().toISOString().split('T')[0],
-        photo_url: urlData.publicUrl,
+        photo_url: publicUrl,
         label: selectedLabel,
         notes: photoNotes || null,
       })
@@ -175,7 +172,6 @@ export default function TrackerProgressi() {
     return d > 0 ? '#3B6D11' : d < 0 ? '#E24B4A' : '#888780'
   }
 
-  // Raggruppa foto per data
   const photosByDate = {}
   photos.forEach(p => {
     if (!photosByDate[p.photo_date]) photosByDate[p.photo_date] = []
@@ -197,35 +193,30 @@ export default function TrackerProgressi() {
         {activeTab === 'foto' && (
           <button style={s.btn} onClick={() => fileRef.current?.click()} disabled={uploadingPhoto}>
             <i className="ti ti-camera" style={{fontSize:14}}/>
-            {uploadingPhoto ? 'Caricando...' : 'Aggiungi foto'}
+            {uploadingPhoto ? 'Caricando...' : 'Scegli foto'}
           </button>
         )}
-        <input ref={fileRef} type="file" accept="image/*" capture="environment"
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/jpg,image/heic,image/webp"
           style={{display:'none'}} onChange={uploadPhoto}/>
       </div>
 
       <div style={s.page}>
-
-        {/* TAB */}
         <div style={{display:'flex',gap:0,marginBottom:14,background:'var(--bg-card)',borderRadius:12,padding:4,border:'0.5px solid var(--border)'}}>
           {[{id:'misure',label:'📏 Misurazioni'},{id:'foto',label:'📸 Foto progressi'}].map(tab=>(
             <button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{
               ...s.tab,
               background:activeTab===tab.id?'#D4570A':'transparent',
-              color:activeTab===tab.id?'white':'#888780'
+              color:activeTab===tab.id?'white':'var(--text-muted)'
             }}>{tab.label}</button>
           ))}
         </div>
 
-        {/* ─── MISURAZIONI ─── */}
         {activeTab === 'misure' && (
           <>
-            {/* Form nuova misurazione */}
             {showForm && (
               <div style={{...s.card, border:'0.5px solid #D4570A', marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
-                  <i className="ti ti-ruler" style={{fontSize:15,color:'#D4570A'}}/>
-                  Nuova misurazione
+                  <i className="ti ti-ruler" style={{fontSize:15,color:'#D4570A'}}/>Nuova misurazione
                 </div>
                 <div style={{marginBottom:12}}>
                   <label style={s.label}>Data</label>
@@ -246,20 +237,18 @@ export default function TrackerProgressi() {
                 </div>
                 <div style={{display:'flex',gap:10}}>
                   <button style={s.btn} onClick={saveEntry} disabled={saving}>
-                    <i className="ti ti-check" style={{fontSize:14}}/>
-                    {saving ? 'Salvataggio...' : 'Salva'}
+                    <i className="ti ti-check" style={{fontSize:14}}/>{saving ? 'Salvataggio...' : 'Salva'}
                   </button>
                   <button style={s.btnGray} onClick={()=>setShowForm(false)}>Annulla</button>
                 </div>
               </div>
             )}
 
-            {/* Ultimi valori */}
             {latest && (
               <div style={s.card}>
                 <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
                   <i className="ti ti-chart-line" style={{fontSize:13,color:'#D4570A'}}/>
-                  Ultima misurazione — {new Date(latest.entry_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
+                  Ultima — {new Date(latest.entry_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
                 </div>
                 <div style={s.grid3}>
                   {MISURE.filter(m => latest[m.key]).map(m => {
@@ -268,11 +257,7 @@ export default function TrackerProgressi() {
                       <div key={m.key} style={s.statCard}>
                         <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:4}}>{m.label}</div>
                         <div style={{fontSize:18,fontWeight:700,color:'var(--text)'}}>{latest[m.key]}<span style={{fontSize:11,color:'var(--text-muted)'}}>{m.unit}</span></div>
-                        {d !== null && (
-                          <div style={{fontSize:11,color:diffColor(m.key),marginTop:3,fontWeight:600}}>
-                            {parseFloat(d) > 0 ? '+' : ''}{d}{m.unit}
-                          </div>
-                        )}
+                        {d !== null && <div style={{fontSize:11,color:diffColor(m.key),marginTop:3,fontWeight:600}}>{parseFloat(d)>0?'+':''}{d}{m.unit}</div>}
                       </div>
                     )
                   })}
@@ -280,18 +265,15 @@ export default function TrackerProgressi() {
               </div>
             )}
 
-            {/* Grafico peso */}
             {entries.filter(e => e.weight_kg).length > 1 && (
               <div style={s.card}>
                 <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
-                  <i className="ti ti-trending-down" style={{fontSize:13,color:'#D4570A'}}/>
-                  Andamento peso
+                  <i className="ti ti-trending-down" style={{fontSize:13,color:'#D4570A'}}/>Andamento peso
                 </div>
                 <PesoChart entries={entries.filter(e=>e.weight_kg).slice(0,10).reverse()}/>
               </div>
             )}
 
-            {/* Storico */}
             <div style={s.card}>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Storico misurazioni</div>
               {loading ? (
@@ -326,19 +308,17 @@ export default function TrackerProgressi() {
           </>
         )}
 
-        {/* ─── FOTO ─── */}
         {activeTab === 'foto' && (
           <>
-            {/* Seleziona tipo foto */}
             <div style={s.card}>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>Tipo di foto</div>
               <div style={{display:'flex',gap:8,marginBottom:12}}>
                 {PHOTO_LABELS.map(l => (
                   <button key={l} onClick={()=>setSelectedLabel(l)} style={{
                     flex:1,padding:'8px',borderRadius:9,border:'0.5px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
-                    background:selectedLabel===l?'#D4570A':'white',
-                    color:selectedLabel===l?'white':'#888780',
-                    borderColor:selectedLabel===l?'#D4570A':'#E0DDD6'
+                    background:selectedLabel===l?'#D4570A':'var(--bg-card)',
+                    color:selectedLabel===l?'white':'var(--text-muted)',
+                    borderColor:selectedLabel===l?'#D4570A':'var(--border)'
                   }}>{l}</button>
                 ))}
               </div>
@@ -347,20 +327,18 @@ export default function TrackerProgressi() {
               <button style={{...s.btn,width:'100%',justifyContent:'center',marginTop:10}}
                 onClick={()=>fileRef.current?.click()} disabled={uploadingPhoto}>
                 <i className="ti ti-camera" style={{fontSize:15}}/>
-                {uploadingPhoto ? 'Caricamento in corso...' : `Scatta o scegli foto — ${selectedLabel}`}
+                {uploadingPhoto ? 'Caricamento...' : `Scegli dalla galleria — ${selectedLabel}`}
               </button>
             </div>
 
-            {/* Nessuna foto */}
             {photos.length === 0 && (
-              <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
+              <div style={{...s.card,textAlign:'center',padding:'40px 20px'}}>
                 <i className="ti ti-camera" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
                 <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:8}}>Nessuna foto ancora</div>
-                <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>Aggiungi la tua prima foto per iniziare a tracciare i tuoi progressi visivi.</div>
+                <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>Aggiungi la tua prima foto per tracciare i progressi visivi.</div>
               </div>
             )}
 
-            {/* Foto raggruppate per data */}
             {Object.entries(photosByDate).map(([date, dayPhotos]) => (
               <div key={date} style={s.card}>
                 <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>
@@ -369,23 +347,16 @@ export default function TrackerProgressi() {
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
                   {dayPhotos.map(photo => (
                     <div key={photo.id} style={{position:'relative'}}>
-                      <img
-                        src={photo.photo_url}
-                        alt={photo.label}
-                        onClick={()=>setLightbox(photo)}
-                        style={{width:'100%',aspectRatio:'3/4',objectFit:'cover',borderRadius:10,cursor:'pointer',display:'block'}}
-                      />
+                      <img src={photo.photo_url} alt={photo.label} onClick={()=>setLightbox(photo)}
+                        style={{width:'100%',aspectRatio:'3/4',objectFit:'cover',borderRadius:10,cursor:'pointer',display:'block'}}/>
                       <div style={{position:'absolute',bottom:6,left:6,background:'rgba(0,0,0,0.6)',color:'white',fontSize:10,padding:'2px 7px',borderRadius:10,fontWeight:600}}>
                         {photo.label}
                       </div>
-                      <button
-                        onClick={()=>deletePhoto(photo.id, photo.photo_url)}
+                      <button onClick={()=>deletePhoto(photo.id,photo.photo_url)}
                         style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.5)',border:'none',borderRadius:'50%',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'white'}}>
                         <i className="ti ti-x" style={{fontSize:12}}/>
                       </button>
-                      {photo.notes && (
-                        <div style={{fontSize:10,color:'var(--text-muted)',marginTop:4,textAlign:'center'}}>{photo.notes}</div>
-                      )}
+                      {photo.notes && <div style={{fontSize:10,color:'var(--text-muted)',marginTop:4,textAlign:'center'}}>{photo.notes}</div>}
                     </div>
                   ))}
                 </div>
@@ -395,7 +366,6 @@ export default function TrackerProgressi() {
         )}
       </div>
 
-      {/* LIGHTBOX */}
       {lightbox && (
         <div onClick={()=>setLightbox(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
           <img src={lightbox.photo_url} alt={lightbox.label}
