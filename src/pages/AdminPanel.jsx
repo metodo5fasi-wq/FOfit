@@ -256,19 +256,63 @@ export default function AdminPanel() {
 
 function ClientProgress({ client }) {
   const [latest, setLatest] = useState(null)
+  const [diaryToday, setDiaryToday] = useState(false)
+  const [activePlan, setActivePlan] = useState(null)
+  const today = new Date().toISOString().split('T')[0]
+
   useEffect(() => {
-    supabase.from('body_measurements').select('*').eq('client_id',client.id).order('measured_at',{ascending:false}).limit(1).then(({data})=>data?.length&&setLatest(data[0]))
+    supabase.from('progress_entries').select('*')
+      .eq('client_id', client.id).order('entry_date', {ascending:false}).limit(1)
+      .then(({data}) => data?.length && setLatest(data[0]))
+    supabase.from('diary_entries').select('id')
+      .eq('client_id', client.id).eq('entry_date', today).limit(1)
+      .then(({data}) => setDiaryToday(data?.length > 0))
+    supabase.from('meal_plans').select('title,kcal_target')
+      .eq('client_id', client.id).eq('is_active', true).limit(1)
+      .then(({data}) => data?.length && setActivePlan(data[0]))
   }, [client.id])
+
   const ini = client.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()||'U'
+
   return (
-    <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'#F5F3EF',borderRadius:10,border:'0.5px solid #E0DDD6'}}>
-      <div style={{width:36,height:36,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:500,color:'white',flexShrink:0}}>{ini}</div>
-      <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500,color:'#111'}}>{client.full_name}</div><div style={{fontSize:11,color:'#888780'}}>{latest?`Ultima: ${new Date(latest.measured_at).toLocaleDateString('it-IT')}`:'Nessuna misurazione'}</div></div>
-      {latest&&<div style={{display:'flex',gap:16}}>
-        {[{l:'Peso',v:latest.weight_kg?`${latest.weight_kg}kg`:'—'},{l:'Grasso',v:latest.body_fat_pct?`${latest.body_fat_pct}%`:'—'},{l:'Vita',v:latest.waist_cm?`${latest.waist_cm}cm`:'—'}].map(m=>(
-          <div key={m.l} style={{textAlign:'center'}}><div style={{fontSize:13,fontWeight:500,color:'#111'}}>{m.v}</div><div style={{fontSize:10,color:'#888780'}}>{m.l}</div></div>
-        ))}
-      </div>}
+    <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px 16px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+        <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,color:'white',flexShrink:0}}>{ini}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:500,color:'#111'}}>{client.full_name}</div>
+          <div style={{fontSize:11,color:'#888780'}}>{client.goal || 'Obiettivo non impostato'}</div>
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:diaryToday?'#EAF3DE':'#FEE2E2',color:diaryToday?'#3B6D11':'#E24B4A'}}>
+            {diaryToday ? '✓ Diario' : '✗ Diario'}
+          </div>
+          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:activePlan?'#FEF0E7':'#F5F3EF',color:activePlan?'#D4570A':'#888780'}}>
+            {activePlan ? '📋 Piano attivo' : 'Nessun piano'}
+          </div>
+        </div>
+      </div>
+      {latest ? (
+        <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid #F5F3EF',flexWrap:'wrap'}}>
+          {[
+            {l:'Peso',v:latest.weight_kg?`${latest.weight_kg}kg`:'—'},
+            {l:'Vita',v:latest.waist_cm?`${latest.waist_cm}cm`:'—'},
+            {l:'% Grasso',v:latest.body_fat_pct?`${latest.body_fat_pct}%`:'—'},
+          ].map(m=>(
+            <div key={m.l} style={{textAlign:'center'}}>
+              <div style={{fontSize:14,fontWeight:600,color:'#111'}}>{m.v}</div>
+              <div style={{fontSize:10,color:'#888780'}}>{m.l}</div>
+            </div>
+          ))}
+          <div style={{marginLeft:'auto',textAlign:'right'}}>
+            <div style={{fontSize:10,color:'#888780'}}>Ultima misurazione</div>
+            <div style={{fontSize:11,color:'#111'}}>{new Date(latest.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{fontSize:11,color:'#888780',paddingTop:8,borderTop:'0.5px solid #F5F3EF'}}>
+          Nessuna misurazione ancora registrata
+        </div>
+      )}
     </div>
   )
 }
