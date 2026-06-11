@@ -197,6 +197,11 @@ export default function PianoAlimentare() {
                         <span style={{fontSize:11,color:'#888780'}}>P {mealP}g · C {mealC}g · G {mealG}g</span>
                       </div>
                     )}
+
+                    {/* ALTERNATIVE */}
+                    {(meal.alternatives?.length > 0) && (
+                      <AlternativeSection alternatives={meal.alternatives}/>
+                    )}
                   </div>
                 )}
               </div>
@@ -208,3 +213,46 @@ export default function PianoAlimentare() {
   )
 }
 
+function AlternativeSection({ alternatives }) {
+  const [openAlt, setOpenAlt] = React.useState(null)
+  if (!alternatives || alternatives.length === 0) return null
+  return (
+    <div style={{marginTop:8,paddingTop:8,borderTop:'0.5px dashed #E0DDD6'}}>
+      <div style={{fontSize:11,color:'#888780',fontWeight:500,marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
+        <i className="ti ti-refresh" style={{fontSize:12,color:'#F4894A'}}/>
+        Alternative disponibili
+      </div>
+      {alternatives.map((alt, ai) => (
+        <div key={ai} style={{marginBottom:6}}>
+          <button onClick={()=>setOpenAlt(openAlt===ai?null:ai)} style={{
+            width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',
+            padding:'8px 10px',borderRadius:8,border:'0.5px solid #F4C9A8',
+            background:openAlt===ai?'#FEF0E7':'#FEF8F4',cursor:'pointer',fontFamily:'inherit'
+          }}>
+            <span style={{fontSize:12,fontWeight:500,color:'#D4570A'}}>{alt.nome || `Alternativa ${ai+1}`}</span>
+            <i className={`ti ti-chevron-${openAlt===ai?'up':'down'}`} style={{fontSize:12,color:'#F4894A'}}/>
+          </button>
+          {openAlt === ai && (
+            <div style={{padding:'8px 10px',background:'#FEF8F4',borderRadius:'0 0 8px 8px',border:'0.5px solid #F4C9A8',borderTop:'none'}}>
+              {(alt.alimenti || []).map((a, fi) => (
+                <div key={fi} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.08)'}}>
+                  <div style={{width:5,height:5,borderRadius:'50%',background:'#F4894A',flexShrink:0}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,color:'#111'}}>{a.nome}</div>
+                    {a.marca&&<div style={{fontSize:10,color:'#888780'}}>{a.marca}</div>}
+                  </div>
+                  <div style={{fontSize:11,color:'#888780'}}>{a.quantita_g}g</div>
+                  <div style={{display:'flex',gap:3}}>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#FEF0E7',color:'#D4570A',fontWeight:500}}>P{a.proteine_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#FEF0E7',color:'#F4894A',fontWeight:500}}>C{a.carboidrati_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#F5F3EF',color:'#888780',fontWeight:500}}>G{a.grassi_g}g</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
