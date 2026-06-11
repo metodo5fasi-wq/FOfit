@@ -26,8 +26,17 @@ export default function DiarioGiornaliero() {
   const [selectedMeal, setSelectedMeal] = useState('Colazione')
   const [loading, setLoading] = useState(true)
   const [water, setWater] = useState(0)
-  const [waterGoal, setWaterGoal] = useState(8)
+  const [waterGoal, setWaterGoal] = useState(() => parseInt(localStorage.getItem('fofit_water_goal')) || 8)
   const [editingWaterGoal, setEditingWaterGoal] = useState(false)
+  const [waterGoalInput, setWaterGoalInput] = useState(waterGoal)
+  const [activeTab, setActiveTab] = useState('pasti')
+
+  function saveWaterGoal() {
+    const val = Math.max(1, Math.min(20, parseInt(waterGoalInput) || 8))
+    setWaterGoal(val)
+    localStorage.setItem('fofit_water_goal', val)
+    setEditingWaterGoal(false)
+  }
   const searchTimeout = useRef(null)
   const today = new Date().toISOString().split('T')[0]
 
@@ -86,6 +95,7 @@ export default function DiarioGiornaliero() {
     })
     setSelectedFood(null)
     setQty(100)
+    if (window.innerWidth < 768) setActiveTab('pasti')
     fetchDiary()
   }
 
@@ -159,10 +169,25 @@ export default function DiarioGiornaliero() {
           </div>
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:12}}>
+        {/* TAB MOBILE */}
+        {window.innerWidth < 768 && (
+          <div style={{display:'flex',gap:0,marginBottom:12,background:'white',borderRadius:12,padding:4,border:'0.5px solid #E0DDD6'}}>
+            {[{id:'pasti',label:'🍽 Pasti'},{id:'cerca',label:'🔍 Aggiungi'}].map(tab=>(
+              <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
+                style={{flex:1,padding:'9px',borderRadius:9,border:'none',cursor:'pointer',fontFamily:'inherit',
+                  fontSize:13,fontWeight:600,transition:'all 0.15s',
+                  background:activeTab===tab.id?'#D4570A':'transparent',
+                  color:activeTab===tab.id?'white':'#888780'}}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={{display: window.innerWidth < 768 ? 'block' : 'grid', gridTemplateColumns:'1.2fr 1fr', gap:12}}>
 
           {/* PASTI */}
-          <div>
+          <div style={{display: window.innerWidth < 768 && activeTab !== 'pasti' ? 'none' : 'block'}}>
             {MEAL_SLOTS.map(meal => {
               const foods = diary[meal] || []
               const mealKcal = Math.round(foods.reduce((s,e) => s+(e.kcal||0), 0))
@@ -196,7 +221,7 @@ export default function DiarioGiornaliero() {
           </div>
 
           {/* CERCA E AGGIUNGI */}
-          <div style={{position:'sticky',top:0}}>
+          <div style={{position: window.innerWidth < 768 ? 'static' : 'sticky', top:0, display: window.innerWidth < 768 && activeTab !== 'cerca' ? 'none' : 'block'}}>
             <div style={s.card}>
               <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:12,display:'flex',alignItems:'center',gap:7}}>
                 <i className="ti ti-search" style={{fontSize:14,color:'#D4570A'}}/>
@@ -269,28 +294,35 @@ export default function DiarioGiornaliero() {
                 </div>
               )}
 
-              {/* IDRATAZIONE */}
               <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #F5F3EF'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
                   <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{water * 250}ml</div>
-                    <button onClick={()=>setEditingWaterGoal(!editingWaterGoal)}
-                      style={{background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:11,fontFamily:'inherit',padding:0}}>
-                      <i className="ti ti-settings" style={{fontSize:12}}/>
+                    <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{water * 250}ml / {waterGoal * 250}ml</div>
+                    <button onClick={()=>{ setWaterGoalInput(waterGoal); setEditingWaterGoal(!editingWaterGoal) }}
+                      style={{background:'none',border:'none',cursor:'pointer',color:'#888780',padding:0}}>
+                      <i className="ti ti-settings" style={{fontSize:13}}/>
                     </button>
                   </div>
                 </div>
 
                 {editingWaterGoal && (
-                  <div style={{marginBottom:8,display:'flex',alignItems:'center',gap:8,background:'#F5F3EF',borderRadius:8,padding:'8px 10px'}}>
-                    <span style={{fontSize:11,color:'#888780'}}>Obiettivo:</span>
-                    <input type="number" value={waterGoal} min={1} max={20}
-                      onChange={e=>setWaterGoal(parseInt(e.target.value)||8)}
-                      style={{width:50,padding:'4px 8px',border:'0.5px solid #E0DDD6',borderRadius:6,fontSize:12,textAlign:'center',outline:'none',fontFamily:'inherit'}}/>
-                    <span style={{fontSize:11,color:'#888780'}}>bicchieri ({waterGoal*250}ml)</span>
-                    <button onClick={()=>setEditingWaterGoal(false)}
-                      style={{marginLeft:'auto',background:'#D4570A',color:'white',border:'none',borderRadius:6,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>OK</button>
+                  <div style={{marginBottom:10,background:'#F5F3EF',borderRadius:10,padding:'10px 12px'}}>
+                    <div style={{fontSize:11,color:'#888780',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <button onClick={()=>setWaterGoalInput(Math.max(1, waterGoalInput-1))}
+                        style={{width:32,height:32,borderRadius:8,background:'white',border:'0.5px solid #E0DDD6',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>−</button>
+                      <div style={{flex:1,textAlign:'center'}}>
+                        <div style={{fontSize:22,fontWeight:700,color:'#111'}}>{waterGoalInput}</div>
+                        <div style={{fontSize:10,color:'#888780'}}>{waterGoalInput * 250}ml totali</div>
+                      </div>
+                      <button onClick={()=>setWaterGoalInput(Math.min(20, waterGoalInput+1))}
+                        style={{width:32,height:32,borderRadius:8,background:'white',border:'0.5px solid #E0DDD6',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>+</button>
+                    </div>
+                    <button onClick={saveWaterGoal}
+                      style={{width:'100%',marginTop:10,background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'8px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                      Salva obiettivo
+                    </button>
                   </div>
                 )}
 
@@ -303,7 +335,7 @@ export default function DiarioGiornaliero() {
                   ))}
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div style={{fontSize:10,color:'#888780'}}>{water}/{waterGoal} bicchieri · obiettivo {waterGoal*250}ml</div>
+                  <div style={{fontSize:10,color:'#888780'}}>{water}/{waterGoal} bicchieri</div>
                   {water > 0 && (
                     <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#888780',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
                   )}
