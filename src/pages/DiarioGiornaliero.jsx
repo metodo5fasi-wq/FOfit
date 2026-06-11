@@ -27,8 +27,8 @@ export default function DiarioGiornaliero() {
   const [qty, setQty] = useState(100)
   const [selectedMeal, setSelectedMeal] = useState('Colazione')
   const [loading, setLoading] = useState(true)
-  const searchTimeout = useRef(null)
-  const today = new Date().toISOString().split('T')[0]
+  const [water, setWater] = useState(0)
+  const WATER_GOAL = 8 // 8 bicchieri = 2L
 
   useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
 
@@ -242,13 +242,25 @@ export default function DiarioGiornaliero() {
               )}
 
               <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #F5F3EF'}}>
-                <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Idratazione</div>
-                <div style={{display:'flex',gap:4}}>
-                  {[250,250,250,250,250,250,250,250].map((_,i)=>(
-                    <div key={i} style={{flex:1,height:7,borderRadius:2,background:i<4?'#D4570A':'#F5F3EF'}}/>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                  <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
+                  <div style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{water * 250}ml / 2L</div>
+                </div>
+                <div style={{display:'flex',gap:4,marginBottom:6}}>
+                  {Array.from({length:WATER_GOAL}).map((_,i)=>(
+                    <div key={i}
+                      onClick={()=>setWater(i < water ? i : i+1)}
+                      style={{flex:1,height:7,borderRadius:2,cursor:'pointer',
+                        background:i<water?'#D4570A':'#F5F3EF',
+                        transition:'background 0.15s'}}/>
                   ))}
                 </div>
-                <div style={{fontSize:11,color:'#888780',marginTop:4}}>1.0L di 2L</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{fontSize:10,color:'#888780'}}>{water} bicchieri da 250ml</div>
+                  {water > 0 && (
+                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#888780',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
