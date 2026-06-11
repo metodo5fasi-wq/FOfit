@@ -124,11 +124,14 @@ export default function TrackerProgressi() {
     try {
       const ext = file.name.split('.').pop().toLowerCase() || 'jpg'
       const fileName = `${profile.id}/${Date.now()}.${ext}`
+      
       const { error: upErr } = await supabase.storage
         .from('progress-photos')
         .upload(fileName, file, { cacheControl: '3600', upsert: false })
-      if (upErr) throw upErr
+      if (upErr) { alert('Errore storage: ' + upErr.message); setUploading(false); return }
+
       const publicUrl = `https://hdgiwrwcxfbojqfeyrxn.supabase.co/storage/v1/object/public/progress-photos/${fileName}`
+      
       const { error: dbErr } = await supabase.from('progress_photos').insert({
         client_id: profile.id,
         photo_date: new Date().toISOString().split('T')[0],
@@ -136,9 +139,11 @@ export default function TrackerProgressi() {
         label: selectedLabel,
         notes: photoNotes || null,
       })
-      if (dbErr) throw dbErr
+      if (dbErr) { alert('Errore database: ' + dbErr.message); setUploading(false); return }
+
       setPhotoNotes('')
       await fetchPhotos()
+      alert('✅ Foto salvata!')
     } catch(err) {
       alert('Errore: ' + err.message)
     }
