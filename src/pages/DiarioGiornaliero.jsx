@@ -30,6 +30,7 @@ export default function DiarioGiornaliero() {
   const [editingWaterGoal, setEditingWaterGoal] = useState(false)
   const [waterGoalInput, setWaterGoalInput] = useState(waterGoal)
   const [activeTab, setActiveTab] = useState('pasti')
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
   function saveWaterGoal() {
     const val = Math.max(1, Math.min(20, parseInt(waterGoalInput) || 8))
@@ -39,8 +40,10 @@ export default function DiarioGiornaliero() {
   }
   const searchTimeout = useRef(null)
   const today = new Date().toISOString().split('T')[0]
+  const isToday = selectedDate === today
 
   useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
+  useEffect(() => { if (profile) fetchDiary() }, [selectedDate])
 
   async function fetchPlan() {
     const { data } = await supabase.from('meal_plans').select('*')
@@ -51,7 +54,7 @@ export default function DiarioGiornaliero() {
   async function fetchDiary() {
     setLoading(true)
     const { data } = await supabase.from('diary_entries').select('*')
-      .eq('client_id', profile.id).eq('entry_date', today).order('created_at')
+      .eq('client_id', profile.id).eq('entry_date', selectedDate).order('created_at')
     const byMeal = {}
     MEAL_SLOTS.forEach(m => byMeal[m] = [])
     ;(data || []).forEach(e => {
@@ -83,7 +86,7 @@ export default function DiarioGiornaliero() {
     const ratio = qty / 100
     await supabase.from('diary_entries').insert({
       client_id: profile.id,
-      entry_date: today,
+      entry_date: selectedDate,
       meal_type: selectedMeal.toLowerCase(),
       food_name: selectedFood.name,
       brand: selectedFood.brand,
@@ -107,7 +110,7 @@ export default function DiarioGiornaliero() {
   async function clearAll() {
     if (!window.confirm('Vuoi azzerare tutto il diario di oggi?')) return
     await supabase.from('diary_entries').delete()
-      .eq('client_id', profile.id).eq('entry_date', today)
+      .eq('client_id', profile.id).eq('entry_date', selectedDate)
     setDiary(Object.fromEntries(MEAL_SLOTS.map(m => [m, []])))
   }
 
@@ -128,17 +131,46 @@ export default function DiarioGiornaliero() {
   return (
     <>
       <div style={s.topbar}>
-        <div>
-          <div style={{fontSize:15,fontWeight:600,color:'#111'}}>Diario giornaliero</div>
-          <div style={{fontSize:12,color:'#888780'}}>{new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {/* Navigazione date */}
+          <button onClick={()=>{
+            const d = new Date(selectedDate)
+            d.setDate(d.getDate()-1)
+            setSelectedDate(d.toISOString().split('T')[0])
+          }} style={{background:'none',border:'none',cursor:'pointer',color:'#888780',padding:4,display:'flex',alignItems:'center'}}>
+            <i className="ti ti-chevron-left" style={{fontSize:18}}/>
+          </button>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#111'}}>
+              {isToday ? 'Oggi' : new Date(selectedDate+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}
+            </div>
+            {!isToday && (
+              <button onClick={()=>setSelectedDate(today)}
+                style={{fontSize:10,color:'#D4570A',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontWeight:500,padding:0}}>
+                Torna a oggi
+              </button>
+            )}
+          </div>
+          <button onClick={()=>{
+            const d = new Date(selectedDate)
+            d.setDate(d.getDate()+1)
+            const next = d.toISOString().split('T')[0]
+            if (next <= today) setSelectedDate(next)
+          }} style={{background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',
+            color: selectedDate >= today ? '#E0DDD6' : '#888780'}}>
+            <i className="ti ti-chevron-right" style={{fontSize:18}}/>
+          </button>
         </div>
+
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          {totKcal > 0 && (
+          {totKcal > 0 && isToday && (
             <button onClick={clearAll} style={{background:'#FEE2E2',color:'#E24B4A',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:4}}>
               <i className="ti ti-trash" style={{fontSize:13}}/>Azzera
             </button>
           )}
-          <span style={{background:'#FEF0E7',color:'#D4570A',fontSize:11,padding:'3px 10px',borderRadius:20,fontWeight:500}}>{remaining} kcal rimanenti</span>
+          <span style={{background:'#FEF0E7',color:'#D4570A',fontSize:11,padding:'3px 10px',borderRadius:20,fontWeight:500}}>
+            {isToday ? `${remaining} kcal rimanenti` : `${totKcal} kcal`}
+          </span>
         </div>
       </div>
 
@@ -170,7 +202,7 @@ export default function DiarioGiornaliero() {
         </div>
 
         {/* TAB MOBILE */}
-        {window.innerWidth < 768 && (
+        {window.innerWidth < 768 && isToday && (
           <div style={{display:'flex',gap:0,marginBottom:12,background:'white',borderRadius:12,padding:4,border:'0.5px solid #E0DDD6'}}>
             {[{id:'pasti',label:'🍽 Pasti'},{id:'cerca',label:'🔍 Aggiungi'}].map(tab=>(
               <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
@@ -220,8 +252,8 @@ export default function DiarioGiornaliero() {
             })}
           </div>
 
-          {/* CERCA E AGGIUNGI */}
-          <div style={{position: window.innerWidth < 768 ? 'static' : 'sticky', top:0, display: window.innerWidth < 768 && activeTab !== 'cerca' ? 'none' : 'block'}}>
+          {/* CERCA E AGGIUNGI — solo per oggi */}
+          <div style={{position: window.innerWidth < 768 ? 'static' : 'sticky', top:0, display: (window.innerWidth < 768 && activeTab !== 'cerca') || !isToday ? 'none' : 'block'}}>
             <div style={s.card}>
               <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:12,display:'flex',alignItems:'center',gap:7}}>
                 <i className="ti ti-search" style={{fontSize:14,color:'#D4570A'}}/>
