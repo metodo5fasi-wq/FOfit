@@ -10,6 +10,7 @@ import ListaSpesa from './pages/ListaSpesa'
 import AssistenteAI from './pages/AssistenteAI'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
+import Onboarding from './pages/Onboarding'
 import Layout from './components/Layout'
 
 export const AuthContext = createContext(null)
@@ -112,8 +113,13 @@ export default function App() {
         <OfflineBanner/>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/onboarding" element={session && profile ? <Onboarding /> : <Navigate to="/login" />} />
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={
+              session && profile && profile.role === 'client' && !localStorage.getItem(`fofit_onboarded_${profile.id}`)
+                ? <Navigate to="/onboarding" />
+                : <Dashboard />
+            } />
             <Route path="piano" element={<PianoAlimentare />} />
             <Route path="diario" element={<DiarioGiornaliero />} />
             <Route path="progressi" element={<TrackerProgressi />} />
