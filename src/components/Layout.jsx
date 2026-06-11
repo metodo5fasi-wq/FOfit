@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../App'
+import { useAuth, useTheme } from '../App'
 
 const NAV = [
   { to:'/', icon:'ti-layout-dashboard', label:'Dashboard', exact:true, color:'#F4894A' },
@@ -17,7 +17,7 @@ const ADMIN_NAV = [
   { to:'/importa', icon:'ti-file-upload', label:'Importa piano', color:'#F4894A' },
 ]
 
-function Sidebar({ profile, onClose, onLogout }) {
+function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
   const isAdmin = profile?.role === 'admin'
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
@@ -30,7 +30,7 @@ function Sidebar({ profile, onClose, onLogout }) {
   }[profile?.goal] || '🎯 Obiettivo'
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#0F0F0F'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',background: darkMode ? '#000000' : '#0F0F0F'}}>
 
       {/* LOGO */}
       <div style={{padding:'22px 20px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
@@ -113,7 +113,14 @@ function Sidebar({ profile, onClose, onLogout }) {
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:7,fontSize:12,color:'rgba(255,255,255,0.3)',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:14}}/>Esci
         </button>
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.15)'}}>v1.0</div>
+        <button onClick={onToggleTheme} style={{
+          background:'rgba(255,255,255,0.08)',border:'none',borderRadius:20,
+          padding:'5px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:6,
+          color:'rgba(255,255,255,0.5)',fontSize:11,fontFamily:'inherit'
+        }}>
+          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:13}}/>
+          {darkMode?'Light':'Dark'}
+        </button>
       </div>
     </div>
   )
@@ -121,6 +128,7 @@ function Sidebar({ profile, onClose, onLogout }) {
 
 export default function Layout() {
   const { profile } = useAuth()
+  const { theme, darkMode, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -142,25 +150,23 @@ export default function Layout() {
       {/* SIDEBAR DESKTOP */}
       {!isMobile && (
         <div style={{width:230,flexShrink:0,borderRight:'0.5px solid rgba(255,255,255,0.04)'}}>
-          <Sidebar profile={profile} onClose={()=>{}} onLogout={handleLogout}/>
+          <Sidebar profile={profile} onClose={()=>{}} onLogout={handleLogout} theme={theme} darkMode={darkMode} onToggleTheme={toggleTheme}/>
         </div>
       )}
 
       {/* SIDEBAR MOBILE */}
       {isMobile && mobileOpen && (
         <>
-          <div
-            onClick={()=>setMobileOpen(false)}
-            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:98}}
-          />
+          <div onClick={()=>setMobileOpen(false)}
+            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:98}}/>
           <div style={{position:'fixed',left:0,top:0,bottom:0,width:260,zIndex:99,boxShadow:'4px 0 24px rgba(0,0,0,0.5)'}}>
-            <Sidebar profile={profile} onClose={()=>setMobileOpen(false)} onLogout={handleLogout}/>
+            <Sidebar profile={profile} onClose={()=>setMobileOpen(false)} onLogout={handleLogout} theme={theme} darkMode={darkMode} onToggleTheme={toggleTheme}/>
           </div>
         </>
       )}
 
       {/* CONTENUTO PRINCIPALE */}
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#F5F3EF',minWidth:0}}>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:theme.bg,minWidth:0,transition:'background 0.3s'}}>
 
         {/* TOPBAR MOBILE */}
         {isMobile && (
