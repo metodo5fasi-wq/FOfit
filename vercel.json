@@ -1,6 +1,5 @@
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+ "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -18,10 +17,5 @@
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     }
-  ],
-  "functions": {
-    "api/parse-plan.js": { "maxDuration": 60 },
-    "api/create-user.js": { "maxDuration": 30 },
-    "api/ai-coach.js": { "maxDuration": 60 }
-  }
+  ]
 }
