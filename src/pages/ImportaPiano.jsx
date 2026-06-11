@@ -104,6 +104,7 @@ export default function ImportaPiano() {
             meal_type: pasto.tipo || 'altro',
             meal_order: idx,
             coach_note: giorno.nota_giorno || '',
+            alternatives: pasto.alternative || [],
           }).select().single()
 
           if (mealErr) throw mealErr
