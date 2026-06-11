@@ -15,6 +15,25 @@ import Layout from './components/Layout'
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 
+// Banner offline
+function OfflineBanner() {
+  const [offline, setOffline] = useState(!navigator.onLine)
+  useEffect(() => {
+    const on = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  if (!offline) return null
+  return (
+    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:9999,background:'#1a1a1a',color:'white',padding:'10px 16px',display:'flex',alignItems:'center',gap:8,fontSize:13}}>
+      <i className="ti ti-wifi-off" style={{fontSize:16,color:'#FAC775'}}/>
+      <span>Nessuna connessione — alcune funzioni potrebbero non funzionare</span>
+    </div>
+  )
+}
+
 const C = {
   orange: '#D4570A', orangeLight: '#FEF0E7', orangeMid: '#F4894A',
   black: '#111111', white: '#ffffff', gray: '#F5F3EF',
@@ -67,8 +86,14 @@ export default function App() {
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    setProfile(data)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, goal, height_cm, phone, notes')
+      .eq('id', userId)
+      .maybeSingle()
+    if (data) {
+      setProfile(data)
+    }
     setLoading(false)
   }
 
@@ -84,6 +109,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ session, profile, setProfile }}>
       <BrowserRouter>
+        <OfflineBanner/>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
@@ -93,8 +119,8 @@ export default function App() {
             <Route path="progressi" element={<TrackerProgressi />} />
             <Route path="spesa" element={<ListaSpesa />} />
             <Route path="ai" element={<AssistenteAI />} />
-           <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
-<Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
+            <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
+            <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
       </BrowserRouter>
