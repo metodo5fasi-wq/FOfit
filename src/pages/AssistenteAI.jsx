@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import { useNavigate } from 'react-router-dom'
 
 const SUGGERIMENTI = [
   { label: '🍳 Ricetta con pollo', text: 'Dammi una ricetta sfiziosa con il pollo che rispetti i miei macro per il pranzo.' },
@@ -92,6 +93,7 @@ function RecipeCard({ recipe, onAdd }) {
 
 export default function AssistenteAI() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -256,9 +258,11 @@ export default function AssistenteAI() {
             Assistente nutrizionale attivo
           </div>
         </div>
-        <button onClick={clearHistory} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:13,fontFamily:'inherit'}}>
-          <i className="ti ti-trash" style={{fontSize:16}}/>
-        </button>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={clearHistory} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontFamily:'inherit'}}>
+            <i className="ti ti-trash" style={{fontSize:16}}/>
+          </button>
+        </div>
       </div>
 
       {/* MESSAGGI */}
@@ -304,6 +308,23 @@ export default function AssistenteAI() {
             <i className="ti ti-send" style={{fontSize:16,color:'white'}}/>
           </button>
         </div>
+      </div>
+
+      {/* NAVIGAZIONE RAPIDA */}
+      <div style={{padding:'8px 16px 12px',background:'white',borderTop:'0.5px solid #F5F3EF',display:'flex',gap:6,overflowX:'auto',flexShrink:0}}>
+        {[
+          {to:'/',icon:'ti-layout-dashboard',label:'Home'},
+          {to:'/piano',icon:'ti-clipboard-list',label:'Piano'},
+          {to:'/diario',icon:'ti-pencil',label:'Diario'},
+          {to:'/progressi',icon:'ti-chart-line',label:'Progressi'},
+          {to:'/spesa',icon:'ti-shopping-cart',label:'Spesa'},
+        ].map(item=>(
+          <button key={item.to} onClick={()=>navigate(item.to)}
+            style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'6px 12px',borderRadius:10,border:'0.5px solid #E0DDD6',background:'#F5F3EF',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+            <i className={`ti ${item.icon}`} style={{fontSize:16,color:'#D4570A'}}/>
+            <span style={{fontSize:10,color:'#888780',fontWeight:500}}>{item.label}</span>
+          </button>
+        ))}
       </div>
 
       <style>{`@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}`}</style>
