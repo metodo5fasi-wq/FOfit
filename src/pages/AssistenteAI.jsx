@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { useNavigate } from 'react-router-dom'
+import { PulseDot } from '../components/Animations'
 
 const SUGGERIMENTI = [
   { label: '🍳 Ricetta con pollo', text: 'Dammi una ricetta sfiziosa con il pollo che rispetti i miei macro per il pranzo.' },
@@ -253,8 +254,8 @@ export default function AssistenteAI() {
         </div>
         <div style={{flex:1}}>
           <div style={{fontSize:15,fontWeight:500,color:'#111'}}>FO Coach</div>
-          <div style={{fontSize:11,color:'#3B6D11',display:'flex',alignItems:'center',gap:4}}>
-            <div style={{width:6,height:6,borderRadius:'50%',background:'#3B6D11'}}/>
+          <div style={{fontSize:11,color:'#3B6D11',display:'flex',alignItems:'center',gap:6}}>
+            <PulseDot color="#3B6D11"/>
             Assistente nutrizionale attivo
           </div>
         </div>
