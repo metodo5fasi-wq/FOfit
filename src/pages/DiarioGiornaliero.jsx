@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { searchFoods } from '../lib/foodDatabase'
+import { Toast } from '../components/Animations'
 
 const MEAL_SLOTS = ['Colazione','Spuntino','Pranzo','Pre-workout','Cena','Merenda']
 const MEAL_ICONS = { Colazione:'ti-sun', Spuntino:'ti-apple', Pranzo:'ti-tools-kitchen-2', 'Pre-workout':'ti-bolt', Cena:'ti-moon', Merenda:'ti-coffee' }
@@ -31,6 +32,12 @@ export default function DiarioGiornaliero() {
   const [waterGoalInput, setWaterGoalInput] = useState(waterGoal)
   const [activeTab, setActiveTab] = useState('pasti')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
+
+  function showToast(message, emoji) {
+    setToast({ visible: true, message, emoji })
+    setTimeout(() => setToast(t => ({ ...t, visible: false })), 2000)
+  }
 
   function saveWaterGoal() {
     const val = Math.max(1, Math.min(20, parseInt(waterGoalInput) || 8))
@@ -99,6 +106,7 @@ export default function DiarioGiornaliero() {
     setSelectedFood(null)
     setQty(100)
     if (window.innerWidth < 768) setActiveTab('pasti')
+    showToast(`${selectedFood.name} aggiunto!`, '✅')
     fetchDiary()
   }
 
@@ -130,6 +138,7 @@ export default function DiarioGiornaliero() {
 
   return (
     <>
+      <Toast message={toast.message} emoji={toast.emoji} visible={toast.visible}/>
       <div style={s.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           {/* Navigazione date */}
