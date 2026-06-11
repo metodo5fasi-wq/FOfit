@@ -143,9 +143,11 @@ export default function TrackerProgressi() {
       })
 
       setPhotoNotes('')
-      fetchPhotos()
+      await fetchPhotos()
+      setActiveTab('foto')
+      alert('✅ Foto caricata!')
     } catch(err) {
-      alert('Errore upload: ' + err.message)
+      alert('Errore: ' + err.message)
     }
     setUploadingPhoto(false)
     e.target.value = ''
@@ -196,8 +198,7 @@ export default function TrackerProgressi() {
             {uploadingPhoto ? 'Caricando...' : 'Scegli foto'}
           </button>
         )}
-        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/jpg,image/heic,image/webp"
-          style={{display:'none'}} onChange={uploadPhoto}/>
+        <input ref={fileRef} type="file" accept="image/png, image/jpeg, image/jpg, image/heic, image/heif, image/webp" style={{display:'none'}} onChange={uploadPhoto}/>
       </div>
 
       <div style={s.page}>
