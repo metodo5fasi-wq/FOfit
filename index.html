@@ -4,16 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>FOfit</title>
+
+    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#D4570A" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#1a0800" />
+
+    <!-- iOS Safari — questi sono i tag che fanno aprire senza barra URL -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="FOfit" />
+
+    <!-- Icone iOS -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Splash screen iOS (sfondo scuro mentre carica) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- SEO -->
     <meta name="description" content="FOfit — Il tuo piano alimentare personalizzato con il coach Federico Obinu" />
+
+    <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
   </head>
-  <body>
+  <body style="background:#1a0800;margin:0">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
