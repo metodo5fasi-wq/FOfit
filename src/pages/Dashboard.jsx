@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
+import { Confetti, Toast, AnimatedNumber, FadeIn, PulseDot } from '../components/Animations'
 
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
@@ -28,7 +29,9 @@ function CalorieRing({ current, target }) {
           style={{transition:'stroke-dashoffset 0.8s ease, stroke 0.3s'}}/>
       </svg>
       <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-        <div style={{fontSize:24,fontWeight:700,color:'white',lineHeight:1}}>{Math.round(current).toLocaleString('it-IT')}</div>
+        <div style={{fontSize:24,fontWeight:700,color:'white',lineHeight:1}}>
+          <AnimatedNumber value={Math.round(current)} duration={400}/>
+        </div>
         <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>kcal</div>
         <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:1}}>di {target.toLocaleString('it-IT')}</div>
       </div>
@@ -59,6 +62,9 @@ export default function Dashboard() {
   const [todayG, setTodayG] = useState(0)
   const [plan, setPlan] = useState(null)
   const [streak, setStreak] = useState(0)
+  const [confetti, setConfetti] = useState(false)
+  const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
+  const prevKcalRef = React.useRef(0)
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buongiorno' : hour < 18 ? 'Buon pomeriggio' : 'Buonasera'
@@ -111,7 +117,26 @@ export default function Dashboard() {
     setStreak(count)
   }
 
-  const kcalTarget = plan?.kcal_target || 2200
+  function showToast(message, emoji) {
+    setToast({ visible: true, message, emoji })
+    setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500)
+  }
+
+  useEffect(() => {
+    if (!plan) return
+    const target = plan.kcal_target || 2200
+    const prev = prevKcalRef.current
+    // Confetti quando si raggiunge il 95-105% del target
+    if (prev < target * 0.95 && todayKcal >= target * 0.95 && todayKcal <= target * 1.05) {
+      setConfetti(true)
+      showToast('Target calorico raggiunto!', '🎉')
+    }
+    // Toast proteine
+    if (prev < (plan.protein_target_g || 150) && todayP >= (plan.protein_target_g || 150)) {
+      showToast('Target proteico raggiunto!', '💪')
+    }
+    prevKcalRef.current = todayKcal
+  }, [todayKcal, todayP, plan])
   const pTarget = plan?.protein_target_g || 150
   const cTarget = plan?.carbs_target_g || 220
   const gTarget = plan?.fat_target_g || 65
@@ -129,6 +154,8 @@ export default function Dashboard() {
 
   return (
     <>
+      <Confetti active={confetti} onDone={() => setConfetti(false)}/>
+      <Toast message={toast.message} emoji={toast.emoji} visible={toast.visible}/>
       {/* HERO */}
       <div style={{
         background:'linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%)',
@@ -164,7 +191,7 @@ export default function Dashboard() {
                 <div key={m.label}>
                   <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
                     <span style={{fontSize:11,color:'rgba(255,255,255,0.45)'}}>{m.label}</span>
-                    <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:500}}>{m.val}<span style={{color:'rgba(255,255,255,0.3)'}}>/{m.target}{m.unit}</span></span>
+                    <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:500}}><AnimatedNumber value={m.val} duration={400}/><span style={{color:'rgba(255,255,255,0.3)'}}>/{m.target}{m.unit}</span></span>
                   </div>
                   <div style={{height:5,background:'rgba(255,255,255,0.08)',borderRadius:3,overflow:'hidden'}}>
                     <div style={{height:5,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
@@ -182,6 +209,7 @@ export default function Dashboard() {
       <div style={{flex:1,overflowY:'auto',padding:'16px 18px'}}>
 
         {/* QUICK LINKS */}
+        <FadeIn delay={100}>
         <div style={{marginBottom:16}}>
           <div style={{fontSize:11,fontWeight:600,color:'#888780',textTransform:'uppercase',letterSpacing:'0.09em',marginBottom:10}}>Accesso rapido</div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
@@ -201,7 +229,7 @@ export default function Dashboard() {
               </Link>
             ))}
           </div>
-        </div>
+        </FadeIn>
 
         {/* STATO FISICO */}
         {measurements && (
