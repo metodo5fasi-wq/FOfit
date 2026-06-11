@@ -8,10 +8,10 @@ const MEAL_SLOTS = ['Colazione','Spuntino','Pranzo','Pre-workout','Cena','Merend
 const MEAL_ICONS = { Colazione:'ti-sun', Spuntino:'ti-apple', Pranzo:'ti-tools-kitchen-2', 'Pre-workout':'ti-bolt', Cena:'ti-moon', Merenda:'ti-coffee' }
 
 const s = {
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px 18px' },
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'14px 16px', marginBottom:10, boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'14px 16px', marginBottom:10, boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid var(--border)', borderRadius:8, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 },
   tag: { fontSize:10, padding:'2px 7px', borderRadius:10, fontWeight:500 },
 }
@@ -146,11 +146,11 @@ export default function DiarioGiornaliero() {
             const d = new Date(selectedDate)
             d.setDate(d.getDate()-1)
             setSelectedDate(d.toISOString().split('T')[0])
-          }} style={{background:'none',border:'none',cursor:'pointer',color:'#888780',padding:4,display:'flex',alignItems:'center'}}>
+          }} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:4,display:'flex',alignItems:'center'}}>
             <i className="ti ti-chevron-left" style={{fontSize:18}}/>
           </button>
           <div style={{textAlign:'center'}}>
-            <div style={{fontSize:14,fontWeight:600,color:'#111'}}>
+            <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>
               {isToday ? 'Oggi' : new Date(selectedDate+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}
             </div>
             {!isToday && (
@@ -188,23 +188,23 @@ export default function DiarioGiornaliero() {
         {/* RIEPILOGO CALORIE */}
         <div style={s.card}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-            <span style={{fontSize:24,fontWeight:700,color:'#111'}}>{totKcal.toLocaleString('it-IT')}<span style={{fontSize:13,color:'#888780',fontWeight:400}}> kcal</span></span>
+            <span style={{fontSize:24,fontWeight:700,color:'var(--text)'}}>{totKcal.toLocaleString('it-IT')}<span style={{fontSize:13,color:'var(--text-muted)',fontWeight:400}}> kcal</span></span>
             <span style={{fontSize:13,color:pct>100?'#E24B4A':'#D4570A',fontWeight:600}}>{pct}% del target</span>
           </div>
-          <div style={{height:8,background:'#F5F3EF',borderRadius:4,marginBottom:12,overflow:'hidden'}}>
+          <div style={{height:8,background:'var(--bg-input)',borderRadius:4,marginBottom:12,overflow:'hidden'}}>
             <div style={{height:8,borderRadius:4,background:pct>100?'#E24B4A':'linear-gradient(90deg,#D4570A,#F4894A)',width:`${pct}%`,transition:'width 0.4s'}}/>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
             {[{l:'Proteine',v:totP,t:target.p,c:'#D4570A'},{l:'Carboidrati',v:totC,t:target.c,c:'#F4894A'},{l:'Grassi',v:totG,t:target.g,c:'#FAC775'}].map(m=>(
               <div key={m.l}>
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                  <span style={{color:'#888780'}}>{m.l}</span>
-                  <span style={{fontWeight:600,color:'#111'}}>{m.v}g</span>
+                  <span style={{color:'var(--text-muted)'}}>{m.l}</span>
+                  <span style={{fontWeight:600,color:'var(--text)'}}>{m.v}g</span>
                 </div>
-                <div style={{height:4,background:'#F5F3EF',borderRadius:2}}>
+                <div style={{height:4,background:'var(--bg-input)',borderRadius:2}}>
                   <div style={{height:4,borderRadius:2,background:m.c,width:`${Math.min(100,Math.round(m.v/m.t*100))}%`,transition:'width 0.4s'}}/>
                 </div>
-                <div style={{fontSize:10,color:'#888780',marginTop:2}}>di {m.t}g</div>
+                <div style={{fontSize:10,color:'var(--text-muted)',marginTop:2}}>di {m.t}g</div>
               </div>
             ))}
           </div>
@@ -212,7 +212,7 @@ export default function DiarioGiornaliero() {
 
         {/* TAB MOBILE */}
         {window.innerWidth < 768 && isToday && (
-          <div style={{display:'flex',gap:0,marginBottom:12,background:'white',borderRadius:12,padding:4,border:'0.5px solid #E0DDD6'}}>
+          <div style={{display:'flex',gap:0,marginBottom:12,background:'var(--bg-card)',borderRadius:12,padding:4,border:'0.5px solid var(--border)'}}>
             {[{id:'pasti',label:'🍽 Pasti'},{id:'cerca',label:'🔍 Aggiungi'}].map(tab=>(
               <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
                 style={{flex:1,padding:'9px',borderRadius:9,border:'none',cursor:'pointer',fontFamily:'inherit',
@@ -239,18 +239,18 @@ export default function DiarioGiornaliero() {
                       <div style={{width:28,height:28,borderRadius:7,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                         <i className={`ti ${MEAL_ICONS[meal]||'ti-circle'}`} style={{fontSize:14,color:'#D4570A'}}/>
                       </div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#111'}}>{meal}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{meal}</div>
                     </div>
                     {mealKcal > 0 && <span style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{mealKcal} kcal</span>}
                   </div>
                   {foods.length === 0 ? (
                     <div style={{fontSize:11,color:'#E0DDD6',paddingTop:4}}>Nessun alimento</div>
                   ) : foods.map(f => (
-                    <div key={f.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid #F5F3EF'}}>
+                    <div key={f.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid var(--border)'}}>
                       <div style={{width:5,height:5,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:12,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.food_name}</div>
-                        <div style={{fontSize:10,color:'#888780'}}>{f.quantity_g}g · P{f.protein_g} C{f.carbs_g} G{f.fat_g}</div>
+                        <div style={{fontSize:12,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.food_name}</div>
+                        <div style={{fontSize:10,color:'var(--text-muted)'}}>{f.quantity_g}g · P{f.protein_g} C{f.carbs_g} G{f.fat_g}</div>
                       </div>
                       <div style={{fontSize:11,color:'#D4570A',fontWeight:600,flexShrink:0}}>{f.kcal}</div>
                       <button onClick={()=>removeFood(f.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:14,padding:0,flexShrink:0}}>✕</button>
@@ -264,14 +264,14 @@ export default function DiarioGiornaliero() {
           {/* CERCA E AGGIUNGI — solo per oggi */}
           <div style={{position: window.innerWidth < 768 ? 'static' : 'sticky', top:0, display: (window.innerWidth < 768 && activeTab !== 'cerca') || !isToday ? 'none' : 'block'}}>
             <div style={s.card}>
-              <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:12,display:'flex',alignItems:'center',gap:7}}>
+              <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:12,display:'flex',alignItems:'center',gap:7}}>
                 <i className="ti ti-search" style={{fontSize:14,color:'#D4570A'}}/>
                 Aggiungi alimento
               </div>
 
               {/* Seleziona pasto */}
               <div style={{marginBottom:10}}>
-                <div style={{fontSize:10,color:'#888780',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.06em'}}>Aggiungi a</div>
+                <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.06em'}}>Aggiungi a</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
                   {MEAL_SLOTS.map(m=>(
                     <button key={m} onClick={()=>setSelectedMeal(m)}
@@ -286,9 +286,9 @@ export default function DiarioGiornaliero() {
               </div>
 
               {/* Search */}
-              <div style={{display:'flex',alignItems:'center',gap:8,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
-                <i className="ti ti-search" style={{fontSize:13,color:'#888780'}}/>
-                <input style={{border:'none',background:'transparent',outline:'none',fontSize:13,color:'#111',width:'100%',fontFamily:'inherit'}}
+              <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
+                <i className="ti ti-search" style={{fontSize:13,color:'var(--text-muted)'}}/>
+                <input style={{border:'none',background:'transparent',outline:'none',fontSize:13,color:'var(--text)',width:'100%',fontFamily:'inherit'}}
                   placeholder="Cerca alimento..." value={search} onChange={e=>handleSearch(e.target.value)}/>
               </div>
 
@@ -296,10 +296,10 @@ export default function DiarioGiornaliero() {
                 <div style={{maxHeight:200,overflowY:'auto',marginBottom:8}}>
                   {results.map((f,i)=>(
                     <div key={i} onClick={()=>selectFood(f)}
-                      style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:2,background:'#F5F3EF'}}>
+                      style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:2,background:'var(--bg-input)'}}>
                       <div>
-                        <div style={{fontSize:12,color:'#111',fontWeight:500}}>{f.name}</div>
-                        <div style={{fontSize:10,color:'#888780'}}>{f.brand} · P{f.p} C{f.c} G{f.g}/100g</div>
+                        <div style={{fontSize:12,color:'var(--text)',fontWeight:500}}>{f.name}</div>
+                        <div style={{fontSize:10,color:'var(--text-muted)'}}>{f.brand} · P{f.p} C{f.c} G{f.g}/100g</div>
                       </div>
                       <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{f.kcal100}</div>
                     </div>
@@ -313,52 +313,52 @@ export default function DiarioGiornaliero() {
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
                     <input type="number" value={qty} onChange={e=>setQty(parseFloat(e.target.value)||100)} min={1}
                       style={{...s.input,width:75,textAlign:'center'}}/>
-                    <span style={{fontSize:12,color:'#888780'}}>g</span>
+                    <span style={{fontSize:12,color:'var(--text-muted)'}}>g</span>
                     <span style={{fontSize:13,color:'#D4570A',fontWeight:700,marginLeft:'auto'}}>
                       {Math.round(selectedFood.kcal100*qty/100)} kcal
                     </span>
                   </div>
                   <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
-                    <span style={{...s.tag,background:'white',color:'#D4570A'}}>P {Math.round(selectedFood.p*qty/100)}g</span>
-                    <span style={{...s.tag,background:'white',color:'#F4894A'}}>C {Math.round(selectedFood.c*qty/100)}g</span>
-                    <span style={{...s.tag,background:'white',color:'#888780'}}>G {Math.round(selectedFood.g*qty/100)}g</span>
+                    <span style={{...s.tag,background:'var(--bg-card)',color:'#D4570A'}}>P {Math.round(selectedFood.p*qty/100)}g</span>
+                    <span style={{...s.tag,background:'var(--bg-card)',color:'#F4894A'}}>C {Math.round(selectedFood.c*qty/100)}g</span>
+                    <span style={{...s.tag,background:'var(--bg-card)',color:'var(--text-muted)'}}>G {Math.round(selectedFood.g*qty/100)}g</span>
                   </div>
                   <div style={{display:'flex',gap:6}}>
                     <button style={s.btn} onClick={addFood}>
                       <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi
                     </button>
                     <button onClick={()=>setSelectedFood(null)}
-                      style={{padding:'8px 12px',background:'white',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:12,cursor:'pointer',color:'#888780',fontFamily:'inherit'}}>
+                      style={{padding:'8px 12px',background:'var(--bg-card)',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,cursor:'pointer',color:'var(--text-muted)',fontFamily:'inherit'}}>
                       ✕
                     </button>
                   </div>
                 </div>
               )}
 
-              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #F5F3EF'}}>
+              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-                  <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
+                  <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{water * 250}ml / {waterGoal * 250}ml</div>
                     <button onClick={()=>{ setWaterGoalInput(waterGoal); setEditingWaterGoal(!editingWaterGoal) }}
-                      style={{background:'none',border:'none',cursor:'pointer',color:'#888780',padding:0}}>
+                      style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',padding:0}}>
                       <i className="ti ti-settings" style={{fontSize:13}}/>
                     </button>
                   </div>
                 </div>
 
                 {editingWaterGoal && (
-                  <div style={{marginBottom:10,background:'#F5F3EF',borderRadius:10,padding:'10px 12px'}}>
-                    <div style={{fontSize:11,color:'#888780',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
+                  <div style={{marginBottom:10,background:'var(--bg-input)',borderRadius:10,padding:'10px 12px'}}>
+                    <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <button onClick={()=>setWaterGoalInput(Math.max(1, waterGoalInput-1))}
-                        style={{width:32,height:32,borderRadius:8,background:'white',border:'0.5px solid #E0DDD6',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>−</button>
+                        style={{width:32,height:32,borderRadius:8,background:'var(--bg-card)',border:'0.5px solid var(--border)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>−</button>
                       <div style={{flex:1,textAlign:'center'}}>
-                        <div style={{fontSize:22,fontWeight:700,color:'#111'}}>{waterGoalInput}</div>
-                        <div style={{fontSize:10,color:'#888780'}}>{waterGoalInput * 250}ml totali</div>
+                        <div style={{fontSize:22,fontWeight:700,color:'var(--text)'}}>{waterGoalInput}</div>
+                        <div style={{fontSize:10,color:'var(--text-muted)'}}>{waterGoalInput * 250}ml totali</div>
                       </div>
                       <button onClick={()=>setWaterGoalInput(Math.min(20, waterGoalInput+1))}
-                        style={{width:32,height:32,borderRadius:8,background:'white',border:'0.5px solid #E0DDD6',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>+</button>
+                        style={{width:32,height:32,borderRadius:8,background:'var(--bg-card)',border:'0.5px solid var(--border)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>+</button>
                     </div>
                     <button onClick={saveWaterGoal}
                       style={{width:'100%',marginTop:10,background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'8px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
@@ -376,9 +376,9 @@ export default function DiarioGiornaliero() {
                   ))}
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div style={{fontSize:10,color:'#888780'}}>{water}/{waterGoal} bicchieri</div>
+                  <div style={{fontSize:10,color:'var(--text-muted)'}}>{water}/{waterGoal} bicchieri</div>
                   {water > 0 && (
-                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#888780',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
+                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'var(--text-muted)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
                   )}
                 </div>
               </div>
