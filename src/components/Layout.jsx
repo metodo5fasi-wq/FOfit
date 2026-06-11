@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -20,10 +20,15 @@ const adminNav = [
 export default function Layout() {
   const { profile } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const isMobile = window.innerWidth < 768
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const isAdmin = profile?.role === 'admin'
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
@@ -56,7 +61,7 @@ export default function Layout() {
             <i className="ti ti-bolt" style={{color:'white',fontSize:19}}/>
           </div>
           <div>
-            <div style={{fontSize:20,fontWeight:600,color:'white',letterSpacing:-0.5,lineHeight:1}}>
+            <div style={{fontSize:20,fontWeight:700,color:'white',letterSpacing:-0.5,lineHeight:1}}>
               FO<span style={{color:'#F4894A'}}>fit</span>
             </div>
             <div style={{fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:'0.1em',marginTop:2}}>FOFIT.FIT</div>
@@ -64,14 +69,14 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* PROFILO UTENTE */}
+      {/* PROFILO */}
       <div style={{padding:'14px 16px',margin:'12px 12px 4px',background:'rgba(255,255,255,0.05)',borderRadius:12,border:'0.5px solid rgba(255,255,255,0.06)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{
             width:40, height:40, borderRadius:'50%', flexShrink:0,
             background:'linear-gradient(135deg, #D4570A, #F4894A)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:14, fontWeight:600, color:'white',
+            fontSize:14, fontWeight:700, color:'white',
             boxShadow:'0 2px 8px rgba(212,87,10,0.35)'
           }}>{initials}</div>
           <div style={{flex:1,minWidth:0}}>
@@ -85,57 +90,43 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* NAVIGAZIONE */}
-      <div style={{flex:1,overflowY:'auto',padding:'8px 8px'}}>
-
-        <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>
-          Menu
-        </div>
-
+      {/* NAV */}
+      <div style={{flex:1,overflowY:'auto',padding:'8px'}}>
+        <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Menu</div>
         {nav.map(item => (
           <NavLink key={item.to} to={item.to} end={item.exact}
             onClick={() => setMobileOpen(false)}
             style={({ isActive }) => ({
               display:'flex', alignItems:'center', gap:10, padding:'9px 10px',
               borderRadius:9, marginBottom:2, textDecoration:'none', transition:'all 0.15s',
-              background: isActive ? `linear-gradient(90deg, ${item.color}22, ${item.color}11)` : 'transparent',
+              background: isActive ? `${item.color}22` : 'transparent',
               borderLeft: isActive ? `2.5px solid ${item.color}` : '2.5px solid transparent',
               color: isActive ? 'white' : 'rgba(255,255,255,0.48)',
             })}>
-            <div style={{
-              width:28, height:28, borderRadius:7, flexShrink:0,
-              background: `${item.color}22`,
-              display:'flex', alignItems:'center', justifyContent:'center'
-            }}>
+            <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
               <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
             </div>
             <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
             {item.to === '/ai' && (
-              <span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:600,letterSpacing:'0.05em'}}>AI</span>
+              <span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>
             )}
           </NavLink>
         ))}
 
         {isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>
-              Admin
-            </div>
+            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Admin</div>
             {adminNav.map(item => (
               <NavLink key={item.to} to={item.to}
                 onClick={() => setMobileOpen(false)}
                 style={({ isActive }) => ({
                   display:'flex', alignItems:'center', gap:10, padding:'9px 10px',
                   borderRadius:9, marginBottom:2, textDecoration:'none', transition:'all 0.15s',
-                  background: isActive ? `linear-gradient(90deg, ${item.color}22, ${item.color}11)` : 'transparent',
+                  background: isActive ? `${item.color}22` : 'transparent',
                   borderLeft: isActive ? `2.5px solid ${item.color}` : '2.5px solid transparent',
                   color: isActive ? 'white' : 'rgba(255,255,255,0.48)',
                 })}>
-                <div style={{
-                  width:28, height:28, borderRadius:7, flexShrink:0,
-                  background:`${item.color}22`,
-                  display:'flex', alignItems:'center', justifyContent:'center'
-                }}>
+                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
                 </div>
                 <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
@@ -147,13 +138,8 @@ export default function Layout() {
 
       {/* FOOTER */}
       <div style={{padding:'12px 16px',borderTop:'0.5px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <button onClick={handleLogout} style={{
-          display:'flex', alignItems:'center', gap:7, fontSize:12,
-          color:'rgba(255,255,255,0.3)', cursor:'pointer', background:'none', border:'none',
-          transition:'color 0.15s'
-        }}>
-          <i className="ti ti-logout" style={{fontSize:14}}/>
-          Esci
+        <button onClick={handleLogout} style={{display:'flex',alignItems:'center',gap:7,fontSize:12,color:'rgba(255,255,255,0.3)',cursor:'pointer',background:'none',border:'none'}}>
+          <i className="ti ti-logout" style={{fontSize:14}}/>Esci
         </button>
         <div style={{fontSize:10,color:'rgba(255,255,255,0.15)'}}>v1.0</div>
       </div>
@@ -170,28 +156,28 @@ export default function Layout() {
         </div>
       )}
 
-      {/* SIDEBAR MOBILE OVERLAY */}
+      {/* OVERLAY MOBILE */}
       {isMobile && mobileOpen && (
         <>
           <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:99,backdropFilter:'blur(4px)'}}
             onClick={()=>setMobileOpen(false)}/>
-          <div style={{position:'fixed',left:0,top:0,bottom:0,zIndex:100,width:240,background:'#0F0F0F',boxShadow:'6px 0 30px rgba(0,0,0,0.5)'}}>
+          <div style={{position:'fixed',left:0,top:0,bottom:0,zIndex:100,width:260,background:'#0F0F0F',boxShadow:'6px 0 30px rgba(0,0,0,0.5)'}}>
             <SidebarContent/>
           </div>
         </>
       )}
 
-      {/* MAIN CONTENT */}
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#F5F3EF'}}>
+      {/* MAIN */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#F5F3EF',minWidth:0}}>
 
         {/* TOPBAR MOBILE */}
         {isMobile && (
-          <div style={{background:'#0F0F0F',padding:'0 16px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-            <button style={{background:'none',border:'none',color:'white',fontSize:22,display:'flex',alignItems:'center'}}
+          <div style={{background:'#0F0F0F',padding:'0 16px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,zIndex:10}}>
+            <button style={{background:'none',border:'none',color:'white',fontSize:24,display:'flex',alignItems:'center',padding:0,cursor:'pointer'}}
               onClick={()=>setMobileOpen(true)}>
               <i className="ti ti-menu-2"/>
             </button>
-            <div style={{fontSize:18,fontWeight:600,color:'white',letterSpacing:-0.5}}>
+            <div style={{fontSize:18,fontWeight:700,color:'white',letterSpacing:-0.5}}>
               FO<span style={{color:'#F4894A'}}>fit</span>
             </div>
             <div style={{width:32}}/>
