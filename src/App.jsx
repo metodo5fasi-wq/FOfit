@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import { getTheme, isDark, toggleTheme, DARK, LIGHT } from './lib/theme'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import PianoAlimentare from './pages/PianoAlimentare'
@@ -15,6 +16,8 @@ import Layout from './components/Layout'
 
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
+export const ThemeContext = createContext(LIGHT)
+export const useTheme = () => useContext(ThemeContext)
 
 // Banner offline
 function OfflineBanner() {
@@ -62,13 +65,33 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [theme, setTheme] = useState(getTheme())
+  const [darkMode, setDarkMode] = useState(isDark())
 
+  function handleToggleTheme() {
+    const next = toggleTheme()
+    setDarkMode(next === 'dark')
+    setTheme(next === 'dark' ? DARK : LIGHT)
+  }
+
+  // Inietta CSS variables del tema dinamicamente
   useEffect(() => {
-    const style = document.createElement('style')
-    style.textContent = globalStyles
-    document.head.appendChild(style)
-    return () => document.head.removeChild(style)
-  }, [])
+    const root = document.documentElement
+    const t = theme
+    root.style.setProperty('--bg', t.bg)
+    root.style.setProperty('--bg-card', t.bgCard)
+    root.style.setProperty('--bg-input', t.bgInput)
+    root.style.setProperty('--bg-subtle', t.bgSubtle)
+    root.style.setProperty('--border', t.border)
+    root.style.setProperty('--text', t.text)
+    root.style.setProperty('--text-muted', t.textMuted)
+    root.style.setProperty('--orange', t.orange)
+    root.style.setProperty('--orange-light', t.orangeLight)
+    root.style.setProperty('--green', t.green)
+    root.style.setProperty('--green-light', t.greenLight)
+    document.body.style.background = t.bg
+    document.body.style.color = t.text
+  }, [theme])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -108,9 +131,11 @@ export default function App() {
   )
 
   return (
+    <ThemeContext.Provider value={{theme, darkMode, toggleTheme: handleToggleTheme}}>
     <AuthContext.Provider value={{ session, profile, setProfile }}>
       <BrowserRouter>
         <OfflineBanner/>
+        <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light'}}>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/onboarding" element={session && profile ? <Onboarding /> : <Navigate to="/login" />} />
@@ -129,7 +154,9 @@ export default function App() {
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
+        </div>
       </BrowserRouter>
     </AuthContext.Provider>
+    </ThemeContext.Provider>
   )
 }
