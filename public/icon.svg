@@ -9,12 +9,11 @@
       <stop offset="100%" stop-color="#F4894A"/>
     </linearGradient>
   </defs>
-  <!-- Sfondo -->
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
-  <!-- Bolt -->
-  <polygon points="280,80 210,240 248,240 222,420 340,255 298,255 325,80" fill="url(#bolt)"/>
-  <!-- FO bianco -->
-  <text x="256" y="468" text-anchor="middle"
+  <polygon points="256,60 210,190 238,190 215,320 300,185 270,185 295,60" fill="url(#bolt)"/>
+  <text x="256" y="430"
+    text-anchor="middle"
+    dominant-baseline="auto"
     font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif"
-    font-size="88" font-weight="700" fill="white" letter-spacing="-3">FO<tspan fill="#F4894A">fit</tspan></text>
+    font-size="96" font-weight="700" fill="white" letter-spacing="-2">FO<tspan fill="#F4894A">fit</tspan></text>
 </svg>
