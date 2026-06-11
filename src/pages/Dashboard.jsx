@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../App'
+import { useAuth, useTheme } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber, FadeIn, PulseDot } from '../components/Animations'
 
@@ -55,6 +55,7 @@ function StreakBadge({ streak }) {
 
 export default function Dashboard() {
   const { profile } = useAuth()
+  const { theme, darkMode } = useTheme()
   const [measurements, setMeasurements] = useState(null)
   const [todayKcal, setTodayKcal] = useState(0)
   const [todayP, setTodayP] = useState(0)
