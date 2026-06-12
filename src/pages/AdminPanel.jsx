@@ -333,6 +333,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [measurements, setMeasurements] = useState([])
   const [photos, setPhotos] = useState([])
   const [diaryWeek, setDiaryWeek] = useState([])
+  const [workoutSessions, setWorkoutSessions] = useState([])
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -340,13 +341,15 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   async function loadData() {
     setLoadingData(true)
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
-    const [measRes, photoRes, diaryRes] = await Promise.all([
+    const [measRes, photoRes, diaryRes, sessionsRes] = await Promise.all([
       supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
       supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
+      supabase.from('workout_sessions').select('*').eq('client_id', client.id).order('session_date',{ascending:false}).limit(5),
     ])
     setMeasurements(measRes.data || [])
     setPhotos(photoRes.data || [])
+    setWorkoutSessions(sessionsRes.data || [])
 
     // Raggruppa diario per giorno
     const byDay = {}
@@ -513,6 +516,23 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             </div>
           )}
         </div>
+
+        {/* NOTE ALLENAMENTO */}
+        {workoutSessions.filter(s=>s.notes).length > 0 && (
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+              <i className="ti ti-barbell" style={{fontSize:12,marginRight:4}}/>Note allenamento recenti
+            </div>
+            {workoutSessions.filter(s=>s.notes).map(sess => (
+              <div key={sess.id} style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
+                <div style={{fontSize:10,color:'#888780',marginBottom:3,fontWeight:600}}>
+                  {sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})} · {sess.sets_completed}/{sess.sets_total} serie
+                </div>
+                {sess.notes}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* FOTO RECENTI */}
         {photos.length > 0 && (
