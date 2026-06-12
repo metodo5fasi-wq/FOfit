@@ -8,6 +8,7 @@ import { requestNotificationPermission, checkNotificationStatus, sendTestNotific
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
   { to:'/diario', icon:'ti-pencil', label:'Diario di oggi', sub:'Registra quello che mangi', color:'#E8803A', bg:'#FEF3EC' },
+  { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', sub:'La tua scheda di oggi', color:'#D4570A', bg:'#FEF0E7' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', sub:'Peso e misurazioni', color:'#3B8C5A', bg:'#EAF3DE' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', sub:'Generata dal tuo piano', color:'#4A90D4', bg:'#EBF3FD' },
   { to:'/ai', icon:'ti-robot', label:'FO Coach AI', sub:'Sostituzioni e consigli', color:'#9B59B6', bg:'#F5EEF8' },
@@ -68,6 +69,8 @@ export default function Dashboard() {
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
   const [nextCall, setNextCall] = useState(null)
+  const [workoutPlan, setWorkoutPlan] = useState(null)
+  const [workoutToday, setWorkoutToday] = useState({ done:0, total:0 })
   const prevKcalRef = React.useRef(0)
 
   useEffect(() => {
@@ -109,6 +112,25 @@ export default function Dashboard() {
       .then(({ data }) => data?.length && setNextCall(data[0]))
     // Calcola streak
     calcStreak()
+    // Scheda allenamento attiva
+    supabase.from('workout_plans').select('*')
+      .eq('client_id', profile.id).eq('is_active', true).limit(1)
+      .then(async ({ data }) => {
+        if (data?.length) {
+          setWorkoutPlan(data[0])
+          const { data: exData } = await supabase.from('workout_exercises')
+            .select('day_label,exercise_name,sets').eq('plan_id', data[0].id)
+          if (exData?.length) {
+            const days = [...new Set(exData.map(e=>e.day_label))]
+            const todayDay = days[0] // mostra il primo giorno come riferimento "di oggi"
+            const dayExercises = exData.filter(e=>e.day_label===todayDay)
+            const totalSets = dayExercises.reduce((s,e)=>s+(e.sets||0),0)
+            const { data: logsToday } = await supabase.from('workout_logs')
+              .select('id').eq('client_id', profile.id).eq('log_date', today)
+            setWorkoutToday({ done: logsToday?.length || 0, total: totalSets })
+          }
+        }
+      })
   }, [profile])
 
   async function calcStreak() {
@@ -248,6 +270,29 @@ export default function Dashboard() {
               Attiva
             </button>
           </div>
+          </FadeIn>
+        )}
+
+        {/* ALLENAMENTO DI OGGI */}
+        {workoutPlan && workoutToday.total > 0 && (
+          <FadeIn delay={110}>
+          <Link to="/allenamento" style={{textDecoration:'none'}}>
+            <div style={{background:'var(--bg-card)',borderRadius:12,padding:'14px 16px',marginBottom:14,border:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:12,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+              <div style={{width:38,height:38,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <i className="ti ti-barbell" style={{fontSize:18,color:'#D4570A'}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Allenamento di oggi</div>
+                <div style={{fontSize:14,fontWeight:700,color:'var(--text)',marginTop:2}}>
+                  {workoutToday.done}/{workoutToday.total} serie completate
+                </div>
+                <div style={{height:5,background:'var(--bg-input)',borderRadius:3,marginTop:6,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${Math.min(100,Math.round(workoutToday.done/workoutToday.total*100))}%`,background:'#D4570A',borderRadius:3,transition:'width 0.4s'}}/>
+                </div>
+              </div>
+              <i className="ti ti-chevron-right" style={{fontSize:18,color:'var(--text-muted)'}}/>
+            </div>
+          </Link>
           </FadeIn>
         )}
 
