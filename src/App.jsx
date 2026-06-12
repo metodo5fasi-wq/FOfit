@@ -67,6 +67,11 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(getTheme())
   const [darkMode, setDarkMode] = useState(isDark())
+  const [onboardedVersion, setOnboardedVersion] = useState(0)
+
+  function markOnboarded() {
+    setOnboardedVersion(v => v + 1)
+  }
 
   function handleToggleTheme() {
     const next = toggleTheme()
@@ -132,7 +137,7 @@ export default function App() {
 
   return (
     <ThemeContext.Provider value={{theme, darkMode, toggleTheme: handleToggleTheme}}>
-    <AuthContext.Provider value={{ session, profile, setProfile }}>
+    <AuthContext.Provider value={{ session, profile, setProfile, markOnboarded }}>
       <BrowserRouter>
         <OfflineBanner/>
         <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light'}}>
@@ -141,9 +146,12 @@ export default function App() {
           <Route path="/onboarding" element={session && profile ? <Onboarding /> : <Navigate to="/login" />} />
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
             <Route index element={
-              session && profile && profile.role === 'client' && !localStorage.getItem(`fofit_onboarded_${profile.id}`)
-                ? <Navigate to="/onboarding" />
-                : <Dashboard />
+              (() => {
+                // eslint-disable-next-line no-unused-expressions
+                onboardedVersion // forza re-render quando onboarding completato
+                const needsOnboarding = session && profile && profile.role === 'client' && !localStorage.getItem(`fofit_onboarded_${profile.id}`)
+                return needsOnboarding ? <Navigate to="/onboarding" /> : <Dashboard />
+              })()
             } />
             <Route path="piano" element={<PianoAlimentare />} />
             <Route path="diario" element={<DiarioGiornaliero />} />
