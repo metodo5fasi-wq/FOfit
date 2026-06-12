@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
-import { Toast } from '../components/Animations'
+import { Toast, Confetti } from '../components/Animations'
 
 const s = {
   topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -23,6 +23,12 @@ export default function Allenamento() {
   const [activeDay, setActiveDay] = useState(null)
   const [expandedExercise, setExpandedExercise] = useState(null)
   const [toast, setToast] = useState({ visible:false, message:'', emoji:'' })
+  const [sessions, setSessions] = useState([]) // storico sessioni per giorno
+  const [showFinish, setShowFinish] = useState(false)
+  const [sessionNotes, setSessionNotes] = useState('')
+  const [savingSession, setSavingSession] = useState(false)
+  const [confettiActive, setConfettiActive] = useState(false)
+  const [todaySession, setTodaySession] = useState(null)
 
   useEffect(() => { if (profile) fetchAll() }, [profile])
 
@@ -46,12 +52,47 @@ export default function Allenamento() {
     const { data: allLogData } = await supabase.from('workout_logs')
       .select('*').eq('client_id', profile.id).order('log_date', {ascending:true})
     setAllLogs(allLogData || [])
+    const { data: sessionData } = await supabase.from('workout_sessions')
+      .select('*').eq('client_id', profile.id).order('session_date', {ascending:false})
+    setSessions(sessionData || [])
     setLoading(false)
   }
 
   function showToast(message, emoji) {
     setToast({ visible:true, message, emoji })
     setTimeout(() => setToast({visible:false, message:'', emoji:''}), 2000)
+  }
+
+  // Controlla se esiste già una sessione conclusa per oggi per il giorno attivo
+  useEffect(() => {
+    if (!activeDay) { setTodaySession(null); return }
+    const existing = sessions.find(s => s.day_label === activeDay && s.session_date === today)
+    setTodaySession(existing || null)
+    setSessionNotes(existing?.notes || '')
+  }, [activeDay, sessions])
+
+  async function finishSession() {
+    setSavingSession(true)
+    const dayEx = exercises.filter(e=>e.day_label===activeDay)
+    const totalSets = dayEx.reduce((s,e)=>s+(e.sets||0),0)
+    const completedSets = logs.filter(l => dayEx.some(e=>e.exercise_name===l.exercise_name)).length
+
+    if (todaySession) {
+      await supabase.from('workout_sessions').update({
+        notes: sessionNotes, sets_completed: completedSets, sets_total: totalSets,
+      }).eq('id', todaySession.id)
+    } else {
+      await supabase.from('workout_sessions').insert({
+        client_id: profile.id, day_label: activeDay, session_date: today,
+        notes: sessionNotes, sets_completed: completedSets, sets_total: totalSets,
+      })
+    }
+    setSavingSession(false)
+    setShowFinish(false)
+    setConfettiActive(true)
+    setTimeout(()=>setConfettiActive(false), 100)
+    showToast('Allenamento salvato! 💪','')
+    fetchAll()
   }
 
   // Trova il log di oggi per un esercizio + numero serie
@@ -248,8 +289,74 @@ export default function Allenamento() {
             </div>
           )
         })}
+
+        {/* NOTE SESSIONI PASSATE PER QUESTO GIORNO */}
+        {sessions.filter(s => s.day_label === activeDay && s.session_date !== today && s.notes).slice(0,3).length > 0 && (
+          <div style={s.card}>
+            <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
+              <i className="ti ti-notes" style={{fontSize:13,marginRight:5,color:'#D4570A'}}/>Note delle scorse volte
+            </div>
+            {sessions.filter(s => s.day_label === activeDay && s.session_date !== today && s.notes).slice(0,3).map(sess => (
+              <div key={sess.id} style={{background:'var(--bg-input)',borderRadius:8,padding:'10px 12px',marginBottom:8,fontSize:12,color:'var(--text)',lineHeight:1.5}}>
+                <div style={{fontSize:10,color:'var(--text-muted)',marginBottom:4}}>
+                  {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'})} · {sess.sets_completed}/{sess.sets_total} serie
+                </div>
+                {sess.notes}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* BOTTONE TERMINA ALLENAMENTO */}
+        <button onClick={()=>setShowFinish(true)} style={{
+          width:'100%', padding:14, borderRadius:12, border:'none', cursor:'pointer', fontFamily:'inherit',
+          fontSize:14, fontWeight:700, color:'white', marginTop:4, marginBottom:20,
+          background: todaySession ? '#3B6D11' : '#D4570A',
+          display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+          boxShadow: todaySession ? '0 2px 8px rgba(59,109,17,0.3)' : '0 2px 8px rgba(212,87,10,0.3)'
+        }}>
+          <i className={`ti ${todaySession ? 'ti-check' : 'ti-flag'}`} style={{fontSize:17}}/>
+          {todaySession ? 'Allenamento completato — modifica note' : 'Termina allenamento'}
+        </button>
       </div>
 
+      {/* MODAL TERMINA ALLENAMENTO */}
+      {showFinish && (
+        <div onClick={e=>e.target===e.currentTarget&&setShowFinish(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
+          <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:440}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+              <div style={{width:40,height:40,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-flag-filled" style={{fontSize:19,color:'#D4570A'}}/>
+              </div>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>Termina {activeDay}</div>
+                <div style={{fontSize:12,color:'var(--text-muted)'}}>{completedToday} serie completate</div>
+              </div>
+            </div>
+
+            <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',margin:'16px 0 6px'}}>
+              Note per il tuo coach (opzionale)
+            </div>
+            <textarea
+              value={sessionNotes}
+              onChange={e=>setSessionNotes(e.target.value)}
+              placeholder="Come ti sei sentito? Esercizi troppo facili/difficili? Dolori particolari? Suggerimenti per la prossima volta..."
+              style={{width:'100%',minHeight:100,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5}}
+            />
+
+            <div style={{display:'flex',gap:10,marginTop:16}}>
+              <button onClick={finishSession} disabled={savingSession} style={{flex:1,padding:12,borderRadius:10,border:'none',background:'#D4570A',color:'white',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+                {savingSession ? 'Salvataggio...' : 'Salva e termina'}
+              </button>
+              <button onClick={()=>setShowFinish(false)} style={{padding:'12px 18px',borderRadius:10,border:'0.5px solid var(--border)',background:'var(--bg-input)',color:'var(--text-muted)',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Confetti active={confettiActive} onDone={()=>setConfettiActive(false)}/>
       <Toast visible={toast.visible} message={toast.message} emoji={toast.emoji}/>
     </>
   )
