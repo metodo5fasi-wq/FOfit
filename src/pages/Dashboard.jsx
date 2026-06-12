@@ -67,6 +67,7 @@ export default function Dashboard() {
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
+  const [nextCall, setNextCall] = useState(null)
   const prevKcalRef = React.useRef(0)
 
   useEffect(() => {
@@ -99,6 +100,13 @@ export default function Dashboard() {
     supabase.from('meal_plans').select('*')
       .eq('client_id', profile.id).eq('is_active', true).limit(1)
       .then(({ data }) => data?.length && setPlan(data[0]))
+    // Prossima chiamata prenotata
+    supabase.from('call_bookings').select('*')
+      .eq('client_id', profile.id).eq('status','confirmed')
+      .gte('booking_date', today)
+      .order('booking_date', { ascending: true }).order('time_slot', { ascending: true })
+      .limit(1)
+      .then(({ data }) => data?.length && setNextCall(data[0]))
     // Calcola streak
     calcStreak()
   }, [profile])
@@ -266,6 +274,26 @@ export default function Dashboard() {
           </div>
         </div>
         </FadeIn>
+
+        {/* PROSSIMA CHIAMATA */}
+        {nextCall && (
+          <FadeIn delay={120}>
+          <Link to="/calendario" style={{textDecoration:'none'}}>
+            <div style={{background:'linear-gradient(135deg,#D4570A,#F4894A)',borderRadius:12,padding:'14px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:12,boxShadow:'0 2px 8px rgba(212,87,10,0.25)'}}>
+              <div style={{width:38,height:38,borderRadius:10,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <i className="ti ti-phone" style={{fontSize:18,color:'white'}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Prossima chiamata</div>
+                <div style={{fontSize:14,fontWeight:700,color:'white',marginTop:2}}>
+                  {new Date(nextCall.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})} alle {nextCall.time_slot}
+                </div>
+              </div>
+              <i className="ti ti-chevron-right" style={{fontSize:18,color:'rgba(255,255,255,0.7)'}}/>
+            </div>
+          </Link>
+          </FadeIn>
+        )}
 
         {/* STATO FISICO */}
         {measurements && (
