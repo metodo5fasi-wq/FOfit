@@ -334,6 +334,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [photos, setPhotos] = useState([])
   const [diaryWeek, setDiaryWeek] = useState([])
   const [workoutSessions, setWorkoutSessions] = useState([])
+  const [allSessionsCount, setAllSessionsCount] = useState(0)
+  const [showAllSessions, setShowAllSessions] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -341,12 +343,14 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   async function loadData() {
     setLoadingData(true)
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
-    const [measRes, photoRes, diaryRes, sessionsRes] = await Promise.all([
+    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes] = await Promise.all([
       supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
       supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
       supabase.from('workout_sessions').select('*').eq('client_id', client.id).order('session_date',{ascending:false}).limit(5),
+      supabase.from('workout_sessions').select('id', {count:'exact', head:true}).eq('client_id', client.id),
     ])
+    setAllSessionsCount(sessionsCountRes.count || 0)
     setMeasurements(measRes.data || [])
     setPhotos(photoRes.data || [])
     setWorkoutSessions(sessionsRes.data || [])
@@ -361,6 +365,13 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
     }
     setDiaryWeek(days)
     setLoadingData(false)
+  }
+
+  async function loadAllSessions() {
+    const { data } = await supabase.from('workout_sessions')
+      .select('*').eq('client_id', client.id).order('session_date',{ascending:false})
+    setWorkoutSessions(data || [])
+    setShowAllSessions(true)
   }
 
   async function save() {
@@ -518,19 +529,32 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         </div>
 
         {/* NOTE ALLENAMENTO */}
-        {workoutSessions.filter(s=>s.notes).length > 0 && (
+        {workoutSessions.length > 0 && (
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
-              <i className="ti ti-barbell" style={{fontSize:12,marginRight:4}}/>Note allenamento recenti
-            </div>
-            {workoutSessions.filter(s=>s.notes).map(sess => (
-              <div key={sess.id} style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
-                <div style={{fontSize:10,color:'#888780',marginBottom:3,fontWeight:600}}>
-                  {sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})} · {sess.sets_completed}/{sess.sets_total} serie
-                </div>
-                {sess.notes}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>
+                <i className="ti ti-barbell" style={{fontSize:12,marginRight:4}}/>Allenamenti recenti
               </div>
-            ))}
+              {!showAllSessions && allSessionsCount > workoutSessions.length && (
+                <button onClick={loadAllSessions} style={{background:'none',border:'none',color:'#D4570A',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                  Vedi tutto ({allSessionsCount}) →
+                </button>
+              )}
+            </div>
+            <div style={{maxHeight: showAllSessions ? 320 : 'none', overflowY: showAllSessions ? 'auto' : 'visible'}}>
+              {workoutSessions.map(sess => {
+                const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
+                return (
+                  <div key={sess.id} style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#888780',marginBottom:sess.notes?3:0,fontWeight:600}}>
+                      <span>{sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+                      <span style={{color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total} ({pct}%)</span>
+                    </div>
+                    {sess.notes}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 
