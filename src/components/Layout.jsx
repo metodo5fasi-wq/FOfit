@@ -10,6 +10,7 @@ const NAV = [
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#3B8C5A' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', color:'#4A90D4' },
   { to:'/ai', icon:'ti-robot', label:'FO Coach AI', color:'#9B59B6' },
+  { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#3B8CD4' },
 ]
 
 const ADMIN_NAV = [
