@@ -7,6 +7,7 @@ const NAV = [
   { to:'/', icon:'ti-layout-dashboard', label:'Dashboard', exact:true, color:'#F4894A' },
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', color:'#D4570A' },
   { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#E8803A' },
+  { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', color:'#D4570A' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#3B8C5A' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', color:'#4A90D4' },
   { to:'/ai', icon:'ti-robot', label:'FO Coach AI', color:'#9B59B6' },
@@ -16,6 +17,7 @@ const NAV = [
 const ADMIN_NAV = [
   { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
   { to:'/importa', icon:'ti-file-upload', label:'Importa piano', color:'#F4894A' },
+  { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa allenamento', color:'#D4570A' },
 ]
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
