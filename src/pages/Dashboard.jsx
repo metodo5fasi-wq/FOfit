@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth, useTheme } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber, FadeIn, PulseDot } from '../components/Animations'
+import { requestNotificationPermission, checkNotificationStatus, sendTestNotification } from '../lib/notifications'
 
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
@@ -65,7 +66,12 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(0)
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
+  const [notifStatus, setNotifStatus] = useState('default')
   const prevKcalRef = React.useRef(0)
+
+  useEffect(() => {
+    checkNotificationStatus().then(setNotifStatus)
+  }, [])
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buongiorno' : hour < 18 ? 'Buon pomeriggio' : 'Buonasera'
@@ -209,6 +215,33 @@ export default function Dashboard() {
 
       <div style={{flex:1,overflowY:'auto',padding:'16px 18px'}}>
 
+        {/* BANNER NOTIFICHE */}
+        {notifStatus === 'default' && (
+          <FadeIn delay={50}>
+          <div style={{background:theme.bgCard,borderRadius:12,padding:'14px 16px',border:`0.5px solid ${theme.border}`,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:36,height:36,borderRadius:10,background:theme.orangeLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <i className="ti ti-bell" style={{fontSize:18,color:theme.orange}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>Attiva i promemoria</div>
+              <div style={{fontSize:11,color:'var(--text-muted)'}}>Ricevi un reminder serale per compilare il diario</div>
+            </div>
+            <button onClick={async()=>{
+              const r = await requestNotificationPermission(profile.id)
+              if (r.ok) {
+                setNotifStatus('granted')
+                sendTestNotification()
+                showToast('Notifiche attivate!', '🔔')
+              } else {
+                setNotifStatus('denied')
+              }
+            }} style={{background:theme.orange,color:'white',border:'none',borderRadius:8,padding:'7px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+              Attiva
+            </button>
+          </div>
+          </FadeIn>
+        )}
+
         {/* QUICK LINKS */}
         <FadeIn delay={100}>
         <div style={{marginBottom:16}}>
@@ -230,6 +263,7 @@ export default function Dashboard() {
               </Link>
             ))}
           </div>
+        </div>
         </FadeIn>
 
         {/* STATO FISICO */}
