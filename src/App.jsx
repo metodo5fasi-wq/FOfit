@@ -18,6 +18,39 @@ import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
 import Layout from './components/Layout'
 
+// ─────────────────────────────────────────────────────────
+// ERROR BOUNDARY — mostra l'errore invece di una pagina bianca
+// ─────────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  componentDidCatch(error, info) {
+    console.error('App crash:', error, info)
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,textAlign:'center',background:'#1a0800',color:'white',fontFamily:'system-ui'}}>
+          <div style={{fontSize:40,marginBottom:12}}>⚠️</div>
+          <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>Si è verificato un errore</div>
+          <div style={{fontSize:13,color:'rgba(255,255,255,0.7)',marginBottom:20,maxWidth:400,wordBreak:'break-word'}}>
+            {this.state.error?.message || String(this.state.error)}
+          </div>
+          <button onClick={()=>{ this.setState({error:null}); window.location.href = '/' }} style={{background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>
+            Torna alla home
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 export const ThemeContext = createContext(LIGHT)
@@ -145,6 +178,7 @@ export default function App() {
       <BrowserRouter>
         <OfflineBanner/>
         <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light'}}>
+        <ErrorBoundary>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/onboarding" element={session && profile ? <Onboarding /> : <Navigate to="/login" />} />
@@ -170,6 +204,7 @@ export default function App() {
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
+        </ErrorBoundary>
         </div>
       </BrowserRouter>
     </AuthContext.Provider>
