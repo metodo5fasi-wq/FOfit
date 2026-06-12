@@ -161,7 +161,7 @@ export default function AdminPanel() {
           ))}
         </div>
         <div style={s.tabs}>
-          {['clienti','piani','progressi'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
+          {['clienti','piani','progressi','calendario'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
         </div>
 
         {tab==='clienti'&&(
@@ -243,6 +243,8 @@ export default function AdminPanel() {
             {clients.length===0?<div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#888780'}}>Nessun cliente ancora.</div>:<div style={{display:'flex',flexDirection:'column',gap:10}}>{clients.map(c=><ClientProgress key={c.id} client={c}/>)}</div>}
           </div>
         )}
+
+        {tab==='calendario'&&<CalendarioAdmin/>}
       </div>
 
       {showNewClient&&(
@@ -592,5 +594,155 @@ function ClientProgress({ client }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
+// TAB CALENDARIO — gestione prenotazioni chiamate
+// ─────────────────────────────────────────────────────────
+const AVAIL_ADMIN = {
+  1: { start:'09:00', end:'12:00' },
+  2: { start:'15:00', end:'18:30' },
+  3: { start:'09:00', end:'12:00' },
+  4: { start:'15:00', end:'18:30' },
+  5: { start:'09:00', end:'12:00' },
+}
+const DAY_NAMES_ADMIN = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']
+
+function genSlotsAdmin(dow) {
+  const avail = AVAIL_ADMIN[dow]
+  if (!avail) return []
+  const slots = []
+  let [h,m] = avail.start.split(':').map(Number)
+  const [eh,em] = avail.end.split(':').map(Number)
+  while (h < eh || (h===eh && m < em)) {
+    slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
+    m += 30
+    if (m>=60) { m-=60; h+=1 }
+  }
+  return slots
+}
+
+function CalendarioAdmin() {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState(null)
+
+  useEffect(() => { fetchBookings() }, [])
+
+  async function fetchBookings() {
+    setLoading(true)
+    const todayStr = new Date().toISOString().split('T')[0]
+    const { data } = await supabase.from('call_bookings')
+      .select('*, profiles(full_name)')
+      .gte('booking_date', todayStr)
+      .order('booking_date', {ascending:true}).order('time_slot', {ascending:true})
+    setBookings(data || [])
+    setLoading(false)
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('Eliminare questa prenotazione?')) return
+    await supabase.from('call_bookings').delete().eq('id', id)
+    fetchBookings()
+  }
+
+  async function toggleBlock(date, slot) {
+    const existing = bookings.find(b => b.booking_date===date && b.time_slot===slot && b.status==='blocked')
+    if (existing) {
+      await supabase.from('call_bookings').delete().eq('id', existing.id)
+    } else {
+      await supabase.from('call_bookings').insert({ client_id:null, booking_date:date, time_slot:slot, status:'blocked' })
+    }
+    fetchBookings()
+  }
+
+  // Prossime 3 settimane di giorni disponibili
+  const upcomingDates = []
+  const now = new Date()
+  for (let i=0;i<21;i++) {
+    const d = new Date(now)
+    d.setDate(now.getDate()+i)
+    if (AVAIL_ADMIN[d.getDay()]) upcomingDates.push(d)
+  }
+
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
+
+  return (
+    <>
+      {/* PRENOTAZIONI CONFERMATE */}
+      <div style={s.card}>
+        <div style={s.cardTitle}><i className="ti ti-calendar-event" style={{fontSize:16,color:'#D4570A'}}/> Prenotazioni ({confirmedBookings.length})</div>
+        {loading ? (
+          <div style={{textAlign:'center',padding:'20px 0',color:'#888780',fontSize:13}}>Caricamento...</div>
+        ) : confirmedBookings.length === 0 ? (
+          <div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#888780'}}>Nessuna chiamata prenotata.</div>
+        ) : (
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Data</th><th style={s.th}>Ora</th><th style={s.th}>Azioni</th></tr></thead>
+            <tbody>{confirmedBookings.map(b=>(
+              <tr key={b.id}>
+                <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={{...s.avatar,width:24,height:24,fontSize:10,marginRight:6}}>{initials(b.profiles?.full_name||'')}</div><span style={{fontSize:12}}>{b.profiles?.full_name||'—'}</span></div></td>
+                <td style={s.td}>{new Date(b.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</td>
+                <td style={s.td}><span style={{fontWeight:600}}>{b.time_slot}</span></td>
+                <td style={s.td}><button style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>cancelBooking(b.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+
+      {/* GESTIONE DISPONIBILITÀ */}
+      <div style={s.card}>
+        <div style={s.cardTitle}><i className="ti ti-calendar-cog" style={{fontSize:16,color:'#D4570A'}}/> Gestisci disponibilità</div>
+        <div style={{fontSize:12,color:'#888780',marginBottom:14}}>
+          Clicca su uno slot per segnarlo come "occupato" — non sarà visibile ai clienti come disponibile. Utile per simulare un'agenda piena o bloccare orari per impegni personali.
+        </div>
+
+        {upcomingDates.map(date => {
+          const dateKey = date.toISOString().split('T')[0]
+          const slots = genSlotsAdmin(date.getDay())
+          const isSelected = selectedDate === dateKey
+          return (
+            <div key={dateKey} style={{marginBottom:8}}>
+              <button
+                onClick={()=>setSelectedDate(isSelected?null:dateKey)}
+                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:8,border:'0.5px solid #E0DDD6',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#111',fontFamily:'inherit',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+                <span>{DAY_NAMES_ADMIN[date.getDay()]} {date.getDate()}/{date.getMonth()+1}</span>
+                <span style={{fontSize:11}}>{isSelected?'▲':'▼'}</span>
+              </button>
+              {isSelected && (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginTop:8}}>
+                  {slots.map(slot => {
+                    const booked = bookings.find(b=>b.booking_date===dateKey && b.time_slot===slot && b.status==='confirmed')
+                    const blocked = bookings.find(b=>b.booking_date===dateKey && b.time_slot===slot && b.status==='blocked')
+                    return (
+                      <button
+                        key={slot}
+                        disabled={!!booked}
+                        onClick={()=>toggleBlock(dateKey, slot)}
+                        style={{
+                          padding:'8px',borderRadius:7,border:'0.5px solid',fontSize:12,fontWeight:600,fontFamily:'inherit',
+                          cursor:booked?'not-allowed':'pointer',
+                          background: booked?'#FEF0E7':blocked?'#F5F3EF':'#EAF3DE',
+                          color: booked?'#D4570A':blocked?'#888780':'#3B6D11',
+                          borderColor: booked?'#D4570A':blocked?'#E0DDD6':'#3B6D11',
+                        }}>
+                        {slot}{booked?' 📞':blocked?' 🚫':''}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <div style={{display:'flex',gap:16,marginTop:14,fontSize:11,color:'#888780'}}>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#EAF3DE',marginRight:4,verticalAlign:'middle'}}/>Libero</div>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#F5F3EF',marginRight:4,verticalAlign:'middle'}}/>Bloccato (clicca per liberare)</div>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#FEF0E7',marginRight:4,verticalAlign:'middle'}}/>Prenotato</div>
+        </div>
+      </div>
+    </>
   )
 }
