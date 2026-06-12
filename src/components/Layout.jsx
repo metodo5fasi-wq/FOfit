@@ -145,7 +145,7 @@ export default function Layout() {
   }
 
   return (
-    <div style={{display:'flex',height:'100dvh',overflow:'hidden'}}>
+    <div style={{display:'flex',height:'100dvh',overflow:'hidden',paddingTop:'env(safe-area-inset-top)',paddingBottom:'env(safe-area-inset-bottom)',background:'#0F0F0F',boxSizing:'border-box'}}>
 
       {/* SIDEBAR DESKTOP */}
       {!isMobile && (
@@ -171,9 +171,8 @@ export default function Layout() {
         {/* TOPBAR MOBILE */}
         {isMobile && (
           <div style={{
-            background:'#0F0F0F', height:52, display:'flex', alignItems:'center',
-            justifyContent:'space-between', padding:'0 14px',
-            paddingTop:'env(safe-area-inset-top)',
+            background:'#0F0F0F', minHeight:52, display:'flex', alignItems:'center',
+            justifyContent:'space-between', padding:'10px 14px',
             flexShrink:0
           }}>
             <button
