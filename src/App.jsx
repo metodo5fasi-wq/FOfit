@@ -11,6 +11,7 @@ import ListaSpesa from './pages/ListaSpesa'
 import AssistenteAI from './pages/AssistenteAI'
 import Calendario from './pages/Calendario'
 import Allenamento from './pages/Allenamento'
+import StoricoAllenamento from './pages/StoricoAllenamento'
 import ImportaAllenamento from './pages/ImportaAllenamento'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
@@ -163,6 +164,7 @@ export default function App() {
             <Route path="ai" element={<AssistenteAI />} />
             <Route path="calendario" element={<Calendario />} />
             <Route path="allenamento" element={<Allenamento />} />
+            <Route path="storico-allenamento" element={<StoricoAllenamento />} />
             <Route path="importa-allenamento" element={!profile ? null : profile.role === 'admin' ? <ImportaAllenamento /> : <Navigate to="/" />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
