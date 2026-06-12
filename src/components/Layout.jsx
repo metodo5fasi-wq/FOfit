@@ -170,16 +170,21 @@ export default function Layout() {
 
         {/* TOPBAR MOBILE */}
         {isMobile && (
-          <div style={{background:'#0F0F0F',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',flexShrink:0}}>
+          <div style={{
+            background:'#0F0F0F', height:52, display:'flex', alignItems:'center',
+            justifyContent:'space-between', padding:'0 14px',
+            paddingTop:'env(safe-area-inset-top)',
+            flexShrink:0
+          }}>
             <button
               onClick={()=>setMobileOpen(true)}
-              style={{background:'#D4570A',border:'none',color:'white',width:44,height:44,borderRadius:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,touchAction:'manipulation',WebkitTapHighlightColor:'transparent',boxShadow:'0 2px 8px rgba(212,87,10,0.5)'}}>
-              <i className="ti ti-menu-2" style={{fontSize:22,pointerEvents:'none'}}/>
+              style={{background:'#D4570A',border:'none',color:'white',width:38,height:38,borderRadius:9,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,touchAction:'manipulation',WebkitTapHighlightColor:'transparent',boxShadow:'0 2px 8px rgba(212,87,10,0.5)'}}>
+              <i className="ti ti-menu-2" style={{fontSize:20,pointerEvents:'none'}}/>
             </button>
-            <div style={{fontSize:18,fontWeight:700,color:'white',letterSpacing:-0.5}}>
+            <div style={{fontSize:17,fontWeight:700,color:'white',letterSpacing:-0.5}}>
               FO<span style={{color:'#F4894A'}}>fit</span>
             </div>
-            <div style={{width:44}}/>
+            <div style={{width:38}}/>
           </div>
         )}
 
