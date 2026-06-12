@@ -27,6 +27,15 @@
 
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+
+    <!-- Previene lo zoom automatico su iOS quando si tocca un campo di testo -->
+    <style>
+      @media screen and (max-width: 768px) {
+        input, textarea, select {
+          font-size: 16px !important;
+        }
+      }
+    </style>
   </head>
   <body style="background:#1a0800;margin:0">
     <div id="root"></div>
