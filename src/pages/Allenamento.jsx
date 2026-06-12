@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import { Link } from 'react-router-dom'
 import { Toast, Confetti } from '../components/Animations'
 
 const s = {
@@ -178,6 +179,9 @@ export default function Allenamento() {
           <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{plan.title}</div>
           <div style={{fontSize:12,color:'var(--text-muted)'}}>{days.length} giorni · {exercises.length} esercizi</div>
         </div>
+        <Link to="/storico-allenamento" style={{width:36,height:36,borderRadius:9,border:'0.5px solid var(--border)',background:'var(--bg-input)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',textDecoration:'none',flexShrink:0}}>
+          <i className="ti ti-history" style={{fontSize:17}}/>
+        </Link>
       </div>
 
       <div style={s.page}>
