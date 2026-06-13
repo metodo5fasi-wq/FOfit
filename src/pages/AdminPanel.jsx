@@ -130,6 +130,39 @@ export default function AdminPanel() {
   async function deletePlan(id) { if (!confirm('Eliminare?')) return; await supabase.from('meal_plans').delete().eq('id',id); fetchAll() }
   const macroKcal = p => (parseInt(p.protein_target_g||0)*4+parseInt(p.carbs_target_g||0)*4+parseInt(p.fat_target_g||0)*9)
 
+  // Quando cambiano le kcal totali -> riproporziona i macro mantenendo le proporzioni attuali
+  function handleKcalChange(newKcal) {
+    setNewPlan(p => {
+      const kcalNum = parseInt(newKcal) || 0
+      const currentTotal = macroKcal(p)
+      if (currentTotal === 0) {
+        // Nessun macro impostato: usa una distribuzione di default 30% proteine / 40% carbo / 30% grassi
+        return {
+          ...p, kcal_target: newKcal,
+          protein_target_g: Math.round(kcalNum * 0.30 / 4),
+          carbs_target_g: Math.round(kcalNum * 0.40 / 4),
+          fat_target_g: Math.round(kcalNum * 0.30 / 9),
+        }
+      }
+      const ratio = kcalNum / currentTotal
+      return {
+        ...p, kcal_target: newKcal,
+        protein_target_g: Math.round((parseInt(p.protein_target_g)||0) * ratio),
+        carbs_target_g: Math.round((parseInt(p.carbs_target_g)||0) * ratio),
+        fat_target_g: Math.round((parseInt(p.fat_target_g)||0) * ratio),
+      }
+    })
+  }
+
+  // Quando cambia un macro -> ricalcola le kcal totali dalla somma dei macro
+  function handleMacroChange(field, value) {
+    setNewPlan(p => {
+      const updated = { ...p, [field]: value }
+      updated.kcal_target = macroKcal(updated)
+      return updated
+    })
+  }
+
   // Applica ricerca e filtri
   const filteredClients = clients.filter(c => {
     if (search && !c.full_name?.toLowerCase().includes(search.toLowerCase())) return false
@@ -288,12 +321,24 @@ export default function AdminPanel() {
               <div style={s.formGroup}><label style={s.label}>Titolo</label><input style={s.input} value={newPlan.title} onChange={e=>setNewPlan(p=>({...p,title:e.target.value}))}/></div>
               <div style={s.formGroup}><label style={s.label}>Settimana</label><input style={s.input} type="number" value={newPlan.week_number} onChange={e=>setNewPlan(p=>({...p,week_number:e.target.value}))}/></div>
             </div>
-            <div style={s.formGroup}><label style={s.label}>Calorie target (kcal)</label><input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>setNewPlan(p=>({...p,kcal_target:e.target.value}))}/></div>
+            <div style={s.formGroup}>
+              <label style={s.label}>Calorie target (kcal)</label>
+              <input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/>
+              <div style={{fontSize:11,color:'#888780',marginTop:5}}>
+                <i className="ti ti-refresh" style={{fontSize:12,marginRight:4}}/>
+                Modificando le kcal, i macro sotto si riproporzionano automaticamente
+              </div>
+            </div>
             <div style={s.grid2}>
-              <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>setNewPlan(p=>({...p,protein_target_g:e.target.value}))}/></div>
-              <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>setNewPlan(p=>({...p,carbs_target_g:e.target.value}))}/></div>
-              <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>setNewPlan(p=>({...p,fat_target_g:e.target.value}))}/></div>
-              <div style={s.formGroup}><label style={s.label}>Kcal dai macro</label><div style={{padding:'9px 12px',background:'#FEF0E7',borderRadius:8,fontSize:13,color:'#D4570A',fontWeight:500}}>{macroKcal(newPlan)} kcal</div></div>
+              <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
+              <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
+              <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
+              <div style={s.formGroup}>
+                <label style={s.label}>Totale da macro</label>
+                <div style={{padding:'9px 12px',background:'#EAF3DE',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
+                  <i className="ti ti-check" style={{fontSize:14}}/>{macroKcal(newPlan)} kcal
+                </div>
+              </div>
             </div>
             <div style={s.formGroup}><label style={s.label}>Note coach</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newPlan.notes} onChange={e=>setNewPlan(p=>({...p,notes:e.target.value}))}/></div>
             {msg&&<div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
