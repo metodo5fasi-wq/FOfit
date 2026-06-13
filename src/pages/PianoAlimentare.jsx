@@ -29,6 +29,9 @@ export default function PianoAlimentare() {
   const [selectedDay, setSelectedDay] = useState(0)
   const [openMeals, setOpenMeals] = useState({})
   const [noplan, setNoPlan] = useState(false)
+  const [selectedOptions, setSelectedOptions] = useState({}) // { foodId: optionIndex } 0=principale, 1+=opzioni[idx-1]
+  const [supplements, setSupplements] = useState([])
+  const [showSupplements, setShowSupplements] = useState(false)
 
   useEffect(() => {
     if (profile) fetchPlan()
@@ -62,6 +65,12 @@ export default function PianoAlimentare() {
       byDay[d] = (mealsData || []).filter(m => m.day_of_week === d)
     }
     setMeals(byDay)
+
+    // Piano integratori
+    const { data: suppData } = await supabase.from('plan_supplements')
+      .select('*').eq('plan_id', planData.id).order('order_index', {ascending:true})
+    setSupplements(suppData || [])
+
     setLoading(false)
   }
 
@@ -70,7 +79,18 @@ export default function PianoAlimentare() {
   }
 
   const dayMeals = meals[selectedDay + 1] || []
-  const dayKcal = dayMeals.reduce((s, m) => s + (m.plan_meal_foods || []).reduce((ss, f) => ss + (f.kcal || 0), 0), 0)
+  const dayKcal = dayMeals.reduce((s, m) => s + (m.plan_meal_foods || []).reduce((ss, f) => ss + getDisplayedFood(f, selectedOptions).kcal, 0), 0)
+  const dayTarget = dayMeals[0]?.day_kcal_target || null
+  const dayLabel = dayMeals[0]?.day_label || null
+
+  function getDisplayedFood(food, selOpts) {
+    const sel = selOpts[food.id]
+    if (sel && food.options?.[sel-1]) {
+      const o = food.options[sel-1]
+      return { food_name:o.food_name, brand:'', quantity_g:o.quantity_g, kcal:o.kcal, protein_g:o.protein_g, carbs_g:o.carbs_g, fat_g:o.fat_g }
+    }
+    return food
+  }
 
   if (loading) return (
     <>
@@ -104,7 +124,9 @@ export default function PianoAlimentare() {
           <div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Piano alimentare</div>
           <div style={{fontSize:12,color:'var(--text-muted)'}}>{plan?.title} — Settimana {plan?.week_number}</div>
         </div>
-        <span style={s.badge}>{plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno</span>
+        <span style={s.badge}>
+          {dayTarget && dayTarget !== plan?.kcal_target ? `${dayTarget.toLocaleString('it-IT')} kcal/giorno` : `${plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno`}
+        </span>
       </div>
 
       <div style={s.page}>
@@ -119,13 +141,22 @@ export default function PianoAlimentare() {
           </div>
         )}
 
+        {/* Etichetta tipo giorno (es. ON WEEK2+3) */}
+        {dayLabel && (
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
+            <span style={{fontSize:11,fontWeight:600,color:'#D4570A',background:'#FEF0E7',padding:'4px 10px',borderRadius:8}}>
+              <i className="ti ti-calendar-event" style={{fontSize:12,marginRight:4}}/>{dayLabel}
+            </span>
+          </div>
+        )}
+
         {/* Riepilogo macro */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
           {[
-            { label:'Calorie', val:plan?.kcal_target?.toLocaleString('it-IT'), unit:'kcal' },
-            { label:'Proteine', val:plan?.protein_target_g, unit:'g' },
-            { label:'Carboidrati', val:plan?.carbs_target_g, unit:'g' },
-            { label:'Grassi', val:plan?.fat_target_g, unit:'g' },
+            { label:'Calorie', val:(dayTarget||plan?.kcal_target)?.toLocaleString('it-IT'), unit:'kcal' },
+            { label:'Proteine', val:dayMeals[0]?.day_protein_target_g||plan?.protein_target_g, unit:'g' },
+            { label:'Carboidrati', val:dayMeals[0]?.day_carbs_target_g||plan?.carbs_target_g, unit:'g' },
+            { label:'Grassi', val:dayMeals[0]?.day_fat_target_g||plan?.fat_target_g, unit:'g' },
           ].map(m => (
             <div key={m.label} style={s.card}>
               <div style={{fontSize:10,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}}>{m.label}</div>
@@ -154,10 +185,11 @@ export default function PianoAlimentare() {
             const key = `${selectedDay}-${mi}`
             const isOpen = openMeals[key]
             const foods = meal.plan_meal_foods || []
-            const mealKcal = Math.round(foods.reduce((s, f) => s + (f.kcal || 0), 0))
-            const mealP = Math.round(foods.reduce((s, f) => s + (f.protein_g || 0), 0))
-            const mealC = Math.round(foods.reduce((s, f) => s + (f.carbs_g || 0), 0))
-            const mealG = Math.round(foods.reduce((s, f) => s + (f.fat_g || 0), 0))
+            const displayedFoods = foods.map(f => getDisplayedFood(f, selectedOptions))
+            const mealKcal = Math.round(displayedFoods.reduce((s, f) => s + (f.kcal || 0), 0))
+            const mealP = Math.round(displayedFoods.reduce((s, f) => s + (f.protein_g || 0), 0))
+            const mealC = Math.round(displayedFoods.reduce((s, f) => s + (f.carbs_g || 0), 0))
+            const mealG = Math.round(displayedFoods.reduce((s, f) => s + (f.fat_g || 0), 0))
 
             return (
               <div key={mi} style={s.mealBlock}>
@@ -175,21 +207,40 @@ export default function PianoAlimentare() {
 
                 {isOpen && (
                   <div style={s.mealBody}>
-                    {foods.map((food, fi) => (
-                      <div key={fi} style={s.foodRow}>
-                        <div style={{width:6,height:6,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:13,color:'var(--text)'}}>{food.food_name}</div>
-                          {food.brand && <div style={{fontSize:11,color:'var(--text-muted)'}}>{food.brand}</div>}
+                    {foods.map((food, fi) => {
+                      const displayed = displayedFoods[fi]
+                      const sel = selectedOptions[food.id] || 0
+                      return (
+                      <div key={fi} style={{...s.foodRow, flexDirection:'column', alignItems:'stretch', gap:6}}>
+                        <div style={{display:'flex',alignItems:'center',gap:10}}>
+                          <div style={{width:6,height:6,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,color:'var(--text)'}}>{displayed.food_name}</div>
+                            {displayed.brand && <div style={{fontSize:11,color:'var(--text-muted)'}}>{displayed.brand}</div>}
+                          </div>
+                          <div style={{fontSize:12,color:'var(--text-muted)',marginRight:8}}>{displayed.quantity_g}g</div>
+                          <div style={{display:'flex',gap:4}}>
+                            <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A'}}>P {displayed.protein_g}g</span>
+                            <span style={{...s.tag,background:'#FEF0E7',color:'#F4894A'}}>C {displayed.carbs_g}g</span>
+                            <span style={{...s.tag,background:'var(--bg-input)',color:'var(--text-muted)'}}>G {displayed.fat_g}g</span>
+                          </div>
                         </div>
-                        <div style={{fontSize:12,color:'var(--text-muted)',marginRight:8}}>{food.quantity_g}g</div>
-                        <div style={{display:'flex',gap:4}}>
-                          <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A'}}>P {food.protein_g}g</span>
-                          <span style={{...s.tag,background:'#FEF0E7',color:'#F4894A'}}>C {food.carbs_g}g</span>
-                          <span style={{...s.tag,background:'var(--bg-input)',color:'var(--text-muted)'}}>G {food.fat_g}g</span>
-                        </div>
+                        {food.options?.length > 0 && (
+                          <div style={{display:'flex',gap:5,flexWrap:'wrap',marginLeft:16}}>
+                            <button onClick={()=>setSelectedOptions(p=>({...p,[food.id]:0}))} style={{
+                              fontSize:10,padding:'3px 9px',borderRadius:10,fontWeight:500,cursor:'pointer',fontFamily:'inherit',border:'0.5px solid',
+                              background:sel===0?'#D4570A':'var(--bg-input)', color:sel===0?'white':'var(--text-muted)', borderColor:sel===0?'#D4570A':'var(--border)'
+                            }}>{food.food_name}</button>
+                            {food.options.map((op,oi)=>(
+                              <button key={oi} onClick={()=>setSelectedOptions(p=>({...p,[food.id]:oi+1}))} style={{
+                                fontSize:10,padding:'3px 9px',borderRadius:10,fontWeight:500,cursor:'pointer',fontFamily:'inherit',border:'0.5px solid',
+                                background:sel===oi+1?'#D4570A':'var(--bg-input)', color:sel===oi+1?'white':'var(--text-muted)', borderColor:sel===oi+1?'#D4570A':'var(--border)'
+                              }}>{op.food_name}</button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    )})}
                     {foods.length > 0 && (
                       <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid var(--border)'}}>
                         <span style={{fontSize:11,color:'var(--text-muted)'}}>Totale pasto:</span>
@@ -207,6 +258,40 @@ export default function PianoAlimentare() {
               </div>
             )
           })
+        )}
+
+        {/* INTEGRATORI */}
+        {supplements.length > 0 && (
+          <div style={s.mealBlock}>
+            <div style={showSupplements ? s.mealHeaderOpen : s.mealHeader} onClick={()=>setShowSupplements(v=>!v)}>
+              <div style={s.mealIcon}>
+                <i className="ti ti-pill" style={{fontSize:16,color:'#D4570A'}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>Piano integratori</div>
+                <div style={{fontSize:11,color:'var(--text-muted)'}}>{supplements.length} prodotti</div>
+              </div>
+              <i className="ti ti-chevron-down" style={{fontSize:15,color:'var(--text-muted)',transform:showSupplements?'rotate(180deg)':'none',transition:'transform 0.2s'}}/>
+            </div>
+            {showSupplements && (
+              <div style={s.mealBody}>
+                {supplements.map((sup,si)=>(
+                  <div key={si} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 0',borderBottom:'0.5px solid var(--border)'}}>
+                    <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A',flexShrink:0,marginTop:2}}>{sup.timing_label||'—'}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,color:'var(--text)',fontWeight:500}}>{sup.name}{sup.dosage && <span style={{color:'var(--text-muted)',fontWeight:400}}> · {sup.dosage}</span>}</div>
+                      {sup.notes && <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>{sup.notes}</div>}
+                      {sup.link && (
+                        <a href={sup.link} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#D4570A',display:'inline-flex',alignItems:'center',gap:3,marginTop:4,textDecoration:'none'}}>
+                          <i className="ti ti-external-link" style={{fontSize:12}}/>Vedi prodotto
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </>
