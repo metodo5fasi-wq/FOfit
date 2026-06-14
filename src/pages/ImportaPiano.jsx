@@ -84,9 +84,13 @@ export default function ImportaPiano() {
       // Assegnazione automatica giorni
       const assign = {}
       if (plan.varianti.length === 1) {
+        // Piano unico — tutti i giorni usano variante 0
         for (let d=1; d<=7; d++) assign[d] = 0
+      } else if (plan.varianti.every(v => v.dayNum)) {
+        // Piano giorno per giorno — ogni variante ha già il suo dayNum
+        plan.varianti.forEach((v, idx) => { if (v.dayNum) assign[v.dayNum] = idx })
       } else if (plan.varianti.length === 2) {
-        // Variante con kcal piu' alte -> giorni ON (Lun Mer Ven Sab), l'altra -> OFF (Mar Gio Dom)
+        // 2 varianti (es. ON/OFF): più kcal -> Lun/Mer/Ven/Sab, meno -> Mar/Gio/Dom
         const onIdx = plan.varianti[0].kcal >= plan.varianti[1].kcal ? 0 : 1
         const offIdx = onIdx === 0 ? 1 : 0
         ;[1,3,5,6].forEach(d => assign[d] = onIdx)
