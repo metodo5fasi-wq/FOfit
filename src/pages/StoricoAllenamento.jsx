@@ -9,6 +9,7 @@ const s = {
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
   backBtn: { width:34, height:34, borderRadius:9, border:'0.5px solid var(--border)', background:'var(--bg-input)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, color:'var(--text)', textDecoration:'none' },
   tab: { padding:'6px 13px', borderRadius:18, fontSize:12, fontWeight:600, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', whiteSpace:'nowrap' },
+  shareBtn: { background:'var(--bg-input)', border:'0.5px solid var(--border)', borderRadius:8, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:4 },
 }
 
 const DAY_LETTERS = ['L','M','M','G','V','S','D'] // Lun...Dom
@@ -26,6 +27,54 @@ export default function StoricoAllenamento() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('tutti')
+  const [sharingId, setSharingId] = useState(null)
+  const [shareLink, setShareLink] = useState('')
+  const [showPeriodModal, setShowPeriodModal] = useState(false)
+  const [periodStart, setPeriodStart] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]
+  })
+  const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
+  const [copiedId, setCopiedId] = useState(null)
+
+  async function shareSession(session) {
+    setSharingId(session.id)
+    try {
+      const r = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: profile.id, shareType: 'session', sessionId: session.id })
+      })
+      const data = await r.json()
+      if (data.token) {
+        const link = `${window.location.origin}/share/${data.token}`
+        await navigator.clipboard.writeText(link)
+        setCopiedId(session.id)
+        setTimeout(() => setCopiedId(null), 3000)
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setSharingId(null)
+  }
+
+  async function sharePeriod() {
+    setSharingId('period')
+    try {
+      const r = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: profile.id, shareType: 'period', periodStart, periodEnd })
+      })
+      const data = await r.json()
+      if (data.token) {
+        const link = `${window.location.origin}/share/${data.token}`
+        await navigator.clipboard.writeText(link)
+        setShareLink(link)
+        setCopiedId('period')
+        setTimeout(() => setCopiedId(null), 3000)
+        setShowPeriodModal(false)
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setSharingId(null)
+  }
 
   useEffect(() => { if (profile) fetchSessions() }, [profile])
 
@@ -85,10 +134,13 @@ export default function StoricoAllenamento() {
     <>
       <div style={s.topbar}>
         <Link to="/allenamento" style={s.backBtn}><i className="ti ti-arrow-left" style={{fontSize:17}}/></Link>
-        <div>
+        <div style={{flex:1}}>
           <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>Storico allenamenti</div>
           <div style={{fontSize:12,color:'var(--text-muted)'}}>{totalSessions} sessioni totali</div>
         </div>
+        <button onClick={()=>setShowPeriodModal(true)} style={{...s.shareBtn, background:'#FEF0E7', color:'#D4570A', borderColor:'#D4570A'}}>
+          <i className="ti ti-share" style={{fontSize:13}}/>Condividi periodo
+        </button>
       </div>
 
       <div style={s.page}>
@@ -164,9 +216,14 @@ export default function StoricoAllenamento() {
                       {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
                     </div>
                   </div>
-                  <div style={{textAlign:'right',flexShrink:0,marginLeft:10}}>
-                    <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
-                    <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0,marginLeft:10}}>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
+                      <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
+                    </div>
+                    <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
+                      {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Copiato!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
+                    </button>
                   </div>
                 </div>
                 {sess.notes && (
@@ -177,6 +234,30 @@ export default function StoricoAllenamento() {
               </div>
             )
           })
+        )}
+
+        {/* MODAL CONDIVIDI PERIODO */}
+        {showPeriodModal && (
+          <div onClick={e=>e.target===e.currentTarget&&setShowPeriodModal(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
+            <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:380}}>
+              <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:4}}>Condividi riepilogo periodo</div>
+              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:20}}>Scegli il periodo da condividere. Verrà generato un link pubblico valido 30 giorni.</div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Dal</div>
+                <input type="date" value={periodStart} onChange={e=>setPeriodStart(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+              </div>
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Al</div>
+                <input type="date" value={periodEnd} onChange={e=>setPeriodEnd(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+              </div>
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={sharePeriod} disabled={sharingId==='period'} style={{flex:1,padding:11,background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                  {copiedId==='period'?<><i className="ti ti-check"/>Link copiato!</>:sharingId==='period'?'Generazione...':<><i className="ti ti-link"/>Genera e copia link</>}
+                </button>
+                <button onClick={()=>setShowPeriodModal(false)} style={{padding:'11px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>Annulla</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>
