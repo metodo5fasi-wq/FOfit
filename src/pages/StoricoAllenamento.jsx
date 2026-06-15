@@ -36,6 +36,8 @@ export default function StoricoAllenamento() {
   const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
   const [copiedId, setCopiedId] = useState(null)
 
+  const [generatedLink, setGeneratedLink] = useState('')
+
   async function shareSession(session) {
     setSharingId(session.id)
     try {
@@ -47,7 +49,8 @@ export default function StoricoAllenamento() {
       const data = await r.json()
       if (data.token) {
         const link = `${window.location.origin}/share/${data.token}`
-        await navigator.clipboard.writeText(link)
+        setGeneratedLink(link)
+        copyToClipboard(link)
         setCopiedId(session.id)
         setTimeout(() => setCopiedId(null), 3000)
       }
@@ -66,8 +69,8 @@ export default function StoricoAllenamento() {
       const data = await r.json()
       if (data.token) {
         const link = `${window.location.origin}/share/${data.token}`
-        await navigator.clipboard.writeText(link)
-        setShareLink(link)
+        setGeneratedLink(link)
+        copyToClipboard(link)
         setCopiedId('period')
         setTimeout(() => setCopiedId(null), 3000)
         setShowPeriodModal(false)
@@ -180,6 +183,32 @@ export default function StoricoAllenamento() {
             <span>Più</span>
           </div>
         </div>
+
+        {/* LINK GENERATO */}
+        {generatedLink && (
+          <div style={{...s.card, border:'0.5px solid #D4570A', marginBottom:14}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#D4570A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+              <i className="ti ti-link" style={{fontSize:13}}/>Link generato — tieni premuto per copiare
+            </div>
+            <input
+              readOnly
+              value={generatedLink}
+              onFocus={e=>e.target.select()}
+              style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'monospace',boxSizing:'border-box',marginBottom:8}}
+            />
+            <div style={{display:'flex',gap:8}}>
+              <a href={generatedLink} target="_blank" rel="noopener noreferrer" style={{flex:1,padding:'9px',background:'#FEF0E7',color:'#D4570A',borderRadius:8,fontSize:12,fontWeight:600,textAlign:'center',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                <i className="ti ti-external-link" style={{fontSize:13}}/>Apri link
+              </a>
+              <button onClick={()=>{ if(navigator.share){ navigator.share({url:generatedLink,title:'Il mio allenamento FOfit'}) } }} style={{flex:1,padding:'9px',background:'#D4570A',color:'white',border:'none',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                <i className="ti ti-share" style={{fontSize:13}}/>Condividi
+              </button>
+              <button onClick={()=>setGeneratedLink('')} style={{padding:'9px 12px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
+                <i className="ti ti-x" style={{fontSize:13}}/>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* FILTRI */}
         {dayLabels.length > 1 && (
