@@ -19,13 +19,20 @@ import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
 import Layout from './components/Layout'
 
+// ─────────────────────────────────────────────────────────
+// ERROR BOUNDARY — mostra l'errore invece di una pagina bianca
+// ─────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
     this.state = { error: null }
   }
-  static getDerivedStateFromError(error) { return { error } }
-  componentDidCatch(error, info) { console.error('App crash:', error, info) }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  componentDidCatch(error, info) {
+    console.error('App crash:', error, info)
+  }
   render() {
     if (this.state.error) {
       return (
@@ -50,6 +57,7 @@ export const useAuth = () => useContext(AuthContext)
 export const ThemeContext = createContext(LIGHT)
 export const useTheme = () => useContext(ThemeContext)
 
+// Banner offline
 function OfflineBanner() {
   const [offline, setOffline] = useState(!navigator.onLine)
   useEffect(() => {
@@ -75,6 +83,22 @@ const C = {
 }
 export { C }
 
+const globalStyles = `
+  :root {
+    --orange: ${C.orange}; --orange-light: ${C.orangeLight}; --orange-mid: ${C.orangeMid};
+    --black: ${C.black}; --white: ${C.white}; --gray: ${C.gray};
+    --gray-border: ${C.grayBorder}; --text-muted: ${C.textMuted};
+    --radius: 10px; --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray); color: var(--black); }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea, select { font-family: inherit; }
+  ::-webkit-scrollbar { width: 4px; } 
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-border); border-radius: 2px; }
+`
+
 export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -83,7 +107,9 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(isDark())
   const [onboardedVersion, setOnboardedVersion] = useState(0)
 
-  function markOnboarded() { setOnboardedVersion(v => v + 1) }
+  function markOnboarded() {
+    setOnboardedVersion(v => v + 1)
+  }
 
   function handleToggleTheme() {
     const next = toggleTheme()
@@ -91,6 +117,7 @@ export default function App() {
     setTheme(next === 'dark' ? DARK : LIGHT)
   }
 
+  // Inietta CSS variables del tema dinamicamente
   useEffect(() => {
     const root = document.documentElement
     const t = theme
@@ -115,26 +142,33 @@ export default function App() {
       if (session) fetchProfile(session.user.id)
       else setLoading(false)
     })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else { setProfile(null); setLoading(false) }
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase.from('profiles').select('id, full_name, role, goal, height_cm, phone, notes, coach_notes')
-      .eq('id', userId).maybeSingle()
-    if (data) setProfile(data)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, goal, height_cm, phone, notes')
+      .eq('id', userId)
+      .maybeSingle()
+    if (data) {
+      setProfile(data)
+    }
     setLoading(false)
   }
 
   if (loading) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'#111'}}>
-      <div style={{textAlign:'center'}}>
-        <div style={{fontSize:28,fontWeight:500,color:'#D4570A',letterSpacing:-0.5}}>FO<span style={{color:'white'}}>fit</span></div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:6}}>Caricamento...</div>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#111' }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ fontSize:28, fontWeight:500, color:'#D4570A', letterSpacing:-0.5 }}>FO<span style={{color:'white'}}>fit</span></div>
+        <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:6 }}>Caricamento...</div>
       </div>
     </div>
   )
@@ -153,7 +187,8 @@ export default function App() {
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
             <Route index element={
               (() => {
-                onboardedVersion
+                // eslint-disable-next-line no-unused-expressions
+                onboardedVersion // forza re-render quando onboarding completato
                 const needsOnboarding = session && profile && profile.role === 'client' && !localStorage.getItem(`fofit_onboarded_${profile.id}`)
                 return needsOnboarding ? <Navigate to="/onboarding" /> : <Dashboard />
               })()
