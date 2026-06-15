@@ -119,8 +119,22 @@ export default function Allenamento() {
     }
   }
 
-  async function updateWeight(ex, setNumber, weight) {
+  async function updateReps(ex, setNumber, reps) {
     const existing = getLog(ex.exercise_name, setNumber)
+    const repsNum = reps === '' ? null : parseInt(reps)
+    if (existing) {
+      await supabase.from('workout_logs').update({ reps_done: repsNum }).eq('id', existing.id)
+      setLogs(prev => prev.map(l => l.id===existing.id ? {...l, reps_done:repsNum} : l))
+    } else {
+      const { data, error } = await supabase.from('workout_logs').insert({
+        client_id: profile.id, exercise_name: ex.exercise_name, log_date: today,
+        set_number: setNumber, weight_kg: null, reps_done: repsNum,
+      }).select().single()
+      if (!error) setLogs(prev => [...prev, data])
+    }
+  }
+
+  async function updateWeight(ex, setNumber, weight) {
     const weightNum = weight === '' ? null : parseFloat(weight)
     if (existing) {
       await supabase.from('workout_logs').update({ weight_kg: weightNum }).eq('id', existing.id)
@@ -259,7 +273,7 @@ export default function Allenamento() {
                     {setsArray.map(setNum => {
                       const log = getLog(ex.exercise_name, setNum)
                       return (
-                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:10,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
+                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
                           <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
                             width:26,height:26,borderRadius:7,border:'none',cursor:'pointer',flexShrink:0,
                             background: log ? '#3B6D11' : 'var(--bg-card)',
@@ -268,14 +282,22 @@ export default function Allenamento() {
                           }}>
                             {log && <i className="ti ti-check" style={{fontSize:14,color:'white'}}/>}
                           </button>
-                          <span style={{fontSize:12,color:'var(--text-muted)',width:50}}>Serie {setNum}</span>
+                          <span style={{fontSize:12,color:'var(--text-muted)',width:46,flexShrink:0}}>Serie {setNum}</span>
                           <input
                             type="number" placeholder="kg" inputMode="decimal"
                             value={log?.weight_kg ?? ''}
                             onChange={e=>updateWeight(ex, setNum, e.target.value)}
-                            style={{...s.input, width:70, padding:'6px 8px', textAlign:'center'}}
+                            style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
                           />
-                          <span style={{fontSize:11,color:'var(--text-muted)'}}>kg</span>
+                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>kg</span>
+                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>×</span>
+                          <input
+                            type="number" placeholder="reps" inputMode="numeric"
+                            value={log?.reps_done ?? ''}
+                            onChange={e=>updateReps(ex, setNum, e.target.value)}
+                            style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
+                          />
+                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>reps</span>
                         </div>
                       )
                     })}
