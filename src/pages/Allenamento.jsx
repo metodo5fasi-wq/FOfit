@@ -97,6 +97,10 @@ export default function Allenamento() {
   }
 
   // Trova il log di oggi per un esercizio + numero serie
+  function getLog(exerciseName, setNumber) {
+    return logs.find(l => l.exercise_name === exerciseName && l.set_number === setNumber)
+  }
+
   const [inputValues, setInputValues] = useState({}) // { 'exerciseName-setNum-kg': '80', ... }
 
   function getInputVal(exName, setNum, field) {
