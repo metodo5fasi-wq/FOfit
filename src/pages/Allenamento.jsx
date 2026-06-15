@@ -97,8 +97,17 @@ export default function Allenamento() {
   }
 
   // Trova il log di oggi per un esercizio + numero serie
-  function getLog(exerciseName, setNumber) {
-    return logs.find(l => l.exercise_name === exerciseName && l.set_number === setNumber)
+  const [inputValues, setInputValues] = useState({}) // { 'exerciseName-setNum-kg': '80', ... }
+
+  function getInputVal(exName, setNum, field) {
+    const key = `${exName}-${setNum}-${field}`
+    if (key in inputValues) return inputValues[key]
+    const log = logs.find(l => l.exercise_name === exName && l.set_number === setNum)
+    return log?.[field] ?? ''
+  }
+
+  function setInputVal(exName, setNum, field, val) {
+    setInputValues(prev => ({ ...prev, [`${exName}-${setNum}-${field}`]: val }))
   }
 
   async function toggleSet(ex, setNumber) {
@@ -285,16 +294,22 @@ export default function Allenamento() {
                           <span style={{fontSize:12,color:'var(--text-muted)',width:46,flexShrink:0}}>Serie {setNum}</span>
                           <input
                             type="number" placeholder="kg" inputMode="decimal"
-                            value={log?.weight_kg ?? ''}
-                            onChange={e=>updateWeight(ex, setNum, e.target.value)}
+                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
+                            onChange={e => {
+                              setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
+                              updateWeight(ex, setNum, e.target.value)
+                            }}
                             style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
                           />
                           <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>kg</span>
                           <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>×</span>
                           <input
                             type="number" placeholder="reps" inputMode="numeric"
-                            value={log?.reps_done ?? ''}
-                            onChange={e=>updateReps(ex, setNum, e.target.value)}
+                            value={getInputVal(ex.exercise_name, setNum, 'reps_done')}
+                            onChange={e => {
+                              setInputVal(ex.exercise_name, setNum, 'reps_done', e.target.value)
+                              updateReps(ex, setNum, e.target.value)
+                            }}
                             style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
                           />
                           <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>reps</span>
