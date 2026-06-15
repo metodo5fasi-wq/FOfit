@@ -27,6 +27,18 @@ export default function StoricoAllenamento() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('tutti')
+  const [editingSession, setEditingSession] = useState(null)
+  const [editNotes, setEditNotes] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  async function saveEditSession() {
+    if (!editingSession) return
+    setSavingEdit(true)
+    await supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id)
+    setSessions(prev => prev.map(s => s.id===editingSession.id ? {...s, notes:editNotes} : s))
+    setSavingEdit(false)
+    setEditingSession(null)
+  }
   const [sharingId, setSharingId] = useState(null)
   const [shareLink, setShareLink] = useState('')
   const [showPeriodModal, setShowPeriodModal] = useState(false)
@@ -50,7 +62,6 @@ export default function StoricoAllenamento() {
       if (data.token) {
         const link = `${window.location.origin}/share/${data.token}`
         setGeneratedLink(link)
-        copyToClipboard(link)
         setCopiedId(session.id)
         setTimeout(() => setCopiedId(null), 3000)
       }
@@ -70,7 +81,6 @@ export default function StoricoAllenamento() {
       if (data.token) {
         const link = `${window.location.origin}/share/${data.token}`
         setGeneratedLink(link)
-        copyToClipboard(link)
         setCopiedId('period')
         setTimeout(() => setCopiedId(null), 3000)
         setShowPeriodModal(false)
@@ -200,8 +210,22 @@ export default function StoricoAllenamento() {
               <a href={generatedLink} target="_blank" rel="noopener noreferrer" style={{flex:1,padding:'9px',background:'#FEF0E7',color:'#D4570A',borderRadius:8,fontSize:12,fontWeight:600,textAlign:'center',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
                 <i className="ti ti-external-link" style={{fontSize:13}}/>Apri link
               </a>
-              <button onClick={()=>{ if(navigator.share){ navigator.share({url:generatedLink,title:'Il mio allenamento FOfit'}) } }} style={{flex:1,padding:'9px',background:'#D4570A',color:'white',border:'none',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
-                <i className="ti ti-share" style={{fontSize:13}}/>Condividi
+              <button onClick={()=>{
+                if (navigator.share) {
+                  navigator.share({ url: generatedLink, title: 'Il mio allenamento FOfit' })
+                } else {
+                  const el = document.createElement('textarea')
+                  el.value = generatedLink
+                  el.style.position = 'fixed'; el.style.opacity = '0'
+                  document.body.appendChild(el); el.focus(); el.select()
+                  document.execCommand('copy')
+                  document.body.removeChild(el)
+                  setCopiedId('link')
+                  setTimeout(() => setCopiedId(null), 2000)
+                }
+              }} style={{flex:1,padding:'9px',background:'#D4570A',color:'white',border:'none',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                <i className={`ti ${copiedId==='link'?'ti-check':'ti-share'}`} style={{fontSize:13}}/>
+                {copiedId==='link' ? 'Copiato!' : navigator.share ? 'Condividi' : 'Copia link'}
               </button>
               <button onClick={()=>setGeneratedLink('')} style={{padding:'9px 12px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
                 <i className="ti ti-x" style={{fontSize:13}}/>
@@ -250,8 +274,11 @@ export default function StoricoAllenamento() {
                       <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
                       <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
                     </div>
+                    <button onClick={()=>{setEditingSession(sess);setEditNotes(sess.notes||'')}} style={s.shareBtn}>
+                      <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica
+                    </button>
                     <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
-                      {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Copiato!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
+                      {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Ok!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
                     </button>
                   </div>
                 </div>
@@ -263,6 +290,34 @@ export default function StoricoAllenamento() {
               </div>
             )
           })
+        )}
+
+        {/* MODAL MODIFICA SESSIONE */}
+        {editingSession && (
+          <div onClick={e=>e.target===e.currentTarget&&setEditingSession(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
+            <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:440}}>
+              <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:2}}>Modifica sessione</div>
+              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:16}}>
+                {editingSession.day_label} · {new Date(editingSession.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
+              </div>
+              <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>Note</div>
+              <textarea
+                value={editNotes}
+                onChange={e=>setEditNotes(e.target.value)}
+                placeholder="Come ti sei sentito? Dolori? Note per il prossimo allenamento..."
+                style={{width:'100%',minHeight:120,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5,marginBottom:16}}
+              />
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={saveEditSession} disabled={savingEdit} style={{flex:1,padding:12,background:'#D4570A',color:'white',border:'none',borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+                  {savingEdit ? 'Salvataggio...' : 'Salva modifiche'}
+                </button>
+                <button onClick={()=>setEditingSession(null)} style={{padding:'12px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
+                  Annulla
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         )}
 
         {/* MODAL CONDIVIDI PERIODO */}
