@@ -12,6 +12,7 @@ import AssistenteAI from './pages/AssistenteAI'
 import Calendario from './pages/Calendario'
 import Allenamento from './pages/Allenamento'
 import StoricoAllenamento from './pages/StoricoAllenamento'
+import ShareView from './pages/ShareView'
 import ImportaAllenamento from './pages/ImportaAllenamento'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
@@ -181,6 +182,7 @@ export default function App() {
         <ErrorBoundary>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/share/:token" element={<ShareView />} />
           <Route path="/onboarding" element={session && profile ? <Onboarding /> : <Navigate to="/login" />} />
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
             <Route index element={
