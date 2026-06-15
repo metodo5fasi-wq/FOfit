@@ -120,16 +120,29 @@ export default function Allenamento() {
       await supabase.from('workout_logs').delete().eq('id', existing.id)
       setLogs(prev => prev.filter(l => l.id !== existing.id))
     } else {
+      // Prendi i valori già inseriti nei campi input (se presenti)
+      const weightVal = inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
+      const repsVal = inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
       const { data, error } = await supabase.from('workout_logs').insert({
         client_id: profile.id,
         exercise_name: ex.exercise_name,
         log_date: today,
         set_number: setNumber,
-        weight_kg: null,
-        reps_done: null,
+        weight_kg: weightVal ? parseFloat(weightVal) : null,
+        reps_done: repsVal ? parseInt(repsVal) : null,
       }).select().single()
       if (!error) setLogs(prev => [...prev, data])
     }
+  }
+
+  async function updateWeight(ex, setNumber, weight) {
+    const existing = getLog(ex.exercise_name, setNumber)
+    const weightNum = weight === '' ? null : parseFloat(weight)
+    if (existing) {
+      await supabase.from('workout_logs').update({ weight_kg: weightNum }).eq('id', existing.id)
+      setLogs(prev => prev.map(l => l.id===existing.id ? {...l, weight_kg:weightNum} : l))
+    }
+    // Se non esiste ancora, il valore è in inputValues — verrà salvato al toggleSet
   }
 
   async function updateReps(ex, setNumber, reps) {
@@ -138,31 +151,8 @@ export default function Allenamento() {
     if (existing) {
       await supabase.from('workout_logs').update({ reps_done: repsNum }).eq('id', existing.id)
       setLogs(prev => prev.map(l => l.id===existing.id ? {...l, reps_done:repsNum} : l))
-    } else {
-      const { data, error } = await supabase.from('workout_logs').insert({
-        client_id: profile.id, exercise_name: ex.exercise_name, log_date: today,
-        set_number: setNumber, weight_kg: null, reps_done: repsNum,
-      }).select().single()
-      if (!error) setLogs(prev => [...prev, data])
     }
-  }
-
-  async function updateWeight(ex, setNumber, weight) {
-    const weightNum = weight === '' ? null : parseFloat(weight)
-    if (existing) {
-      await supabase.from('workout_logs').update({ weight_kg: weightNum }).eq('id', existing.id)
-      setLogs(prev => prev.map(l => l.id===existing.id ? {...l, weight_kg:weightNum} : l))
-    } else {
-      const { data, error } = await supabase.from('workout_logs').insert({
-        client_id: profile.id,
-        exercise_name: ex.exercise_name,
-        log_date: today,
-        set_number: setNumber,
-        weight_kg: weightNum,
-        reps_done: null,
-      }).select().single()
-      if (!error) setLogs(prev => [...prev, data])
-    }
+    // Se non esiste ancora, il valore è in inputValues — verrà salvato al toggleSet
   }
 
   // Storico peso per un esercizio (ultimi valori distinti per data)
