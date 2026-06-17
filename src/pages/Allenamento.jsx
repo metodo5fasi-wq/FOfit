@@ -44,7 +44,8 @@ export default function Allenamento() {
       setExercises(exData || [])
       if (exData?.length) {
         const days = [...new Set(exData.map(e=>e.day_label))]
-        setActiveDay(days[0])
+        const saved = localStorage.getItem('fofit_active_day')
+        setActiveDay(saved && days.includes(saved) ? saved : days[0])
       }
     }
     const { data: logData } = await supabase.from('workout_logs')
@@ -206,7 +207,7 @@ export default function Allenamento() {
         {/* TAB GIORNI */}
         <div style={{display:'flex',gap:4,marginBottom:14,overflowX:'auto',background:'var(--bg-card)',borderRadius:12,padding:4,border:'0.5px solid var(--border)'}}>
           {days.map(day => (
-            <button key={day} onClick={()=>setActiveDay(day)} style={{
+            <button key={day} onClick={()=>{setActiveDay(day); localStorage.setItem('fofit_active_day', day)}} style={{
               ...s.tab, whiteSpace:'nowrap', flex:'0 0 auto', padding:'9px 16px',
               background: activeDay===day ? '#D4570A' : 'transparent',
               color: activeDay===day ? 'white' : 'var(--text-muted)',
