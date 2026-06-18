@@ -66,7 +66,10 @@ export default function ShareView() {
             <div>
               <div style={{fontSize:15,fontWeight:700,color:DARK}}>{data.profile?.full_name || 'Cliente FOfit'}</div>
               <div style={{fontSize:12,color:GRAY,marginTop:2}}>
-                {data.type === 'session' ? `📅 ${new Date(data.session?.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}` : `📆 ${new Date(data.period?.start+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(data.period?.end+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`}
+                {data.type === 'session' && `📅 ${new Date(data.session?.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}`}
+                {data.type === 'period' && `📆 ${new Date(data.period?.start+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(data.period?.end+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`}
+                {data.type === 'progress' && `📏 ${new Date(data.entry?.entry_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}`}
+                {data.type === 'progress_period' && `📆 ${new Date(data.period?.start+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(data.period?.end+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`}
               </div>
             </div>
           </div>
@@ -75,8 +78,14 @@ export default function ShareView() {
         {/* SESSIONE SINGOLA */}
         {data.type === 'session' && <SessionView session={data.session} logs={data.logs}/>}
 
-        {/* RIEPILOGO PERIODO */}
+        {/* RIEPILOGO PERIODO ALLENAMENTO */}
         {data.type === 'period' && <PeriodView sessions={data.sessions} logs={data.logs} period={data.period}/>}
+
+        {/* MISURAZIONE SINGOLA */}
+        {data.type === 'progress' && <ProgressView entry={data.entry} photos={data.photos}/>}
+
+        {/* RIEPILOGO PERIODO PROGRESSI */}
+        {data.type === 'progress_period' && <ProgressPeriodView entries={data.entries} photos={data.photos} period={data.period}/>}
 
         {/* FOOTER */}
         <div style={{textAlign:'center',marginTop:24,padding:'16px 0',borderTop:`1px solid #E0DDD6`}}>
@@ -227,5 +236,165 @@ function PeriodView({ sessions, logs, period }) {
         })}
       </div>
     </>
+  )
+}
+
+const MISURE_LABELS = [
+  { key:'weight_kg', label:'Peso', unit:'kg' },
+  { key:'waist_cm', label:'Vita', unit:'cm' },
+  { key:'hips_cm', label:'Fianchi', unit:'cm' },
+  { key:'chest_cm', label:'Petto', unit:'cm' },
+  { key:'arm_cm', label:'Braccio', unit:'cm' },
+  { key:'thigh_cm', label:'Coscia', unit:'cm' },
+  { key:'body_fat_pct', label:'Massa grassa', unit:'%' },
+]
+
+function ProgressView({ entry, photos }) {
+  if (!entry) return null
+  const filledMeasures = MISURE_LABELS.filter(m => entry[m.key])
+
+  return (
+    <>
+      {/* MISURE */}
+      {filledMeasures.length > 0 && (
+        <div style={{background:CARD,borderRadius:14,padding:'16px',marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📏 Misurazioni</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+            {filledMeasures.map(m => (
+              <div key={m.key} style={{background:BG,borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+                <div style={{fontSize:18,fontWeight:800,color:ORANGE}}>{entry[m.key]}<span style={{fontSize:11,color:GRAY}}>{m.unit}</span></div>
+                <div style={{fontSize:10,color:GRAY,marginTop:4}}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NOTE */}
+      {entry.notes && (
+        <div style={{background:'#FEF0E7',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
+          <div style={{fontSize:10,color:ORANGE,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Note</div>
+          <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{entry.notes}</div>
+        </div>
+      )}
+
+      {/* FOTO */}
+      {photos.length > 0 && (
+        <div style={{background:CARD,borderRadius:14,padding:'16px',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📸 Foto progressi</div>
+          <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(photos.length,3)},1fr)`,gap:8}}>
+            {photos.map((p,i) => (
+              <div key={i} style={{position:'relative'}}>
+                <img src={p.photo_url} alt={p.label} style={{width:'100%',aspectRatio:'3/4',objectFit:'cover',borderRadius:10,display:'block'}}/>
+                <div style={{position:'absolute',bottom:6,left:6,background:'rgba(0,0,0,0.6)',color:'white',fontSize:10,padding:'2px 7px',borderRadius:8,fontWeight:600}}>{p.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filledMeasures.length === 0 && photos.length === 0 && (
+        <div style={{background:CARD,borderRadius:14,padding:'30px',textAlign:'center',color:GRAY,fontSize:13}}>Nessun dato disponibile per questa data.</div>
+      )}
+    </>
+  )
+}
+
+function ProgressPeriodView({ entries, photos, period }) {
+  const first = entries[0]
+  const last = entries[entries.length-1]
+
+  const weightDiff = first?.weight_kg && last?.weight_kg ? (last.weight_kg - first.weight_kg).toFixed(1) : null
+  const waistDiff = first?.waist_cm && last?.waist_cm ? (last.waist_cm - first.waist_cm).toFixed(1) : null
+
+  return (
+    <>
+      {/* RIEPILOGO VARIAZIONE */}
+      {(weightDiff !== null || waistDiff !== null) && (
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+          {weightDiff !== null && (
+            <div style={{background:CARD,borderRadius:12,padding:'14px',textAlign:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+              <div style={{fontSize:22,fontWeight:800,color:parseFloat(weightDiff)<=0?'#3B6D11':ORANGE}}>{parseFloat(weightDiff)>0?'+':''}{weightDiff}kg</div>
+              <div style={{fontSize:10,color:GRAY,textTransform:'uppercase',letterSpacing:'0.06em',marginTop:4}}>Variazione peso</div>
+            </div>
+          )}
+          {waistDiff !== null && (
+            <div style={{background:CARD,borderRadius:12,padding:'14px',textAlign:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+              <div style={{fontSize:22,fontWeight:800,color:parseFloat(waistDiff)<=0?'#3B6D11':ORANGE}}>{parseFloat(waistDiff)>0?'+':''}{waistDiff}cm</div>
+              <div style={{fontSize:10,color:GRAY,textTransform:'uppercase',letterSpacing:'0.06em',marginTop:4}}>Variazione vita</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* GRAFICO PESO */}
+      {entries.filter(e=>e.weight_kg).length > 1 && (
+        <div style={{background:CARD,borderRadius:14,padding:'16px',marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📉 Andamento peso</div>
+          <WeightChart entries={entries.filter(e=>e.weight_kg)}/>
+        </div>
+      )}
+
+      {/* FOTO DEL PERIODO */}
+      {photos.length > 0 && (
+        <div style={{background:CARD,borderRadius:14,padding:'16px',marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📸 Foto del periodo</div>
+          <div style={{display:'flex',gap:8,overflowX:'auto'}}>
+            {photos.map((p,i)=>(
+              <div key={i} style={{position:'relative',flexShrink:0}}>
+                <img src={p.photo_url} alt={p.label} style={{width:90,height:120,objectFit:'cover',borderRadius:10,display:'block'}}/>
+                <div style={{position:'absolute',bottom:5,left:5,background:'rgba(0,0,0,0.6)',color:'white',fontSize:9,padding:'2px 6px',borderRadius:6,fontWeight:600}}>{p.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LISTA MISURAZIONI */}
+      <div style={{background:CARD,borderRadius:14,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+        <div style={{padding:'14px 16px',borderBottom:`1px solid ${BG}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>Misurazioni del periodo</div>
+        {entries.length === 0 ? (
+          <div style={{padding:'24px',textAlign:'center',fontSize:13,color:GRAY}}>Nessuna misurazione trovata</div>
+        ) : entries.map((e,i) => (
+          <div key={i} style={{padding:'12px 16px',borderBottom:i<entries.length-1?`1px solid ${BG}`:'none'}}>
+            <div style={{fontSize:12,color:GRAY,marginBottom:5}}>{new Date(e.entry_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              {MISURE_LABELS.filter(m=>e[m.key]).map(m=>(
+                <span key={m.key} style={{fontSize:11,color:DARK,background:BG,padding:'3px 9px',borderRadius:10}}>{m.label}: <strong>{e[m.key]}{m.unit}</strong></span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function WeightChart({ entries }) {
+  const weights = entries.map(e => e.weight_kg)
+  const min = Math.min(...weights) - 1
+  const max = Math.max(...weights) + 1
+  const W = 320, H = 90
+  const pts = entries.map((e, i) => {
+    const x = entries.length>1 ? (i / (entries.length - 1)) * (W - 20) + 10 : W/2
+    const y = H - ((e.weight_kg - min) / (max - min)) * (H - 30) - 20
+    return `${x},${y}`
+  }).join(' ')
+  return (
+    <div style={{overflowX:'auto'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',maxWidth:W,display:'block'}}>
+        <polyline points={pts} fill="none" stroke={ORANGE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {entries.map((e, i) => {
+          const x = entries.length>1 ? (i / (entries.length - 1)) * (W - 20) + 10 : W/2
+          const y = H - ((e.weight_kg - min) / (max - min)) * (H - 30) - 20
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r={3.5} fill={ORANGE}/>
+              <text x={x} y={y-10} textAnchor="middle" fontSize={10} fontWeight="700" fill={DARK}>{e.weight_kg}</text>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
   )
 }
