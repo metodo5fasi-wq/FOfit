@@ -22,7 +22,7 @@ export default function Allenamento() {
   const [allLogs, setAllLogs] = useState([]) // tutti i log (per progressione)
   const [loading, setLoading] = useState(true)
   const [activeDay, setActiveDay] = useState(null)
-  const [expandedExercise, setExpandedExercise] = useState(null)
+  const [expandedExercise, setExpandedExercise] = useState(() => localStorage.getItem('fofit_expanded_exercise') || null)
   const [toast, setToast] = useState({ visible:false, message:'', emoji:'' })
   const [sessions, setSessions] = useState([]) // storico sessioni per giorno
   const [showFinish, setShowFinish] = useState(false)
@@ -236,7 +236,12 @@ export default function Allenamento() {
 
           return (
             <div key={ex.id} style={s.card}>
-              <div onClick={()=>setExpandedExercise(isExpanded ? null : ex.id)} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}>
+              <div onClick={()=>{
+                const next = isExpanded ? null : ex.id
+                setExpandedExercise(next)
+                if (next) localStorage.setItem('fofit_expanded_exercise', next)
+                else localStorage.removeItem('fofit_expanded_exercise')
+              }} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}>
                 <div style={{
                   width:36,height:36,borderRadius:10,flexShrink:0,
                   background: completedSets===ex.sets && ex.sets>0 ? '#EAF3DE' : 'var(--bg-input)',
