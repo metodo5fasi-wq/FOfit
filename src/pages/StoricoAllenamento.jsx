@@ -281,7 +281,6 @@ export default function StoricoAllenamento() {
             </div>
           </div>
         )}
-        )}
 
         {/* MODAL LINK GENERATO — sempre visibile in primo piano */}
         {generatedLink && (
