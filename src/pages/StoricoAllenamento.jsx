@@ -210,48 +210,50 @@ export default function StoricoAllenamento() {
         )}
 
         {/* LISTA SESSIONI */}
-        {loading ? (
+        {loading && (
           <div style={{textAlign:'center',padding:'30px 0',color:'var(--text-muted)',fontSize:13}}>Caricamento...</div>
-        ) : filteredSessions.length === 0 ? (
+        )}
+
+        {!loading && filteredSessions.length === 0 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-history" style={{fontSize:44,color:'#E0DDD6',display:'block',marginBottom:14}}/>
             <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>Nessun allenamento ancora</div>
             <div style={{fontSize:13,color:'var(--text-muted)'}}>Le sessioni completate appariranno qui.</div>
           </div>
-        ) : (
-          filteredSessions.map(sess => {
-            const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
-            return (
-              <div key={sess.id} style={s.card}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:sess.notes?10:0}}>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{sess.day_label}</div>
-                    <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
-                      {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
-                    </div>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0,marginLeft:10}}>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
-                      <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
-                    </div>
-                    <button onClick={()=>{setEditingSession(sess);setEditNotes(sess.notes||'')}} style={s.shareBtn}>
-                      <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica
-                    </button>
-                    <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
-                      {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Ok!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
-                    </button>
+        )}
+
+        {!loading && filteredSessions.map(sess => {
+          const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
+          return (
+            <div key={sess.id} style={s.card}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:sess.notes?10:0}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{sess.day_label}</div>
+                  <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
+                    {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
                   </div>
                 </div>
-                {sess.notes && (
-                  <div style={{fontSize:12,color:'var(--text)',background:'var(--bg-input)',borderRadius:8,padding:'10px 12px',lineHeight:1.5}}>
-                    {sess.notes}
+                <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0,marginLeft:10}}>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
+                    <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
                   </div>
-                )}
+                  <button onClick={()=>{setEditingSession(sess);setEditNotes(sess.notes||'')}} style={s.shareBtn}>
+                    <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica
+                  </button>
+                  <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
+                    {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Ok!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
+                  </button>
+                </div>
               </div>
-            )
-          })
-        )}
+              {sess.notes && (
+                <div style={{fontSize:12,color:'var(--text)',background:'var(--bg-input)',borderRadius:8,padding:'10px 12px',lineHeight:1.5}}>
+                  {sess.notes}
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {/* MODAL MODIFICA SESSIONE */}
         {editingSession && (
