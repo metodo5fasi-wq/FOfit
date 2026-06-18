@@ -282,11 +282,11 @@ function ProgressView({ entry, photos }) {
       {photos.length > 0 && (
         <div style={{background:CARD,borderRadius:14,padding:'16px',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
           <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📸 Foto progressi</div>
-          <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(photos.length,3)},1fr)`,gap:8}}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {photos.map((p,i) => (
               <div key={i} style={{position:'relative'}}>
-                <img src={p.photo_url} alt={p.label} style={{width:'100%',aspectRatio:'3/4',objectFit:'cover',borderRadius:10,display:'block'}}/>
-                <div style={{position:'absolute',bottom:6,left:6,background:'rgba(0,0,0,0.6)',color:'white',fontSize:10,padding:'2px 7px',borderRadius:8,fontWeight:600}}>{p.label}</div>
+                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:520,objectFit:'contain',borderRadius:12,display:'block',background:BG}}/>
+                <div style={{position:'absolute',bottom:10,left:10,background:'rgba(0,0,0,0.65)',color:'white',fontSize:12,padding:'4px 10px',borderRadius:8,fontWeight:600}}>{p.label}</div>
               </div>
             ))}
           </div>
@@ -339,11 +339,13 @@ function ProgressPeriodView({ entries, photos, period }) {
       {photos.length > 0 && (
         <div style={{background:CARD,borderRadius:14,padding:'16px',marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
           <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📸 Foto del periodo</div>
-          <div style={{display:'flex',gap:8,overflowX:'auto'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {photos.map((p,i)=>(
-              <div key={i} style={{position:'relative',flexShrink:0}}>
-                <img src={p.photo_url} alt={p.label} style={{width:90,height:120,objectFit:'cover',borderRadius:10,display:'block'}}/>
-                <div style={{position:'absolute',bottom:5,left:5,background:'rgba(0,0,0,0.6)',color:'white',fontSize:9,padding:'2px 6px',borderRadius:6,fontWeight:600}}>{p.label}</div>
+              <div key={i} style={{position:'relative'}}>
+                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:480,objectFit:'contain',borderRadius:12,display:'block',background:BG}}/>
+                <div style={{position:'absolute',bottom:10,left:10,background:'rgba(0,0,0,0.65)',color:'white',fontSize:11,padding:'4px 9px',borderRadius:8,fontWeight:600}}>
+                  {p.label} · {new Date(p.photo_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
+                </div>
               </div>
             ))}
           </div>
