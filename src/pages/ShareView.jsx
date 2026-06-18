@@ -14,12 +14,19 @@ export default function ShareView() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    document.title = 'FOfit'
+  }, [])
+
+  useEffect(() => {
     if (!token) return
     fetch(`/api/share?token=${token}`)
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error)
-        else setData(d)
+        else {
+          setData(d)
+          document.title = `FOfit · ${d.profile?.full_name || 'Progressi'}`
+        }
         setLoading(false)
       })
       .catch(() => { setError('Errore di rete'); setLoading(false) })
