@@ -81,6 +81,7 @@ export default function TrackerProgressi() {
   const [sharingId, setSharingId] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
   const [generatedLink, setGeneratedLink] = useState('')
+  const [previewOpen, setPreviewOpen] = useState(false)
   const [showPeriodShare, setShowPeriodShare] = useState(false)
   const [periodStart, setPeriodStart] = useState(() => {
     const d = new Date(); d.setDate(d.getDate()-30); return d.toISOString().split('T')[0]
@@ -476,7 +477,7 @@ export default function TrackerProgressi() {
               }} style={{flex:1,padding:'11px',background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>
                 <i className="ti ti-share" style={{fontSize:14}}/>{navigator.share?'Condividi':'Copia link'}
               </button>
-              <button onClick={()=>window.open(generatedLink,'_blank')} style={{flex:1,padding:'11px',background:'#FEF0E7',color:'#D4570A',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>
+              <button onClick={()=>setPreviewOpen(true)} style={{flex:1,padding:'11px',background:'#FEF0E7',color:'#D4570A',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>
                 <i className="ti ti-eye" style={{fontSize:14}}/>Vedi anteprima
               </button>
             </div>
@@ -484,6 +485,20 @@ export default function TrackerProgressi() {
               Chiudi
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ANTEPRIMA IN-APP (iframe, resta dentro FOfit) */}
+      {previewOpen && generatedLink && (
+        <div style={{position:'fixed',inset:0,background:'white',zIndex:400,display:'flex',flexDirection:'column'}}>
+          <div style={{background:'#111',padding:'12px 16px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+            <button onClick={()=>setPreviewOpen(false)} style={{background:'rgba(255,255,255,0.12)',border:'none',borderRadius:9,padding:'8px 14px',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontFamily:'inherit'}}>
+              <i className="ti ti-arrow-left" style={{fontSize:15,color:'white'}}/>
+              <span style={{fontSize:12,fontWeight:600,color:'white'}}>Torna a FOfit</span>
+            </button>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.6)'}}>Anteprima link condiviso</div>
+          </div>
+          <iframe src={generatedLink} title="Anteprima" style={{flex:1,border:'none',width:'100%'}}/>
         </div>
       )}
 
