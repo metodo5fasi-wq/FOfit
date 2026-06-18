@@ -55,11 +55,19 @@ export default function ShareView() {
   return (
     <div style={{minHeight:'100dvh',background:BG,fontFamily:'system-ui',WebkitFontSmoothing:'antialiased'}}>
       {/* HEADER */}
-      <div style={{background:DARK,padding:'16px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div style={{fontSize:18,fontWeight:800,color:'white',letterSpacing:-0.5}}>
+      <div style={{background:DARK,padding:'14px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
+        {window.self === window.top ? (
+          <button onClick={()=>{
+            if (window.history.length > 1) window.history.back()
+            else window.location.href = '/'
+          }} style={{background:'rgba(255,255,255,0.12)',border:'none',borderRadius:9,padding:'8px 14px',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontFamily:'inherit'}}>
+            <i className="ti ti-arrow-left" style={{fontSize:15,color:'white'}}/>
+            <span style={{fontSize:12,fontWeight:600,color:'white'}}>Chiudi</span>
+          </button>
+        ) : <div/>}
+        <div style={{fontSize:17,fontWeight:800,color:'white',letterSpacing:-0.5}}>
           FO<span style={{color:ORANGE}}>fit</span>
         </div>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>by Federico Obinu</div>
       </div>
 
       <div style={{maxWidth:480,margin:'0 auto',padding:'20px 16px'}}>
