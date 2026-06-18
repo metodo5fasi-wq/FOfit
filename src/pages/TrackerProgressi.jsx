@@ -491,7 +491,7 @@ export default function TrackerProgressi() {
       {/* ANTEPRIMA IN-APP (iframe, resta dentro FOfit) */}
       {previewOpen && generatedLink && (
         <div style={{position:'fixed',inset:0,background:'white',zIndex:400,display:'flex',flexDirection:'column'}}>
-          <div style={{background:'#111',padding:'12px 16px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+          <div style={{background:'#111',padding:'calc(env(safe-area-inset-top) + 12px) 16px 12px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
             <button onClick={()=>setPreviewOpen(false)} style={{background:'rgba(255,255,255,0.12)',border:'none',borderRadius:9,padding:'8px 14px',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontFamily:'inherit'}}>
               <i className="ti ti-arrow-left" style={{fontSize:15,color:'white'}}/>
               <span style={{fontSize:12,fontWeight:600,color:'white'}}>Torna a FOfit</span>
