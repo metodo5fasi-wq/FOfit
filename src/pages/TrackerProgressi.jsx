@@ -78,6 +78,51 @@ export default function TrackerProgressi() {
   const [photoNotes, setPhotoNotes] = useState('')
   const [lightbox, setLightbox] = useState(null)
   const fileRef = useRef(null)
+  const [sharingId, setSharingId] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
+  const [generatedLink, setGeneratedLink] = useState('')
+  const [showPeriodShare, setShowPeriodShare] = useState(false)
+  const [periodStart, setPeriodStart] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate()-30); return d.toISOString().split('T')[0]
+  })
+  const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
+
+  async function shareEntry(entry) {
+    setSharingId(entry.id)
+    try {
+      const r = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: profile.id, shareType: 'progress', progressEntryId: entry.id })
+      })
+      const data = await r.json()
+      if (data.token) {
+        setGeneratedLink(`${window.location.origin}/share/${data.token}`)
+        setCopiedId(entry.id)
+        setTimeout(() => setCopiedId(null), 3000)
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setSharingId(null)
+  }
+
+  async function sharePeriodProgress() {
+    setSharingId('period')
+    try {
+      const r = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: profile.id, shareType: 'progress_period', periodStart, periodEnd })
+      })
+      const data = await r.json()
+      if (data.token) {
+        setGeneratedLink(`${window.location.origin}/share/${data.token}`)
+        setCopiedId('period')
+        setTimeout(() => setCopiedId(null), 3000)
+        setShowPeriodShare(false)
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setSharingId(null)
+  }
   const [form, setForm] = useState({
     entry_date: new Date().toISOString().split('T')[0],
     weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:''
@@ -186,9 +231,14 @@ export default function TrackerProgressi() {
           <div style={{fontSize:12, color:'var(--text-muted)'}}>{entries.length} misurazioni · {photos.length} foto</div>
         </div>
         {activeTab === 'misure' && (
-          <button style={s.btn} onClick={() => setShowForm(!showForm)}>
-            <i className="ti ti-plus" style={{fontSize:14}}/> Misurazione
-          </button>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={() => setShowPeriodShare(true)} style={{background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #D4570A',borderRadius:8,padding:'8px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
+              <i className="ti ti-share" style={{fontSize:14}}/>Condividi
+            </button>
+            <button style={s.btn} onClick={() => setShowForm(!showForm)}>
+              <i className="ti ti-plus" style={{fontSize:14}}/> Misurazione
+            </button>
+          </div>
         )}
         {activeTab === 'foto' && (
           <button style={s.btn} onClick={() => fileRef.current?.click()} disabled={uploading}>
@@ -315,12 +365,47 @@ export default function TrackerProgressi() {
                     </div>
                     {e.notes && <div style={{fontSize:11, color:'var(--text-muted)', marginTop:4, fontStyle:'italic'}}>{e.notes}</div>}
                   </div>
-                  <button onClick={() => deleteEntry(e.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#E0DDD6', fontSize:16, padding:'0 0 0 12px', flexShrink:0}}>
-                    <i className="ti ti-trash"/>
-                  </button>
+                  <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                    <button onClick={()=>shareEntry(e)} disabled={sharingId===e.id} style={{background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:7,padding:'5px 9px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)',display:'flex',alignItems:'center',gap:3}}>
+                      {copiedId===e.id ? <><i className="ti ti-check" style={{fontSize:12,color:'#3B6D11'}}/></> : sharingId===e.id ? '...' : <i className="ti ti-share" style={{fontSize:12}}/>}
+                    </button>
+                    <button onClick={() => deleteEntry(e.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#E0DDD6', fontSize:16, padding:0}}>
+                      <i className="ti ti-trash"/>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* LINK GENERATO */}
+            {generatedLink && (
+              <div style={{...s.card, border:'0.5px solid #D4570A'}}>
+                <div style={{fontSize:12,fontWeight:600,color:'#D4570A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+                  <i className="ti ti-link" style={{fontSize:13}}/>Link generato — tieni premuto per copiare
+                </div>
+                <input readOnly value={generatedLink} onFocus={e=>e.target.select()}
+                  style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'monospace',boxSizing:'border-box',marginBottom:8}}/>
+                <div style={{display:'flex',gap:8}}>
+                  <a href={generatedLink} target="_blank" rel="noopener noreferrer" style={{flex:1,padding:'9px',background:'#FEF0E7',color:'#D4570A',borderRadius:8,fontSize:12,fontWeight:600,textAlign:'center',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                    <i className="ti ti-external-link" style={{fontSize:13}}/>Apri link
+                  </a>
+                  <button onClick={()=>{
+                    if (navigator.share) { navigator.share({ url: generatedLink, title: 'I miei progressi FOfit' }) }
+                    else {
+                      const el = document.createElement('textarea')
+                      el.value = generatedLink; el.style.position='fixed'; el.style.opacity='0'
+                      document.body.appendChild(el); el.focus(); el.select()
+                      document.execCommand('copy'); document.body.removeChild(el)
+                    }
+                  }} style={{flex:1,padding:'9px',background:'#D4570A',color:'white',border:'none',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                    <i className="ti ti-share" style={{fontSize:13}}/>{navigator.share?'Condividi':'Copia link'}
+                  </button>
+                  <button onClick={()=>setGeneratedLink('')} style={{padding:'9px 12px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
+                    <i className="ti ti-x" style={{fontSize:13}}/>
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -393,6 +478,30 @@ export default function TrackerProgressi() {
           </>
         )}
       </div>
+
+      {/* MODAL CONDIVIDI PERIODO */}
+      {showPeriodShare && (
+        <div onClick={e=>e.target===e.currentTarget&&setShowPeriodShare(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
+          <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:380}}>
+            <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:4}}>Condividi progressi</div>
+            <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:20}}>Scegli il periodo da condividere: misurazioni, foto e variazione peso. Link valido 30 giorni.</div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Dal</div>
+              <input type="date" value={periodStart} onChange={e=>setPeriodStart(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Al</div>
+              <input type="date" value={periodEnd} onChange={e=>setPeriodEnd(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            </div>
+            <div style={{display:'flex',gap:10}}>
+              <button onClick={sharePeriodProgress} disabled={sharingId==='period'} style={{flex:1,padding:11,background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                {sharingId==='period' ? 'Generazione...' : <><i className="ti ti-link"/>Genera link</>}
+              </button>
+              <button onClick={()=>setShowPeriodShare(false)} style={{padding:'11px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>Annulla</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:999, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:20}}>
