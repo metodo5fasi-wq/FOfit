@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth, useTheme } from '../App'
 
-const NAV = [
+const NAV_CLIENT = [
   { to:'/', icon:'ti-layout-dashboard', label:'Dashboard', exact:true, color:'#F4894A' },
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', color:'#D4570A' },
   { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#E8803A' },
@@ -17,10 +17,16 @@ const NAV = [
   { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#3B8CD4' },
 ]
 
+const NAV_ADMIN = [
+  { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
+]
+
 const ADMIN_NAV = [
   { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
-  { to:'/importa', icon:'ti-file-upload', label:'Importa piano', color:'#F4894A' },
-  { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa allenamento', color:'#D4570A' },
+  { to:'/importa', icon:'ti-file-upload', label:'Importa piano alimentare', color:'#F4894A' },
+  { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa scheda allenamento', color:'#D4570A' },
+  { to:'/modifica-piano-cliente', icon:'ti-tools-kitchen-2', label:'Modifica piano alimentare', color:'#3B8C5A' },
+  { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
 ]
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
@@ -72,31 +78,53 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
 
       {/* VOCI NAV */}
       <div style={{flex:1,overflowY:'auto',padding:'8px'}}>
-        <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Menu</div>
-        {NAV.map(item => (
-          <NavLink key={item.to} to={item.to} end={item.exact}
-            onClick={onClose}
-            style={({ isActive }) => ({
-              display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
-              borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
-              background:isActive?`${item.color}22`:'transparent',
-              borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
-              color:isActive?'white':'rgba(255,255,255,0.48)',
-            })}>
-            <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
-            </div>
-            <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
-            {item.to==='/ai'&&<span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>}
-          </NavLink>
-        ))}
 
+        {/* MENU CLIENTE */}
+        {!isAdmin && (
+          <>
+            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Menu</div>
+            {NAV_CLIENT.map(item => (
+              <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
+                style={({ isActive }) => ({
+                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
+                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
+                  background:isActive?`${item.color}22`:'transparent',
+                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
+                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                })}>
+                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
+                </div>
+                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+                {item.to==='/ai'&&<span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>}
+              </NavLink>
+            ))}
+          </>
+        )}
+
+        {/* MENU ADMIN */}
         {isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Admin</div>
+            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Gestione clienti</div>
+            {NAV_ADMIN.map(item => (
+              <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
+                style={({ isActive }) => ({
+                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
+                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
+                  background:isActive?`${item.color}22`:'transparent',
+                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
+                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                })}>
+                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
+                </div>
+                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+              </NavLink>
+            ))}
+
+            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Importa</div>
             {ADMIN_NAV.map(item => (
-              <NavLink key={item.to} to={item.to}
-                onClick={onClose}
+              <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
                   display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
                   borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
@@ -114,7 +142,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         )}
       </div>
 
-      {/* FOOTER */}
+            {/* FOOTER */}
       <div style={{padding:'12px 16px',borderTop:'0.5px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:7,fontSize:12,color:'rgba(255,255,255,0.3)',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:14}}/>Esci
