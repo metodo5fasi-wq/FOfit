@@ -50,6 +50,99 @@ export default function AdminPanel() {
   const [msg, setMsg] = useState('')
   const [newClient, setNewClient] = useState({ email:'', password:'', full_name:'', goal:'dimagrimento', phone:'', height_cm:'', notes:'' })
   const [newPlan, setNewPlan] = useState({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
+  const [dietType, setDietType] = useState('lineare')
+  const [dietConfig, setDietConfig] = useState({
+    // ON/OFF
+    on_kcal:2200, on_protein:160, on_carbs:250, on_fat:65,
+    off_kcal:1900, off_protein:155, off_carbs:190, off_fat:65,
+    on_days:[1,3,5], // Lun Mer Ven
+    // AD ONDE
+    high_kcal:2400, high_protein:170, high_carbs:280, high_fat:65,
+    mid_kcal:2100, mid_protein:155, mid_carbs:230, mid_fat:65,
+    low_kcal:1800, low_protein:150, low_carbs:175, low_fat:65,
+    high_days:[1,3,5], mid_days:[2,4], low_days:[6,7],
+    // REVERSE
+    base_kcal:1800, base_protein:150, base_carbs:175, base_fat:60,
+    weekly_increase_pct:5, weeks:8,
+    // DEFICIT/SURPLUS CICLICO
+    deficit_kcal:1800, deficit_protein:155, deficit_carbs:175, deficit_fat:60,
+    surplus_kcal:2400, surplus_protein:160, surplus_carbs:290, surplus_fat:70,
+    // REFEED
+    normal_kcal:1900, normal_protein:155, normal_carbs:185, normal_fat:62,
+    refeed_kcal:2500, refeed_protein:160, refeed_carbs:350, refeed_fat:50,
+    refeed_days:[6,7],
+  })
+
+  const DIET_TYPES = [
+    { value:'lineare', label:'🔵 Lineare', desc:'Stesso schema ogni giorno' },
+    { value:'on_off', label:'🟠 ON / OFF', desc:'Kcal diverse nei giorni di allenamento e riposo' },
+    { value:'onde', label:'🌊 Ad onde', desc:'3 livelli: alto / medio / basso su 7 giorni' },
+    { value:'reverse', label:'📈 Reverse diet', desc:'Aumento progressivo settimanale delle kcal' },
+    { value:'ciclico', label:'🔄 Deficit/Surplus ciclico', desc:'Settimane alternate deficit e surplus' },
+    { value:'refeed', label:'⚡ Refeed', desc:'Dieta base con 1-2 giorni di ricarica kcal' },
+  ]
+  const DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']
+
+  function toggleDietDay(field, day) {
+    setDietConfig(p => {
+      const arr = p[field] || []
+      return { ...p, [field]: arr.includes(day) ? arr.filter(d=>d!==day) : [...arr, day] }
+    })
+  }
+
+  function DayPicker({ field, color='#D4570A' }) {
+    return (
+      <div style={{display:'flex',gap:4,marginTop:6}}>
+        {DAY_NAMES.map((dn,i) => {
+          const day = i+1
+          const active = (dietConfig[field]||[]).includes(day)
+          return (
+            <button key={day} onClick={()=>toggleDietDay(field, day)} style={{
+              width:32,height:28,borderRadius:7,border:'0.5px solid',fontFamily:'inherit',fontSize:11,fontWeight:600,cursor:'pointer',
+              background:active?color:'#F5F3EF', color:active?'white':'#888780', borderColor:active?color:'#E0DDD6'
+            }}>{dn}</button>
+          )
+        })}
+      </div>
+    )
+  }
+
+  function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
+    return (
+      <div style={{background:bg,borderRadius:10,padding:'12px',border:`0.5px solid ${color}22`,marginBottom:10}}>
+        <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>{label}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+          {[{k:`${prefix}_kcal`,l:'Kcal'},{k:`${prefix}_protein`,l:'Pro (g)'},{k:`${prefix}_carbs`,l:'Carbo (g)'},{k:`${prefix}_fat`,l:'Grassi (g)'}].map(f=>(
+            <div key={f.k}>
+              <label style={{...s.label,color:'#888780'}}>{f.l}</label>
+              <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
+                value={dietConfig[f.k]||''}
+                onChange={e=>setDietConfig(p=>({...p,[f.k]:parseInt(e.target.value)||0}))}/>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  function buildPlanFromDiet() {
+    // Ritorna { kcal_target, protein_target_g, carbs_target_g, fat_target_g, diet_config }
+    // Per il piano base usiamo la media pesata
+    const dc = dietConfig
+    switch(dietType) {
+      case 'lineare': return { kcal_target:newPlan.kcal_target, protein_target_g:newPlan.protein_target_g, carbs_target_g:newPlan.carbs_target_g, fat_target_g:newPlan.fat_target_g, diet_type:'lineare', diet_config:null }
+      case 'on_off': {
+        const onDays = dc.on_days.length, offDays = 7-onDays
+        const avgKcal = Math.round((dc.on_kcal*onDays+dc.off_kcal*offDays)/7)
+        return { kcal_target:avgKcal, protein_target_g:Math.round((dc.on_protein*onDays+dc.off_protein*offDays)/7), carbs_target_g:Math.round((dc.on_carbs*onDays+dc.off_carbs*offDays)/7), fat_target_g:Math.round((dc.on_fat*onDays+dc.off_fat*offDays)/7), diet_type:'on_off', diet_config:JSON.stringify({on:{kcal:dc.on_kcal,protein:dc.on_protein,carbs:dc.on_carbs,fat:dc.on_fat,days:dc.on_days},off:{kcal:dc.off_kcal,protein:dc.off_protein,carbs:dc.off_carbs,fat:dc.off_fat}}) }
+      }
+      case 'onde': return { kcal_target:Math.round((dc.high_kcal*dc.high_days.length+dc.mid_kcal*dc.mid_days.length+dc.low_kcal*dc.low_days.length)/7), protein_target_g:Math.round((dc.high_protein*dc.high_days.length+dc.mid_protein*dc.mid_days.length+dc.low_protein*dc.low_days.length)/7), carbs_target_g:Math.round((dc.high_carbs*dc.high_days.length+dc.mid_carbs*dc.mid_days.length+dc.low_carbs*dc.low_days.length)/7), fat_target_g:Math.round((dc.high_fat*dc.high_days.length+dc.mid_fat*dc.mid_days.length+dc.low_fat*dc.low_days.length)/7), diet_type:'onde', diet_config:JSON.stringify({high:{kcal:dc.high_kcal,protein:dc.high_protein,carbs:dc.high_carbs,fat:dc.high_fat,days:dc.high_days},mid:{kcal:dc.mid_kcal,protein:dc.mid_protein,carbs:dc.mid_carbs,fat:dc.mid_fat,days:dc.mid_days},low:{kcal:dc.low_kcal,protein:dc.low_protein,carbs:dc.low_carbs,fat:dc.low_fat,days:dc.low_days}}) }
+      case 'reverse': return { kcal_target:dc.base_kcal, protein_target_g:dc.base_protein, carbs_target_g:dc.base_carbs, fat_target_g:dc.base_fat, diet_type:'reverse', diet_config:JSON.stringify({base:{kcal:dc.base_kcal,protein:dc.base_protein,carbs:dc.base_carbs,fat:dc.base_fat},weekly_increase_pct:dc.weekly_increase_pct,weeks:dc.weeks}) }
+      case 'ciclico': return { kcal_target:Math.round((dc.deficit_kcal+dc.surplus_kcal)/2), protein_target_g:Math.round((dc.deficit_protein+dc.surplus_protein)/2), carbs_target_g:Math.round((dc.deficit_carbs+dc.surplus_carbs)/2), fat_target_g:Math.round((dc.deficit_fat+dc.surplus_fat)/2), diet_type:'ciclico', diet_config:JSON.stringify({deficit:{kcal:dc.deficit_kcal,protein:dc.deficit_protein,carbs:dc.deficit_carbs,fat:dc.deficit_fat},surplus:{kcal:dc.surplus_kcal,protein:dc.surplus_protein,carbs:dc.surplus_carbs,fat:dc.surplus_fat}}) }
+      case 'refeed': return { kcal_target:dc.normal_kcal, protein_target_g:dc.normal_protein, carbs_target_g:dc.normal_carbs, fat_target_g:dc.normal_fat, diet_type:'refeed', diet_config:JSON.stringify({normal:{kcal:dc.normal_kcal,protein:dc.normal_protein,carbs:dc.normal_carbs,fat:dc.normal_fat},refeed:{kcal:dc.refeed_kcal,protein:dc.refeed_protein,carbs:dc.refeed_carbs,fat:dc.refeed_fat,days:dc.refeed_days}}) }
+      default: return { kcal_target:newPlan.kcal_target, protein_target_g:newPlan.protein_target_g, carbs_target_g:newPlan.carbs_target_g, fat_target_g:newPlan.fat_target_g, diet_type:'lineare', diet_config:null }
+    }
+  }
 
   // Ricerca e filtri
   const [search, setSearch] = useState('')
@@ -152,10 +245,21 @@ export default function AdminPanel() {
   async function createPlan() {
     if (!newPlan.client_id||!newPlan.title) { setMsg('Seleziona un cliente'); return }
     setSaving(true)
-    const { error } = await supabase.from('meal_plans').insert({ ...newPlan, created_by:profile.id, kcal_target:parseInt(newPlan.kcal_target), protein_target_g:parseInt(newPlan.protein_target_g), carbs_target_g:parseInt(newPlan.carbs_target_g), fat_target_g:parseInt(newPlan.fat_target_g), week_number:parseInt(newPlan.week_number) })
+    const dietData = buildPlanFromDiet()
+    const { error } = await supabase.from('meal_plans').insert({
+      ...newPlan, created_by:profile.id,
+      kcal_target: dietData.kcal_target,
+      protein_target_g: dietData.protein_target_g,
+      carbs_target_g: dietData.carbs_target_g,
+      fat_target_g: dietData.fat_target_g,
+      diet_type: dietData.diet_type,
+      diet_config: dietData.diet_config,
+      week_number: parseInt(newPlan.week_number),
+    })
     if (error) { setMsg('Errore: '+error.message); setSaving(false); return }
     setMsg('Piano creato!')
     setShowNewPlan(false)
+    setDietType('lineare')
     setNewPlan({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
     setTimeout(() => { setMsg(''); fetchAll() }, 2000)
     setSaving(false)
@@ -347,37 +451,110 @@ export default function AdminPanel() {
 
       {showNewPlan&&(
         <div style={s.modal} onClick={e=>e.target===e.currentTarget&&setShowNewPlan(false)}>
-          <div style={s.modalCard}>
+          <div style={{...s.modalCard, maxWidth:620}}>
             <div style={{fontSize:16,fontWeight:500,color:'#111',marginBottom:4}}>Nuovo piano alimentare</div>
-            <div style={{fontSize:12,color:'#888780',marginBottom:20}}>Assegna un piano a un cliente.</div>
-            <div style={s.formGroup}><label style={s.label}>Cliente *</label>
-              <select style={s.select} value={newPlan.client_id} onChange={e=>setNewPlan(p=>({...p,client_id:e.target.value}))}>
-                <option value="">Seleziona...</option>{clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
+            <div style={{fontSize:12,color:'#888780',marginBottom:16}}>Assegna un piano a un cliente.</div>
+
+            {/* CLIENTE E TITOLO */}
+            <div style={s.grid2}>
+              <div style={s.formGroup}><label style={s.label}>Cliente *</label>
+                <select style={s.select} value={newPlan.client_id} onChange={e=>setNewPlan(p=>({...p,client_id:e.target.value}))}>
+                  <option value="">Seleziona...</option>{clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
+                </select>
+              </div>
+              <div style={s.formGroup}><label style={s.label}>Titolo</label><input style={s.input} value={newPlan.title} onChange={e=>setNewPlan(p=>({...p,title:e.target.value}))}/></div>
+            </div>
+
+            {/* TIPO DI DIETA */}
+            <div style={s.formGroup}>
+              <label style={s.label}>Tipo di approccio alimentare</label>
+              <select style={{...s.select, fontWeight:500}} value={dietType} onChange={e=>setDietType(e.target.value)}>
+                {DIET_TYPES.map(d=><option key={d.value} value={d.value}>{d.label} — {d.desc}</option>)}
               </select>
             </div>
-            <div style={s.grid2}>
-              <div style={s.formGroup}><label style={s.label}>Titolo</label><input style={s.input} value={newPlan.title} onChange={e=>setNewPlan(p=>({...p,title:e.target.value}))}/></div>
-              <div style={s.formGroup}><label style={s.label}>Settimana</label><input style={s.input} type="number" value={newPlan.week_number} onChange={e=>setNewPlan(p=>({...p,week_number:e.target.value}))}/></div>
-            </div>
-            <div style={s.formGroup}>
-              <label style={s.label}>Calorie target (kcal)</label>
-              <input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/>
-              <div style={{fontSize:11,color:'#888780',marginTop:5}}>
-                <i className="ti ti-refresh" style={{fontSize:12,marginRight:4}}/>
-                Modificando le kcal, i macro sotto si riproporzionano automaticamente
-              </div>
-            </div>
-            <div style={s.grid2}>
-              <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
-              <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
-              <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
-              <div style={s.formGroup}>
-                <label style={s.label}>Totale da macro</label>
-                <div style={{padding:'9px 12px',background:'#EAF3DE',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
-                  <i className="ti ti-check" style={{fontSize:14}}/>{macroKcal(newPlan)} kcal
+
+            {/* LINEARE */}
+            {dietType==='lineare' && (
+              <>
+                <div style={s.formGroup}>
+                  <label style={s.label}>Calorie target (kcal)</label>
+                  <input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/>
                 </div>
-              </div>
-            </div>
+                <div style={s.grid2}>
+                  <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'#EAF3DE',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
+                </div>
+              </>
+            )}
+
+            {/* ON/OFF */}
+            {dietType==='on_off' && (
+              <>
+                <MacroBox label="🟠 Giorni ON (allenamento)" prefix="on" color="#D4570A" bg="#FEF0E7"/>
+                <div style={{fontSize:11,color:'#888780',marginBottom:6,marginTop:-4}}>Giorni ON</div>
+                <DayPicker field="on_days" color="#D4570A"/>
+                <div style={{height:12}}/>
+                <MacroBox label="🔵 Giorni OFF (riposo)" prefix="off" color="#4A90D4" bg="#EBF3FD"/>
+                <div style={{fontSize:11,color:'#888780',marginTop:6}}>I giorni non selezionati come ON saranno automaticamente OFF.</div>
+              </>
+            )}
+
+            {/* AD ONDE */}
+            {dietType==='onde' && (
+              <>
+                <MacroBox label="🔴 Giorni ALTO" prefix="high" color="#D4570A" bg="#FEF0E7"/>
+                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni ALTO</div><DayPicker field="high_days" color="#D4570A"/>
+                <div style={{height:10}}/>
+                <MacroBox label="🟡 Giorni MEDIO" prefix="mid" color="#E8A020" bg="#FEF8E7"/>
+                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni MEDIO</div><DayPicker field="mid_days" color="#E8A020"/>
+                <div style={{height:10}}/>
+                <MacroBox label="🟢 Giorni BASSO" prefix="low" color="#3B6D11" bg="#EAF3DE"/>
+                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni BASSO</div><DayPicker field="low_days" color="#3B6D11"/>
+              </>
+            )}
+
+            {/* REVERSE */}
+            {dietType==='reverse' && (
+              <>
+                <MacroBox label="📈 Kcal di partenza (Settimana 1)" prefix="base" color="#9B59B6" bg="#F5EEF8"/>
+                <div style={s.grid2}>
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Aumento settimanale (%)</label>
+                    <input style={s.input} type="number" value={dietConfig.weekly_increase_pct} onChange={e=>setDietConfig(p=>({...p,weekly_increase_pct:parseFloat(e.target.value)||0}))}/>
+                  </div>
+                  <div style={s.formGroup}>
+                    <label style={s.label}>Numero settimane</label>
+                    <input style={s.input} type="number" value={dietConfig.weeks} onChange={e=>setDietConfig(p=>({...p,weeks:parseInt(e.target.value)||1}))}/>
+                  </div>
+                </div>
+                <div style={{background:'#F5EEF8',borderRadius:9,padding:'10px 12px',fontSize:12,color:'#9B59B6'}}>
+                  Progressione stimata: {Array.from({length:Math.min(dietConfig.weeks,6)},(_,i)=>Math.round(dietConfig.base_kcal*Math.pow(1+dietConfig.weekly_increase_pct/100,i))).join(' → ')} {dietConfig.weeks>6?'→ ...':''} kcal
+                </div>
+              </>
+            )}
+
+            {/* CICLICO */}
+            {dietType==='ciclico' && (
+              <>
+                <MacroBox label="🔻 Settimana DEFICIT" prefix="deficit" color="#E24B4A" bg="#FEE2E2"/>
+                <MacroBox label="🔺 Settimana SURPLUS" prefix="surplus" color="#3B6D11" bg="#EAF3DE"/>
+                <div style={{fontSize:11,color:'#888780'}}>Le settimane si alternano automaticamente: A=Deficit, B=Surplus.</div>
+              </>
+            )}
+
+            {/* REFEED */}
+            {dietType==='refeed' && (
+              <>
+                <MacroBox label="📊 Giorni normali" prefix="normal" color="#4A90D4" bg="#EBF3FD"/>
+                <MacroBox label="⚡ Giorni Refeed" prefix="refeed" color="#D4570A" bg="#FEF0E7"/>
+                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni Refeed</div>
+                <DayPicker field="refeed_days" color="#D4570A"/>
+              </>
+            )}
+
+            <div style={{height:12}}/>
             <div style={s.formGroup}><label style={s.label}>Note coach</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newPlan.notes} onChange={e=>setNewPlan(p=>({...p,notes:e.target.value}))}/></div>
             {msg&&<div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
             <button style={s.saveBtn} onClick={createPlan} disabled={saving}>{saving?'Creazione...':'Crea piano'}</button>
