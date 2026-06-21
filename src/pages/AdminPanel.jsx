@@ -442,7 +442,7 @@ export default function AdminPanel() {
                     <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={s.avatar}>{initials(c.full_name)}</div><div><div style={{fontWeight:500}}>{c.full_name}</div><div style={{fontSize:11,color:'#888780'}}>{c.height_cm?`${c.height_cm}cm`:'—'}</div></div></div></td>
                     <td style={s.td}><span style={{...s.badge,background:goalColor[c.goal]||'#F5F3EF',color:goalTextColor[c.goal]||'#888780'}}>{goalLabel[c.goal]||'—'}</span></td>
                     <td style={s.td}><span style={{...s.badge,background:st.diaryToday?'#EAF3DE':'#FEE2E2',color:st.diaryToday?'#3B6D11':'#E24B4A'}}>{st.diaryToday?'✓ Fatto':'✗ Da fare'}</span></td>
-                    <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activeMealPlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
+                    <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activePlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
                     <td style={{...s.td,fontSize:12,color:'#888780'}}>{new Date(c.created_at).toLocaleDateString('it-IT')}</td>
                     <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}>+ Piano</button><button style={s.btnGray} onClick={()=>setSelectedClient(c)}>Dettagli</button></div></td>
                   </tr>
@@ -1362,7 +1362,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
               <div style={{fontSize:13,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
               <div style={{fontSize:11,color:'#888780',marginTop:2}}>
                 {st.latestMeasure?.weight_kg ? `${st.latestMeasure.weight_kg}kg · ` : ''}
-                {st.activePlan ? st.activeMealPlan.title : 'Nessun piano'}
+                {st.activePlan ? st.activePlan.title : 'Nessun piano'}
               </div>
             </div>
             <div style={{display:'flex',gap:6,flexShrink:0}}>
