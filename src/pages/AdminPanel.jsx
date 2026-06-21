@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
@@ -838,88 +838,183 @@ function CalendarioAdmin() {
   )
 }
 
-// ── COMPONENTE MESSAGGI ADMIN ──────────────────────────────
+// ── COMPONENTE MESSAGGI ADMIN (CHAT) ──────────────────────────────
 function MessaggiAdmin() {
   const { profile } = useAuth()
   const [clients, setClients] = useState([])
-  const [selectedClient, setSelectedClient] = useState('')
-  const [message, setMessage] = useState('')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [selectedClient, setSelectedClient] = useState(null)
   const [messages, setMessages] = useState([])
-  const [generateReport, setGenerateReport] = useState(false)
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
   const [generatingReport, setGeneratingReport] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState({})
+  const bottomRef = useRef(null)
+  const pollRef = useRef(null)
 
   useEffect(() => {
-    supabase.from('profiles').select('*').eq('role','client').order('full_name').then(({data})=>setClients(data||[]))
-    supabase.from('coach_messages').select('*,profiles!coach_messages_client_id_fkey(full_name)').order('created_at',{ascending:false}).limit(20).then(({data})=>setMessages(data||[]))
+    supabase.from('profiles').select('*').eq('role','client').order('full_name').then(({data}) => {
+      setClients(data||[])
+    })
+    fetchUnread()
   }, [])
 
-  async function send() {
-    if (!selectedClient || !message.trim()) return
-    setSending(true)
-    await supabase.from('coach_messages').insert({ coach_id: profile.id, client_id: selectedClient, message: message.trim() })
-    setMessage('')
-    setSent(true)
-    setTimeout(()=>setSent(false), 3000)
-    setSending(false)
-    supabase.from('coach_messages').select('*,profiles!coach_messages_client_id_fkey(full_name)').order('created_at',{ascending:false}).limit(20).then(({data})=>setMessages(data||[]))
+  useEffect(() => {
+    if (!selectedClient) return
+    fetchMessages(selectedClient.id)
+    clearInterval(pollRef.current)
+    pollRef.current = setInterval(() => fetchMessages(selectedClient.id), 8000)
+    return () => clearInterval(pollRef.current)
+  }, [selectedClient])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  async function fetchUnread() {
+    const { data } = await supabase.from('coach_messages')
+      .select('client_id').eq('sender_role','client').eq('is_read',false)
+    const counts = {}
+    data?.forEach(m => { counts[m.client_id] = (counts[m.client_id]||0)+1 })
+    setUnreadCounts(counts)
   }
 
-  async function handleGenerateReport() {
+  async function fetchMessages(clientId) {
+    const { data } = await supabase.from('coach_messages')
+      .select('*').eq('client_id', clientId).order('created_at', {ascending:true})
+    setMessages(data||[])
+    // Segna come letti i messaggi del cliente
+    await supabase.from('coach_messages').update({is_read:true})
+      .eq('client_id', clientId).eq('sender_role','client').eq('is_read',false)
+    fetchUnread()
+  }
+
+  async function send() {
+    if (!text.trim() || !selectedClient || sending) return
+    setSending(true)
+    const msg = text.trim()
+    setText('')
+    setMessages(prev => [...prev, {
+      id: 'tmp-'+Date.now(), message: msg,
+      sender_role: 'coach', created_at: new Date().toISOString()
+    }])
+    await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ clientId: selectedClient.id, coachId: profile.id, message: msg, senderRole: 'coach' })
+    })
+    fetchMessages(selectedClient.id)
+    setSending(false)
+  }
+
+  async function generateReport() {
     if (!selectedClient) return
     setGeneratingReport(true)
     try {
       const r = await fetch('/api/monthly-report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: selectedClient })
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ clientId: selectedClient.id })
       })
       const data = await r.json()
-      if (data.content) {
-        setMessage(data.content)
-        setGenerateReport(false)
-      }
-    } catch(e) { alert('Errore: ' + e.message) }
+      if (data.content) setText(data.content)
+    } catch(e) { alert('Errore: '+e.message) }
     setGeneratingReport(false)
   }
 
-  const s2 = { input: {width:'100%',padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}, select: {width:'100%',padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit'} }
+  const grouped = {}
+  messages.forEach(m => {
+    const date = m.created_at.split('T')[0]
+    if (!grouped[date]) grouped[date] = []
+    grouped[date].push(m)
+  })
+
+  const s2 = {
+    clientBtn: { width:'100%', padding:'10px 14px', background:'white', border:'0.5px solid #E0DDD6', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
+    clientBtnActive: { width:'100%', padding:'10px 14px', background:'#FEF0E7', border:'0.5px solid #D4570A', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
+  }
 
   return (
-    <div style={{padding:'16px 22px'}}>
-      <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:16,marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:14}}>Invia messaggio al cliente</div>
-        <div style={{marginBottom:10}}>
-          <select style={s2.select} value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}>
-            <option value="">Seleziona cliente...</option>
-            {clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
-          </select>
-        </div>
-        <div style={{marginBottom:10}}>
-          <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Scrivi il tuo messaggio al cliente..." rows={4}
-            style={{...s2.input,resize:'vertical',lineHeight:1.6}}/>
-        </div>
-        <div style={{display:'flex',gap:8}}>
-          <button onClick={send} disabled={sending||!selectedClient||!message.trim()} style={{flex:1,padding:11,background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <i className="ti ti-send" style={{fontSize:14}}/>{sent?'Inviato! ✓':sending?'Invio...':'Invia messaggio'}
+    <div style={{display:'flex',height:'calc(100dvh - 120px)',gap:0}}>
+      {/* LISTA CLIENTI */}
+      <div style={{width:200,borderRight:'0.5px solid #E0DDD6',overflowY:'auto',padding:14,flexShrink:0}}>
+        <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Conversazioni</div>
+        {clients.map(c => (
+          <button key={c.id} onClick={()=>setSelectedClient(c)} style={selectedClient?.id===c.id?s2.clientBtnActive:s2.clientBtn}>
+            <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0}}>
+              {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+            </div>
+            {unreadCounts[c.id] > 0 && (
+              <div style={{width:18,height:18,borderRadius:'50%',background:'#D4570A',fontSize:10,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                {unreadCounts[c.id]}
+              </div>
+            )}
           </button>
-          <button onClick={handleGenerateReport} disabled={!selectedClient||generatingReport} style={{padding:'11px 14px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
-            <i className="ti ti-sparkles" style={{fontSize:14,color:'#D4570A'}}/>{generatingReport?'Generando...':'Report AI'}
-          </button>
-        </div>
+        ))}
       </div>
 
-      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Ultimi messaggi inviati</div>
-      {messages.map(m=>(
-        <div key={m.id} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-            <span style={{fontSize:11,fontWeight:600,color:'#D4570A'}}>{m.profiles?.full_name}</span>
-            <span style={{fontSize:11,color:'#888780'}}>{new Date(m.created_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+      {/* CHAT */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        {!selectedClient ? (
+          <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#888780',fontSize:13}}>
+            Seleziona un cliente per aprire la chat
           </div>
-          <div style={{fontSize:12,color:'#555',lineHeight:1.6}}>{m.message}</div>
-        </div>
-      ))}
+        ) : (
+          <>
+            {/* Header chat */}
+            <div style={{padding:'12px 16px',borderBottom:'0.5px solid #E0DDD6',display:'flex',alignItems:'center',justifyContent:'space-between',background:'white'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#111'}}>{selectedClient.full_name}</div>
+              <button onClick={generateReport} disabled={generatingReport} style={{padding:'6px 12px',background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #D4570A',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
+                <i className="ti ti-sparkles" style={{fontSize:13}}/>{generatingReport?'Generando...':'+Report AI'}
+              </button>
+            </div>
+
+            {/* Messaggi */}
+            <div style={{flex:1,overflowY:'auto',padding:'12px 16px'}}>
+              {Object.entries(grouped).map(([date, msgs]) => (
+                <div key={date}>
+                  <div style={{textAlign:'center',margin:'10px 0',fontSize:11,color:'#888780'}}>
+                    {date === new Date().toISOString().split('T')[0] ? 'Oggi' : new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
+                  </div>
+                  {msgs.map(m => {
+                    const isCoach = m.sender_role === 'coach'
+                    return (
+                      <div key={m.id} style={{display:'flex',justifyContent:isCoach?'flex-end':'flex-start',marginBottom:6}}>
+                        <div style={{
+                          maxWidth:'70%',padding:'9px 13px',
+                          borderRadius:isCoach?'16px 16px 4px 16px':'16px 16px 16px 4px',
+                          background:isCoach?'#D4570A':'#F5F3EF',
+                          color:isCoach?'white':'#111',
+                        }}>
+                          <div style={{fontSize:12,lineHeight:1.5,whiteSpace:'pre-wrap'}}>{m.message}</div>
+                          <div style={{fontSize:10,marginTop:3,textAlign:'right',opacity:0.7}}>
+                            {new Date(m.created_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
+                            {isCoach && <span style={{marginLeft:3}}>{m.is_read?'✓✓':'✓'}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+              <div ref={bottomRef}/>
+            </div>
+
+            {/* Input */}
+            <div style={{padding:'10px 16px',borderTop:'0.5px solid #E0DDD6',display:'flex',gap:8,background:'white'}}>
+              <textarea value={text} onChange={e=>setText(e.target.value)}
+                onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
+                placeholder="Scrivi un messaggio..." rows={1}
+                style={{flex:1,padding:'9px 14px',border:'0.5px solid #E0DDD6',borderRadius:20,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit',resize:'none',maxHeight:80,overflowY:'auto'}}/>
+              <button onClick={send} disabled={!text.trim()||sending} style={{width:38,height:38,borderRadius:'50%',background:text.trim()?'#D4570A':'#E0DDD6',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <i className="ti ti-send" style={{fontSize:16,color:'white'}}/>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
