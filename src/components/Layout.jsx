@@ -21,10 +21,12 @@ const NAV_ADMIN = [
   { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
 ]
 
-const ADMIN_NAV = [
-  { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
+const ADMIN_NAV_IMPORTA = [
   { to:'/importa', icon:'ti-file-upload', label:'Importa piano alimentare', color:'#F4894A' },
   { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa scheda allenamento', color:'#D4570A' },
+]
+
+const ADMIN_NAV_MODIFICA = [
   { to:'/modifica-piano-cliente', icon:'ti-tools-kitchen-2', label:'Modifica piano alimentare', color:'#3B8C5A' },
   { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
 ]
@@ -123,7 +125,24 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
             ))}
 
             <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Importa</div>
-            {ADMIN_NAV.map(item => (
+            {ADMIN_NAV_IMPORTA.map(item => (
+              <NavLink key={item.to} to={item.to} onClick={onClose}
+                style={({ isActive }) => ({
+                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
+                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
+                  background:isActive?`${item.color}22`:'transparent',
+                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
+                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                })}>
+                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
+                </div>
+                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+              </NavLink>
+            ))}
+
+            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Modifica</div>
+            {ADMIN_NAV_MODIFICA.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
                   display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
