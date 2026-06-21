@@ -466,7 +466,13 @@ export default function AdminPanel() {
                     <td style={s.td}><span style={{fontWeight:500}}>{p.kcal_target}</span><span style={{fontSize:11,color:'#888780'}}> kcal</span></td>
                     <td style={s.td}><div style={{fontSize:11,color:'#888780'}}>P{p.protein_target_g}g C{p.carbs_target_g}g G{p.fat_target_g}g</div></td>
                     <td style={s.td}><span style={{...s.badge,background:p.is_active?'#EAF3DE':'#F5F3EF',color:p.is_active?'#3B6D11':'#888780'}}>{p.is_active?'Attivo':'Inattivo'}</span></td>
-                    <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>togglePlan(p.id,p.is_active)}>{p.is_active?'Disattiva':'Attiva'}</button><button style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>deletePlan(p.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button></div></td>
+                    <td style={s.td}><div style={{display:'flex',gap:6}}>
+                      <a href={`/modifica-piano/${p.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                        <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica pasti
+                      </a>
+                      <button style={s.btnSm} onClick={()=>togglePlan(p.id,p.is_active)}>{p.is_active?'Disattiva':'Attiva'}</button>
+                      <button style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>deletePlan(p.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button>
+                    </div></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -839,10 +845,13 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                   <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activePlan.title}</div>
                   <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activePlan.kcal_target} kcal · P{activePlan.protein_target_g}g C{activePlan.carbs_target_g}g G{activePlan.fat_target_g}g</div>
                 </div>
-                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
                   <span style={{...s.badge,background:'#3B6D11',color:'white'}}>Attivo</span>
+                  <a href={`/modifica-piano/${activePlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                    <i className="ti ti-tools-kitchen-2" style={{fontSize:12}}/>Modifica pasti
+                  </a>
                   <button onClick={()=>setEditingPlan(!editingPlan)} style={{...s.btnSm,background:editingPlan?'#D4570A':'#F5F3EF',color:editingPlan?'white':'#888780'}}>
-                    {editingPlan?'Chiudi':'✏️ Modifica'}
+                    {editingPlan?'Chiudi':'✏️ Target'}
                   </button>
                 </div>
               </div>
