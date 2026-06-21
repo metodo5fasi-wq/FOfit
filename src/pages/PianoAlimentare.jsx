@@ -198,9 +198,45 @@ export default function PianoAlimentare() {
 
         {/* Pasti del giorno */}
         {dayMeals.length === 0 ? (
-          <div style={{...s.card, textAlign:'center', padding:'30px 0'}}>
-            <i className="ti ti-calendar-off" style={{fontSize:36,color:'#E0DDD6',display:'block',marginBottom:10}}/>
-            <div style={{fontSize:13,color:'var(--text-muted)'}}>Nessun pasto per questo giorno.</div>
+          <div>
+            {/* Piano senza pasti strutturati — mostra i target macro */}
+            <div style={{...s.card, background:'linear-gradient(135deg,#FEF0E7,#FAC9A8)', border:'0.5px solid #F4894A'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#D4570A',marginBottom:14,display:'flex',alignItems:'center',gap:6}}>
+                <i className="ti ti-target" style={{fontSize:15}}/>
+                Target giornalieri
+                {plan?.diet_type && plan.diet_type !== 'lineare' && (
+                  <span style={{fontSize:11,background:'#D4570A',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600,marginLeft:4}}>
+                    {{'on_off':'ON/OFF','onde':'Ad onde','reverse':'Reverse diet','ciclico':'Deficit/Surplus ciclico','refeed':'Refeed'}[plan.diet_type] || plan.diet_type}
+                  </span>
+                )}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+                {[
+                  {l:'Calorie',v:`${plan?.kcal_target?.toLocaleString('it-IT')}`,u:'kcal',icon:'ti-flame'},
+                  {l:'Proteine',v:plan?.protein_target_g,u:'g',icon:'ti-meat'},
+                  {l:'Carboidrati',v:plan?.carbs_target_g,u:'g',icon:'ti-bread'},
+                  {l:'Grassi',v:plan?.fat_target_g,u:'g',icon:'ti-droplet'},
+                ].map(m=>(
+                  <div key={m.l} style={{background:'rgba(255,255,255,0.6)',borderRadius:10,padding:'12px',textAlign:'center'}}>
+                    <i className={`ti ${m.icon}`} style={{fontSize:16,color:'#D4570A',display:'block',marginBottom:4}}/>
+                    <div style={{fontSize:20,fontWeight:800,color:'#D4570A'}}>{m.v}<span style={{fontSize:12,fontWeight:500}}>{m.u}</span></div>
+                    <div style={{fontSize:10,color:'#7a3508',marginTop:2,textTransform:'uppercase',letterSpacing:'0.06em'}}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+              {plan?.notes && (
+                <div style={{marginTop:12,background:'rgba(255,255,255,0.5)',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#7a3508',lineHeight:1.6}}>
+                  <i className="ti ti-notes" style={{fontSize:13,marginRight:5}}/>{plan.notes}
+                </div>
+              )}
+            </div>
+            <div style={{...s.card, textAlign:'center', padding:'20px'}}>
+              <i className="ti ti-calendar-off" style={{fontSize:32,color:'#E0DDD6',display:'block',marginBottom:8}}/>
+              <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>
+                Il tuo coach ha impostato i target nutrizionali.<br/>
+                Il piano pasti dettagliato sarà disponibile a breve.
+              </div>
+            </div>
           </div>
         ) : (
           dayMeals.map((meal, mi) => {
