@@ -442,7 +442,7 @@ export default function AdminPanel() {
                     <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={s.avatar}>{initials(c.full_name)}</div><div><div style={{fontWeight:500}}>{c.full_name}</div><div style={{fontSize:11,color:'#888780'}}>{c.height_cm?`${c.height_cm}cm`:'—'}</div></div></div></td>
                     <td style={s.td}><span style={{...s.badge,background:goalColor[c.goal]||'#F5F3EF',color:goalTextColor[c.goal]||'#888780'}}>{goalLabel[c.goal]||'—'}</span></td>
                     <td style={s.td}><span style={{...s.badge,background:st.diaryToday?'#EAF3DE':'#FEE2E2',color:st.diaryToday?'#3B6D11':'#E24B4A'}}>{st.diaryToday?'✓ Fatto':'✗ Da fare'}</span></td>
-                    <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activePlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
+                    <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activeMealPlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
                     <td style={{...s.td,fontSize:12,color:'#888780'}}>{new Date(c.created_at).toLocaleDateString('it-IT')}</td>
                     <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}>+ Piano</button><button style={s.btnGray} onClick={()=>setSelectedClient(c)}>Dettagli</button></div></td>
                   </tr>
@@ -670,6 +670,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [lastCheckin, setLastCheckin] = useState(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [adherenceWeek, setAdherenceWeek] = useState(null)
+  const [activeWorkoutPlan, setActiveWorkoutPlan] = useState(null)
+  const [activeMealPlan, setActiveMealPlan] = useState(null)
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -677,7 +679,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   async function loadData() {
     setLoadingData(true)
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
-    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes, logsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
+    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes, logsRes, checkinRes, msgRes, adherenceRes, mealPlanRes, workoutPlanRes] = await Promise.all([
       supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
       supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
@@ -687,6 +689,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
       supabase.from('weekly_checkins').select('*').eq('client_id', client.id).order('week_date',{ascending:false}).limit(1),
       supabase.from('coach_messages').select('id',{count:'exact',head:true}).eq('client_id', client.id).eq('sender_role','client').eq('is_read',false),
       supabase.from('meal_adherence').select('followed').eq('client_id', client.id).gte('adherence_date', sevenDaysAgo),
+      supabase.from('meal_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
+      supabase.from('workout_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
     ])
     setAllSessionsCount(sessionsCountRes.count || 0)
     setMeasurements(measRes.data || [])
@@ -697,6 +701,12 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
     setUnreadCount(msgRes.count || 0)
     const adh = adherenceRes.data || []
     setAdherenceWeek(adh.length > 0 ? { followed: adh.filter(a=>a.followed).length, total: adh.length } : null)
+    setActiveMealPlan(mealPlanRes.data?.[0] || null)
+    if (mealPlanRes.data?.[0]) {
+      const mp = mealPlanRes.data[0]
+      setPlanEdit({ title: mp.title, kcal_target: mp.kcal_target, protein_target_g: mp.protein_target_g, carbs_target_g: mp.carbs_target_g, fat_target_g: mp.fat_target_g, notes: mp.notes||'' })
+    }
+    setActiveWorkoutPlan(workoutPlanRes.data?.[0] || null)
 
     // Raggruppa diario per giorno
     const byDay = {}
@@ -734,16 +744,11 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
     }
   }
 
-  const activePlan = plans.find(p => p.is_active)
   const [editingPlan, setEditingPlan] = useState(false)
   const [planEdit, setPlanEdit] = useState({ title:'', kcal_target:'', protein_target_g:'', carbs_target_g:'', fat_target_g:'', notes:'' })
 
-  useEffect(() => {
-    if (activePlan) setPlanEdit({ title: activePlan.title, kcal_target: activePlan.kcal_target, protein_target_g: activePlan.protein_target_g, carbs_target_g: activePlan.carbs_target_g, fat_target_g: activePlan.fat_target_g, notes: activePlan.notes||'' })
-  }, [activePlan?.id])
-
   async function savePlanEdit() {
-    if (!activePlan) return
+    if (!activeMealPlan) return
     await supabase.from('meal_plans').update({
       title: planEdit.title,
       kcal_target: parseInt(planEdit.kcal_target),
@@ -751,7 +756,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
       carbs_target_g: parseInt(planEdit.carbs_target_g),
       fat_target_g: parseInt(planEdit.fat_target_g),
       notes: planEdit.notes,
-    }).eq('id', activePlan.id)
+    }).eq('id', activeMealPlan.id)
     setEditingPlan(false)
     onSaved()
   }
@@ -835,19 +840,24 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           </>
         )}
 
+        {/* ── SEZIONE ALIMENTAZIONE ── */}
+        <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid #FEF0E7',paddingBottom:8}}>
+          <i className="ti ti-clipboard-list" style={{fontSize:14}}/>Alimentazione
+        </div>
+
         {/* PIANO ATTIVO */}
         <div style={{marginBottom:14}}>
           <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Piano alimentare</div>
-          {activePlan ? (
+          {activeMealPlan ? (
             <div>
               <div style={{background:'#FEF0E7',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activePlan.title}</div>
-                  <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activePlan.kcal_target} kcal · P{activePlan.protein_target_g}g C{activePlan.carbs_target_g}g G{activePlan.fat_target_g}g</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activeMealPlan.title}</div>
+                  <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activeMealPlan.kcal_target} kcal · P{activeMealPlan.protein_target_g}g C{activeMealPlan.carbs_target_g}g G{activeMealPlan.fat_target_g}g</div>
                 </div>
                 <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
                   <span style={{...s.badge,background:'#3B6D11',color:'white'}}>Attivo</span>
-                  <a href={`/modifica-piano/${activePlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                  <a href={`/modifica-piano/${activeMealPlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
                     <i className="ti ti-tools-kitchen-2" style={{fontSize:12}}/>Modifica pasti
                   </a>
                   <button onClick={()=>setEditingPlan(!editingPlan)} style={{...s.btnSm,background:editingPlan?'#D4570A':'#F5F3EF',color:editingPlan?'white':'#888780'}}>
@@ -867,7 +877,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                   <div style={{marginBottom:10}}><label style={s.label}>Note</label><textarea style={{...s.input,resize:'none',height:60}} value={planEdit.notes||''} onChange={e=>setPlanEdit(p=>({...p,notes:e.target.value}))}/></div>
                   <div style={{display:'flex',gap:8}}>
                     <button onClick={savePlanEdit} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12}}>Salva modifiche</button>
-                    <button onClick={()=>deactivatePlan(activePlan.id)} style={{...s.btnGray,fontSize:12}}>Disattiva piano</button>
+                    <button onClick={()=>deactivatePlan(activeMealPlan.id)} style={{...s.btnGray,fontSize:12}}>Disattiva piano</button>
                   </div>
                 </div>
               )}
@@ -888,7 +898,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           ) : (
             <div style={{display:'flex',gap:4}}>
               {diaryWeek.map(d => {
-                const target = activePlan?.kcal_target || 2200
+                const target = activeMealPlan?.kcal_target || 2200
                 const pct = Math.min(100, Math.round(d.kcal/target*100))
                 const dayLabel = new Date(d.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'}).slice(0,1).toUpperCase()
                 return (
@@ -963,6 +973,19 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           </div>
         )}
 
+        {/* ── SEZIONE ALLENAMENTO ── */}
+        <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,marginTop:8,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #FEF0E7',paddingBottom:8}}>
+          <span style={{display:'flex',alignItems:'center',gap:6}}><i className="ti ti-barbell" style={{fontSize:14}}/>Allenamento</span>
+          {activeWorkoutPlan && (
+            <a href={`/modifica-allenamento/${activeWorkoutPlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:11}}>
+              <i className="ti ti-pencil" style={{fontSize:11}}/>Modifica scheda
+            </a>
+          )}
+          {!activeWorkoutPlan && (
+            <a href="/importa-allenamento" style={{...s.btnSm,textDecoration:'none',fontSize:11}}>+ Importa scheda</a>
+          )}
+        </div>
+
         {/* NOTE ALLENAMENTO */}
         {workoutSessions.length > 0 && (
           <div style={{marginBottom:14}}>
@@ -970,11 +993,18 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
               <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>
                 <i className="ti ti-barbell" style={{fontSize:12,marginRight:4}}/>Allenamenti recenti
               </div>
-              {!showAllSessions && allSessionsCount > workoutSessions.length && (
-                <button onClick={loadAllSessions} style={{background:'none',border:'none',color:'#D4570A',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-                  Vedi tutto ({allSessionsCount}) →
-                </button>
-              )}
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                {activeWorkoutPlan && (
+                  <a href={`/modifica-allenamento/${activeWorkoutPlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:11}}>
+                    <i className="ti ti-pencil" style={{fontSize:11}}/>Modifica scheda
+                  </a>
+                )}
+                {!showAllSessions && allSessionsCount > workoutSessions.length && (
+                  <button onClick={loadAllSessions} style={{background:'none',border:'none',color:'#D4570A',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                    Vedi tutto ({allSessionsCount}) →
+                  </button>
+                )}
+              </div>
             </div>
             <div style={{maxHeight: showAllSessions ? 320 : 'none', overflowY: showAllSessions ? 'auto' : 'visible'}}>
               {workoutSessions.map(sess => {
@@ -1330,7 +1360,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
               <div style={{fontSize:13,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
               <div style={{fontSize:11,color:'#888780',marginTop:2}}>
                 {st.latestMeasure?.weight_kg ? `${st.latestMeasure.weight_kg}kg · ` : ''}
-                {st.activePlan ? st.activePlan.title : 'Nessun piano'}
+                {st.activePlan ? st.activeMealPlan.title : 'Nessun piano'}
               </div>
             </div>
             <div style={{display:'flex',gap:6,flexShrink:0}}>
