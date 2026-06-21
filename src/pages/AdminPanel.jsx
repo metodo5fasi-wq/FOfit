@@ -139,21 +139,19 @@ export default function AdminPanel() {
   }
 
   function buildPlanFromDiet() {
-    // Ritorna { kcal_target, protein_target_g, carbs_target_g, fat_target_g, diet_config }
-    // Per il piano base usiamo la media pesata
     const dc = dietConfig
+    const r = Math.round
     switch(dietType) {
-      case 'lineare': return { kcal_target:newPlan.kcal_target, protein_target_g:newPlan.protein_target_g, carbs_target_g:newPlan.carbs_target_g, fat_target_g:newPlan.fat_target_g, diet_type:'lineare', diet_config:null }
+      case 'lineare': return { kcal_target:r(newPlan.kcal_target)||2000, protein_target_g:r(newPlan.protein_target_g)||150, carbs_target_g:r(newPlan.carbs_target_g)||200, fat_target_g:r(newPlan.fat_target_g)||65, diet_type:'lineare', diet_config:null }
       case 'on_off': {
         const onDays = dc.on_days.length, offDays = 7-onDays
-        const avgKcal = Math.round((dc.on_kcal*onDays+dc.off_kcal*offDays)/7)
-        return { kcal_target:avgKcal, protein_target_g:Math.round((dc.on_protein*onDays+dc.off_protein*offDays)/7), carbs_target_g:Math.round((dc.on_carbs*onDays+dc.off_carbs*offDays)/7), fat_target_g:Math.round((dc.on_fat*onDays+dc.off_fat*offDays)/7), diet_type:'on_off', diet_config:JSON.stringify({on:{kcal:dc.on_kcal,protein:dc.on_protein,carbs:dc.on_carbs,fat:dc.on_fat,days:dc.on_days},off:{kcal:dc.off_kcal,protein:dc.off_protein,carbs:dc.off_carbs,fat:dc.off_fat}}) }
+        return { kcal_target:r((dc.on_kcal*onDays+dc.off_kcal*offDays)/7), protein_target_g:r((dc.on_protein*onDays+dc.off_protein*offDays)/7), carbs_target_g:r((dc.on_carbs*onDays+dc.off_carbs*offDays)/7), fat_target_g:r((dc.on_fat*onDays+dc.off_fat*offDays)/7), diet_type:'on_off', diet_config:JSON.stringify({on:{kcal:r(dc.on_kcal),protein:r(dc.on_protein),carbs:r(dc.on_carbs),fat:r(dc.on_fat),days:dc.on_days},off:{kcal:r(dc.off_kcal),protein:r(dc.off_protein),carbs:r(dc.off_carbs),fat:r(dc.off_fat)}}) }
       }
-      case 'onde': return { kcal_target:Math.round((dc.high_kcal*dc.high_days.length+dc.mid_kcal*dc.mid_days.length+dc.low_kcal*dc.low_days.length)/7), protein_target_g:Math.round((dc.high_protein*dc.high_days.length+dc.mid_protein*dc.mid_days.length+dc.low_protein*dc.low_days.length)/7), carbs_target_g:Math.round((dc.high_carbs*dc.high_days.length+dc.mid_carbs*dc.mid_days.length+dc.low_carbs*dc.low_days.length)/7), fat_target_g:Math.round((dc.high_fat*dc.high_days.length+dc.mid_fat*dc.mid_days.length+dc.low_fat*dc.low_days.length)/7), diet_type:'onde', diet_config:JSON.stringify({high:{kcal:dc.high_kcal,protein:dc.high_protein,carbs:dc.high_carbs,fat:dc.high_fat,days:dc.high_days},mid:{kcal:dc.mid_kcal,protein:dc.mid_protein,carbs:dc.mid_carbs,fat:dc.mid_fat,days:dc.mid_days},low:{kcal:dc.low_kcal,protein:dc.low_protein,carbs:dc.low_carbs,fat:dc.low_fat,days:dc.low_days}}) }
-      case 'reverse': return { kcal_target:dc.base_kcal, protein_target_g:dc.base_protein, carbs_target_g:dc.base_carbs, fat_target_g:dc.base_fat, diet_type:'reverse', diet_config:JSON.stringify({base:{kcal:dc.base_kcal,protein:dc.base_protein,carbs:dc.base_carbs,fat:dc.base_fat},weekly_increase_pct:dc.weekly_increase_pct,weeks:dc.weeks}) }
-      case 'ciclico': return { kcal_target:Math.round((dc.deficit_kcal+dc.surplus_kcal)/2), protein_target_g:Math.round((dc.deficit_protein+dc.surplus_protein)/2), carbs_target_g:Math.round((dc.deficit_carbs+dc.surplus_carbs)/2), fat_target_g:Math.round((dc.deficit_fat+dc.surplus_fat)/2), diet_type:'ciclico', diet_config:JSON.stringify({deficit:{kcal:dc.deficit_kcal,protein:dc.deficit_protein,carbs:dc.deficit_carbs,fat:dc.deficit_fat},surplus:{kcal:dc.surplus_kcal,protein:dc.surplus_protein,carbs:dc.surplus_carbs,fat:dc.surplus_fat}}) }
-      case 'refeed': return { kcal_target:dc.normal_kcal, protein_target_g:dc.normal_protein, carbs_target_g:dc.normal_carbs, fat_target_g:dc.normal_fat, diet_type:'refeed', diet_config:JSON.stringify({normal:{kcal:dc.normal_kcal,protein:dc.normal_protein,carbs:dc.normal_carbs,fat:dc.normal_fat},refeed:{kcal:dc.refeed_kcal,protein:dc.refeed_protein,carbs:dc.refeed_carbs,fat:dc.refeed_fat,days:dc.refeed_days}}) }
-      default: return { kcal_target:newPlan.kcal_target, protein_target_g:newPlan.protein_target_g, carbs_target_g:newPlan.carbs_target_g, fat_target_g:newPlan.fat_target_g, diet_type:'lineare', diet_config:null }
+      case 'onde': return { kcal_target:r((dc.high_kcal*dc.high_days.length+dc.mid_kcal*dc.mid_days.length+dc.low_kcal*dc.low_days.length)/7), protein_target_g:r((dc.high_protein*dc.high_days.length+dc.mid_protein*dc.mid_days.length+dc.low_protein*dc.low_days.length)/7), carbs_target_g:r((dc.high_carbs*dc.high_days.length+dc.mid_carbs*dc.mid_days.length+dc.low_carbs*dc.low_days.length)/7), fat_target_g:r((dc.high_fat*dc.high_days.length+dc.mid_fat*dc.mid_days.length+dc.low_fat*dc.low_days.length)/7), diet_type:'onde', diet_config:JSON.stringify({high:{kcal:r(dc.high_kcal),protein:r(dc.high_protein),carbs:r(dc.high_carbs),fat:r(dc.high_fat),days:dc.high_days},mid:{kcal:r(dc.mid_kcal),protein:r(dc.mid_protein),carbs:r(dc.mid_carbs),fat:r(dc.mid_fat),days:dc.mid_days},low:{kcal:r(dc.low_kcal),protein:r(dc.low_protein),carbs:r(dc.low_carbs),fat:r(dc.low_fat),days:dc.low_days}}) }
+      case 'reverse': return { kcal_target:r(dc.base_kcal), protein_target_g:r(dc.base_protein), carbs_target_g:r(dc.base_carbs), fat_target_g:r(dc.base_fat), diet_type:'reverse', diet_config:JSON.stringify({base:{kcal:r(dc.base_kcal),protein:r(dc.base_protein),carbs:r(dc.base_carbs),fat:r(dc.base_fat)},weekly_increase_pct:dc.weekly_increase_pct,weeks:dc.weeks}) }
+      case 'ciclico': return { kcal_target:r((dc.deficit_kcal+dc.surplus_kcal)/2), protein_target_g:r((dc.deficit_protein+dc.surplus_protein)/2), carbs_target_g:r((dc.deficit_carbs+dc.surplus_carbs)/2), fat_target_g:r((dc.deficit_fat+dc.surplus_fat)/2), diet_type:'ciclico', diet_config:JSON.stringify({deficit:{kcal:r(dc.deficit_kcal),protein:r(dc.deficit_protein),carbs:r(dc.deficit_carbs),fat:r(dc.deficit_fat)},surplus:{kcal:r(dc.surplus_kcal),protein:r(dc.surplus_protein),carbs:r(dc.surplus_carbs),fat:r(dc.surplus_fat)}}) }
+      case 'refeed': return { kcal_target:r(dc.normal_kcal), protein_target_g:r(dc.normal_protein), carbs_target_g:r(dc.normal_carbs), fat_target_g:r(dc.normal_fat), diet_type:'refeed', diet_config:JSON.stringify({normal:{kcal:r(dc.normal_kcal),protein:r(dc.normal_protein),carbs:r(dc.normal_carbs),fat:r(dc.normal_fat)},refeed:{kcal:r(dc.refeed_kcal),protein:r(dc.refeed_protein),carbs:r(dc.refeed_carbs),fat:r(dc.refeed_fat),days:dc.refeed_days}}) }
+      default: return { kcal_target:r(newPlan.kcal_target)||2000, protein_target_g:r(newPlan.protein_target_g)||150, carbs_target_g:r(newPlan.carbs_target_g)||200, fat_target_g:r(newPlan.fat_target_g)||65, diet_type:'lineare', diet_config:null }
     }
   }
 
@@ -263,26 +261,36 @@ export default function AdminPanel() {
     // Disattiva piano precedente del cliente
     await supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id)
 
-    const { error } = await supabase.from('meal_plans').insert({
+    // Insert base senza colonne opzionali
+    const payload = {
       client_id: newPlan.client_id,
       created_by: profile.id,
       title: newPlan.title,
-      week_number: parseInt(newPlan.week_number),
-      kcal_target: dietData.kcal_target,
-      protein_target_g: dietData.protein_target_g,
-      carbs_target_g: dietData.carbs_target_g,
-      fat_target_g: dietData.fat_target_g,
-      notes: newPlan.notes,
-      diet_type: dietData.diet_type || 'lineare',
-      diet_config: dietData.diet_config || null,
+      week_number: parseInt(newPlan.week_number) || 1,
+      kcal_target: Math.round(dietData.kcal_target) || 2000,
+      protein_target_g: Math.round(dietData.protein_target_g) || 150,
+      carbs_target_g: Math.round(dietData.carbs_target_g) || 200,
+      fat_target_g: Math.round(dietData.fat_target_g) || 65,
+      notes: newPlan.notes || '',
       is_active: true,
-    })
-    if (error) {
-      setMsg('Errore salvataggio: ' + error.message)
-      setSaving(false)
-      return
     }
-    setMsg('Piano creato e assegnato al cliente!')
+
+    // Prova ad aggiungere diet_type/diet_config solo se il campo esiste
+    const { error } = await supabase.from('meal_plans').insert(payload)
+
+    if (error) {
+      // Se l'errore è sulle colonne diet_type, riprova senza
+      if (error.message?.includes('diet_type') || error.message?.includes('diet_config')) {
+        const { error: error2 } = await supabase.from('meal_plans').insert(payload)
+        if (error2) { setMsg('Errore: ' + error2.message); setSaving(false); return }
+      } else {
+        setMsg('Errore: ' + error.message)
+        setSaving(false)
+        return
+      }
+    }
+
+    setMsg('✓ Piano creato e assegnato al cliente!')
     setShowNewPlan(false)
     setDietType('lineare')
     setNewPlan({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
