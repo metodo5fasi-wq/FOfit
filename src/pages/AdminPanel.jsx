@@ -194,7 +194,7 @@ export default function AdminPanel() {
           ))}
         </div>
         <div style={s.tabs}>
-          {['clienti','piani','progressi','calendario'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
+          {['clienti','piani','progressi','calendario','messaggi','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
         </div>
 
         {tab==='clienti'&&(
@@ -278,6 +278,8 @@ export default function AdminPanel() {
         )}
 
         {tab==='calendario'&&<CalendarioAdmin/>}
+        {tab==='messaggi'&&<MessaggiAdmin/>}
+        {tab==='check-in'&&<CheckinAdmin/>}
       </div>
 
       {showNewClient&&(
@@ -833,5 +835,147 @@ function CalendarioAdmin() {
         </div>
       </div>
     </>
+  )
+}
+
+// ── COMPONENTE MESSAGGI ADMIN ──────────────────────────────
+function MessaggiAdmin() {
+  const { profile } = useAuth()
+  const [clients, setClients] = useState([])
+  const [selectedClient, setSelectedClient] = useState('')
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [messages, setMessages] = useState([])
+  const [generateReport, setGenerateReport] = useState(false)
+  const [generatingReport, setGeneratingReport] = useState(false)
+
+  useEffect(() => {
+    supabase.from('profiles').select('*').eq('role','client').order('full_name').then(({data})=>setClients(data||[]))
+    supabase.from('coach_messages').select('*,profiles!coach_messages_client_id_fkey(full_name)').order('created_at',{ascending:false}).limit(20).then(({data})=>setMessages(data||[]))
+  }, [])
+
+  async function send() {
+    if (!selectedClient || !message.trim()) return
+    setSending(true)
+    await supabase.from('coach_messages').insert({ coach_id: profile.id, client_id: selectedClient, message: message.trim() })
+    setMessage('')
+    setSent(true)
+    setTimeout(()=>setSent(false), 3000)
+    setSending(false)
+    supabase.from('coach_messages').select('*,profiles!coach_messages_client_id_fkey(full_name)').order('created_at',{ascending:false}).limit(20).then(({data})=>setMessages(data||[]))
+  }
+
+  async function handleGenerateReport() {
+    if (!selectedClient) return
+    setGeneratingReport(true)
+    try {
+      const r = await fetch('/api/monthly-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: selectedClient })
+      })
+      const data = await r.json()
+      if (data.content) {
+        setMessage(data.content)
+        setGenerateReport(false)
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setGeneratingReport(false)
+  }
+
+  const s2 = { input: {width:'100%',padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}, select: {width:'100%',padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit'} }
+
+  return (
+    <div style={{padding:'16px 22px'}}>
+      <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:14}}>Invia messaggio al cliente</div>
+        <div style={{marginBottom:10}}>
+          <select style={s2.select} value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}>
+            <option value="">Seleziona cliente...</option>
+            {clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:10}}>
+          <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Scrivi il tuo messaggio al cliente..." rows={4}
+            style={{...s2.input,resize:'vertical',lineHeight:1.6}}/>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={send} disabled={sending||!selectedClient||!message.trim()} style={{flex:1,padding:11,background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <i className="ti ti-send" style={{fontSize:14}}/>{sent?'Inviato! ✓':sending?'Invio...':'Invia messaggio'}
+          </button>
+          <button onClick={handleGenerateReport} disabled={!selectedClient||generatingReport} style={{padding:'11px 14px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
+            <i className="ti ti-sparkles" style={{fontSize:14,color:'#D4570A'}}/>{generatingReport?'Generando...':'Report AI'}
+          </button>
+        </div>
+      </div>
+
+      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Ultimi messaggi inviati</div>
+      {messages.map(m=>(
+        <div key={m.id} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+            <span style={{fontSize:11,fontWeight:600,color:'#D4570A'}}>{m.profiles?.full_name}</span>
+            <span style={{fontSize:11,color:'#888780'}}>{new Date(m.created_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+          </div>
+          <div style={{fontSize:12,color:'#555',lineHeight:1.6}}>{m.message}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── COMPONENTE CHECK-IN ADMIN ──────────────────────────────
+function CheckinAdmin() {
+  const [clients, setClients] = useState([])
+  const [checkins, setCheckins] = useState([])
+  const [selectedClient, setSelectedClient] = useState('')
+
+  useEffect(() => {
+    supabase.from('profiles').select('*').eq('role','client').order('full_name').then(({data})=>setClients(data||[]))
+  }, [])
+
+  useEffect(() => {
+    if (!selectedClient) { setCheckins([]); return }
+    supabase.from('weekly_checkins').select('*').eq('client_id', selectedClient).order('week_date',{ascending:false}).limit(12)
+      .then(({data})=>setCheckins(data||[]))
+  }, [selectedClient])
+
+  const LABELS = { energy:'⚡ Energia', sleep:'😴 Sonno', stress:'🧘 Stress' }
+
+  return (
+    <div style={{padding:'16px 22px'}}>
+      <div style={{marginBottom:14}}>
+        <select value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}
+          style={{width:'100%',padding:'9px 12px',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit'}}>
+          <option value="">Seleziona cliente per vedere i check-in...</option>
+          {clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
+        </select>
+      </div>
+
+      {!selectedClient && (
+        <div style={{textAlign:'center',padding:'40px 0',color:'#888780',fontSize:13}}>Seleziona un cliente per vedere i suoi check-in settimanali.</div>
+      )}
+
+      {selectedClient && checkins.length === 0 && (
+        <div style={{textAlign:'center',padding:'40px 0',color:'#888780',fontSize:13}}>Nessun check-in ancora per questo cliente.</div>
+      )}
+
+      {checkins.map(c=>(
+        <div key={c.week_date} style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px',marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#111',marginBottom:10}}>
+            Settimana del {new Date(c.week_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
+          </div>
+          <div style={{display:'flex',gap:16,marginBottom:c.notes?10:0}}>
+            {['energy','sleep','stress'].map(f=>(
+              <div key={f} style={{flex:1,textAlign:'center',background:'#F5F3EF',borderRadius:9,padding:'10px 6px'}}>
+                <div style={{fontSize:20,fontWeight:800,color: c[f]>=4?'#3B6D11':c[f]<=2?'#D4570A':'#111'}}>{c[f]}</div>
+                <div style={{fontSize:10,color:'#888780',marginTop:2}}>{LABELS[f]}</div>
+              </div>
+            ))}
+          </div>
+          {c.notes && <div style={{fontSize:12,color:'#555',lineHeight:1.6,background:'#F5F3EF',borderRadius:8,padding:'10px 12px'}}>{c.notes}</div>}
+        </div>
+      ))}
+    </div>
   )
 }
