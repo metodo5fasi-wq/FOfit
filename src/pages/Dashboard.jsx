@@ -69,6 +69,7 @@ export default function Dashboard() {
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
   const [nextCall, setNextCall] = useState(null)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const [workoutPlan, setWorkoutPlan] = useState(null)
   const [workoutToday, setWorkoutToday] = useState({ done:0, total:0 })
   const prevKcalRef = React.useRef(0)
@@ -112,6 +113,10 @@ export default function Dashboard() {
       .then(({ data }) => data?.length && setNextCall(data[0]))
     // Calcola streak
     calcStreak()
+    // Messaggi non letti
+    supabase.from('coach_messages').select('id', { count:'exact', head:true })
+      .eq('client_id', profile.id).eq('sender_role','coach').eq('is_read', false)
+      .then(({ count }) => setUnreadMessages(count || 0))
     // Scheda allenamento attiva
     supabase.from('workout_plans').select('*')
       .eq('client_id', profile.id).eq('is_active', true).limit(1)
@@ -319,6 +324,29 @@ export default function Dashboard() {
           </div>
         </div>
         </FadeIn>
+
+        {/* MESSAGGI NON LETTI */}
+        {unreadMessages > 0 && (
+          <FadeIn delay={115}>
+          <Link to="/messaggi" style={{textDecoration:'none'}}>
+            <div style={{background:'var(--bg-card)',borderRadius:12,padding:'14px 16px',marginBottom:14,border:'0.5px solid #D4570A',display:'flex',alignItems:'center',gap:12,boxShadow:'0 1px 3px rgba(212,87,10,0.12)'}}>
+              <div style={{width:38,height:38,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,position:'relative'}}>
+                <i className="ti ti-message" style={{fontSize:18,color:'#D4570A'}}/>
+                <div style={{position:'absolute',top:-4,right:-4,width:16,height:16,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{fontSize:9,fontWeight:700,color:'white'}}>{unreadMessages}</span>
+                </div>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:700}}>Nuovo messaggio dal coach</div>
+                <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginTop:2}}>
+                  {unreadMessages === 1 ? '1 messaggio non letto' : `${unreadMessages} messaggi non letti`}
+                </div>
+              </div>
+              <i className="ti ti-chevron-right" style={{fontSize:18,color:'#D4570A'}}/>
+            </div>
+          </Link>
+          </FadeIn>
+        )}
 
         {/* PROSSIMA CHIAMATA */}
         {nextCall && (
