@@ -259,18 +259,30 @@ export default function AdminPanel() {
     if (!newPlan.client_id||!newPlan.title) { setMsg('Seleziona un cliente'); return }
     setSaving(true)
     const dietData = buildPlanFromDiet()
+
+    // Disattiva piano precedente del cliente
+    await supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id)
+
     const { error } = await supabase.from('meal_plans').insert({
-      ...newPlan, created_by:profile.id,
+      client_id: newPlan.client_id,
+      created_by: profile.id,
+      title: newPlan.title,
+      week_number: parseInt(newPlan.week_number),
       kcal_target: dietData.kcal_target,
       protein_target_g: dietData.protein_target_g,
       carbs_target_g: dietData.carbs_target_g,
       fat_target_g: dietData.fat_target_g,
-      diet_type: dietData.diet_type,
-      diet_config: dietData.diet_config,
-      week_number: parseInt(newPlan.week_number),
+      notes: newPlan.notes,
+      diet_type: dietData.diet_type || 'lineare',
+      diet_config: dietData.diet_config || null,
+      is_active: true,
     })
-    if (error) { setMsg('Errore: '+error.message); setSaving(false); return }
-    setMsg('Piano creato!')
+    if (error) {
+      setMsg('Errore salvataggio: ' + error.message)
+      setSaving(false)
+      return
+    }
+    setMsg('Piano creato e assegnato al cliente!')
     setShowNewPlan(false)
     setDietType('lineare')
     setNewPlan({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
