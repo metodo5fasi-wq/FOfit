@@ -24,7 +24,9 @@ export default function Allenamento() {
   const [activeDay, setActiveDay] = useState(null)
   const [expandedExercise, setExpandedExercise] = useState(() => localStorage.getItem('fofit_expanded_exercise') || null)
   const [toast, setToast] = useState({ visible:false, message:'', emoji:'' })
-  const [sessions, setSessions] = useState([]) // storico sessioni per giorno
+  const [sessions, setSessions] = useState([])
+  const [newPRs, setNewPRs] = useState([]) // record personali battuti oggi
+  const [weekStreak, setWeekStreak] = useState(0)
   const [showFinish, setShowFinish] = useState(false)
   const [sessionNotes, setSessionNotes] = useState('')
   const [savingSession, setSavingSession] = useState(false)
@@ -57,6 +59,54 @@ export default function Allenamento() {
     const { data: sessionData } = await supabase.from('workout_sessions')
       .select('*').eq('client_id', profile.id).order('session_date', {ascending:false})
     setSessions(sessionData || [])
+
+    // Calcola streak settimanale
+    if (sessionData?.length) {
+      const weeks = new Set(sessionData.map(s => {
+        const d = new Date(s.session_date)
+        const dow = d.getDay()
+        const diff = dow === 0 ? -6 : 1 - dow
+        d.setDate(d.getDate() + diff)
+        return d.toISOString().split('T')[0]
+      }))
+      const sortedWeeks = [...weeks].sort().reverse()
+      let streak = 0
+      const thisWeek = (() => {
+        const d = new Date()
+        const dow = d.getDay()
+        const diff = dow === 0 ? -6 : 1 - dow
+        d.setDate(d.getDate() + diff)
+        return d.toISOString().split('T')[0]
+      })()
+      for (let i = 0; i < sortedWeeks.length; i++) {
+        const expected = new Date(thisWeek)
+        expected.setDate(expected.getDate() - i * 7)
+        if (sortedWeeks[i] === expected.toISOString().split('T')[0]) streak++
+        else break
+      }
+      setWeekStreak(streak)
+    }
+
+    // Calcola record personali (PR) odierni
+    if (allLogData?.length) {
+      const todayLogsData = logData || []
+      const prs = []
+      for (const log of todayLogsData) {
+        if (!log.weight_kg) continue
+        const historical = allLogData.filter(l =>
+          l.exercise_name === log.exercise_name &&
+          l.log_date !== today &&
+          l.weight_kg
+        )
+        const maxHist = historical.length > 0 ? Math.max(...historical.map(l=>l.weight_kg)) : 0
+        if (log.weight_kg > maxHist) {
+          if (!prs.find(p=>p.exercise===log.exercise_name)) {
+            prs.push({ exercise: log.exercise_name, weight: log.weight_kg })
+          }
+        }
+      }
+      setNewPRs(prs)
+    }
     setLoading(false)
   }
 
@@ -250,7 +300,25 @@ export default function Allenamento() {
             <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>Allenamento di oggi</div>
             <div style={{fontSize:12,color:'var(--text-muted)'}}>{completedToday} serie completate</div>
           </div>
+          {weekStreak > 0 && (
+            <div style={{background:'#FEF0E7',borderRadius:10,padding:'6px 12px',textAlign:'center',flexShrink:0}}>
+              <div style={{fontSize:16,fontWeight:800,color:'#D4570A'}}>{weekStreak}🔥</div>
+              <div style={{fontSize:9,color:'#D4570A',fontWeight:600}}>SETTIMANE</div>
+            </div>
+          )}
         </div>
+
+        {/* RECORD PERSONALI ODIERNI */}
+        {newPRs.length > 0 && (
+          <div style={{background:'linear-gradient(135deg,#FEF0E7,#FAC9A8)',borderRadius:12,padding:'14px 16px',marginBottom:12,border:'0.5px solid #F4894A'}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8}}>🏆 Nuovi record personali oggi!</div>
+            {newPRs.map((pr,i) => (
+              <div key={i} style={{fontSize:13,color:'#7a3508',fontWeight:600}}>
+                {pr.exercise} — {pr.weight}kg
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ESERCIZI DEL GIORNO */}
         {dayExercises.map(ex => {
