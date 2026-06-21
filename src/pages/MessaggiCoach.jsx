@@ -45,7 +45,7 @@ export default function MessaggiCoach() {
       sender_role: 'client', created_at: new Date().toISOString()
     }])
 
-    await fetch('/api/chat', {
+    await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
