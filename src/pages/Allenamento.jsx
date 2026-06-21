@@ -124,6 +124,7 @@ export default function Allenamento() {
       // Prendi i valori già inseriti nei campi input (se presenti)
       const weightVal = inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
       const repsVal = inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
+      const noteVal = inputValues[`${ex.exercise_name}-note`] || null
       const { data, error } = await supabase.from('workout_logs').insert({
         client_id: profile.id,
         exercise_name: ex.exercise_name,
@@ -131,9 +132,34 @@ export default function Allenamento() {
         set_number: setNumber,
         weight_kg: weightVal ? parseFloat(weightVal) : null,
         reps_done: repsVal ? parseInt(repsVal) : null,
+        exercise_note: noteVal,
       }).select().single()
       if (!error) setLogs(prev => [...prev, data])
     }
+  }
+
+  async function updateNote(ex, note) {
+    // Aggiorna la nota su tutti i log di oggi per quell'esercizio
+    const exLogs = logs.filter(l => l.exercise_name === ex.exercise_name)
+    if (exLogs.length > 0) {
+      await supabase.from('workout_logs')
+        .update({ exercise_note: note })
+        .eq('client_id', profile.id)
+        .eq('exercise_name', ex.exercise_name)
+        .eq('log_date', today)
+      setLogs(prev => prev.map(l =>
+        l.exercise_name === ex.exercise_name ? {...l, exercise_note: note} : l
+      ))
+    }
+    // Salvo sempre in inputValues per averla disponibile quando si crea il primo log
+    setInputValues(prev => ({...prev, [`${ex.exercise_name}-note`]: note}))
+  }
+
+  function getExerciseNote(exName) {
+    // Prima guarda i log esistenti, poi inputValues
+    const log = logs.find(l => l.exercise_name === exName && l.exercise_note)
+    if (log) return log.exercise_note
+    return inputValues[`${exName}-note`] || ''
   }
 
   async function updateWeight(ex, setNumber, weight) {
@@ -316,6 +342,20 @@ export default function Allenamento() {
                         </div>
                       )
                     })}
+                  </div>
+
+                  {/* NOTE ESERCIZIO */}
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>
+                      <i className="ti ti-notes" style={{fontSize:12,marginRight:4,color:'#D4570A'}}/>Note esercizio
+                    </div>
+                    <textarea
+                      placeholder="Es. aumentare peso la prossima volta, dolore al gomito, tecnica da correggere..."
+                      value={getExerciseNote(ex.exercise_name)}
+                      onChange={e => updateNote(ex, e.target.value)}
+                      rows={2}
+                      style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:9,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'none',lineHeight:1.5,boxSizing:'border-box'}}
+                    />
                   </div>
 
                   {/* GRAFICO PROGRESSIONE */}
