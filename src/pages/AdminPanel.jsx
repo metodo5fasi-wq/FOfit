@@ -65,24 +65,59 @@ export default function AdminPanel() {
     const { data: pl } = await supabase.from('meal_plans').select('*, profiles(full_name)').order('created_at',{ascending:false})
     setPlans(pl||[])
 
-    // Carica statistiche per ogni cliente (diario oggi, piano attivo, ultima misurazione)
     if (prof?.length) {
       const ids = prof.map(c => c.id)
-      const [diaryRes, measureRes] = await Promise.all([
-        supabase.from('diary_entries').select('client_id').eq('entry_date', today).in('client_id', ids),
-        supabase.from('progress_entries').select('client_id, entry_date, weight_kg').in('client_id', ids).order('entry_date', {ascending:false}),
+      const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0]
+      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
+        supabase.from('diary_entries').select('client_id,entry_date,kcal').in('client_id', ids).gte('entry_date', weekAgo),
+        supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}),
+        supabase.from('workout_sessions').select('client_id,session_date,sets_completed,sets_total').in('client_id', ids).gte('session_date', weekAgo),
+        supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}),
+        supabase.from('coach_messages').select('client_id,is_read,sender_role,created_at').in('client_id', ids).eq('sender_role','client').eq('is_read',false),
+        supabase.from('meal_adherence').select('client_id,followed,adherence_date').in('client_id', ids).gte('adherence_date', weekAgo),
       ])
-      const diaryDoneIds = new Set((diaryRes.data||[]).map(d => d.client_id))
+
+      const diaryByClient = {}
+      ;(diaryRes.data||[]).forEach(d => {
+        if (!diaryByClient[d.client_id]) diaryByClient[d.client_id] = []
+        diaryByClient[d.client_id].push(d)
+      })
+
       const latestByClient = {}
       ;(measureRes.data||[]).forEach(m => { if (!latestByClient[m.client_id]) latestByClient[m.client_id] = m })
+
+      const sessionsByClient = {}
+      ;(sessionsRes.data||[]).forEach(s => {
+        if (!sessionsByClient[s.client_id]) sessionsByClient[s.client_id] = []
+        sessionsByClient[s.client_id].push(s)
+      })
+
+      const checkinByClient = {}
+      ;(checkinRes.data||[]).forEach(c => { if (!checkinByClient[c.client_id]) checkinByClient[c.client_id] = c })
+
+      const unreadByClient = {}
+      ;(msgRes.data||[]).forEach(m => { unreadByClient[m.client_id] = (unreadByClient[m.client_id]||0)+1 })
+
+      const adherenceByClient = {}
+      ;(adherenceRes.data||[]).forEach(a => {
+        if (!adherenceByClient[a.client_id]) adherenceByClient[a.client_id] = {followed:0,total:0}
+        adherenceByClient[a.client_id].total++
+        if (a.followed) adherenceByClient[a.client_id].followed++
+      })
 
       const stats = {}
       prof.forEach(c => {
         const cp = (pl||[]).filter(p => p.client_id === c.id)
+        const diaryDays = (diaryByClient[c.id]||[]).map(d=>d.entry_date)
         stats[c.id] = {
-          diaryToday: diaryDoneIds.has(c.id),
+          diaryToday: diaryDays.includes(today),
+          diaryDays7: diaryDays.length,
           activePlan: cp.find(p => p.is_active) || null,
           latestMeasure: latestByClient[c.id] || null,
+          sessions7: sessionsByClient[c.id] || [],
+          lastCheckin: checkinByClient[c.id] || null,
+          unreadMessages: unreadByClient[c.id] || 0,
+          adherence: adherenceByClient[c.id] || null,
         }
       })
       setClientStats(stats)
@@ -194,9 +229,10 @@ export default function AdminPanel() {
           ))}
         </div>
         <div style={s.tabs}>
-          {['clienti','piani','progressi','calendario','messaggi','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
+          {['dashboard','clienti','piani','progressi','calendario','messaggi','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
         </div>
 
+        {tab==='dashboard'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}}/>}
         {tab==='clienti'&&(
           <>
           <NotifPanel/>
@@ -381,8 +417,12 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [photos, setPhotos] = useState([])
   const [diaryWeek, setDiaryWeek] = useState([])
   const [workoutSessions, setWorkoutSessions] = useState([])
+  const [workoutLogs, setWorkoutLogs] = useState([])
   const [allSessionsCount, setAllSessionsCount] = useState(0)
   const [showAllSessions, setShowAllSessions] = useState(false)
+  const [lastCheckin, setLastCheckin] = useState(null)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [adherenceWeek, setAdherenceWeek] = useState(null)
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -390,17 +430,26 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   async function loadData() {
     setLoadingData(true)
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
-    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes] = await Promise.all([
+    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes, logsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
       supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
       supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
       supabase.from('workout_sessions').select('*').eq('client_id', client.id).order('session_date',{ascending:false}).limit(5),
       supabase.from('workout_sessions').select('id', {count:'exact', head:true}).eq('client_id', client.id),
+      supabase.from('workout_logs').select('*').eq('client_id', client.id).gte('log_date', sevenDaysAgo).order('log_date',{ascending:false}),
+      supabase.from('weekly_checkins').select('*').eq('client_id', client.id).order('week_date',{ascending:false}).limit(1),
+      supabase.from('coach_messages').select('id',{count:'exact',head:true}).eq('client_id', client.id).eq('sender_role','client').eq('is_read',false),
+      supabase.from('meal_adherence').select('followed').eq('client_id', client.id).gte('adherence_date', sevenDaysAgo),
     ])
     setAllSessionsCount(sessionsCountRes.count || 0)
     setMeasurements(measRes.data || [])
     setPhotos(photoRes.data || [])
     setWorkoutSessions(sessionsRes.data || [])
+    setWorkoutLogs(logsRes.data || [])
+    setLastCheckin(checkinRes.data?.[0] || null)
+    setUnreadCount(msgRes.count || 0)
+    const adh = adherenceRes.data || []
+    setAdherenceWeek(adh.length > 0 ? { followed: adh.filter(a=>a.followed).length, total: adh.length } : null)
 
     // Raggruppa diario per giorno
     const byDay = {}
@@ -439,6 +488,33 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   }
 
   const activePlan = plans.find(p => p.is_active)
+  const [editingPlan, setEditingPlan] = useState(false)
+  const [planEdit, setPlanEdit] = useState({ title:'', kcal_target:'', protein_target_g:'', carbs_target_g:'', fat_target_g:'', notes:'' })
+
+  useEffect(() => {
+    if (activePlan) setPlanEdit({ title: activePlan.title, kcal_target: activePlan.kcal_target, protein_target_g: activePlan.protein_target_g, carbs_target_g: activePlan.carbs_target_g, fat_target_g: activePlan.fat_target_g, notes: activePlan.notes||'' })
+  }, [activePlan?.id])
+
+  async function savePlanEdit() {
+    if (!activePlan) return
+    await supabase.from('meal_plans').update({
+      title: planEdit.title,
+      kcal_target: parseInt(planEdit.kcal_target),
+      protein_target_g: parseInt(planEdit.protein_target_g),
+      carbs_target_g: parseInt(planEdit.carbs_target_g),
+      fat_target_g: parseInt(planEdit.fat_target_g),
+      notes: planEdit.notes,
+    }).eq('id', activePlan.id)
+    setEditingPlan(false)
+    onSaved()
+  }
+
+  async function deactivatePlan(planId) {
+    if (!window.confirm('Disattivare questo piano? Il cliente non lo vedrà più nell\'app.')) return
+    await supabase.from('meal_plans').update({ is_active: false }).eq('id', planId)
+    setEditingPlan(false)
+    onSaved()
+  }
   const latest = measurements[0]
   const prevM = measurements[1]
   const weightDiff = latest?.weight_kg && prevM?.weight_kg ? (latest.weight_kg - prevM.weight_kg).toFixed(1) : null
@@ -516,12 +592,35 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         <div style={{marginBottom:14}}>
           <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Piano alimentare</div>
           {activePlan ? (
-            <div style={{background:'#FEF0E7',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <div>
-                <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activePlan.title}</div>
-                <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activePlan.kcal_target} kcal · P{activePlan.protein_target_g}g C{activePlan.carbs_target_g}g G{activePlan.fat_target_g}g</div>
+            <div>
+              <div style={{background:'#FEF0E7',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activePlan.title}</div>
+                  <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activePlan.kcal_target} kcal · P{activePlan.protein_target_g}g C{activePlan.carbs_target_g}g G{activePlan.fat_target_g}g</div>
+                </div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{...s.badge,background:'#3B6D11',color:'white'}}>Attivo</span>
+                  <button onClick={()=>setEditingPlan(!editingPlan)} style={{...s.btnSm,background:editingPlan?'#D4570A':'#F5F3EF',color:editingPlan?'white':'#888780'}}>
+                    {editingPlan?'Chiudi':'✏️ Modifica'}
+                  </button>
+                </div>
               </div>
-              <span style={{...s.badge,background:'#3B6D11',color:'white'}}>Attivo</span>
+              {editingPlan && (
+                <div style={{background:'#F5F3EF',borderRadius:10,padding:'14px',border:'0.5px solid #E0DDD6'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+                    <div><label style={s.label}>Kcal target</label><input style={s.input} type="number" value={planEdit.kcal_target} onChange={e=>setPlanEdit(p=>({...p,kcal_target:e.target.value}))}/></div>
+                    <div><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={planEdit.protein_target_g} onChange={e=>setPlanEdit(p=>({...p,protein_target_g:e.target.value}))}/></div>
+                    <div><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={planEdit.carbs_target_g} onChange={e=>setPlanEdit(p=>({...p,carbs_target_g:e.target.value}))}/></div>
+                    <div><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={planEdit.fat_target_g} onChange={e=>setPlanEdit(p=>({...p,fat_target_g:e.target.value}))}/></div>
+                  </div>
+                  <div style={{marginBottom:10}}><label style={s.label}>Titolo</label><input style={s.input} value={planEdit.title} onChange={e=>setPlanEdit(p=>({...p,title:e.target.value}))}/></div>
+                  <div style={{marginBottom:10}}><label style={s.label}>Note</label><textarea style={{...s.input,resize:'none',height:60}} value={planEdit.notes||''} onChange={e=>setPlanEdit(p=>({...p,notes:e.target.value}))}/></div>
+                  <div style={{display:'flex',gap:8}}>
+                    <button onClick={savePlanEdit} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12}}>Salva modifiche</button>
+                    <button onClick={()=>deactivatePlan(activePlan.id)} style={{...s.btnGray,fontSize:12}}>Disattiva piano</button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -575,6 +674,45 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           )}
         </div>
 
+        {/* INDICATORI RAPIDI */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
+          {/* Messaggi non letti */}
+          <div style={{background: unreadCount>0?'#FEF0E7':'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border: unreadCount>0?'0.5px solid #D4570A':'0.5px solid #E0DDD6'}}>
+            <div style={{fontSize:18,fontWeight:800,color:unreadCount>0?'#D4570A':'#888780'}}>{unreadCount}</div>
+            <div style={{fontSize:9,color:unreadCount>0?'#D4570A':'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Msg non letti</div>
+          </div>
+          {/* Aderenza piano */}
+          <div style={{background:'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #E0DDD6'}}>
+            <div style={{fontSize:18,fontWeight:800,color: adherenceWeek ? (adherenceWeek.followed/adherenceWeek.total>=0.7?'#3B6D11':'#D4570A') : '#888780'}}>
+              {adherenceWeek ? `${Math.round(adherenceWeek.followed/adherenceWeek.total*100)}%` : '—'}
+            </div>
+            <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Aderenza pasti</div>
+          </div>
+          {/* Allenamenti settimana */}
+          <div style={{background:'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #E0DDD6'}}>
+            <div style={{fontSize:18,fontWeight:800,color:'#D4570A'}}>{workoutSessions.filter(s=>{const d=new Date(s.session_date);return(new Date()-d)<7*24*60*60*1000}).length}</div>
+            <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Allenamenti/7gg</div>
+          </div>
+        </div>
+
+        {/* ULTIMO CHECK-IN */}
+        {lastCheckin && (
+          <div style={{background:'#F5F3EF',borderRadius:9,padding:'12px',marginBottom:14}}>
+            <div style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+              Check-in — settimana del {new Date(lastCheckin.week_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
+            </div>
+            <div style={{display:'flex',gap:16}}>
+              {[{l:'⚡ Energia',v:lastCheckin.energy},{l:'😴 Sonno',v:lastCheckin.sleep},{l:'🧘 Stress',v:lastCheckin.stress}].map(item=>(
+                <div key={item.l} style={{flex:1,textAlign:'center'}}>
+                  <div style={{fontSize:20,fontWeight:800,color:item.v>=4?'#3B6D11':item.v<=2?'#D4570A':'#111'}}>{item.v}<span style={{fontSize:10,color:'#888780'}}>/5</span></div>
+                  <div style={{fontSize:9,color:'#888780',marginTop:2}}>{item.l}</div>
+                </div>
+              ))}
+            </div>
+            {lastCheckin.notes && <div style={{fontSize:11,color:'#555',marginTop:8,fontStyle:'italic'}}>"{lastCheckin.notes}"</div>}
+          </div>
+        )}
+
         {/* NOTE ALLENAMENTO */}
         {workoutSessions.length > 0 && (
           <div style={{marginBottom:14}}>
@@ -591,13 +729,26 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             <div style={{maxHeight: showAllSessions ? 320 : 'none', overflowY: showAllSessions ? 'auto' : 'visible'}}>
               {workoutSessions.map(sess => {
                 const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
+                // Trova i log di quella sessione
+                const sessLogs = workoutLogs.filter(l => l.log_date === sess.session_date)
+                const byEx = {}
+                sessLogs.forEach(l => { if (!byEx[l.exercise_name]) byEx[l.exercise_name] = []; byEx[l.exercise_name].push(l) })
                 return (
                   <div key={sess.id} style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
-                    <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#888780',marginBottom:sess.notes?3:0,fontWeight:600}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#888780',marginBottom:6,fontWeight:600}}>
                       <span>{sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                       <span style={{color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total} ({pct}%)</span>
                     </div>
-                    {sess.notes}
+                    {Object.entries(byEx).map(([exName, logs]) => {
+                      const maxW = Math.max(...logs.map(l=>l.weight_kg||0))
+                      return (
+                        <div key={exName} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #E0DDD6'}}>
+                          <span style={{color:'#111',fontWeight:500}}>{exName}</span>
+                          <span style={{color:'#D4570A',fontWeight:700}}>{logs.length} serie {maxW>0?`· max ${maxW}kg`:''}</span>
+                        </div>
+                      )
+                    })}
+                    {sess.notes && <div style={{fontSize:11,color:'#888780',marginTop:6,fontStyle:'italic'}}>{sess.notes}</div>}
                   </div>
                 )
               })}
@@ -835,6 +986,129 @@ function CalendarioAdmin() {
         </div>
       </div>
     </>
+  )
+}
+
+// ── DASHBOARD COACH ──────────────────────────────────────────
+function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
+  const today = new Date().toISOString().split('T')[0]
+  const activeClients = clients.length
+  const trainedToday = clients.filter(c => clientStats[c.id]?.sessions7?.some(s => s.session_date === today)).length
+  const diaryToday = clients.filter(c => clientStats[c.id]?.diaryToday).length
+  const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
+  const noActivity = clients.filter(c => {
+    const st = clientStats[c.id]
+    if (!st) return false
+    return !st.diaryToday && !st.sessions7?.length
+  })
+
+  const ALERT_COLOR = '#D4570A'
+  const OK_COLOR = '#3B6D11'
+
+  return (
+    <div>
+      {/* STATS AGGREGATE */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
+        {[
+          {l:'Clienti totali', v:activeClients, icon:'ti-users', color:'#4A90D4'},
+          {l:'Allenati oggi', v:trainedToday, icon:'ti-barbell', color:ALERT_COLOR},
+          {l:'Diario oggi', v:diaryToday, icon:'ti-pencil', color:OK_COLOR},
+          {l:'Messaggi non letti', v:totalUnread, icon:'ti-message', color:totalUnread>0?ALERT_COLOR:'#888780'},
+        ].map(st=>(
+          <div key={st.l} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'14px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+              <i className={`ti ${st.icon}`} style={{fontSize:14,color:st.color}}/>
+              <span style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>{st.l}</span>
+            </div>
+            <div style={{fontSize:24,fontWeight:700,color:st.color}}>{st.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* MESSAGGI NON LETTI */}
+      {totalUnread > 0 && (
+        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+            📬 Messaggi non letti
+          </div>
+          {clients.filter(c=>clientStats[c.id]?.unreadMessages>0).map(c=>(
+            <div key={c.id} onClick={()=>onOpenClient(c)} style={{display:'flex',alignItems:'center',gap:10,padding:'6px 0',cursor:'pointer',borderBottom:'0.5px solid #F4C9A8'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
+                {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+              </div>
+              <div style={{flex:1,fontSize:12,color:'#111',fontWeight:500}}>{c.full_name}</div>
+              <div style={{background:'#D4570A',color:'white',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:10}}>
+                {clientStats[c.id].unreadMessages}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CLIENTI INATTIVI */}
+      {noActivity.length > 0 && (
+        <div style={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+            ⚠️ Inattivi oggi ({noActivity.length})
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {noActivity.map(c=>(
+              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'#F5F3EF',borderRadius:8,padding:'5px 10px',fontSize:12,color:'#555',cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>
+                <div style={{width:18,height:18,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'white'}}>
+                  {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+                </div>
+                {c.full_name?.split(' ')[0]}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PANORAMICA CLIENTI */}
+      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Panoramica clienti</div>
+      {clients.map(c => {
+        const st = clientStats[c.id] || {}
+        const sessions7 = st.sessions7?.length || 0
+        const adh = st.adherence
+        const checkin = st.lastCheckin
+        return (
+          <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:36,height:36,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'white',flexShrink:0}}>
+              {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+              <div style={{fontSize:11,color:'#888780',marginTop:2}}>
+                {st.latestMeasure?.weight_kg ? `${st.latestMeasure.weight_kg}kg · ` : ''}
+                {st.activePlan ? st.activePlan.title : 'Nessun piano'}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:6,flexShrink:0}}>
+              {/* Diario */}
+              <div title="Diario oggi" style={{width:26,height:26,borderRadius:7,background:st.diaryToday?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-pencil" style={{fontSize:12,color:st.diaryToday?OK_COLOR:'#E0DDD6'}}/>
+              </div>
+              {/* Allenamento settimana */}
+              <div title={`${sessions7} allenamenti questa settimana`} style={{width:26,height:26,borderRadius:7,background:sessions7>0?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-barbell" style={{fontSize:12,color:sessions7>0?OK_COLOR:'#E0DDD6'}}/>
+              </div>
+              {/* Messaggi non letti */}
+              {st.unreadMessages > 0 && (
+                <div style={{width:26,height:26,borderRadius:7,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{fontSize:10,fontWeight:700,color:ALERT_COLOR}}>{st.unreadMessages}</span>
+                </div>
+              )}
+              {/* Check-in */}
+              {checkin && (
+                <div title={`Check-in: E${checkin.energy} S${checkin.sleep} St${checkin.stress}`} style={{width:26,height:26,borderRadius:7,background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:checkin.energy>=4?OK_COLOR:checkin.energy<=2?ALERT_COLOR:'#888780'}}>
+                  {checkin.energy}⚡
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
