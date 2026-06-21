@@ -108,18 +108,31 @@ export default function AdminPanel() {
   }
 
   function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
+    const total = dcMacroKcal(prefix)
     return (
-      <div style={{background:bg,borderRadius:10,padding:'12px',border:`0.5px solid ${color}22`,marginBottom:10}}>
+      <div style={{background:bg,borderRadius:10,padding:'12px',border:`0.5px solid ${color}33`,marginBottom:10}}>
         <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>{label}</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
-          {[{k:`${prefix}_kcal`,l:'Kcal'},{k:`${prefix}_protein`,l:'Pro (g)'},{k:`${prefix}_carbs`,l:'Carbo (g)'},{k:`${prefix}_fat`,l:'Grassi (g)'}].map(f=>(
+          <div>
+            <label style={{...s.label,color:'#888780'}}>Kcal</label>
+            <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
+              value={dietConfig[`${prefix}_kcal`]||''}
+              onChange={e=>handleDcKcalChange(prefix, e.target.value)}/>
+          </div>
+          {[{k:'protein',l:'Pro (g)'},{k:'carbs',l:'Carbo (g)'},{k:'fat',l:'Grassi (g)'}].map(f=>(
             <div key={f.k}>
               <label style={{...s.label,color:'#888780'}}>{f.l}</label>
               <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
-                value={dietConfig[f.k]||''}
-                onChange={e=>setDietConfig(p=>({...p,[f.k]:parseInt(e.target.value)||0}))}/>
+                value={dietConfig[`${prefix}_${f.k}`]||''}
+                onChange={e=>handleDcMacroChange(prefix, f.k, e.target.value)}/>
             </div>
           ))}
+        </div>
+        <div style={{marginTop:8,fontSize:11,color,fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
+          <i className="ti ti-check" style={{fontSize:12}}/> Totale da macro: {total} kcal
+          {Math.abs(total - (dietConfig[`${prefix}_kcal`]||0)) > 5 && (
+            <span style={{color:'#E24B4A',fontWeight:400,fontSize:10,marginLeft:4}}>⚠️ differenza di {Math.abs(total-(dietConfig[`${prefix}_kcal`]||0))} kcal</span>
+          )}
         </div>
       </div>
     )
@@ -268,6 +281,37 @@ export default function AdminPanel() {
   async function togglePlan(id, cur) { await supabase.from('meal_plans').update({is_active:!cur}).eq('id',id); fetchAll() }
   async function deletePlan(id) { if (!confirm('Eliminare?')) return; await supabase.from('meal_plans').delete().eq('id',id); fetchAll() }
   const macroKcal = p => (parseInt(p.protein_target_g||0)*4+parseInt(p.carbs_target_g||0)*4+parseInt(p.fat_target_g||0)*9)
+  const dcMacroKcal = (prefix) => (parseInt(dietConfig[`${prefix}_protein`]||0)*4+parseInt(dietConfig[`${prefix}_carbs`]||0)*4+parseInt(dietConfig[`${prefix}_fat`]||0)*9)
+
+  // Sync kcal → macro per dietConfig (mantiene proporzioni)
+  function handleDcKcalChange(prefix, newKcal) {
+    setDietConfig(p => {
+      const kcalNum = parseInt(newKcal) || 0
+      const currentTotal = dcMacroKcal(prefix)
+      if (currentTotal === 0) return {
+        ...p, [`${prefix}_kcal`]: kcalNum,
+        [`${prefix}_protein`]: Math.round(kcalNum*0.30/4),
+        [`${prefix}_carbs`]: Math.round(kcalNum*0.40/4),
+        [`${prefix}_fat`]: Math.round(kcalNum*0.30/9),
+      }
+      const ratio = kcalNum / currentTotal
+      return {
+        ...p, [`${prefix}_kcal`]: kcalNum,
+        [`${prefix}_protein`]: Math.round((parseInt(p[`${prefix}_protein`])||0)*ratio),
+        [`${prefix}_carbs`]: Math.round((parseInt(p[`${prefix}_carbs`])||0)*ratio),
+        [`${prefix}_fat`]: Math.round((parseInt(p[`${prefix}_fat`])||0)*ratio),
+      }
+    })
+  }
+
+  // Sync macro → kcal per dietConfig
+  function handleDcMacroChange(prefix, field, value) {
+    setDietConfig(p => {
+      const updated = { ...p, [`${prefix}_${field}`]: parseInt(value)||0 }
+      updated[`${prefix}_kcal`] = (parseInt(updated[`${prefix}_protein`]||0)*4)+(parseInt(updated[`${prefix}_carbs`]||0)*4)+(parseInt(updated[`${prefix}_fat`]||0)*9)
+      return updated
+    })
+  }
 
   // Quando cambiano le kcal totali -> riproporziona i macro mantenendo le proporzioni attuali
   function handleKcalChange(newKcal) {
