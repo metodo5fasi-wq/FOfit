@@ -921,7 +921,7 @@ function MessaggiAdmin() {
       id: 'tmp-'+Date.now(), message: msg,
       sender_role: 'coach', created_at: new Date().toISOString()
     }])
-    await fetch('/api/chat', {
+    await fetch('/api/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ clientId: selectedClient.id, coachId: profile.id, message: msg, senderRole: 'coach' })
