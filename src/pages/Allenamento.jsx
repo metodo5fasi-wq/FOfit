@@ -378,7 +378,7 @@ export default function Allenamento() {
                       return (
                         <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
                           <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
-                            width:26,height:26,borderRadius:7,border:'none',cursor:'pointer',flexShrink:0,
+                            width:26,height:26,borderRadius:7,cursor:'pointer',flexShrink:0,
                             background: log ? '#3B6D11' : 'var(--bg-card)',
                             border: log ? 'none' : '0.5px solid var(--border)',
                             display:'flex',alignItems:'center',justifyContent:'center'
