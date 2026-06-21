@@ -32,6 +32,8 @@ export default function PianoAlimentare() {
   const [selectedOptions, setSelectedOptions] = useState({}) // { foodId: optionIndex } 0=principale, 1+=opzioni[idx-1]
   const [supplements, setSupplements] = useState([])
   const [showSupplements, setShowSupplements] = useState(false)
+  const [adherence, setAdherence] = useState({})
+  const todayDate = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     if (profile) fetchPlan()
@@ -71,7 +73,27 @@ export default function PianoAlimentare() {
       .select('*').eq('plan_id', planData.id).order('order_index', {ascending:true})
     setSupplements(suppData || [])
 
+    // Aderenza pasti di oggi
+    const { data: adherenceData } = await supabase.from('meal_adherence')
+      .select('*').eq('client_id', profile.id).eq('adherence_date', new Date().toISOString().split('T')[0])
+    const adherenceMap = {}
+    adherenceData?.forEach(a => { adherenceMap[a.plan_meal_id] = a.followed })
+    setAdherence(adherenceMap)
+
     setLoading(false)
+  }
+
+  async function toggleAdherence(mealId) {
+    const current = adherence[mealId] || false
+    const next = !current
+    setAdherence(prev => ({...prev, [mealId]: next}))
+    const existing = await supabase.from('meal_adherence')
+      .select('id').eq('client_id', profile.id).eq('plan_meal_id', mealId).eq('adherence_date', todayDate).single()
+    if (existing.data) {
+      await supabase.from('meal_adherence').update({ followed: next }).eq('id', existing.data.id)
+    } else {
+      await supabase.from('meal_adherence').insert({ client_id: profile.id, plan_meal_id: mealId, adherence_date: todayDate, followed: next })
+    }
   }
 
   function toggleMeal(key) {
@@ -202,7 +224,18 @@ export default function PianoAlimentare() {
                     {meal.coach_note && <div style={{fontSize:11,color:'var(--text-muted)'}}>{meal.coach_note}</div>}
                   </div>
                   {mealKcal > 0 && <span style={{...s.badge,fontSize:11}}>{mealKcal} kcal</span>}
-                  <i className={`ti ti-chevron-down`} style={{fontSize:15,color:'var(--text-muted)',transform:isOpen?'rotate(180deg)':'none',transition:'transform 0.2s'}}/>
+                  <button onClick={e=>{e.stopPropagation(); toggleAdherence(meal.id)}} style={{
+                    padding:'5px 10px', borderRadius:8, border:'0.5px solid',
+                    background: adherence[meal.id] ? '#EAF3DE' : 'var(--bg-input)',
+                    color: adherence[meal.id] ? '#3B6D11' : 'var(--text-muted)',
+                    borderColor: adherence[meal.id] ? '#3B6D11' : 'var(--border)',
+                    fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
+                    display:'flex', alignItems:'center', gap:3, flexShrink:0,
+                  }}>
+                    <i className={`ti ${adherence[meal.id]?'ti-check':'ti-circle'}`} style={{fontSize:12}}/>
+                    {adherence[meal.id]?'Seguito':'Segui'}
+                  </button>
+                  <i className="ti ti-chevron-down" style={{fontSize:15,color:'var(--text-muted)',transform:isOpen?'rotate(180deg)':'none',transition:'transform 0.2s'}}/>
                 </div>
 
                 {isOpen && (
