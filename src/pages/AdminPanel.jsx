@@ -678,45 +678,47 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
   async function loadData() {
     setLoadingData(true)
-    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
-    const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes, logsRes, checkinRes, msgRes, adherenceRes, mealPlanRes, workoutPlanRes] = await Promise.all([
-      supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
-      supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
-      supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
-      supabase.from('workout_sessions').select('*').eq('client_id', client.id).order('session_date',{ascending:false}).limit(5),
-      supabase.from('workout_sessions').select('id', {count:'exact', head:true}).eq('client_id', client.id),
-      supabase.from('workout_logs').select('*').eq('client_id', client.id).gte('log_date', sevenDaysAgo).order('log_date',{ascending:false}),
-      supabase.from('weekly_checkins').select('*').eq('client_id', client.id).order('week_date',{ascending:false}).limit(1),
-      supabase.from('coach_messages').select('id',{count:'exact',head:true}).eq('client_id', client.id).eq('sender_role','client').eq('is_read',false),
-      supabase.from('meal_adherence').select('followed').eq('client_id', client.id).gte('adherence_date', sevenDaysAgo),
-      supabase.from('meal_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
-      supabase.from('workout_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
-    ])
-    setAllSessionsCount(sessionsCountRes.count || 0)
-    setMeasurements(measRes.data || [])
-    setPhotos(photoRes.data || [])
-    setWorkoutSessions(sessionsRes.data || [])
-    setWorkoutLogs(logsRes.data || [])
-    setLastCheckin(checkinRes.data?.[0] || null)
-    setUnreadCount(msgRes.count || 0)
-    const adh = adherenceRes.data || []
-    setAdherenceWeek(adh.length > 0 ? { followed: adh.filter(a=>a.followed).length, total: adh.length } : null)
-    setActiveMealPlan(mealPlanRes.data?.[0] || null)
-    if (mealPlanRes.data?.[0]) {
-      const mp = mealPlanRes.data[0]
-      setPlanEdit({ title: mp.title, kcal_target: mp.kcal_target, protein_target_g: mp.protein_target_g, carbs_target_g: mp.carbs_target_g, fat_target_g: mp.fat_target_g, notes: mp.notes||'' })
+    try {
+      const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]
+      const [measRes, photoRes, diaryRes, sessionsRes, sessionsCountRes, logsRes, checkinRes, msgRes, adherenceRes, mealPlanRes, workoutPlanRes] = await Promise.all([
+        supabase.from('progress_entries').select('*').eq('client_id', client.id).order('entry_date',{ascending:false}).limit(3),
+        supabase.from('progress_photos').select('*').eq('client_id', client.id).order('photo_date',{ascending:false}).limit(6),
+        supabase.from('diary_entries').select('entry_date, kcal').eq('client_id', client.id).gte('entry_date', sevenDaysAgo),
+        supabase.from('workout_sessions').select('*').eq('client_id', client.id).order('session_date',{ascending:false}).limit(5),
+        supabase.from('workout_sessions').select('id', {count:'exact', head:true}).eq('client_id', client.id),
+        supabase.from('workout_logs').select('*').eq('client_id', client.id).gte('log_date', sevenDaysAgo).order('log_date',{ascending:false}),
+        supabase.from('weekly_checkins').select('*').eq('client_id', client.id).order('week_date',{ascending:false}).limit(1),
+        supabase.from('coach_messages').select('id',{count:'exact',head:true}).eq('client_id', client.id).eq('sender_role','client').eq('is_read',false),
+        supabase.from('meal_adherence').select('followed').eq('client_id', client.id).gte('adherence_date', sevenDaysAgo),
+        supabase.from('meal_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
+        supabase.from('workout_plans').select('*').eq('client_id', client.id).eq('is_active', true).limit(1),
+      ])
+      setAllSessionsCount(sessionsCountRes.count || 0)
+      setMeasurements(measRes.data || [])
+      setPhotos(photoRes.data || [])
+      setWorkoutSessions(sessionsRes.data || [])
+      setWorkoutLogs(logsRes.data || [])
+      setLastCheckin(checkinRes.data?.[0] || null)
+      setUnreadCount(msgRes.count || 0)
+      const adh = adherenceRes.data || []
+      setAdherenceWeek(adh.length > 0 ? { followed: adh.filter(a=>a.followed).length, total: adh.length } : null)
+      setActiveMealPlan(mealPlanRes.data?.[0] || null)
+      if (mealPlanRes.data?.[0]) {
+        const mp = mealPlanRes.data[0]
+        setPlanEdit({ title: mp.title, kcal_target: mp.kcal_target, protein_target_g: mp.protein_target_g, carbs_target_g: mp.carbs_target_g, fat_target_g: mp.fat_target_g, notes: mp.notes||'' })
+      }
+      setActiveWorkoutPlan(workoutPlanRes.data?.[0] || null)
+      const byDay = {}
+      ;(diaryRes.data||[]).forEach(d => { byDay[d.entry_date] = (byDay[d.entry_date]||0) + (d.kcal||0) })
+      const days = []
+      for (let i=6;i>=0;i--) {
+        const d = new Date(Date.now() - i*24*60*60*1000).toISOString().split('T')[0]
+        days.push({ date:d, kcal: Math.round(byDay[d]||0) })
+      }
+      setDiaryWeek(days)
+    } catch(e) {
+      console.error('loadData error:', e)
     }
-    setActiveWorkoutPlan(workoutPlanRes.data?.[0] || null)
-
-    // Raggruppa diario per giorno
-    const byDay = {}
-    ;(diaryRes.data||[]).forEach(d => { byDay[d.entry_date] = (byDay[d.entry_date]||0) + (d.kcal||0) })
-    const days = []
-    for (let i=6;i>=0;i--) {
-      const d = new Date(Date.now() - i*24*60*60*1000).toISOString().split('T')[0]
-      days.push({ date:d, kcal: Math.round(byDay[d]||0) })
-    }
-    setDiaryWeek(days)
     setLoadingData(false)
   }
 
@@ -1675,4 +1677,3 @@ function CheckinAdmin() {
       ))}
     </div>
   )
-}
