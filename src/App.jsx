@@ -14,6 +14,9 @@ import Allenamento from './pages/Allenamento'
 import StoricoAllenamento from './pages/StoricoAllenamento'
 import ShareView from './pages/ShareView'
 import ImportaAllenamento from './pages/ImportaAllenamento'
+import ReportMensile from './pages/ReportMensile'
+import CheckinSettimanale from './pages/CheckinSettimanale'
+import MessaggiCoach from './pages/MessaggiCoach'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
@@ -202,6 +205,9 @@ export default function App() {
             <Route path="allenamento" element={<Allenamento />} />
             <Route path="storico-allenamento" element={<StoricoAllenamento />} />
             <Route path="importa-allenamento" element={!profile ? null : profile.role === 'admin' ? <ImportaAllenamento /> : <Navigate to="/" />} />
+            <Route path="report" element={<ReportMensile />} />
+            <Route path="checkin" element={<CheckinSettimanale />} />
+            <Route path="messaggi" element={<MessaggiCoach />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
