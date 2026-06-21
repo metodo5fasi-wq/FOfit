@@ -17,6 +17,7 @@ import ImportaAllenamento from './pages/ImportaAllenamento'
 import ReportMensile from './pages/ReportMensile'
 import CheckinSettimanale from './pages/CheckinSettimanale'
 import MessaggiCoach from './pages/MessaggiCoach'
+import ModificaPiano from './pages/ModificaPiano'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
@@ -208,6 +209,7 @@ export default function App() {
             <Route path="report" element={<ReportMensile />} />
             <Route path="checkin" element={<CheckinSettimanale />} />
             <Route path="messaggi" element={<MessaggiCoach />} />
+            <Route path="modifica-piano/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaPiano /> : <Navigate to="/" />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
