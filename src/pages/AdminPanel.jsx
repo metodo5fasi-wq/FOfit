@@ -38,7 +38,7 @@ const today = new Date().toISOString().split('T')[0]
 
 export default function AdminPanel() {
   const { profile } = useAuth()
-  const [tab, setTab] = useState('clienti')
+  const [tab, setTab] = useState('overview')
   const [clients, setClients] = useState([])
   const [plans, setPlans] = useState([])
   const [clientStats, setClientStats] = useState({}) // { [clientId]: { diaryToday, activePlan, latestMeasure } }
@@ -383,7 +383,10 @@ export default function AdminPanel() {
   return (
     <>
       <div style={s.topbar}>
-        <div><div style={{fontSize:15,fontWeight:500,color:'#111'}}>Pannello Admin</div><div style={{fontSize:12,color:'#888780'}}>Gestisci clienti e piani</div></div>
+        <div>
+          <div style={{fontSize:15,fontWeight:500,color:'#111'}}>FOfit Coach</div>
+          <div style={{fontSize:12,color:'#888780'}}>{new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}</div>
+        </div>
         <div style={{display:'flex',gap:8}}>
           {tab==='clienti'&&<button style={s.btn} onClick={()=>setShowNewClient(true)}><i className="ti ti-user-plus" style={{fontSize:15}}/> Nuovo cliente</button>}
           {tab==='piani'&&<button style={s.btn} onClick={()=>setShowNewPlan(true)}><i className="ti ti-plus" style={{fontSize:15}}/> Nuovo piano</button>}
@@ -391,16 +394,18 @@ export default function AdminPanel() {
       </div>
       <div style={s.page}>
         {msg&&<div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
-          {[{l:'Clienti',v:clients.length,i:'ti-users'},{l:'Piani attivi',v:plans.filter(p=>p.is_active).length,i:'ti-clipboard-list'},{l:'Piani totali',v:plans.length,i:'ti-files'},{l:'Coach',v:'Federico Obinu',i:'ti-star',sm:true}].map(st=>(
-            <div key={st.l} style={s.card}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}><i className={`ti ${st.i}`} style={{fontSize:16,color:'#D4570A'}}/><span style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>{st.l}</span></div><div style={{fontSize:st.sm?13:22,fontWeight:500,color:'#111'}}>{st.v}</div></div>
-          ))}
-        </div>
+
         <div style={s.tabs}>
-          {['dashboard','clienti','piani','progressi','calendario','messaggi','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</div>)}
+          {['overview','clienti','messaggi','calendario','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{
+            t==='overview'?'📊 Overview':
+            t==='clienti'?'👥 Clienti':
+            t==='messaggi'?'💬 Messaggi':
+            t==='calendario'?'📅 Calendario':
+            '✅ Check-in'
+          }</div>)}
         </div>
 
-        {tab==='dashboard'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}}/>}
+        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}}/>}
         {tab==='clienti'&&(
           <>
           <NotifPanel/>
@@ -489,6 +494,7 @@ export default function AdminPanel() {
 
         {tab==='calendario'&&<CalendarioAdmin/>}
         {tab==='messaggi'&&<MessaggiAdmin/>}
+        {tab==='overview'&&false&&null}
         {tab==='check-in'&&<CheckinAdmin/>}
       </div>
 
@@ -1274,125 +1280,170 @@ function CalendarioAdmin() {
 // ── DASHBOARD COACH ──────────────────────────────────────────
 function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
   const today = new Date().toISOString().split('T')[0]
-  const activeClients = clients.length
+  const ALERT = '#D4570A'
+  const OK = '#3B6D11'
+
+  // Metriche aggregate
+  const totalClients = clients.length
   const trainedToday = clients.filter(c => clientStats[c.id]?.sessions7?.some(s => s.session_date === today)).length
   const diaryToday = clients.filter(c => clientStats[c.id]?.diaryToday).length
   const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
-  const noActivity = clients.filter(c => {
+  const withPlan = clients.filter(c => clientStats[c.id]?.activePlan).length
+  const noPlan = totalClients - withPlan
+  const inactiveToday = clients.filter(c => {
     const st = clientStats[c.id]
-    if (!st) return false
-    return !st.diaryToday && !st.sessions7?.length
+    return st && !st.diaryToday && !st.sessions7?.length
   })
-
-  const ALERT_COLOR = '#D4570A'
-  const OK_COLOR = '#3B6D11'
 
   return (
     <div>
-      {/* STATS AGGREGATE */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
-        {[
-          {l:'Clienti totali', v:activeClients, icon:'ti-users', color:'#4A90D4'},
-          {l:'Allenati oggi', v:trainedToday, icon:'ti-barbell', color:ALERT_COLOR},
-          {l:'Diario oggi', v:diaryToday, icon:'ti-pencil', color:OK_COLOR},
-          {l:'Messaggi non letti', v:totalUnread, icon:'ti-message', color:totalUnread>0?ALERT_COLOR:'#888780'},
-        ].map(st=>(
-          <div key={st.l} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'14px 12px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-              <i className={`ti ${st.icon}`} style={{fontSize:14,color:st.color}}/>
-              <span style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>{st.l}</span>
-            </div>
-            <div style={{fontSize:24,fontWeight:700,color:st.color}}>{st.v}</div>
+      {/* STATS CARD ROW */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:16}}>
+        <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'#EBF3FD',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <i className="ti ti-users" style={{fontSize:20,color:'#4A90D4'}}/>
           </div>
-        ))}
+          <div>
+            <div style={{fontSize:26,fontWeight:800,color:'#4A90D4',lineHeight:1}}>{totalClients}</div>
+            <div style={{fontSize:11,color:'#888780',marginTop:3}}>Clienti totali</div>
+          </div>
+          <div style={{marginLeft:'auto',textAlign:'right'}}>
+            <div style={{fontSize:12,fontWeight:600,color:OK}}>{withPlan} con piano</div>
+            {noPlan > 0 && <div style={{fontSize:11,color:ALERT}}>{noPlan} senza piano</div>}
+          </div>
+        </div>
+
+        <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <i className="ti ti-barbell" style={{fontSize:20,color:ALERT}}/>
+          </div>
+          <div>
+            <div style={{fontSize:26,fontWeight:800,color:ALERT,lineHeight:1}}>{trainedToday}</div>
+            <div style={{fontSize:11,color:'#888780',marginTop:3}}>Allenati oggi</div>
+          </div>
+          <div style={{marginLeft:'auto',textAlign:'right'}}>
+            <div style={{fontSize:12,fontWeight:600,color:OK}}>{diaryToday} diario ok</div>
+            {inactiveToday.length > 0 && <div style={{fontSize:11,color:'#888780'}}>{inactiveToday.length} inattivi</div>}
+          </div>
+        </div>
       </div>
 
       {/* MESSAGGI NON LETTI */}
       {totalUnread > 0 && (
-        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
-          <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
-            📬 Messaggi non letti
+        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:12,padding:'14px',marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <i className="ti ti-message-2" style={{fontSize:15,color:ALERT}}/>
+            <div style={{fontSize:13,fontWeight:700,color:ALERT}}>Messaggi non letti ({totalUnread})</div>
           </div>
           {clients.filter(c=>clientStats[c.id]?.unreadMessages>0).map(c=>(
-            <div key={c.id} onClick={()=>onOpenClient(c)} style={{display:'flex',alignItems:'center',gap:10,padding:'6px 0',cursor:'pointer',borderBottom:'0.5px solid #F4C9A8'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
+            <div key={c.id} onClick={()=>onOpenClient(c)}
+              style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #F4C9A8'}}>
+              <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              <div style={{flex:1,fontSize:12,color:'#111',fontWeight:500}}>{c.full_name}</div>
-              <div style={{background:'#D4570A',color:'white',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:10}}>
-                {clientStats[c.id].unreadMessages}
+              <div style={{flex:1,fontSize:13,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <div style={{background:'#D4570A',color:'white',fontSize:11,fontWeight:700,padding:'2px 10px',borderRadius:10}}>
+                {clientStats[c.id].unreadMessages} nuovi
               </div>
+              <i className="ti ti-chevron-right" style={{fontSize:14,color:'#D4570A'}}/>
             </div>
           ))}
         </div>
       )}
 
-      {/* CLIENTI INATTIVI */}
-      {noActivity.length > 0 && (
-        <div style={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
-          <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
-            ⚠️ Inattivi oggi ({noActivity.length})
+      {/* INATTIVI OGGI */}
+      {inactiveToday.length > 0 && (
+        <div style={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:12,padding:'14px',marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <i className="ti ti-alert-circle" style={{fontSize:15,color:'#888780'}}/>
+            <div style={{fontSize:13,fontWeight:700,color:'#888780'}}>Inattivi oggi ({inactiveToday.length})</div>
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-            {noActivity.map(c=>(
-              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'#F5F3EF',borderRadius:8,padding:'5px 10px',fontSize:12,color:'#555',cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>
-                <div style={{width:18,height:18,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'white'}}>
+            {inactiveToday.map(c=>(
+              <div key={c.id} onClick={()=>onOpenClient(c)}
+                style={{display:'flex',alignItems:'center',gap:6,background:'#F5F3EF',borderRadius:20,padding:'5px 12px 5px 6px',cursor:'pointer'}}>
+                <div style={{width:22,height:22,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#888780'}}>
                   {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
                 </div>
-                {c.full_name?.split(' ')[0]}
+                <span style={{fontSize:12,color:'#555',fontWeight:500}}>{c.full_name?.split(' ')[0]}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* PANORAMICA CLIENTI */}
-      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Panoramica clienti</div>
+      {/* LISTA CLIENTI CON STATO */}
+      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,fontWeight:600}}>
+        Stato clienti oggi
+      </div>
       {clients.map(c => {
         const st = clientStats[c.id] || {}
         const sessions7 = st.sessions7?.length || 0
-        const adh = st.adherence
         const checkin = st.lastCheckin
+        const adh = st.adherence
+        const pct = adh ? Math.round(adh.followed/adh.total*100) : null
+
         return (
-          <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:36,height:36,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'white',flexShrink:0}}>
+          <div key={c.id} onClick={()=>onOpenClient(c)}
+            style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',alignItems:'center',gap:12,transition:'box-shadow 0.15s'}}
+            onMouseEnter={e=>e.currentTarget.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)'}
+            onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}
+          >
+            {/* Avatar */}
+            <div style={{width:40,height:40,borderRadius:11,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
               {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
             </div>
+
+            {/* Info */}
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+              <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
               <div style={{fontSize:11,color:'#888780',marginTop:2}}>
                 {st.latestMeasure?.weight_kg ? `${st.latestMeasure.weight_kg}kg · ` : ''}
                 {st.activePlan ? st.activePlan.title : 'Nessun piano'}
               </div>
             </div>
-            <div style={{display:'flex',gap:6,flexShrink:0}}>
+
+            {/* Indicatori */}
+            <div style={{display:'flex',gap:5,alignItems:'center',flexShrink:0}}>
               {/* Diario */}
-              <div title="Diario oggi" style={{width:26,height:26,borderRadius:7,background:st.diaryToday?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <i className="ti ti-pencil" style={{fontSize:12,color:st.diaryToday?OK_COLOR:'#E0DDD6'}}/>
+              <div title={st.diaryToday?'Diario compilato':'Diario non fatto'}
+                style={{width:28,height:28,borderRadius:8,background:st.diaryToday?'#EAF3DE':'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-pencil" style={{fontSize:13,color:st.diaryToday?OK:'#E24B4A'}}/>
               </div>
-              {/* Allenamento settimana */}
-              <div title={`${sessions7} allenamenti questa settimana`} style={{width:26,height:26,borderRadius:7,background:sessions7>0?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <i className="ti ti-barbell" style={{fontSize:12,color:sessions7>0?OK_COLOR:'#E0DDD6'}}/>
+              {/* Allenamento */}
+              <div title={`${sessions7} allenamenti questa settimana`}
+                style={{width:28,height:28,borderRadius:8,background:sessions7>0?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-barbell" style={{fontSize:13,color:sessions7>0?OK:'#E0DDD6'}}/>
               </div>
-              {/* Messaggi non letti */}
-              {st.unreadMessages > 0 && (
-                <div style={{width:26,height:26,borderRadius:7,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <span style={{fontSize:10,fontWeight:700,color:ALERT_COLOR}}>{st.unreadMessages}</span>
+              {/* Aderenza */}
+              {pct !== null && (
+                <div title={`Aderenza piano: ${pct}%`}
+                  style={{height:28,minWidth:28,borderRadius:8,background:pct>=70?'#EAF3DE':'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 6px'}}>
+                  <span style={{fontSize:11,fontWeight:700,color:pct>=70?OK:ALERT}}>{pct}%</span>
                 </div>
               )}
-              {/* Check-in */}
+              {/* Messaggi non letti */}
+              {st.unreadMessages > 0 && (
+                <div style={{width:28,height:28,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{fontSize:10,fontWeight:700,color:ALERT}}>{st.unreadMessages}</span>
+                </div>
+              )}
+              {/* Check-in energia */}
               {checkin && (
-                <div title={`Check-in: E${checkin.energy} S${checkin.sleep} St${checkin.stress}`} style={{width:26,height:26,borderRadius:7,background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:checkin.energy>=4?OK_COLOR:checkin.energy<=2?ALERT_COLOR:'#888780'}}>
-                  {checkin.energy}⚡
+                <div title={`Energia: ${checkin.energy}/5 · Sonno: ${checkin.sleep}/5 · Stress: ${checkin.stress}/5`}
+                  style={{width:28,height:28,borderRadius:8,background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <span style={{fontSize:11,fontWeight:700,color:checkin.energy>=4?OK:checkin.energy<=2?ALERT:'#888780'}}>{checkin.energy}⚡</span>
                 </div>
               )}
             </div>
+            <i className="ti ti-chevron-right" style={{fontSize:14,color:'#E0DDD6',flexShrink:0}}/>
           </div>
         )
       })}
     </div>
   )
 }
+
 
 // ── COMPONENTE MESSAGGI ADMIN (CHAT) ──────────────────────────────
 function MessaggiAdmin() {
