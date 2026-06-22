@@ -20,25 +20,34 @@ export default function MessaggiCoach() {
   const textareaRef = useRef(null)
   const pollRef = useRef(null)
 
+  const isVisible = useRef(false)
+
   useEffect(() => {
     if (!profile) return
-    fetchMessages()
-    pollRef.current = setInterval(fetchMessages, 10000)
-    return () => clearInterval(pollRef.current)
+    isVisible.current = true
+    fetchMessages(true) // prima apertura — segna come letti
+    pollRef.current = setInterval(() => fetchMessages(false), 10000) // polling — NON segna come letti
+    return () => {
+      isVisible.current = false
+      clearInterval(pollRef.current)
+    }
   }, [profile])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function fetchMessages() {
+  async function fetchMessages(markRead = false) {
     const { data } = await supabase.from('coach_messages')
       .select('*').eq('client_id', profile.id)
       .order('created_at', { ascending: true })
     setMessages(data || [])
     setLoading(false)
-    await supabase.from('coach_messages').update({ is_read: true })
-      .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false)
+    // Segna come letti solo quando il cliente apre la pagina
+    if (markRead) {
+      await supabase.from('coach_messages').update({ is_read: true })
+        .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false)
+    }
   }
 
   async function send() {
@@ -58,7 +67,7 @@ export default function MessaggiCoach() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clientId: profile.id, message: text, senderRole: 'client' })
     })
-    await fetchMessages()
+    await fetchMessages(true)
     setSending(false)
   }
 
