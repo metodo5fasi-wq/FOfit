@@ -33,6 +33,23 @@ const ADMIN_NAV_MODIFICA = [
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
   const isAdmin = profile?.role === 'admin'
+  const [unreadMessages, setUnreadMessages] = useState(0)
+
+  useEffect(() => {
+    if (!profile || isAdmin) return
+    async function fetchUnread() {
+      const { count } = await supabase
+        .from('coach_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('client_id', profile.id)
+        .eq('sender_role', 'coach')
+        .eq('is_read', false)
+      setUnreadMessages(count || 0)
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 15000)
+    return () => clearInterval(interval)
+  }, [profile])
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
     : 'U'
@@ -99,6 +116,11 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                 </div>
                 <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
                 {item.to==='/ai'&&<span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>}
+                {item.to==='/messaggi'&&unreadMessages>0&&(
+                  <span style={{marginLeft:'auto',minWidth:18,height:18,borderRadius:9,background:'#D4570A',color:'white',fontSize:10,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>
+                    {unreadMessages}
+                  </span>
+                )}
               </NavLink>
             ))}
           </>
