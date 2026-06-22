@@ -35,6 +35,22 @@
           font-size: 16px !important;
         }
       }
+
+      /* Blocca overscroll/rubber-band su mobile */
+      html, body {
+        overscroll-behavior: none;
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
     </style>
   </head>
   <body style="background:#1a0800;margin:0">
