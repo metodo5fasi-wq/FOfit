@@ -1,32 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
-const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 16px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0, paddingTop:'env(safe-area-inset-top)' },
-  page: { flex:1, overflowY:'auto', padding:'16px 16px 8px', display:'flex', flexDirection:'column', gap:6 },
-  msgUser: { alignSelf:'flex-end', background:'#D4570A', color:'white', borderRadius:'16px 16px 4px 16px', padding:'10px 14px', maxWidth:'78%', fontSize:13, lineHeight:1.5, wordBreak:'break-word' },
-  msgCoach: { alignSelf:'flex-start', background:'var(--bg-card)', border:'0.5px solid var(--border)', borderRadius:'16px 16px 16px 4px', padding:'10px 14px', maxWidth:'78%', fontSize:13, lineHeight:1.5, color:'var(--text)', wordBreak:'break-word' },
-  bottom: { padding:'10px 16px', paddingBottom:'calc(env(safe-area-inset-bottom) + 10px)', background:'var(--bg-card)', borderTop:'0.5px solid var(--border)', flexShrink:0 },
-  input: { flex:1, padding:'10px 14px', border:'0.5px solid var(--border)', borderRadius:22, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', resize:'none', maxHeight:100, lineHeight:1.5 },
-  sendBtn: { width:40, height:40, borderRadius:'50%', background:'#D4570A', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
-  dateLabel: { textAlign:'center', fontSize:11, color:'var(--text-muted)', margin:'8px 0', fontWeight:500 },
-  timestamp: { fontSize:10, marginTop:3, opacity:0.6, textAlign:'right' },
-}
-
 function formatDateLabel(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
   const today = new Date().toISOString().split('T')[0]
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   if (dateStr === today) return 'Oggi'
   if (dateStr === yesterday) return 'Ieri'
-  return d.toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' })
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' })
 }
 
 export default function MessaggiCoach() {
   const { profile } = useAuth()
-  const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -52,7 +37,6 @@ export default function MessaggiCoach() {
       .order('created_at', { ascending: true })
     setMessages(data || [])
     setLoading(false)
-    // Segna come letti i messaggi del coach
     await supabase.from('coach_messages').update({ is_read: true })
       .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false)
   }
@@ -62,11 +46,12 @@ export default function MessaggiCoach() {
     if (!text || sending) return
     setSending(true)
     setInput('')
-    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto' }
 
-    // Ottimistic update
-    const tempMsg = { id: 'tmp-' + Date.now(), message: text, sender_role: 'client', created_at: new Date().toISOString(), is_read: false }
-    setMessages(prev => [...prev, tempMsg])
+    setMessages(prev => [...prev, {
+      id: 'tmp-' + Date.now(), message: text,
+      sender_role: 'client', created_at: new Date().toISOString(), is_read: false
+    }])
 
     await fetch('/api/messages', {
       method: 'POST',
@@ -84,10 +69,9 @@ export default function MessaggiCoach() {
   function handleInput(e) {
     setInput(e.target.value)
     e.target.style.height = 'auto'
-    e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
   }
 
-  // Raggruppa messaggi per data
   const grouped = {}
   messages.forEach(m => {
     const date = m.created_at.split('T')[0]
@@ -96,54 +80,112 @@ export default function MessaggiCoach() {
   })
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', maxWidth:680, margin:'0 auto', width:'100%' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
 
       {/* TOPBAR */}
-      <div style={s.topbar}>
-        <button onClick={() => navigate(-1)} style={{ width:36, height:36, borderRadius:10, border:'0.5px solid var(--border)', background:'var(--bg-input)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
-          <i className="ti ti-arrow-left" style={{ fontSize:16, color:'var(--text)' }}/>
-        </button>
-        <div style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+      <div style={{ background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 18px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
+        <div style={{ width:38, height:38, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 2px 8px rgba(212,87,10,0.3)' }}>
           <span style={{ fontSize:13, fontWeight:700, color:'white' }}>FO</span>
         </div>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:600, color:'var(--text)' }}>Federico Obinu</div>
-          <div style={{ fontSize:11, color:'#3B6D11' }}>● Coach</div>
+          <div style={{ fontSize:15, fontWeight:600, color:'var(--text)', lineHeight:1.2 }}>Federico Obinu</div>
+          <div style={{ fontSize:11, color:'#3B6D11', display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#3B6D11' }}/>
+            Il tuo coach personale
+          </div>
+        </div>
+        <div style={{ fontSize:10, color:'var(--text-muted)', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
+          Risponde entro 24h
         </div>
       </div>
 
-      {/* MESSAGGI */}
-      <div style={s.page}>
+      {/* AREA MESSAGGI */}
+      <div style={{ flex:1, overflowY:'auto', padding:'12px 16px', display:'flex', flexDirection:'column', gap:2 }}>
+
         {loading && (
-          <div style={{ textAlign:'center', padding:'40px 0', color:'var(--text-muted)', fontSize:13 }}>Caricamento...</div>
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ textAlign:'center', color:'var(--text-muted)', fontSize:13 }}>
+              <div style={{ fontSize:24, marginBottom:8 }}>💬</div>
+              Caricamento messaggi...
+            </div>
+          </div>
         )}
 
         {!loading && messages.length === 0 && (
-          <div style={{ textAlign:'center', padding:'60px 20px' }}>
-            <div style={{ fontSize:40, marginBottom:12 }}>💬</div>
-            <div style={{ fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:8 }}>Nessun messaggio ancora</div>
-            <div style={{ fontSize:13, color:'var(--text-muted)', lineHeight:1.6, maxWidth:260, margin:'0 auto' }}>
-              Scrivi al tuo coach per domande, aggiornamenti o qualsiasi cosa ti serva.
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ textAlign:'center', padding:'0 32px' }}>
+              <div style={{ width:64, height:64, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 4px 16px rgba(212,87,10,0.3)' }}>
+                <i className="ti ti-message-circle" style={{ fontSize:28, color:'white' }}/>
+              </div>
+              <div style={{ fontSize:16, fontWeight:700, color:'var(--text)', marginBottom:8 }}>Inizia la conversazione</div>
+              <div style={{ fontSize:13, color:'var(--text-muted)', lineHeight:1.7 }}>
+                Scrivi al tuo coach per domande sul piano,<br/>aggiornamenti o qualsiasi cosa ti serva.
+              </div>
             </div>
           </div>
         )}
 
         {Object.entries(grouped).map(([date, msgs]) => (
           <div key={date}>
-            <div style={s.dateLabel}>{formatDateLabel(date)}</div>
-            {msgs.map(m => {
+            {/* Etichetta data */}
+            <div style={{ display:'flex', alignItems:'center', gap:10, margin:'12px 0 8px' }}>
+              <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
+              <span style={{ fontSize:11, color:'var(--text-muted)', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
+                {formatDateLabel(date)}
+              </span>
+              <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
+            </div>
+
+            {msgs.map((m, mi) => {
               const isMe = m.sender_role === 'client'
+              const prevMsg = msgs[mi - 1]
+              const isFirstOfGroup = !prevMsg || prevMsg.sender_role !== m.sender_role
+              const isLastOfGroup = !msgs[mi + 1] || msgs[mi + 1].sender_role !== m.sender_role
+
               return (
-                <div key={m.id} style={{ display:'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom:4 }}>
+                <div key={m.id} style={{
+                  display:'flex',
+                  justifyContent: isMe ? 'flex-end' : 'flex-start',
+                  alignItems:'flex-end',
+                  gap:8,
+                  marginBottom: isLastOfGroup ? 8 : 2,
+                  marginTop: isFirstOfGroup ? 4 : 0,
+                }}>
+                  {/* Avatar coach */}
                   {!isMe && (
-                    <div style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:'white', flexShrink:0, marginRight:8, alignSelf:'flex-end' }}>FO</div>
-                  )}
-                  <div style={ isMe ? s.msgUser : s.msgCoach }>
-                    <div style={{ whiteSpace:'pre-wrap' }}>{m.message}</div>
-                    <div style={{ ...s.timestamp, color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>
-                      {new Date(m.created_at).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' })}
-                      {isMe && <span style={{ marginLeft:4 }}>{m.is_read ? '✓✓' : '✓'}</span>}
+                    <div style={{
+                      width:28, height:28, borderRadius:'50%',
+                      background: isLastOfGroup ? 'linear-gradient(135deg,#D4570A,#F4894A)' : 'transparent',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      fontSize:10, fontWeight:700, color:'white', flexShrink:0,
+                    }}>
+                      {isLastOfGroup ? 'FO' : ''}
                     </div>
+                  )}
+
+                  {/* Bolla */}
+                  <div style={{
+                    maxWidth:'75%',
+                    padding:'10px 14px',
+                    borderRadius: isMe
+                      ? isFirstOfGroup ? '18px 18px 4px 18px' : isLastOfGroup ? '18px 4px 4px 18px' : '18px 4px 4px 18px'
+                      : isFirstOfGroup ? '18px 18px 18px 4px' : isLastOfGroup ? '4px 18px 18px 4px' : '4px 18px 18px 4px',
+                    background: isMe ? '#D4570A' : 'var(--bg-card)',
+                    color: isMe ? 'white' : 'var(--text)',
+                    border: isMe ? 'none' : '0.5px solid var(--border)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                  }}>
+                    <div style={{ fontSize:13, lineHeight:1.55, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
+                      {m.message}
+                    </div>
+                    {isLastOfGroup && (
+                      <div style={{ fontSize:10, marginTop:4, textAlign:'right', opacity:0.65, display:'flex', alignItems:'center', justifyContent:'flex-end', gap:3 }}>
+                        {new Date(m.created_at).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' })}
+                        {isMe && (
+                          <span style={{ fontSize:11 }}>{m.is_read ? '✓✓' : '✓'}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -155,23 +197,33 @@ export default function MessaggiCoach() {
       </div>
 
       {/* INPUT */}
-      <div style={s.bottom}>
-        <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+      <div style={{ background:'var(--bg-card)', borderTop:'0.5px solid var(--border)', padding:'10px 16px', paddingBottom:'calc(env(safe-area-inset-bottom) + 10px)', flexShrink:0 }}>
+        <div style={{ display:'flex', gap:8, alignItems:'flex-end', background:'var(--bg-input)', borderRadius:24, border:'0.5px solid var(--border)', padding:'4px 4px 4px 14px' }}>
           <textarea
             ref={textareaRef}
-            style={s.input}
-            placeholder="Scrivi un messaggio..."
+            placeholder="Scrivi al tuo coach..."
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             rows={1}
+            style={{
+              flex:1, background:'transparent', border:'none', outline:'none',
+              fontSize:13, color:'var(--text)', fontFamily:'inherit',
+              resize:'none', maxHeight:120, lineHeight:1.5,
+              padding:'6px 0', alignSelf:'center',
+            }}
           />
           <button
-            style={{ ...s.sendBtn, opacity: (!input.trim() || sending) ? 0.5 : 1 }}
             onClick={send}
             disabled={!input.trim() || sending}
+            style={{
+              width:36, height:36, borderRadius:'50%', border:'none', cursor:'pointer',
+              background: input.trim() ? '#D4570A' : 'var(--border)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              flexShrink:0, transition:'background 0.2s',
+            }}
           >
-            <i className="ti ti-send" style={{ fontSize:16, color:'white' }}/>
+            <i className="ti ti-send" style={{ fontSize:15, color: input.trim() ? 'white' : 'var(--text-muted)' }}/>
           </button>
         </div>
       </div>
