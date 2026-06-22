@@ -194,20 +194,21 @@ export default function App() {
           <Route path="/" element={session ? <Layout /> : <Navigate to="/login" />}>
             <Route index element={
               (() => {
+                if (profile?.role === 'admin') return <Navigate to="/admin" />
                 // eslint-disable-next-line no-unused-expressions
                 onboardedVersion // forza re-render quando onboarding completato
                 const needsOnboarding = session && profile && profile.role === 'client' && !localStorage.getItem(`fofit_onboarded_${profile.id}`)
                 return needsOnboarding ? <Navigate to="/onboarding" /> : <Dashboard />
               })()
             } />
-            <Route path="piano" element={<PianoAlimentare />} />
-            <Route path="diario" element={<DiarioGiornaliero />} />
-            <Route path="progressi" element={<TrackerProgressi />} />
-            <Route path="spesa" element={<ListaSpesa />} />
-            <Route path="ai" element={<AssistenteAI />} />
+            <Route path="piano" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <PianoAlimentare />} />
+            <Route path="diario" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <DiarioGiornaliero />} />
+            <Route path="progressi" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <TrackerProgressi />} />
+            <Route path="spesa" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <ListaSpesa />} />
+            <Route path="ai" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <AssistenteAI />} />
             <Route path="calendario" element={<Calendario />} />
-            <Route path="allenamento" element={<Allenamento />} />
-            <Route path="storico-allenamento" element={<StoricoAllenamento />} />
+            <Route path="allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <Allenamento />} />
+            <Route path="storico-allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <StoricoAllenamento />} />
             <Route path="importa-allenamento" element={!profile ? null : profile.role === 'admin' ? <ImportaAllenamento /> : <Navigate to="/" />} />
             <Route path="report" element={<ReportMensile />} />
             <Route path="checkin" element={<CheckinSettimanale />} />
