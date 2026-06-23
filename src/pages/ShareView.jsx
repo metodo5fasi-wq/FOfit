@@ -15,6 +15,17 @@ export default function ShareView() {
 
   useEffect(() => {
     document.title = 'FOfit'
+    // ShareView è una pagina pubblica — abilita lo scroll del body
+    document.body.style.overflow = 'auto'
+    document.body.style.position = 'static'
+    document.documentElement.style.overflow = 'auto'
+    document.documentElement.style.position = 'static'
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.position = ''
+    }
   }, [])
 
   useEffect(() => {
