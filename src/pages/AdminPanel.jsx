@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
+import Anamnesi from './Anamnesi'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
@@ -678,6 +679,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [adherenceWeek, setAdherenceWeek] = useState(null)
   const [activeWorkoutPlan, setActiveWorkoutPlan] = useState(null)
   const [activeMealPlan, setActiveMealPlan] = useState(null)
+  const [anamnesi, setAnamnesi] = useState(null)
+  const [showAnamnesi, setShowAnamnesi] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -714,6 +717,9 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         setPlanEdit({ title: mp.title, kcal_target: mp.kcal_target, protein_target_g: mp.protein_target_g, carbs_target_g: mp.carbs_target_g, fat_target_g: mp.fat_target_g, notes: mp.notes||'' })
       }
       setActiveWorkoutPlan(workoutPlanRes.data?.[0] || null)
+      // Anamnesi
+      const { data: amnData } = await supabase.from('anamnesi').select('*').eq('client_id', client.id).maybeSingle()
+      setAnamnesi(amnData || null)
       const byDay = {}
       ;(diaryRes.data||[]).forEach(d => { byDay[d.entry_date] = (byDay[d.entry_date]||0) + (d.kcal||0) })
       const days = []
@@ -796,6 +802,10 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           </div>
           <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#F5F3EF':'#FEF0E7', color: editing?'#888780':'#D4570A', borderColor: editing?'#E0DDD6':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:13,marginRight:4}}/>{editing?'Annulla':'Modifica'}
+          </button>
+          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'#EAF3DE':'#F5F3EF', color: anamnesi?.completed_at?'#3B6D11':'#888780', borderColor: anamnesi?.completed_at?'#3B6D11':'#E0DDD6', display:'flex', alignItems:'center', gap:4}}>
+            <i className="ti ti-clipboard-heart" style={{fontSize:13}}/>
+            {anamnesi?.completed_at ? 'Anamnesi ✓' : anamnesi ? 'Anamnesi (incompleta)' : 'Anamnesi'}
           </button>
         </div>
 
@@ -1057,6 +1067,15 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         )}
 
         <button style={s.cancelBtn} onClick={onClose}>Chiudi</button>
+
+        {/* MODALE ANAMNESI */}
+        {showAnamnesi && (
+          <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+            <div style={{width:'100%',maxWidth:640,maxHeight:'90vh',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+              <Anamnesi clientId={client.id} onClose={()=>setShowAnamnesi(false)}/>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
