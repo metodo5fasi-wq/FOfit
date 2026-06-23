@@ -21,6 +21,7 @@ import ModificaPiano from './pages/ModificaPiano'
 import ModificaAllenamento from './pages/ModificaAllenamento'
 import SelezionaPianoCliente from './pages/SelezionaPianoCliente'
 import SelezionaAllenamentoCliente from './pages/SelezionaAllenamentoCliente'
+import Anamnesi from './pages/Anamnesi'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
@@ -215,7 +216,7 @@ export default function App() {
             <Route path="messaggi" element={<MessaggiCoach />} />
             <Route path="modifica-piano/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaPiano /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaAllenamento /> : <Navigate to="/" />} />
-            <Route path="modifica-piano-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaPianoCliente /> : <Navigate to="/" />} />
+            <Route path="anamnesi" element={<Anamnesi />} />
             <Route path="modifica-allenamento-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaAllenamentoCliente /> : <Navigate to="/" />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
