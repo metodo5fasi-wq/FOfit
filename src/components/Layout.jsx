@@ -27,6 +27,8 @@ const ADMIN_NAV_MODIFICA = [
   { to:'/modifica-piano-cliente', icon:'ti-tools-kitchen-2', label:'Modifica piano alimentare', color:'#3B8C5A' },
   { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
   { to:'/abbonamenti', icon:'ti-credit-card', label:'Abbonamenti', color:'#9B59B6' },
+  { to:'/messaggi-programmati', icon:'ti-calendar-time', label:'Messaggi programmati', color:'#E8A020' },
+  { to:'/report-pdf', icon:'ti-file-type-pdf', label:'Report PDF', color:'#E24B4A' },
 ]
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
