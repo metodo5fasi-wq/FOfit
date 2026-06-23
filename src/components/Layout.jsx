@@ -26,6 +26,7 @@ const ADMIN_NAV_IMPORTA = [
 const ADMIN_NAV_MODIFICA = [
   { to:'/modifica-piano-cliente', icon:'ti-tools-kitchen-2', label:'Modifica piano alimentare', color:'#3B8C5A' },
   { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
+  { to:'/abbonamenti', icon:'ti-credit-card', label:'Abbonamenti', color:'#9B59B6' },
 ]
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
