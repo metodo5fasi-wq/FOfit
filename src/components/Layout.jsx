@@ -8,13 +8,10 @@ const NAV_CLIENT = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', color:'#D4570A' },
   { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#E8803A' },
   { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', color:'#D4570A' },
-  { to:'/checkin', icon:'ti-mood-happy', label:'Check-in', color:'#9B59B6' },
-  { to:'/messaggi', icon:'ti-message', label:'Messaggi', color:'#3B6D11' },
-  { to:'/report', icon:'ti-chart-bar', label:'Report', color:'#4A90D4' },
-  { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#3B8C5A' },
-  { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', color:'#4A90D4' },
-  { to:'/ai', icon:'ti-robot', label:'FO Coach AI', color:'#9B59B6' },
-  { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#3B8CD4' },
+  { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#4A90D4' },
+  { to:'/messaggi', icon:'ti-message-2', label:'Messaggi', color:'#D4570A' },
+  { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
+  { to:'/anamnesi', icon:'ti-clipboard-heart', label:'Anamnesi', color:'#3B8C5A' },
 ]
 
 const NAV_ADMIN = [
