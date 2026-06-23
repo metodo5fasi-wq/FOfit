@@ -16,7 +16,7 @@ const s = {
   label: { fontSize:10, color:'#888780', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
-const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, _isNew:true }
+const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', _isNew:true }
 
 export default function ModificaAllenamento() {
   const { planId } = useParams()
@@ -143,6 +143,7 @@ export default function ModificaAllenamento() {
           sets: parseInt(ex.sets) || 3,
           reps: ex.reps || '',
           rest_seconds: parseInt(ex.rest_seconds) || 60,
+          tut: ex.tut || '',
         }
         if (ex._isNew) {
           await supabase.from('workout_exercises').insert(payload)
@@ -239,7 +240,7 @@ export default function ModificaAllenamento() {
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s</div>
+                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}</div>
                 </div>
                 <div style={{display:'flex',gap:4,flexShrink:0}}>
                   <button onClick={e=>{e.stopPropagation();moveEx(ex.id,'up')}} style={{...s.btnGray,padding:'4px 7px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:12}}/></button>
@@ -278,6 +279,10 @@ export default function ModificaAllenamento() {
                     <div>
                       <label style={s.label}>Recupero (secondi)</label>
                       <input style={s.input} type="number" value={ex.rest_seconds||''} onChange={e=>updateEx(ex.id,'rest_seconds',e.target.value)}/>
+                    </div>
+                    <div>
+                      <label style={s.label}>TUT (es. 3-1-2-0)</label>
+                      <input style={s.input} value={ex.tut||''} onChange={e=>updateEx(ex.id,'tut',e.target.value)} placeholder="eccentrica-pausa-concentrica-pausa"/>
                     </div>
                     <div style={{gridColumn:'1/-1'}}>
                       <label style={s.label}>Note / Istruzioni esecuzione</label>
@@ -321,6 +326,10 @@ export default function ModificaAllenamento() {
                 <div>
                   <label style={s.label}>Recupero (sec)</label>
                   <input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:e.target.value}))}/>
+                </div>
+                <div>
+                  <label style={s.label}>TUT (es. 3-1-2-0)</label>
+                  <input style={s.input} value={newEx.tut||''} onChange={e=>setNewEx(p=>({...p,tut:e.target.value}))} placeholder="eccentrica-pausa-concentrica-pausa"/>
                 </div>
                 <div style={{gridColumn:'1/-1'}}>
                   <label style={s.label}>Note esecuzione</label>
