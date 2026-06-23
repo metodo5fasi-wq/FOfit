@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
 import Anamnesi from './Anamnesi'
+import GraficoPeso from '../components/GraficoPeso'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
@@ -835,7 +836,9 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 {l:'Obiettivo',v:goalLabel[client.goal]||'—'},
                 {l:'Altezza',v:client.height_cm?`${client.height_cm} cm`:'—'},
                 {l:'Telefono',v:client.phone||'—'},
-                {l:'Piani totali',v:plans.length},
+                {l:'Abbonamento',v:client.subscription_type||(client.subscription_end?'—':'Non impostato')},
+                {l:'Scadenza',v:client.subscription_end?new Date(client.subscription_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'—'},
+                {l:'Stato',v:!client.subscription_end?'—':Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24)) < 0 ? '⚠️ Scaduto' : Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24)) <=7 ? `⚠️ Scade in ${Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24))}gg` : `✓ Attivo`},
               ].map(r=>(
                 <div key={r.l} style={{background:'#F5F3EF',borderRadius:8,padding:'8px 12px'}}>
                   <div style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>{r.l}</div>
@@ -932,24 +935,12 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           )}
         </div>
 
-        {/* MISURAZIONI */}
+        {/* GRAFICO PESO */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Ultime misurazioni</div>
-          {measurements.length === 0 ? (
-            <div style={{fontSize:12,color:'#888780'}}>Nessuna misurazione registrata</div>
-          ) : (
-            <div style={{display:'flex',gap:16,alignItems:'center'}}>
-              {latest.weight_kg && (
-                <div>
-                  <div style={{fontSize:18,fontWeight:700,color:'#111'}}>{latest.weight_kg}<span style={{fontSize:11,color:'#888780'}}>kg</span></div>
-                  {weightDiff && <div style={{fontSize:11,color:parseFloat(weightDiff)<0?'#3B6D11':'#E24B4A',fontWeight:600}}>{parseFloat(weightDiff)>0?'+':''}{weightDiff}kg</div>}
-                </div>
-              )}
-              {latest.waist_cm && <div><div style={{fontSize:18,fontWeight:700,color:'#111'}}>{latest.waist_cm}<span style={{fontSize:11,color:'#888780'}}>cm</span></div><div style={{fontSize:10,color:'#888780'}}>Vita</div></div>}
-              {latest.body_fat_pct && <div><div style={{fontSize:18,fontWeight:700,color:'#111'}}>{latest.body_fat_pct}<span style={{fontSize:11,color:'#888780'}}>%</span></div><div style={{fontSize:10,color:'#888780'}}>Grasso</div></div>}
-              <div style={{marginLeft:'auto',fontSize:11,color:'#888780'}}>{new Date(latest.entry_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
-            </div>
-          )}
+          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Andamento peso</div>
+          <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px'}}>
+            <GraficoPeso clientId={client.id} targetWeight={anamnesi?.peso_desiderato}/>
+          </div>
         </div>
 
         {/* INDICATORI RAPIDI */}
@@ -1309,6 +1300,12 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
   const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
   const withPlan = clients.filter(c => clientStats[c.id]?.activePlan).length
   const noPlan = totalClients - withPlan
+  const inScadenza = clients.filter(c => {
+    if (!c.subscription_end) return false
+    const days = Math.ceil((new Date(c.subscription_end) - new Date()) / (1000*60*60*24))
+    return days >= 0 && days <= 7
+  })
+  const scaduti = clients.filter(c => c.subscription_end && c.subscription_end < new Date().toISOString().split('T')[0])
   const inactiveToday = clients.filter(c => {
     const st = clientStats[c.id]
     return st && !st.diaryToday && !st.sessions7?.length
@@ -1346,6 +1343,26 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
           </div>
         </div>
       </div>
+
+      {/* ALERT ABBONAMENTI */}
+      {(scaduti.length > 0 || inScadenza.length > 0) && (
+        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+            <i className="ti ti-credit-card" style={{fontSize:14}}/>
+            {scaduti.length>0&&`${scaduti.length} abbonamento${scaduti.length>1?'i':''} scaduto${scaduti.length>1?'i':''}`}
+            {scaduti.length>0&&inScadenza.length>0&&' · '}
+            {inScadenza.length>0&&`${inScadenza.length} in scadenza entro 7 giorni`}
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {[...scaduti,...inScadenza].map(c=>(
+              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'white',borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:600,color:'#111',cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+                {c.full_name?.split(' ')[0]}
+                <span style={{fontSize:10,color:'#D4570A'}}>{c.subscription_end&&Math.ceil((new Date(c.subscription_end)-new Date())/(1000*60*60*24))<0?'Scaduto':'⚠'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* MESSAGGI NON LETTI */}
       {totalUnread > 0 && (
