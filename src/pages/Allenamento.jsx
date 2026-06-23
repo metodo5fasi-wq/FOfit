@@ -366,10 +366,35 @@ export default function Allenamento() {
                       {ex.description}
                     </div>
                   )}
-                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'var(--text-muted)'}}>
+                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'var(--text-muted)',flexWrap:'wrap'}}>
                     <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/>{ex.sets} serie x {ex.reps} ripetizioni</span>
                     <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                    {ex.tut && (
+                      <span style={{color:'#4A90D4',fontWeight:600}}>
+                        <i className="ti ti-timer" style={{fontSize:12,marginRight:3}}/>TUT {ex.tut}
+                      </span>
+                    )}
                   </div>
+                  {ex.tut && (
+                    <div style={{background:'#EBF3FD',borderRadius:8,padding:'10px 12px',marginBottom:12,fontSize:11,color:'#4A90D4',lineHeight:1.7}}>
+                      <div style={{fontWeight:700,marginBottom:4}}>⏱ Come applicare il TUT {ex.tut}:</div>
+                      {(() => {
+                        const parts = ex.tut.split('-')
+                        if (parts.length !== 4) return <div>Segui i tempi indicati: {ex.tut}</div>
+                        const [ecc, pausaGiu, conc, pausaSu] = parts
+                        return (
+                          <div>
+                            {parseInt(ecc)>0 && <div>🔽 <strong>{ecc}s</strong> — Fase eccentrica (abbassamento/allungamento lento)</div>}
+                            {parseInt(pausaGiu)>0 && <div>⏸ <strong>{pausaGiu}s</strong> — Pausa in basso (sotto tensione)</div>}
+                            {parseInt(conc)>0 && <div>🔼 <strong>{conc}s</strong> — Fase concentrica (sollevamento/accorciamento)</div>}
+                            {parseInt(pausaSu)>0 && <div>⏸ <strong>{pausaSu}s</strong> — Pausa in alto (contrazione)</div>}
+                            {parseInt(ecc)===0 && <div>🔽 <strong>Esplosivo</strong> — Fase eccentrica senza controllo</div>}
+                            {parseInt(conc)===0 && <div>🔼 <strong>Esplosivo</strong> — Fase concentrica senza controllo</div>}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
 
                   {/* SERIE CON CHECKBOX E PESO */}
                   <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
