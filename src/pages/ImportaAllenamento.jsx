@@ -101,6 +101,7 @@ export default function ImportaAllenamento() {
             sets: ex.sets || null,
             reps: ex.reps || '',
             rest_seconds: ex.rest_seconds || 60,
+            tut: ex.tut || '',
           })
           if (exErr) throw exErr
         }
@@ -181,6 +182,7 @@ export default function ImportaAllenamento() {
                     <span style={s.tag}>{ex.muscle_group}</span>
                     <span style={s.tag}>{ex.sets}x{ex.reps}</span>
                     <span style={s.tag}>{ex.rest_seconds}s</span>
+                    {ex.tut && <span style={{...s.tag, background:'#EBF3FD', color:'#4A90D4'}}>TUT {ex.tut}</span>}
                     {ex.video_url && <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#D4570A'}}/>}
                   </div>
                 ))}
