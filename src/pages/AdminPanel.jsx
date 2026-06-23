@@ -1024,7 +1024,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 )}
               </div>
             </div>
-            <div style={{maxHeight: showAllSessions ? 320 : 'none', overflowY: showAllSessions ? 'auto' : 'visible'}}>
+            <div style={{maxHeight: 'none', overflowY: 'visible'}}>
               {workoutSessions.map(sess => {
                 const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
                 // Trova i log di quella sessione
