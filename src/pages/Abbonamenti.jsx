@@ -62,12 +62,17 @@ export default function Abbonamenti() {
 
   async function save() {
     setSaving(true)
-    await supabase.from('profiles').update({
+    const { error } = await supabase.from('profiles').update({
       subscription_start: form.subscription_start||null,
       subscription_end: form.subscription_end||null,
       subscription_type: form.subscription_type,
       subscription_notes: form.subscription_notes,
     }).eq('id', editing)
+    if (error) {
+      alert('Errore salvataggio: ' + error.message)
+      setSaving(false)
+      return
+    }
     setSaving(false)
     setEditing(null)
     fetchClients()
