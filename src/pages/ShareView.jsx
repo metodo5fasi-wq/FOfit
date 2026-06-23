@@ -66,7 +66,7 @@ export default function ShareView() {
   return (
     <div style={{minHeight:'100dvh',background:BG,fontFamily:'system-ui',WebkitFontSmoothing:'antialiased'}}>
       {/* HEADER */}
-      <div style={{background:DARK,padding:'calc(env(safe-area-inset-top) + 14px) 20px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
+      <div style={{background:DARK,padding:'calc(env(safe-area-inset-top) + 14px) 20px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         {window.self === window.top ? (
           <button onClick={()=>{
             if (window.history.length > 1) window.history.back()
