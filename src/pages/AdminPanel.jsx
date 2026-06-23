@@ -4,6 +4,7 @@ import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
 import Anamnesi from './Anamnesi'
 import GraficoPeso from '../components/GraficoPeso'
+import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
@@ -993,6 +994,14 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           {!activeWorkoutPlan && (
             <a href="/importa-allenamento" style={{...s.btnSm,textDecoration:'none',fontSize:11}}>+ Importa scheda</a>
           )}
+        </div>
+
+        {/* PROGRESSIONE PESI */}
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Progressione esercizi</div>
+          <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px'}}>
+            <ProgressioneEsercizi clientId={client.id}/>
+          </div>
         </div>
 
         {/* NOTE ALLENAMENTO */}
