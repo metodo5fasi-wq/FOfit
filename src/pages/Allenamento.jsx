@@ -181,7 +181,7 @@ export default function Allenamento() {
         exercise_name: ex.exercise_name,
         log_date: today,
         set_number: setNumber,
-        weight_kg: weightVal ? parseFloat(weightVal) : null,
+        weight_kg: weightVal ? parseFloat(String(weightVal).replace(',', '.')) : null,
         reps_done: repsVal ? parseInt(repsVal) : null,
         exercise_note: noteVal,
       }).select().single()
@@ -219,7 +219,8 @@ export default function Allenamento() {
 
   async function updateWeight(ex, setNumber, weight) {
     const existing = getLog(ex.exercise_name, setNumber)
-    const weightNum = weight === '' ? null : parseFloat(weight)
+    const normalized = typeof weight === 'string' ? weight.replace(',', '.') : weight
+    const weightNum = normalized === '' ? null : parseFloat(normalized)
     if (existing) {
       await supabase.from('workout_logs').update({ weight_kg: weightNum }).eq('id', existing.id)
       setLogs(prev => prev.map(l => l.id===existing.id ? {...l, weight_kg:weightNum} : l))
@@ -417,11 +418,13 @@ export default function Allenamento() {
                           </button>
                           <span style={{fontSize:12,color:'var(--text-muted)',width:46,flexShrink:0}}>Serie {setNum}</span>
                           <input
-                            type="number" placeholder="kg" inputMode="decimal"
+                            type="text" inputMode="decimal" placeholder="kg"
                             value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
                             onChange={e => {
+                              // Accetta sia virgola che punto come separatore decimale
+                              const val = e.target.value.replace(',', '.')
                               setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
-                              updateWeight(ex, setNum, e.target.value)
+                              updateWeight(ex, setNum, val)
                             }}
                             style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
                           />
