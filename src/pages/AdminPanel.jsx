@@ -176,15 +176,23 @@ export default function AdminPanel() {
     if (prof?.length) {
       const ids = prof.map(c => c.id)
       const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0]
-      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes, reportsRes] = await Promise.all([
+      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
         supabase.from('diary_entries').select('client_id,entry_date,kcal').in('client_id', ids).gte('entry_date', weekAgo),
         supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}),
         supabase.from('workout_sessions').select('client_id,session_date,sets_completed,sets_total').in('client_id', ids).gte('session_date', weekAgo),
         supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}),
         supabase.from('coach_messages').select('client_id,is_read,sender_role,created_at').in('client_id', ids).eq('sender_role','client').eq('is_read',false),
         supabase.from('meal_adherence').select('client_id,followed,adherence_date').in('client_id', ids).gte('adherence_date', weekAgo),
-        supabase.from('workout_reports').select('client_id,id,submitted_at,read_by_coach').in('client_id', ids).not('submitted_at','is',null).eq('read_by_coach',false),
       ])
+
+      // workout_reports separato — tabella potrebbe non esistere
+      let reportsRes = { data: [] }
+      try {
+        const { data: repData } = await supabase.from('workout_reports')
+          .select('client_id,id,submitted_at,read_by_coach')
+          .in('client_id', ids).not('submitted_at','is',null).eq('read_by_coach',false)
+        reportsRes = { data: repData || [] }
+      } catch(e) { /* tabella non ancora creata */ }
 
       const diaryByClient = {}
       ;(diaryRes.data||[]).forEach(d => {
