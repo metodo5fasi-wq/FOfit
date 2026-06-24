@@ -11,7 +11,7 @@ const NAV_CLIENT = [
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#4A90D4' },
   { to:'/messaggi', icon:'ti-message-2', label:'Messaggi', color:'#D4570A' },
   { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
-  { to:'/anamnesi', icon:'ti-folder', label:'Documenti', color:'#3B8C5A' },
+  { to:'/documenti', icon:'ti-folder', label:'Documenti', color:'#3B8C5A' },
 ]
 
 const NAV_ADMIN = [
