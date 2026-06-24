@@ -15,16 +15,30 @@ export default function ShareView() {
 
   useEffect(() => {
     document.title = 'FOfit'
-    // ShareView è una pagina pubblica — abilita lo scroll del body
-    document.body.style.overflow = 'auto'
-    document.body.style.position = 'static'
-    document.documentElement.style.overflow = 'auto'
-    document.documentElement.style.position = 'static'
+    // Forza scroll su tutti i browser/versioni
+    const style = document.createElement('style')
+    style.id = 'shareview-scroll'
+    style.textContent = `
+      html, body, #root {
+        overflow: visible !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100% !important;
+        position: static !important;
+        width: 100% !important;
+      }
+    `
+    document.head.appendChild(style)
+    document.body.style.cssText = 'overflow:auto!important;position:static!important;height:auto!important'
+    document.documentElement.style.cssText = 'overflow:auto!important;position:static!important;height:auto!important'
+    const root = document.getElementById('root')
+    if (root) root.style.cssText = 'overflow:visible!important;height:auto!important'
     return () => {
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.position = ''
+      const s = document.getElementById('shareview-scroll')
+      if (s) s.remove()
+      document.body.style.cssText = ''
+      document.documentElement.style.cssText = ''
+      if (root) root.style.cssText = ''
     }
   }, [])
 
