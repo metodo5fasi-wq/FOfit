@@ -217,6 +217,8 @@ export default function AdminPanel() {
 
       const newReportByClient = {}
       ;(reportsRes.data||[]).forEach(r => { newReportByClient[r.client_id] = r })
+
+      const adherenceByClient = {}
       ;(adherenceRes.data||[]).forEach(a => {
         if (!adherenceByClient[a.client_id]) adherenceByClient[a.client_id] = {followed:0,total:0}
         adherenceByClient[a.client_id].total++
