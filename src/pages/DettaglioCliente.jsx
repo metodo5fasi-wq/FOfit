@@ -210,8 +210,7 @@ function ClientDetail({ client, plans, onSaved, navigate }) {
           <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'#EAF3DE':'#F5F3EF', color: anamnesi?.completed_at?'#3B6D11':'#888780', borderColor: anamnesi?.completed_at?'#3B6D11':'#E0DDD6', display:'flex', alignItems:'center', gap:4}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:13}}/>
             {anamnesi?.completed_at ? 'Anamnesi ✓' : anamnesi ? 'Anamnesi (incompleta)' : 'Anamnesi'}
-          </button>
-        </div>
+          </button>        </div>
 
         {/* INFO PROFILO — vista o editing */}
         {editing ? (
@@ -471,6 +470,9 @@ function ClientDetail({ client, plans, onSaved, navigate }) {
 
 
         {/* ── REPORT ALLENAMENTO ── */}
+        <div style={{fontSize:12,fontWeight:700,color:'#7C3AED',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,marginTop:8,display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid #EDE9FE',paddingBottom:8}}>
+          <i className="ti ti-clipboard-list" style={{fontSize:14}}/>Report allenamento
+        </div>
         <ReportSection clientId={client.id} onRead={()=>{}}/>
 
         {/* MODALE ANAMNESI */}
