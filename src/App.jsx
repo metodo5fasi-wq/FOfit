@@ -22,6 +22,7 @@ import ModificaAllenamento from './pages/ModificaAllenamento'
 import SelezionaPianoCliente from './pages/SelezionaPianoCliente'
 import SelezionaAllenamentoCliente from './pages/SelezionaAllenamentoCliente'
 import Anamnesi from './pages/Anamnesi'
+import Documenti from './pages/Documenti'
 import ReportAllenamentoPage from './pages/ReportAllenamentoPage'
 import Abbonamenti from './pages/Abbonamenti'
 import MessaggiProgrammati from './pages/MessaggiProgrammati'
@@ -221,6 +222,7 @@ export default function App() {
             <Route path="modifica-piano/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaPiano /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaAllenamento /> : <Navigate to="/" />} />
             <Route path="anamnesi" element={<Anamnesi />} />
+            <Route path="documenti" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <Documenti />} />
             <Route path="report-allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <ReportAllenamentoPage />} />
             <Route path="abbonamenti" element={!profile ? null : profile.role === 'admin' ? <Abbonamenti /> : <Navigate to="/" />} />
             <Route path="messaggi-programmati" element={!profile ? null : profile.role === 'admin' ? <MessaggiProgrammati /> : <Navigate to="/" />} />
