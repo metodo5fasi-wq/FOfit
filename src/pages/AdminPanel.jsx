@@ -194,6 +194,15 @@ export default function AdminPanel() {
         reportsRes = { data: repData || [] }
       } catch(e) { /* tabella non ancora creata */ }
 
+      // anamnesi non lette
+      let anamnesiRes = { data: [] }
+      try {
+        const { data: amnData } = await supabase.from('anamnesi')
+          .select('client_id,id,completed_at,read_by_coach')
+          .in('client_id', ids).not('completed_at','is',null).eq('read_by_coach',false)
+        anamnesiRes = { data: amnData || [] }
+      } catch(e) { /* colonna non ancora creata */ }
+
       const diaryByClient = {}
       ;(diaryRes.data||[]).forEach(d => {
         if (!diaryByClient[d.client_id]) diaryByClient[d.client_id] = []
@@ -218,6 +227,9 @@ export default function AdminPanel() {
       const newReportByClient = {}
       ;(reportsRes.data||[]).forEach(r => { newReportByClient[r.client_id] = r })
 
+      const newAnamnesiByClient = {}
+      ;(anamnesiRes.data||[]).forEach(a => { newAnamnesiByClient[a.client_id] = a })
+
       const adherenceByClient = {}
       ;(adherenceRes.data||[]).forEach(a => {
         if (!adherenceByClient[a.client_id]) adherenceByClient[a.client_id] = {followed:0,total:0}
@@ -239,6 +251,7 @@ export default function AdminPanel() {
           unreadMessages: unreadByClient[c.id] || 0,
           adherence: adherenceByClient[c.id] || null,
           newReport: newReportByClient[c.id] || null,
+          newAnamnesi: newAnamnesiByClient[c.id] || null,
         }
       })
       setClientStats(stats)
@@ -413,17 +426,18 @@ export default function AdminPanel() {
         {msg&&<div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
 
         <div style={s.tabs}>
-          {['overview','clienti','report','messaggi','calendario','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{
+          {['overview','clienti','report','anamnesi','messaggi','calendario','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{
             t==='overview'?'📊 Overview':
             t==='clienti'?'👥 Clienti':
             t==='messaggi'?'💬 Messaggi':
             t==='calendario'?'📅 Calendario':
             t==='report'?'📋 Report':
+            t==='anamnesi'?'📝 Anamnesi':
             '✅ Check-in'
           }</div>)}
         </div>
 
-        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}} onOpenReport={()=>setTab('report')}/>}
+        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}} onOpenReport={()=>setTab('report')} onOpenAnamnesi={()=>setTab('anamnesi')}/>}
         {tab==='clienti'&&(
           <>
           <NotifPanel/>
@@ -514,6 +528,8 @@ export default function AdminPanel() {
         {tab==='messaggi'&&<MessaggiAdmin/>}
         {tab==='overview'&&false&&null}
         {tab==='check-in'&&<CheckinAdmin/>}
+        {tab==='report'&&<ReportTab clients={clients} clientStats={clientStats} onRefresh={fetchAll}/>}
+        {tab==='anamnesi'&&<AnamnesiTab clients={clients} onRefresh={fetchAll}/>}
       </div>
 
       {showNewClient&&(
@@ -1312,7 +1328,7 @@ function CalendarioAdmin() {
 }
 
 // ── DASHBOARD COACH ──────────────────────────────────────────
-function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenReport }) {
+function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenReport, onOpenAnamnesi }) {
   const today = new Date().toISOString().split('T')[0]
   const ALERT = '#D4570A'
   const OK = '#3B6D11'
@@ -1322,6 +1338,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
   const trainedToday = clients.filter(c => clientStats[c.id]?.sessions7?.some(s => s.session_date === today)).length
   const diaryToday = clients.filter(c => clientStats[c.id]?.diaryToday).length
   const newReports = clients.filter(c => clientStats[c.id]?.newReport)
+  const newAnamnesi = clients.filter(c => clientStats[c.id]?.newAnamnesi)
   const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
   const withPlan = clients.filter(c => clientStats[c.id]?.activePlan).length
   const noPlan = totalClients - withPlan
@@ -1403,8 +1420,29 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
               <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{c.full_name}</div>
-              <span style={{fontSize:10,background:'#7C3AED',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Nuovo</span>
+              <span style={{fontSize:10,background:'#7C3AED',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
               <i className="ti ti-chevron-right" style={{fontSize:13,color:'#7C3AED'}}/>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* NUOVE ANAMNESI */}
+      {newAnamnesi.length > 0 && (
+        <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#3B6D11',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+            <i className="ti ti-clipboard-heart" style={{fontSize:14}}/>
+            {newAnamnesi.length} nuova{newAnamnesi.length>1?'e':''} anamnesi compilata{newAnamnesi.length>1?'e':''}
+          </div>
+          {newAnamnesi.map(c=>(
+            <div key={c.id} onClick={()=>onOpenAnamnesi(c)}
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #A7D9A0'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'#3B6D11',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
+                {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+              </div>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <span style={{fontSize:10,background:'#3B6D11',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
+              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#3B6D11'}}/>
             </div>
           ))}
         </div>
@@ -1911,7 +1949,16 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                 {r.energia_allenamento && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.energia_allenamento >= 7 ? '#3B6D11' : r.energia_allenamento >= 5 ? '#E8A020' : '#E24B4A' }}>{r.energia_allenamento}</div><div style={{ fontSize: 9, color: '#888780' }}>⚡</div></div>}
                 {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#3B6D11' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#888780' }}>🧠</div></div>}
               </div>
-              <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#888780', marginLeft: 4 }} />
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button onClick={(e)=>{e.stopPropagation();generateReportPDF(r,clientName)}} style={{
+                  background:'#EDE9FE',color:'#7C3AED',border:'0.5px solid #7C3AED',
+                  borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+                  display:'flex',alignItems:'center',gap:4
+                }}>
+                  <i className="ti ti-file-type-pdf" style={{fontSize:12}}/>PDF
+                </button>
+                <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#888780' }} />
+              </div>
             </div>
 
             {/* CONTENUTO ESPANSO */}
@@ -1980,6 +2027,320 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                 ))}
               </div>
             )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
+// PDF GENERATORS
+// ─────────────────────────────────────────────────────────
+function generateReportPDF(r, clientName) {
+  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;background:white;padding:0}
+  .header{background:linear-gradient(135deg,#7C3AED,#A855F7);color:white;padding:28px 32px}
+  .header h1{font-size:22px;font-weight:800;margin-bottom:4px}
+  .header p{font-size:13px;opacity:0.85}
+  .content{padding:24px 32px}
+  .section{margin-bottom:22px}
+  .section-title{font-size:12px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid #EDE9FE;padding-bottom:6px;margin-bottom:12px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .stat{background:#F5F3EF;border-radius:8px;padding:10px;text-align:center}
+  .stat .value{font-size:22px;font-weight:800;color:#7C3AED}
+  .stat .label{font-size:9px;color:#888780;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
+  .field{margin-bottom:10px}
+  .field-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}
+  .field-value{font-size:13px;color:#111;line-height:1.5;background:#F5F3EF;border-radius:6px;padding:8px 10px}
+  .ex-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid #F0F0F0;font-size:12px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+  .green{background:#EAF3DE;color:#3B6D11}
+  .red{background:#FEE2E2;color:#E24B4A}
+  .gray{background:#F5F3EF;color:#888780}
+  .footer{margin-top:24px;padding:14px 32px;background:#F5F3EF;font-size:11px;color:#888780;display:flex;justify-content:space-between}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1>Report Allenamento</h1>
+      <p>${clientName} · ${r.period_start&&r.period_end?`${new Date(r.period_start+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(r.period_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`:new Date(r.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</p>
+    </div>
+    <div style="text-align:right;font-size:12px;opacity:0.85">
+      <div style="font-weight:700;font-size:16px">FOfit</div>
+      <div>Federico Obinu · Coach</div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <div class="section">
+    <div class="section-title">Benessere generale</div>
+    <div class="grid4">
+      ${r.benessere_generale?`<div class="stat"><div class="value">${r.benessere_generale}/10</div><div class="label">😊 Benessere</div></div>`:''}
+      ${r.energia_allenamento?`<div class="stat"><div class="value">${r.energia_allenamento}/10</div><div class="label">⚡ Energia</div></div>`:''}
+      ${r.qualita_sonno?`<div class="stat"><div class="value">${r.qualita_sonno}/10</div><div class="label">😴 Sonno</div></div>`:''}
+      ${r.stress_periodo?`<div class="stat"><div class="value">${r.stress_periodo}/10</div><div class="label">🧠 Stress</div></div>`:''}
+    </div>
+    ${r.peso_inizio||r.peso_fine?`<div style="display:flex;gap:16px;margin-top:8px">
+      ${r.peso_inizio?`<div><strong>${r.peso_inizio}kg</strong> <span style="font-size:11px;color:#888780">inizio</span></div>`:''}
+      ${r.peso_fine?`<div><strong>${r.peso_fine}kg</strong> <span style="font-size:11px;color:#888780">fine</span></div>`:''}
+      ${r.peso_inizio&&r.peso_fine?`<div class="badge ${parseFloat(r.peso_fine)-parseFloat(r.peso_inizio)<0?'green':'red'}">${(parseFloat(r.peso_fine)-parseFloat(r.peso_inizio)).toFixed(1)}kg</div>`:''}
+    </div>`:''}
+  </div>
+
+  ${r.progressi_esercizi?.length?`
+  <div class="section">
+    <div class="section-title">Progressi di carico</div>
+    ${r.progressi_esercizi.map(ex=>{
+      const diff = ex.carico_fine&&ex.carico_inizio?(parseFloat(ex.carico_fine)-parseFloat(ex.carico_inizio)).toFixed(1):null
+      return `<div class="ex-row">
+        <div><strong>${ex.exercise_name}</strong>${ex.note?`<br><span style="font-size:11px;color:#888780;font-style:italic">${ex.note}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:#888780">${ex.carico_inizio||'—'}kg → ${ex.carico_fine||'—'}kg</span>
+          ${diff!==null?`<span class="badge ${parseFloat(diff)>0?'green':parseFloat(diff)<0?'red':'gray'}">${parseFloat(diff)>0?'+':''}${diff}kg</span>`:''}
+        </div>
+      </div>`
+    }).join('')}
+  </div>`:''}
+
+  ${[
+    {title:'🥗 Alimentazione', fields:[
+      {l:'Fame/sazietà',v:r.fame_saziet},{l:'Difficoltà',v:r.difficolta_alimentazione},
+      {l:'Pasti saltati',v:r.pasti_saltati},{l:'Note',v:r.note_alimentazione}
+    ]},
+    {title:'💤 Recupero', fields:[
+      {l:'DOMS',v:r.doms},{l:'Qualità recupero',v:r.qualita_recupero},
+      {l:'Zona affaticata',v:r.zona_affaticata},{l:'Dolori nuovi',v:r.dolori_nuovi}
+    ]},
+    {title:'📋 Feedback scheda', fields:[
+      {l:'Esercizi amati',v:r.esercizi_amati},{l:'Esercizi difficili',v:r.esercizi_difficili},
+      {l:'Cosa cambierebbe',v:r.cosa_cambieresti},{l:'Obiettivo prossimo periodo',v:r.obiettivo_prossimo}
+    ]},
+    {title:'💬 Note al coach', fields:[{l:'Note',v:r.note_coach}]},
+  ].map(sec=>{
+    const visibleFields = sec.fields.filter(f=>f.v)
+    if (!visibleFields.length) return ''
+    return `<div class="section">
+      <div class="section-title">${sec.title}</div>
+      ${visibleFields.map(f=>`<div class="field"><div class="field-label">${f.l}</div><div class="field-value">${f.v}</div></div>`).join('')}
+    </div>`
+  }).join('')}
+</div>
+<div class="footer">
+  <span>Generato il ${new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</span>
+  <span>FOfit · Federico Obinu Coach · fofit.fit</span>
+</div>
+</body></html>`
+
+  const win = window.open('','_blank')
+  win.document.write(html)
+  win.document.close()
+  win.focus()
+  setTimeout(()=>win.print(),500)
+}
+
+function generateAnamnesiPDF(a, clientName) {
+  const section = (title, rows) => {
+    const visible = rows.filter(r=>r.v)
+    if (!visible.length) return ''
+    return `<div class="section">
+      <div class="section-title">${title}</div>
+      ${visible.map(r=>Array.isArray(r.v)
+        ?`<div class="field"><div class="field-label">${r.l}</div><div class="field-value">${r.v.join(', ')}</div></div>`
+        :`<div class="field"><div class="field-label">${r.l}</div><div class="field-value">${r.v}</div></div>`
+      ).join('')}
+    </div>`
+  }
+
+  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;background:white}
+  .header{background:linear-gradient(135deg,#3B6D11,#3B8C5A);color:white;padding:28px 32px}
+  .header h1{font-size:22px;font-weight:800;margin-bottom:4px}
+  .header p{font-size:13px;opacity:0.85}
+  .content{padding:24px 32px}
+  .section{margin-bottom:20px}
+  .section-title{font-size:12px;font-weight:700;color:#3B6D11;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid #EAF3DE;padding-bottom:6px;margin-bottom:10px}
+  .field{margin-bottom:8px}
+  .field-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}
+  .field-value{font-size:13px;color:#111;line-height:1.5;background:#F5F3EF;border-radius:6px;padding:8px 10px}
+  .footer{margin-top:24px;padding:14px 32px;background:#F5F3EF;font-size:11px;color:#888780;display:flex;justify-content:space-between}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div><h1>Anamnesi Completa</h1><p>${clientName} · Compilata il ${a.completed_at?new Date(a.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'-'}</p></div>
+    <div style="text-align:right;font-size:12px;opacity:0.85"><div style="font-weight:700;font-size:16px">FOfit</div><div>Federico Obinu · Coach</div></div>
+  </div>
+</div>
+<div class="content">
+  ${section('1. Dati anagrafici',[
+    {l:'Data di nascita',v:a.data_nascita},{l:'Città',v:a.citta},
+    {l:'Telefono',v:a.telefono},{l:'Lavoro',v:a.lavoro},
+    {l:'Orari di lavoro',v:a.orari_lavoro}
+  ])}
+  ${section('2. Obiettivo e aspettative',[
+    {l:'Obiettivo',v:a.obiettivo},{l:'Peso attuale',v:a.peso_attuale?`${a.peso_attuale}kg`:null},
+    {l:'Peso desiderato',v:a.peso_desiderato?`${a.peso_desiderato}kg`:null},{l:'Altezza',v:a.altezza?`${a.altezza}cm`:null},
+    {l:'Tempistiche',v:a.tempo_cambiamento},{l:'Importanza (0-10)',v:a.importanza_obiettivo},
+    {l:'Motivazione',v:a.motivazione}
+  ])}
+  ${section('3. Salute generale',[
+    {l:'Diagnosi attive',v:a.diagnosi_attive},{l:'Interventi chirurgici',v:a.interventi_chirurgici},
+    {l:'Condizioni',v:a.condizioni_salute},{l:'Familiarità',v:a.familiarita}
+  ])}
+  ${section('4. Farmaci e stimolanti',[
+    {l:'Farmaci',v:a.farmaci},{l:'Integratori',v:a.integratori},
+    {l:'Caffeina',v:a.caffeina},{l:'Fumo',v:a.fumo===true?'Sì':a.fumo===false?'No':null},
+    {l:'Alcol',v:a.alcol}
+  ])}
+  ${section('5. Sonno e recupero',[
+    {l:'Ore di sonno',v:a.ore_sonno},{l:'Orario letto',v:a.orario_letto},{l:'Orario sveglia',v:a.orario_sveglia},
+    {l:'Qualità sonno',v:a.qualita_sonno?`${a.qualita_sonno}/10`:null},{l:'Risvegli',v:a.risvegli_notte},
+    {l:'Cosa rovina il sonno',v:a.cosa_rovina_sonno}
+  ])}
+  ${section('6. Stress ed energia',[
+    {l:'Stress medio',v:a.stress_medio?`${a.stress_medio}/10`:null},{l:'Crollo energia',v:a.crollo_energia},
+    {l:'Sintomi frequenti',v:a.sintomi_frequenti},{l:'Fonte stress 1',v:a.fonte_stress_1},{l:'Fonte stress 2',v:a.fonte_stress_2}
+  ])}
+  ${section('7. Digestione',[
+    {l:'Gonfiore',v:a.gonfiore},{l:'Reflusso',v:a.reflusso},{l:'Evacuazione',v:a.evacuazione},
+    {l:'Cibi che gonfiano',v:a.cibi_gonfiano}
+  ])}
+  ${section('8. Storia peso',[
+    {l:'Peso minimo (5 anni)',v:a.peso_minimo?`${a.peso_minimo}kg`:null},{l:'Peso massimo (5 anni)',v:a.peso_massimo?`${a.peso_massimo}kg`:null},
+    {l:'Accumulo grasso',v:a.accumulo_grasso},{l:'Tentativi passati',v:a.tentativi_dieta},
+    {l:'Perché non ha funzionato',v:a.perche_non_funzionato}
+  ])}
+  ${section('9. Alimentazione e preferenze',[
+    {l:'Pasti preferiti',v:a.pasti_preferiti},{l:'Quando ha più fame',v:a.quando_fame},
+    {l:'Giorno tipo',v:a.giorno_tipo},{l:'Acqua',v:a.acqua},
+    {l:'Proteine gradite',v:a.proteine_gradite},{l:'Proteine non vuole',v:a.proteine_non_vuole},
+    {l:'Carboidrati preferiti',v:a.carboidrati_preferiti},{l:'Rapporto carbo',v:a.rapporto_carbo},
+    {l:'Piatti preferiti',v:a.piatti_preferiti},{l:'Cibi critici',v:a.cibi_critici},
+    {l:'Tracking',v:a.livello_tracking}
+  ])}
+  ${section('10. Allenamento',[
+    {l:'Si allena',v:a.si_allena===true?'Sì':a.si_allena===false?'No':null},
+    {l:'Frequenza',v:a.frequenza_allenamento?`${a.frequenza_allenamento}x/settimana`:null},
+    {l:'Tipologia',v:a.tipo_allenamento},{l:'Orario',v:a.orario_allenamento},
+    {l:'Durata sessione',v:a.durata_seduta},{l:'Energia allenamento',v:a.energia_allenamento?`${a.energia_allenamento}/10`:null},
+    {l:'Recupero',v:a.recupero},{l:'DOMS',v:a.doms},
+    {l:'Esercizi che odia',v:a.esercizi_odia},{l:'Esercizi che ama',v:a.esercizi_ama},
+    {l:'Dolori/limitazioni',v:a.dolori_limitazioni},{l:'Movimenti fastidiosi',v:a.movimenti_fastidio}
+  ])}
+  ${section('11. Vincoli e sostenibilità',[
+    {l:'Tempo disponibile',v:a.tempo_settimana},{l:'Giorni migliori',v:a.giorni_migliori},
+    {l:'Cibi da non togliere',v:a.cibi_non_togliere},{l:'Cosa non fare',v:a.cosa_non_fare},
+    {l:'Disponibilità pratiche',v:a.abitudini_pratiche}
+  ])}
+  ${section('12. Note finali',[{l:'Note aggiuntive',v:a.note_finali}])}
+</div>
+<div class="footer">
+  <span>Generato il ${new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</span>
+  <span>FOfit · Federico Obinu Coach · fofit.fit</span>
+</div>
+</body></html>`
+
+  const win = window.open('','_blank')
+  win.document.write(html)
+  win.document.close()
+  win.focus()
+  setTimeout(()=>win.print(),500)
+}
+
+// ─────────────────────────────────────────────────────────
+// TAB ANAMNESI
+// ─────────────────────────────────────────────────────────
+function AnamnesiTab({ clients, onRefresh }) {
+  const [anamnesi, setAnamnesi] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('nuove')
+
+  useEffect(() => { fetchAnamnesi() }, [])
+
+  async function fetchAnamnesi() {
+    setLoading(true)
+    const { data } = await supabase.from('anamnesi')
+      .select('*, profiles!anamnesi_client_id_fkey(full_name)')
+      .not('completed_at','is',null)
+      .order('completed_at',{ascending:false})
+    setAnamnesi(data||[])
+    setLoading(false)
+  }
+
+  async function markRead(id) {
+    await supabase.from('anamnesi').update({read_by_coach:true}).eq('id',id)
+    setAnamnesi(p=>p.map(a=>a.id===id?{...a,read_by_coach:true}:a))
+  }
+
+  const nonLette = anamnesi.filter(a=>!a.read_by_coach)
+  const displayed = filter==='nuove' ? nonLette : anamnesi
+  const initials = n=>n?n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase():'?'
+
+  return (
+    <div style={{padding:'0 0 40px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div style={{fontSize:13,color:'#888780'}}>
+          {nonLette.length>0&&<span style={{fontWeight:700,color:'#3B6D11'}}>{nonLette.length} non letta{nonLette.length>1?'e':''} · </span>}
+          {anamnesi.length} totali
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          {[{id:'nuove',l:`Non lette (${nonLette.length})`},{id:'tutte',l:`Tutte (${anamnesi.length})`}].map(f=>(
+            <button key={f.id} onClick={()=>setFilter(f.id)} style={{
+              padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:500,cursor:'pointer',
+              border:'0.5px solid',fontFamily:'inherit',
+              background:filter===f.id?'#3B6D11':'white',
+              color:filter===f.id?'white':'#888780',
+              borderColor:filter===f.id?'#3B6D11':'#E0DDD6'
+            }}>{f.l}</button>
+          ))}
+        </div>
+      </div>
+
+      {loading&&<div style={{textAlign:'center',padding:'40px',color:'#888780'}}>Caricamento...</div>}
+
+      {!loading&&displayed.length===0&&(
+        <div style={{textAlign:'center',padding:'60px 20px',background:'white',borderRadius:12,border:'0.5px solid #E0DDD6'}}>
+          <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/>
+          <div style={{fontSize:13,color:'#888780'}}>Nessuna anamnesi {filter==='nuove'?'non letta':'compilata'}.</div>
+        </div>
+      )}
+
+      {displayed.map(a=>{
+        const clientName = a.profiles?.full_name || clients.find(c=>c.id===a.client_id)?.full_name || '—'
+        const isNew = !a.read_by_coach
+        return (
+          <div key={a.id} style={{background:'white',borderRadius:12,border:`0.5px solid ${isNew?'#A7D9A0':'#E0DDD6'}`,marginBottom:10,overflow:'hidden'}}>
+            <div style={{padding:'14px',display:'flex',alignItems:'center',gap:12,background:isNew?'#F0FAF0':'white'}}>
+              <div style={{width:40,height:40,borderRadius:'50%',background:isNew?'#3B6D11':'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
+                {initials(clientName)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+                  <span style={{fontSize:14,fontWeight:700,color:'#111'}}>{clientName}</span>
+                  {isNew&&<span style={{fontSize:10,background:'#3B6D11',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>NUOVA</span>}
+                </div>
+                <div style={{fontSize:11,color:'#888780'}}>
+                  Completata il {new Date(a.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
+                  {a.obiettivo&&` · Obiettivo: ${a.obiettivo}`}
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>{generateAnamnesiPDF(a,clientName);if(isNew)markRead(a.id)}} style={{
+                  background:'#EAF3DE',color:'#3B6D11',border:'0.5px solid #3B6D11',
+                  borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+                  display:'flex',alignItems:'center',gap:4
+                }}>
+                  <i className="ti ti-file-type-pdf" style={{fontSize:12}}/>PDF
+                </button>
+                {isNew&&<button onClick={()=>markRead(a.id)} style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,padding:'6px 10px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>✓ Letta</button>}
+              </div>
+            </div>
           </div>
         )
       })}
