@@ -5,6 +5,7 @@ import NotifPanel from '../components/NotifPanel'
 import Anamnesi from './Anamnesi'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
+import ReportAllenamento from './ReportAllenamento'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
@@ -175,13 +176,14 @@ export default function AdminPanel() {
     if (prof?.length) {
       const ids = prof.map(c => c.id)
       const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0]
-      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
+      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes, reportsRes] = await Promise.all([
         supabase.from('diary_entries').select('client_id,entry_date,kcal').in('client_id', ids).gte('entry_date', weekAgo),
         supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}),
         supabase.from('workout_sessions').select('client_id,session_date,sets_completed,sets_total').in('client_id', ids).gte('session_date', weekAgo),
         supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}),
         supabase.from('coach_messages').select('client_id,is_read,sender_role,created_at').in('client_id', ids).eq('sender_role','client').eq('is_read',false),
         supabase.from('meal_adherence').select('client_id,followed,adherence_date').in('client_id', ids).gte('adherence_date', weekAgo),
+        supabase.from('workout_reports').select('client_id,id,submitted_at,read_by_coach').in('client_id', ids).not('submitted_at','is',null).eq('read_by_coach',false),
       ])
 
       const diaryByClient = {}
@@ -205,7 +207,8 @@ export default function AdminPanel() {
       const unreadByClient = {}
       ;(msgRes.data||[]).forEach(m => { unreadByClient[m.client_id] = (unreadByClient[m.client_id]||0)+1 })
 
-      const adherenceByClient = {}
+      const newReportByClient = {}
+      ;(reportsRes.data||[]).forEach(r => { newReportByClient[r.client_id] = r })
       ;(adherenceRes.data||[]).forEach(a => {
         if (!adherenceByClient[a.client_id]) adherenceByClient[a.client_id] = {followed:0,total:0}
         adherenceByClient[a.client_id].total++
@@ -225,6 +228,7 @@ export default function AdminPanel() {
           lastCheckin: checkinByClient[c.id] || null,
           unreadMessages: unreadByClient[c.id] || 0,
           adherence: adherenceByClient[c.id] || null,
+          newReport: newReportByClient[c.id] || null,
         }
       })
       setClientStats(stats)
@@ -1306,6 +1310,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
   const totalClients = clients.length
   const trainedToday = clients.filter(c => clientStats[c.id]?.sessions7?.some(s => s.session_date === today)).length
   const diaryToday = clients.filter(c => clientStats[c.id]?.diaryToday).length
+  const newReports = clients.filter(c => clientStats[c.id]?.newReport)
   const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
   const withPlan = clients.filter(c => clientStats[c.id]?.activePlan).length
   const noPlan = totalClients - withPlan
@@ -1370,6 +1375,27 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* NUOVI REPORT ALLENAMENTO */}
+      {newReports.length > 0 && (
+        <div style={{background:'#EDE9FE',border:'0.5px solid #7C3AED',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#7C3AED',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+            <i className="ti ti-clipboard-list" style={{fontSize:14}}/>
+            {newReports.length} nuovo{newReports.length>1?'i':''} report allenamento
+          </div>
+          {newReports.map(c=>(
+            <div key={c.id} onClick={()=>onOpenClient(c)}
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #C4B5FD'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'#7C3AED',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
+                {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+              </div>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <span style={{fontSize:10,background:'#7C3AED',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Nuovo</span>
+              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#7C3AED'}}/>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1471,6 +1497,12 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient }) {
               {st.unreadMessages > 0 && (
                 <div style={{width:28,height:28,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <span style={{fontSize:10,fontWeight:700,color:ALERT}}>{st.unreadMessages}</span>
+                </div>
+              )}
+              {/* Nuovo report */}
+              {st.newReport && (
+                <div title="Nuovo report allenamento" style={{width:28,height:28,borderRadius:8,background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className="ti ti-clipboard-list" style={{fontSize:12,color:'#7C3AED'}}/>
                 </div>
               )}
               {/* Check-in energia */}
