@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import ReportAllenamento from './ReportAllenamento'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -72,6 +73,7 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
   const clientId = propClientId || profile?.id
   const isAdmin = !!propClientId
 
+  const [activeTab, setActiveTab] = useState('anamnesi')
   const [current, setCurrent] = useState(1)
   const [data, setData] = useState({})
   const [saving, setSaving] = useState(false)
@@ -105,6 +107,22 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
 
   // Progress
   const pct = Math.round(((current-1)/12)*100)
+
+  if (activeTab === 'report') {
+    return (
+      <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100%',background:'var(--bg)'}}>
+        <div style={{background:'var(--bg-card)',borderBottom:'0.5px solid var(--border)',display:'flex',flexShrink:0}}>
+          <button onClick={()=>setActiveTab('anamnesi')} style={{flex:1,padding:'14px',border:'none',background:'transparent',cursor:'pointer',fontSize:13,fontWeight:activeTab==='anamnesi'?700:400,color:activeTab==='anamnesi'?'#D4570A':'var(--text-muted)',borderBottom:activeTab==='anamnesi'?'2px solid #D4570A':'2px solid transparent',fontFamily:'inherit'}}>
+            📋 Anamnesi
+          </button>
+          <button onClick={()=>setActiveTab('report')} style={{flex:1,padding:'14px',border:'none',background:'transparent',cursor:'pointer',fontSize:13,fontWeight:activeTab==='report'?700:400,color:activeTab==='report'?'#D4570A':'var(--text-muted)',borderBottom:activeTab==='report'?'2px solid #D4570A':'2px solid transparent',fontFamily:'inherit'}}>
+            🏋️ Report allenamento
+          </button>
+        </div>
+        <ReportAllenamento/>
+      </div>
+    )
+  }
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100%',background:'var(--bg)'}}>
