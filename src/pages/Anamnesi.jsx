@@ -111,7 +111,7 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Documenti cliente':'I tuoi documenti'}</div>
+          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Anamnesi cliente':'La tua anamnesi'}</div>
           <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
