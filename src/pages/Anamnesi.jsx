@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import ReportAllenamento from './ReportAllenamento'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -73,7 +72,6 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
   const clientId = propClientId || profile?.id
   const isAdmin = !!propClientId
 
-  const [activeTab, setActiveTab] = useState('anamnesi')
   const [current, setCurrent] = useState(1)
   const [data, setData] = useState({})
   const [saving, setSaving] = useState(false)
@@ -82,7 +80,7 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
   useEffect(() => { if (clientId) load() }, [clientId])
 
   async function load() {
-    const { data: d } = await supabase.from('anamnesi').select('*').eq('client_id', clientId).maybeSingle()
+    const { data: d } = await supabase.from('documenti').select('*').eq('client_id', clientId).maybeSingle()
     if (d) { setData(d); setCurrent(d.current_section || 1) }
   }
 
@@ -93,7 +91,7 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
     setSaving(true)
     const payload = { ...data, client_id: clientId, current_section: goTo || current, updated_at: new Date().toISOString() }
     if (goTo === 13) payload.completed_at = new Date().toISOString()
-    await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
+    await supabase.from('documenti').upsert(payload, { onConflict: 'client_id' })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -108,28 +106,12 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
   // Progress
   const pct = Math.round(((current-1)/12)*100)
 
-  if (activeTab === 'report') {
-    return (
-      <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100%',background:'var(--bg)'}}>
-        <div style={{background:'var(--bg-card)',borderBottom:'0.5px solid var(--border)',display:'flex',flexShrink:0}}>
-          <button onClick={()=>setActiveTab('anamnesi')} style={{flex:1,padding:'14px',border:'none',background:'transparent',cursor:'pointer',fontSize:13,fontWeight:activeTab==='anamnesi'?700:400,color:activeTab==='anamnesi'?'#D4570A':'var(--text-muted)',borderBottom:activeTab==='anamnesi'?'2px solid #D4570A':'2px solid transparent',fontFamily:'inherit'}}>
-            📋 Anamnesi
-          </button>
-          <button onClick={()=>setActiveTab('report')} style={{flex:1,padding:'14px',border:'none',background:'transparent',cursor:'pointer',fontSize:13,fontWeight:activeTab==='report'?700:400,color:activeTab==='report'?'#D4570A':'var(--text-muted)',borderBottom:activeTab==='report'?'2px solid #D4570A':'2px solid transparent',fontFamily:'inherit'}}>
-            🏋️ Report allenamento
-          </button>
-        </div>
-        <ReportAllenamento/>
-      </div>
-    )
-  }
-
   return (
     <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100%',background:'var(--bg)'}}>
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Anamnesi cliente':'La tua anamnesi'}</div>
+          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Documenti cliente':'I tuoi documenti'}</div>
           <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
