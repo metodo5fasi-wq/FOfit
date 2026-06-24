@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  page: { flex:1, overflowY:'auto', padding:'0 0 40px' },
+  page: { flex:1, overflowY:'auto', padding:'0 0 8px', WebkitOverflowScrolling:'touch' },
   topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   section: { padding:'20px 20px 0' },
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
@@ -67,7 +67,7 @@ function Scale({ value, onChange, max=10 }) {
   )
 }
 
-export default function Anamnesi({ clientId: propClientId, onClose }) {
+export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=false }) {
   const { profile } = useAuth()
   const clientId = propClientId || profile?.id
   const isAdmin = !!propClientId
@@ -107,11 +107,11 @@ export default function Anamnesi({ clientId: propClientId, onClose }) {
   const pct = Math.round(((current-1)/12)*100)
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100%',background:'var(--bg)'}}>
+    <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100dvh',background:'var(--bg)'}}>
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Anamnesi cliente':'La tua anamnesi'}</div>
+          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Documenti cliente':'I tuoi documenti'}</div>
           <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
