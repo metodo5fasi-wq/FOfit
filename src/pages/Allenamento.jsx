@@ -29,6 +29,7 @@ export default function Allenamento() {
   const [weekStreak, setWeekStreak] = useState(0)
   const [showFinish, setShowFinish] = useState(false)
   const [sessionNotes, setSessionNotes] = useState('')
+  const noteDebounceRef = React.useRef({})
   const [savingSession, setSavingSession] = useState(false)
   const [confettiActive, setConfettiActive] = useState(false)
   const [todaySession, setTodaySession] = useState(null)
@@ -188,21 +189,25 @@ export default function Allenamento() {
     }
   }
 
-  async function updateNote(ex, note) {
-    // Aggiorna la nota su tutti i log di oggi per quell'esercizio
-    const exLogs = logs.filter(l => l.exercise_name === ex.exercise_name)
-    if (exLogs.length > 0) {
-      await supabase.from('workout_logs')
-        .update({ exercise_note: note })
-        .eq('client_id', profile.id)
-        .eq('exercise_name', ex.exercise_name)
-        .eq('log_date', today)
-      setLogs(prev => prev.map(l =>
-        l.exercise_name === ex.exercise_name ? {...l, exercise_note: note} : l
-      ))
-    }
-    // Salvo sempre in inputValues per averla disponibile quando si crea il primo log
+  function updateNote(ex, note) {
+    // Aggiorna subito lo stato locale — nessun lag
     setInputValues(prev => ({...prev, [`${ex.exercise_name}-note`]: note}))
+    setLogs(prev => prev.map(l =>
+      l.exercise_name === ex.exercise_name ? {...l, exercise_note: note} : l
+    ))
+    // Salva su Supabase dopo 800ms di inattività (debounce)
+    const key = ex.exercise_name
+    if (noteDebounceRef.current[key]) clearTimeout(noteDebounceRef.current[key])
+    noteDebounceRef.current[key] = setTimeout(async () => {
+      const exLogs = logs.filter(l => l.exercise_name === ex.exercise_name)
+      if (exLogs.length > 0) {
+        await supabase.from('workout_logs')
+          .update({ exercise_note: note })
+          .eq('client_id', profile.id)
+          .eq('exercise_name', ex.exercise_name)
+          .eq('log_date', today)
+      }
+    }, 800)
   }
 
   function getExerciseNote(exName) {
