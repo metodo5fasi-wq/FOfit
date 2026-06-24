@@ -32,12 +32,12 @@ const GOALS = [
   { value:'resistenza', label:'🏃 Resistenza' },
 ]
 const DIET_TYPES = [
-  { value:'lineare', label:'Lineare — stesso schema ogni giorno' },
-  { value:'on_off', label:'ON/OFF — diverso nei giorni di allenamento' },
-  { value:'onde', label:'Ad onde — alto/medio/basso' },
-  { value:'reverse', label:'Reverse diet — aumento progressivo' },
-  { value:'ciclico', label:'Deficit/Surplus ciclico' },
-  { value:'refeed', label:'Refeed — con giorni di ricarica' },
+  { value:'lineare',  label:'📊 Lineare',      sub:'Stesso schema ogni giorno' },
+  { value:'on_off',   label:'⚡ ON/OFF',        sub:'Macro diversi nei giorni di allenamento' },
+  { value:'onde',     label:'🌊 Ad onde',       sub:'3 livelli: alto / medio / basso' },
+  { value:'ciclico',  label:'🔄 Ciclico',       sub:'Alternanza deficit / surplus' },
+  { value:'reverse',  label:'📈 Reverse diet',  sub:'Aumento progressivo delle calorie' },
+  { value:'refeed',   label:'🔋 Refeed',        sub:'Piano base + giorno di ricarica' },
 ]
 const LIFESTYLE = [
   { value:'semplice', label:'🏠 Cucina semplice — pochi ingredienti' },
@@ -47,6 +47,96 @@ const LIFESTYLE = [
 ]
 
 function macroKcal(p, c, f) { return (p||0)*4 + (c||0)*4 + (f||0)*9 }
+
+function MacroRow({ label, color='#D4570A', prefix, gen, setGen, macroKcal }) {
+  const k = (field) => `${field}${prefix?'_'+prefix:''}`
+  const kcal = macroKcal(gen[k('protein')], gen[k('carbs')], gen[k('fat')])
+  return (
+    <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px',marginBottom:8}}>
+      <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>{label}</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+        <div>
+          <label style={{fontSize:10,color:'#888780',display:'block',marginBottom:3}}>Kcal</label>
+          <input style={{width:'100%',padding:'7px 8px',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:13,fontWeight:700,color,background:'white',outline:'none',fontFamily:'inherit',textAlign:'center',boxSizing:'border-box'}}
+            type="number" value={gen[k('kcal')]||''} onChange={e=>{
+              const val = parseInt(e.target.value)||0
+              const ratio = gen[k('kcal')]>0 ? val/gen[k('kcal')] : 1
+              setGen(p=>({...p,
+                [k('kcal')]:val,
+                [k('protein')]:Math.round((p[k('protein')]||0)*ratio),
+                [k('carbs')]:Math.round((p[k('carbs')]||0)*ratio),
+                [k('fat')]:Math.round((p[k('fat')]||0)*ratio),
+              }))
+            }}/>
+          <div style={{fontSize:9,color:Math.abs(kcal-(gen[k('kcal')]||0))<50?'#3B6D11':'#D4570A',marginTop:2,textAlign:'center'}}>
+            Macro={kcal}
+          </div>
+        </div>
+        {[{f:'protein',l:'P (g)',c:'#3B8C5A'},{f:'carbs',l:'C (g)',c:'#F4894A'},{f:'fat',l:'G (g)',c:'#888780'}].map(m=>(
+          <div key={m.f}>
+            <label style={{fontSize:10,color:m.c,display:'block',marginBottom:3}}>{m.l}</label>
+            <input style={{width:'100%',padding:'7px 8px',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:13,color:'#111',background:'white',outline:'none',fontFamily:'inherit',textAlign:'center',boxSizing:'border-box'}}
+              type="number" value={gen[k(m.f)]||''} onChange={e=>setGen(p=>({...p,[k(m.f)]:parseInt(e.target.value)||0}))}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MacroForm({ gen, setGen, macroKcal }) {
+  const dt = gen.diet_type
+  if (dt === 'lineare') return (
+    <MacroRow label="📊 Macro giornalieri" prefix="" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+  )
+  if (dt === 'on_off') return (<>
+    <MacroRow label="⚡ Giorno ON — allenamento" color="#D4570A" prefix="on" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <MacroRow label="😴 Giorno OFF — riposo" color="#4A90D4" prefix="off" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+  </>)
+  if (dt === 'onde') return (<>
+    <MacroRow label="🔴 Giorno ALTO — massimo intake" color="#E24B4A" prefix="high" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <MacroRow label="🟡 Giorno MEDIO" color="#E8A020" prefix="mid" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <MacroRow label="🟢 Giorno BASSO" color="#3B6D11" prefix="low" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+  </>)
+  if (dt === 'ciclico') return (<>
+    <MacroRow label="📉 Giorni in DEFICIT" color="#4A90D4" prefix="deficit" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <MacroRow label="📈 Giorni in SURPLUS" color="#D4570A" prefix="surplus" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+  </>)
+  if (dt === 'reverse') return (<>
+    <MacroRow label="📊 Kcal di partenza" color="#4A90D4" prefix="start" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px',marginBottom:8}}>
+      <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>📈 Progressione</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        <div>
+          <label style={{fontSize:10,color:'#888780',display:'block',marginBottom:3}}>Incremento kcal/settimana</label>
+          <input style={{width:'100%',padding:'8px',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:13,color:'#111',background:'white',outline:'none',fontFamily:'inherit',textAlign:'center',boxSizing:'border-box'}}
+            type="number" value={gen.kcal_increment||50} onChange={e=>setGen(p=>({...p,kcal_increment:parseInt(e.target.value)||50}))}/>
+        </div>
+        <div>
+          <label style={{fontSize:10,color:'#888780',display:'block',marginBottom:3}}>Kcal obiettivo finale</label>
+          <input style={{width:'100%',padding:'8px',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:13,color:'#111',background:'white',outline:'none',fontFamily:'inherit',textAlign:'center',boxSizing:'border-box'}}
+            type="number" value={gen.kcal_target||2200} onChange={e=>setGen(p=>({...p,kcal_target:parseInt(e.target.value)||2200}))}/>
+        </div>
+      </div>
+    </div>
+  </>)
+  if (dt === 'refeed') return (<>
+    <MacroRow label="📊 Giorni base (deficit)" color="#4A90D4" prefix="base" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <MacroRow label="🔋 Giorno refeed (ricarica)" color="#9B59B6" prefix="refeed" gen={gen} setGen={setGen} macroKcal={macroKcal}/>
+    <div style={{background:'#F5F3EF',borderRadius:10,padding:'10px 12px',marginBottom:8}}>
+      <label style={{fontSize:10,color:'#888780',display:'block',marginBottom:6}}>GIORNI DI REFEED A SETTIMANA</label>
+      <div style={{display:'flex',gap:6}}>
+        {[1,2,3].map(n=>(
+          <button key={n} onClick={()=>setGen(p=>({...p,refeed_days:n}))} style={{
+            flex:1,padding:'7px',borderRadius:7,border:'0.5px solid',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:600,
+            background:gen.refeed_days===n?'#9B59B6':'white',color:gen.refeed_days===n?'white':'#888780',borderColor:gen.refeed_days===n?'#9B59B6':'#E0DDD6'
+          }}>{n}</button>
+        ))}
+      </div>
+    </div>
+  </>)
+  return null
+}
 
 export default function ImportaPiano() {
   const { profile } = useAuth()
@@ -68,9 +158,27 @@ export default function ImportaPiano() {
   // Modalità genera — sezioni espandibili
   const [openSections, setOpenSections] = useState({ nutrition:true, foods:true, lifestyle:false })
   const [gen, setGen] = useState({
+    // Base
     kcal: 2000, protein: 150, carbs: 200, fat: 65,
     meals_per_day: 5, goal: 'dimagrimento', diet_type: 'lineare',
     foods_liked: '', foods_avoided: '', lifestyle: 'standard',
+    // ON/OFF
+    kcal_on: 2300, protein_on: 170, carbs_on: 250, fat_on: 65,
+    kcal_off: 1800, protein_off: 160, carbs_off: 160, fat_off: 60,
+    // Ad onde
+    kcal_high: 2400, protein_high: 180, carbs_high: 280, fat_high: 65,
+    kcal_mid: 2100, protein_mid: 160, carbs_mid: 220, fat_mid: 65,
+    kcal_low: 1800, protein_low: 160, carbs_low: 160, fat_low: 60,
+    // Ciclico
+    kcal_deficit: 1800, protein_deficit: 160, carbs_deficit: 160, fat_deficit: 60,
+    kcal_surplus: 2400, protein_surplus: 180, carbs_surplus: 280, fat_surplus: 70,
+    // Reverse
+    kcal_start: 1800, protein_start: 150, carbs_start: 160, fat_start: 60,
+    kcal_target: 2200, kcal_increment: 50,
+    // Refeed
+    kcal_base: 1900, protein_base: 160, carbs_base: 180, fat_base: 60,
+    kcal_refeed: 2600, protein_refeed: 160, carbs_refeed: 350, fat_refeed: 65,
+    refeed_days: 1,
   })
 
   useEffect(() => {
@@ -104,7 +212,29 @@ export default function ImportaPiano() {
     setLoading(true)
     try {
       const body = mode === 'generate'
-        ? { mode:'generate', preferences:{ kcal:gen.kcal, protein:gen.protein, carbs:gen.carbs, fat:gen.fat, meals_per_day:gen.meals_per_day, goal:gen.goal, diet_type:gen.diet_type, foods_liked:gen.foods_liked, foods_avoided:gen.foods_avoided, lifestyle:gen.lifestyle } }
+        ? { mode:'generate', preferences:{
+            kcal:gen.kcal, protein:gen.protein, carbs:gen.carbs, fat:gen.fat,
+            meals_per_day:gen.meals_per_day, goal:gen.goal, diet_type:gen.diet_type,
+            foods_liked:gen.foods_liked, foods_avoided:gen.foods_avoided, lifestyle:gen.lifestyle,
+            // Parametri multi-fase
+            phases: gen.diet_type==='on_off' ? [
+              {label:'Giorno ON',kcal:gen.kcal_on,protein:gen.protein_on,carbs:gen.carbs_on,fat:gen.fat_on},
+              {label:'Giorno OFF',kcal:gen.kcal_off,protein:gen.protein_off,carbs:gen.carbs_off,fat:gen.fat_off},
+            ] : gen.diet_type==='onde' ? [
+              {label:'Giorno Alto',kcal:gen.kcal_high,protein:gen.protein_high,carbs:gen.carbs_high,fat:gen.fat_high},
+              {label:'Giorno Medio',kcal:gen.kcal_mid,protein:gen.protein_mid,carbs:gen.carbs_mid,fat:gen.fat_mid},
+              {label:'Giorno Basso',kcal:gen.kcal_low,protein:gen.protein_low,carbs:gen.carbs_low,fat:gen.fat_low},
+            ] : gen.diet_type==='ciclico' ? [
+              {label:'Giorno Deficit',kcal:gen.kcal_deficit,protein:gen.protein_deficit,carbs:gen.carbs_deficit,fat:gen.fat_deficit},
+              {label:'Giorno Surplus',kcal:gen.kcal_surplus,protein:gen.protein_surplus,carbs:gen.carbs_surplus,fat:gen.fat_surplus},
+            ] : gen.diet_type==='reverse' ? [
+              {label:'Settimana 1',kcal:gen.kcal_start,protein:gen.protein_start,carbs:gen.carbs_start,fat:gen.fat_start},
+              {label:'Progressione',kcal_increment:gen.kcal_increment,kcal_target:gen.kcal_target},
+            ] : gen.diet_type==='refeed' ? [
+              {label:'Giorno Base',kcal:gen.kcal_base,protein:gen.protein_base,carbs:gen.carbs_base,fat:gen.fat_base},
+              {label:'Giorno Refeed',kcal:gen.kcal_refeed,protein:gen.protein_refeed,carbs:gen.carbs_refeed,fat:gen.fat_refeed,days:gen.refeed_days},
+            ] : null,
+          }}
         : { textContent: rawText }
 
       const r = await fetch('/api/parse-plan', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
@@ -248,50 +378,48 @@ export default function ImportaPiano() {
                   </div>
                   {openSections.nutrition && (
                     <>
-                      <div style={s.grid2}>
-                        <div style={{gridColumn:'1/-1', marginBottom:8}}>
-                          <label style={s.label}>Obiettivo</label>
-                          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                            {GOALS.map(g=>(
-                              <button key={g.value} onClick={()=>setGen(p=>({...p,goal:g.value}))} style={{
-                                padding:'6px 12px', borderRadius:18, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit',
-                                background:gen.goal===g.value?'#D4570A':'white', color:gen.goal===g.value?'white':'#888780', borderColor:gen.goal===g.value?'#D4570A':'#E0DDD6'
-                              }}>{g.label}</button>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <label style={s.label}>Kcal giornaliere</label>
-                          <input style={s.input} type="number" value={gen.kcal} onChange={e=>handleGenKcal(e.target.value)}/>
-                          <div style={{fontSize:11,color:macroMatch?'#3B6D11':'#D4570A',marginTop:4}}>
-                            {macroMatch?'✓':'⚠'} Macro = {totalMacroKcal} kcal
-                          </div>
-                        </div>
-                        <div>
-                          <label style={s.label}>Pasti al giorno</label>
-                          <select style={s.select} value={gen.meals_per_day} onChange={e=>setGen(p=>({...p,meals_per_day:parseInt(e.target.value)}))}>
-                            {[3,4,5,6].map(n=><option key={n} value={n}>{n} pasti</option>)}
-                          </select>
+                      <div style={{marginBottom:12}}>
+                        <label style={s.label}>Obiettivo</label>
+                        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                          {GOALS.map(g=>(
+                            <button key={g.value} onClick={()=>setGen(p=>({...p,goal:g.value}))} style={{
+                              padding:'6px 12px', borderRadius:18, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit',
+                              background:gen.goal===g.value?'#D4570A':'white', color:gen.goal===g.value?'white':'#888780', borderColor:gen.goal===g.value?'#D4570A':'#E0DDD6'
+                            }}>{g.label}</button>
+                          ))}
                         </div>
                       </div>
-                      <div style={s.grid4}>
-                        {[{k:'protein',l:'Proteine (g)',c:'#3B8C5A'},{k:'carbs',l:'Carbo (g)',c:'#F4894A'},{k:'fat',l:'Grassi (g)',c:'#888780'}].map(m=>(
-                          <div key={m.k}>
-                            <label style={{...s.label,color:m.c}}>{m.l}</label>
-                            <input style={{...s.input,textAlign:'center'}} type="number" value={gen[m.k]} onChange={e=>handleGenMacro(m.k,e.target.value)}/>
-                          </div>
-                        ))}
-                        <div>
-                          <label style={s.label}>Tipo dieta</label>
-                          <select style={{...s.input,padding:'7px 8px',fontSize:11}} value={gen.diet_type} onChange={e=>setGen(p=>({...p,diet_type:e.target.value}))}>
-                            {DIET_TYPES.map(d=><option key={d.value} value={d.value}>{d.label}</option>)}
-                          </select>
+                      <div style={{marginBottom:14}}>
+                        <label style={s.label}>Tipo di dieta</label>
+                        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                          {DIET_TYPES.map(d=>(
+                            <button key={d.value} onClick={()=>setGen(p=>({...p,diet_type:d.value}))} style={{
+                              padding:'8px 14px', borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', textAlign:'left',
+                              background:gen.diet_type===d.value?'#D4570A':'white',
+                              color:gen.diet_type===d.value?'white':'#555',
+                              borderColor:gen.diet_type===d.value?'#D4570A':'#E0DDD6',
+                            }}>
+                              <div>{d.label}</div>
+                              <div style={{fontSize:10,opacity:0.75,marginTop:1,fontWeight:400}}>{d.sub}</div>
+                            </button>
+                          ))}
                         </div>
                       </div>
+                      <div style={{marginBottom:14}}>
+                        <label style={s.label}>Pasti al giorno</label>
+                        <div style={{display:'flex',gap:6}}>
+                          {[3,4,5,6].map(n=>(
+                            <button key={n} onClick={()=>setGen(p=>({...p,meals_per_day:n}))} style={{
+                              flex:1, padding:'8px', borderRadius:8, border:'0.5px solid', cursor:'pointer', fontFamily:'inherit', fontSize:13, fontWeight:600,
+                              background:gen.meals_per_day===n?'#D4570A':'white', color:gen.meals_per_day===n?'white':'#888780', borderColor:gen.meals_per_day===n?'#D4570A':'#E0DDD6'
+                            }}>{n}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <MacroForm gen={gen} setGen={setGen} macroKcal={macroKcal}/>
                     </>
                   )}
                 </div>
-
                 {/* SEZIONE 2 — PREFERENZE ALIMENTARI */}
                 <div style={s.card}>
                   <div style={s.sectionTitle} onClick={()=>toggleSection('foods')}>
