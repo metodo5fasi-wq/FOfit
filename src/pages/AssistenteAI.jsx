@@ -107,23 +107,30 @@ export default function AssistenteAI() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
 
   async function loadContext() {
-    const { data: planData } = await supabase.from('meal_plans').select('*')
-      .eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()
-    const { data: progress } = await supabase.from('progress_entries').select('*')
-      .eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle()
+    const today = new Date().toISOString().split('T')[0]
 
+    const [planRes, progressRes, anamnesiRes, workoutRes, diaryRes, checkinRes] = await Promise.all([
+      supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
+      supabase.from('progress_entries').select('*').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('anamnesi').select('*').eq('client_id', profile.id).maybeSingle(),
+      supabase.from('workout_plans').select('id,title').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
+      supabase.from('diary_entries').select('*').eq('client_id', profile.id).eq('entry_date', today),
+      supabase.from('weekly_checkins').select('*').eq('client_id', profile.id).order('week_date', {ascending:false}).limit(1).maybeSingle(),
+    ])
+
+    // Piano alimentare completo
     let pianoParsed = null
-    if (planData) {
+    if (planRes.data) {
       const { data: meals } = await supabase.from('plan_meals')
-        .select('*, plan_meal_foods(*)').eq('plan_id', planData.id).order('meal_order')
+        .select('*, plan_meal_foods(*)').eq('plan_id', planRes.data.id).order('meal_order')
       const giorni = []
       for (let d = 1; d <= 7; d++) {
         const dayMeals = (meals || []).filter(m => m.day_of_week === d)
         if (dayMeals.length > 0) {
           giorni.push({
-            giorno: ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][d-1],
+            giorno: dayMeals[0]?.day_label || ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][d-1],
             pasti: dayMeals.map(m => ({
-              nome: m.meal_type,
+              nome: m.meal_name || m.meal_type,
               alimenti: (m.plan_meal_foods || []).map(f => ({
                 nome: f.food_name, quantita_g: f.quantity_g,
                 kcal: f.kcal, proteine_g: f.protein_g, carboidrati_g: f.carbs_g, grassi_g: f.fat_g,
@@ -135,15 +142,36 @@ export default function AssistenteAI() {
       pianoParsed = { giorni }
     }
 
+    // Scheda allenamento
+    let workoutParsed = null
+    if (workoutRes.data) {
+      const { data: exercises } = await supabase.from('workout_exercises')
+        .select('*').eq('plan_id', workoutRes.data.id).order('order_index')
+      if (exercises?.length) {
+        const byDay = {}
+        exercises.forEach(e => {
+          const key = e.day_label || 'Giorno A'
+          if (!byDay[key]) byDay[key] = []
+          byDay[key].push({ nome: e.exercise_name, serie: e.sets, reps: e.reps })
+        })
+        workoutParsed = { giorni: Object.entries(byDay).map(([label, esercizi]) => ({ label, esercizi })) }
+      }
+    }
+
     setClientContext({
       clientName: profile.full_name,
       goal: profile.goal,
-      kcalTarget: planData?.kcal_target,
-      proteinTarget: planData?.protein_target_g,
-      carbsTarget: planData?.carbs_target_g,
-      fatTarget: planData?.fat_target_g,
+      kcalTarget: planRes.data?.kcal_target,
+      proteinTarget: planRes.data?.protein_target_g,
+      carbsTarget: planRes.data?.carbs_target_g,
+      fatTarget: planRes.data?.fat_target_g,
+      dietType: planRes.data?.diet_type,
       plan: pianoParsed,
-      recentProgress: progress,
+      recentProgress: progressRes.data,
+      anamnesi: anamnesiRes.data,
+      workoutPlan: workoutParsed,
+      todayDiary: diaryRes.data || [],
+      weeklyCheckin: checkinRes.data,
     })
   }
 
