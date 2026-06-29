@@ -387,7 +387,9 @@ export default function Allenamento() {
           const isExpanded = expandedExercise === ex.id
           const progression = getProgressionData(ex.exercise_name)
           const lastWeight = progression.length ? progression[progression.length-1].weight : null
-          const setsArray = Array.from({length: ex.sets || 0}, (_,i) => i+1)
+          const prog = progressionTracking[ex.id]
+          const activeSets = prog?.targetSets || ex.sets || 0
+          const setsArray = Array.from({length: activeSets}, (_,i) => i+1)
           const completedSets = setsArray.filter(n => getLog(ex.exercise_name, n)).length
 
           return (
@@ -400,10 +402,10 @@ export default function Allenamento() {
               }} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}>
                 <div style={{
                   width:36,height:36,borderRadius:10,flexShrink:0,
-                  background: completedSets===ex.sets && ex.sets>0 ? '#EAF3DE' : 'var(--bg-input)',
+                  background: completedSets===activeSets && activeSets>0 ? '#EAF3DE' : 'var(--bg-input)',
                   display:'flex',alignItems:'center',justifyContent:'center'
                 }}>
-                  <i className={completedSets===ex.sets && ex.sets>0 ? 'ti ti-check' : 'ti ti-barbell'} style={{fontSize:17,color: completedSets===ex.sets && ex.sets>0 ? '#3B6D11' : '#D4570A'}}/>
+                  <i className={completedSets===activeSets && activeSets>0 ? 'ti ti-check' : 'ti ti-barbell'} style={{fontSize:17,color: completedSets===activeSets && activeSets>0 ? '#3B6D11' : '#D4570A'}}/>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{ex.exercise_name}</div>
