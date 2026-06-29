@@ -28,6 +28,8 @@ export default function Allenamento() {
   const [newPRs, setNewPRs] = useState([]) // record personali battuti oggi
   const [weekStreak, setWeekStreak] = useState(0)
   const [showFinish, setShowFinish] = useState(false)
+  const [progressionStatus, setProgressionStatus] = useState({}) // { exerciseId: true/false/null }
+  const [progressionTracking, setProgressionTracking] = useState({}) // { exerciseId: { week, targetKg } }
   const [sessionNotes, setSessionNotes] = useState('')
   const noteDebounceRef = React.useRef({})
   const [savingSession, setSavingSession] = useState(false)
@@ -49,6 +51,7 @@ export default function Allenamento() {
         const days = [...new Set(exData.map(e=>e.day_label))]
         const saved = localStorage.getItem('fofit_active_day')
         setActiveDay(saved && days.includes(saved) ? saved : days[0])
+        loadProgression(exData) // Carica stato progressione
       }
     }
     const { data: logData } = await supabase.from('workout_logs')
@@ -124,6 +127,41 @@ export default function Allenamento() {
     setSessionNotes(existing?.notes || '')
   }, [activeDay, sessions])
 
+  // Calcola settimana corrente per ogni esercizio con progressione
+  async function loadProgression(exList) {
+    const progEx = exList.filter(e => e.progression_type === 'linear' && e.progression_start_kg)
+    if (!progEx.length) return
+    const tracking = {}
+    const initStatus = {}
+    for (const ex of progEx) {
+      const { data: history } = await supabase.from('progression_tracking')
+        .select('*').eq('client_id', profile.id).eq('exercise_id', ex.id)
+        .order('week_number', { ascending: true })
+      const startKg = parseFloat(String(ex.progression_start_kg).replace(',','.'))
+      const increment = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
+      const maxWeeks = parseInt(ex.progression_weeks) || 4
+      let currentWeek = 1
+      if (history?.length) {
+        const lastCompleted = [...history].reverse().find(h => h.completed === true)
+        const lastFailed = [...history].reverse().find(h => h.completed === false)
+        if (lastCompleted) {
+          const nextWeek = lastCompleted.week_number + 1
+          currentWeek = nextWeek <= maxWeeks ? nextWeek : maxWeeks
+        } else if (lastFailed) {
+          currentWeek = lastFailed.week_number
+        }
+      }
+      const currentKg = startKg + (currentWeek - 1) * increment
+      tracking[ex.id] = {
+        week: currentWeek, targetKg: Math.round(currentKg*4)/4,
+        maxWeeks, startKg, increment, history: history||[],
+      }
+      initStatus[ex.id] = null
+    }
+    setProgressionTracking(tracking)
+    setProgressionStatus(initStatus)
+  }
+
   async function finishSession() {
     setSavingSession(true)
     const dayEx = exercises.filter(e=>e.day_label===activeDay)
@@ -140,6 +178,22 @@ export default function Allenamento() {
         notes: sessionNotes, sets_completed: completedSets, sets_total: totalSets,
       })
     }
+
+    // Salva stato progressione per ogni esercizio segnato
+    for (const [exerciseId, completed] of Object.entries(progressionStatus)) {
+      if (completed === null) continue // Non segnato — non salvare
+      const prog = progressionTracking[exerciseId]
+      if (!prog) continue
+      await supabase.from('progression_tracking').upsert({
+        client_id: profile.id,
+        exercise_id: exerciseId,
+        week_number: prog.week,
+        target_kg: prog.targetKg,
+        completed: completed,
+        logged_at: new Date().toISOString(),
+      }, { onConflict: 'client_id,exercise_id,week_number' })
+    }
+
     setSavingSession(false)
     setShowFinish(false)
     setConfettiActive(true)
@@ -519,11 +573,80 @@ export default function Allenamento() {
             <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',margin:'16px 0 6px'}}>
               Note per il tuo coach (opzionale)
             </div>
+
+            {/* SEZIONE PROGRESSIONE */}
+            {(() => {
+              const dayEx = exercises.filter(e => e.day_label===activeDay && e.progression_type==='linear' && e.progression_start_kg && progressionTracking[e.id])
+              if (!dayEx.length) return null
+              return (
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
+                    📈 Progressione carichi — settimana corrente
+                  </div>
+                  {dayEx.map(ex => {
+                    const prog = progressionTracking[ex.id]
+                    const status = progressionStatus[ex.id]
+                    return (
+                      <div key={ex.id} style={{background:'var(--bg-input)',borderRadius:10,padding:'12px',marginBottom:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{ex.exercise_name}</div>
+                            <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>
+                              Settimana {prog.week}/{prog.maxWeeks} · Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong>
+                            </div>
+                          </div>
+                          {/* Mini storico puntini */}
+                          <div style={{display:'flex',gap:3}}>
+                            {prog.history.slice(-4).map((h,i)=>(
+                              <div key={i} style={{width:10,height:10,borderRadius:'50%',background:h.completed?'#3B6D11':'#E24B4A'}} title={`S${h.week_number}: ${h.completed?'✓':'✗'}`}/>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Bottoni CE L'HO FATTA / NON CE L'HO FATTA */}
+                        <div style={{display:'flex',gap:8}}>
+                          <button onClick={()=>setProgressionStatus(p=>({...p,[ex.id]:true}))} style={{
+                            flex:1, padding:'9px', borderRadius:9, border:'0.5px solid', cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:700,
+                            background: status===true ? '#3B6D11' : 'var(--bg-card)',
+                            color: status===true ? 'white' : 'var(--text-muted)',
+                            borderColor: status===true ? '#3B6D11' : 'var(--border)',
+                            display:'flex', alignItems:'center', justifyContent:'center', gap:5
+                          }}>
+                            <i className="ti ti-circle-check" style={{fontSize:15}}/> Ce l'ho fatta!
+                          </button>
+                          <button onClick={()=>setProgressionStatus(p=>({...p,[ex.id]:false}))} style={{
+                            flex:1, padding:'9px', borderRadius:9, border:'0.5px solid', cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:700,
+                            background: status===false ? '#E24B4A' : 'var(--bg-card)',
+                            color: status===false ? 'white' : 'var(--text-muted)',
+                            borderColor: status===false ? '#E24B4A' : 'var(--border)',
+                            display:'flex', alignItems:'center', justifyContent:'center', gap:5
+                          }}>
+                            <i className="ti ti-circle-x" style={{fontSize:15}}/> Non ce l'ho fatta
+                          </button>
+                        </div>
+                        {/* Feedback dinamico */}
+                        {status===true && (
+                          <div style={{marginTop:8,fontSize:11,color:'#3B6D11',background:'#EAF3DE',borderRadius:7,padding:'6px 10px'}}>
+                            ✓ Ottimo! La prossima settimana: <strong>{Math.round((prog.targetKg + prog.increment)*4)/4}kg</strong>
+                            {prog.week >= prog.maxWeeks && ' — Progressione completata! 🏆'}
+                          </div>
+                        )}
+                        {status===false && (
+                          <div style={{marginTop:8,fontSize:11,color:'#E24B4A',background:'#FEE2E2',borderRadius:7,padding:'6px 10px'}}>
+                            ✗ Ok, la prossima settimana rimani a <strong>{prog.targetKg}kg</strong> — riprova!
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+
             <textarea
               value={sessionNotes}
               onChange={e=>setSessionNotes(e.target.value)}
               placeholder="Come ti sei sentito? Esercizi troppo facili/difficili? Dolori particolari? Suggerimenti per la prossima volta..."
-              style={{width:'100%',minHeight:100,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5}}
+              style={{width:'100%',minHeight:80,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5}}
             />
 
             <div style={{display:'flex',gap:10,marginTop:16}}>
