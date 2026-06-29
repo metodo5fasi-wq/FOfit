@@ -176,17 +176,20 @@ export default function AssistenteAI() {
   }
 
   async function loadHistory() {
-    const { data } = await supabase.from('ai_chat_messages').select('*')
-      .eq('client_id', profile.id).order('created_at').limit(50)
-    if (data && data.length > 0) {
-      setMessages(data.map(m => ({ role: m.role, content: m.content, id: m.id, recipe: m.recipe || null })))
-    } else {
-      setMessages([{
-        role: 'assistant',
-        content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nPosso suggerirti ricette sfiziose calibrate sui tuoi macro e aggiungerle direttamente al tuo diario con un click. Posso anche aiutarti con sostituzioni creative o analizzare il tuo piano.\n\nCosa ti preparo oggi?`,
-        id: 'welcome'
-      }])
-    }
+    try {
+      const { data } = await supabase.from('ai_chat_messages').select('*')
+        .eq('client_id', profile.id).order('created_at').limit(50)
+      if (data && data.length > 0) {
+        setMessages(data.map(m => ({ role: m.role, content: m.content, id: m.id, recipe: m.recipe || null })))
+        return
+      }
+    } catch(e) { /* tabella non ancora creata */ }
+    // Messaggio di benvenuto di default
+    setMessages([{
+      role: 'assistant',
+      content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nPosso suggerirti ricette sfiziose calibrate sui tuoi macro e aggiungerle direttamente al tuo diario con un click. Posso anche aiutarti con sostituzioni creative o analizzare il tuo piano.\n\nCosa ti preparo oggi?`,
+      id: 'welcome'
+    }])
   }
 
   async function addRecipeToDiary(recipe, mealType) {
@@ -217,9 +220,12 @@ export default function AssistenteAI() {
     setMessages(newMessages)
     setLoading(true)
 
-    await supabase.from('ai_chat_messages').insert({
-      client_id: profile.id, role: 'user', content: userText
-    })
+    // Salva messaggio utente — non blocca se tabella mancante
+    try {
+      await supabase.from('ai_chat_messages').insert({
+        client_id: profile.id, role: 'user', content: userText
+      })
+    } catch(e) { /* tabella non ancora creata */ }
 
     try {
       const res = await fetch('/api/ai-coach', {
@@ -230,18 +236,29 @@ export default function AssistenteAI() {
           clientContext
         })
       })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      const reply = data.reply || 'Errore. Riprova!'
+      if (data.error) throw new Error(data.error)
+      const reply = data.reply || 'Nessuna risposta ricevuta.'
       const recipe = data.recipe || null
 
       const aiMsg = { role: 'assistant', content: reply, id: Date.now().toString() + '_ai', recipe }
       setMessages(prev => [...prev, aiMsg])
 
-      await supabase.from('ai_chat_messages').insert({
-        client_id: profile.id, role: 'assistant', content: reply
-      })
+      // Salva risposta AI — non blocca se tabella mancante
+      try {
+        await supabase.from('ai_chat_messages').insert({
+          client_id: profile.id, role: 'assistant', content: reply
+        })
+      } catch(e) { /* tabella non ancora creata */ }
+
     } catch(e) {
-      setMessages(prev => [...prev, { role:'assistant', content:'Errore di connessione. Riprova.', id:'err' }])
+      console.error('AI Coach error:', e)
+      setMessages(prev => [...prev, {
+        role:'assistant',
+        content:`⚠️ Errore: ${e.message}. Riprova tra qualche secondo.`,
+        id:'err'
+      }])
     }
     setLoading(false)
   }
