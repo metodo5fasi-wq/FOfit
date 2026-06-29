@@ -16,337 +16,11 @@ const s = {
   label: { fontSize:10, color:'#888780', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
-const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', progression_type:'none', progression_start_kg:'', progression_increment_kg:2.5, progression_weeks:4, progression_start_date:'', progression_reps_min:8, progression_reps_max:12, progression_rpe_target:8, progression_one_rm:'', progression_config:{}, weekly_targets:[], _isNew:true }
+const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', weekly_targets:[], _isNew:true }
 
-const PROGRESSION_TYPES = [
-  { value:'none',    label:'Nessuna',                short:'—',      desc:'Nessuna progressione pianificata' },
-  { value:'linear',  label:'📈 Lineare',              short:'+kg/sett', desc:'Aumento fisso di kg ogni settimana' },
-  { value:'double',  label:'🔁 Doppia progressione',  short:'Rep→Kg', desc:'Prima aumenta le reps nel range, poi il carico' },
-  { value:'wup',     label:'🌊 Ondulazione settimanale (WUP)', short:'WUP', desc:'Carichi diversi in ciclo settimanale (pesante/medio/leggero)' },
-  { value:'dup',     label:'⚡ Ondulazione giornaliera (DUP)', short:'DUP', desc:'Ogni sessione ha intensità diversa (forza/ipertrofia/resistenza)' },
-  { value:'step',    label:'🪜 Step loading + Deload', short:'Step',  desc:'3 settimane di aumento + 1 settimana deload' },
-  { value:'block',   label:'🧱 Periodizzazione a blocchi', short:'Block', desc:'Accumulo → Intensificazione → Picco' },
-  { value:'oneRm',   label:'💯 % del massimale (1RM)', short:'%1RM', desc:'Carichi calcolati in percentuale del tuo massimale' },
-]
-
-function ProgressionForm({ ex, onChange, isNew=false }) {
-  const type = ex.progression_type || 'none'
-  const set = (field, val) => onChange(field, val)
-  const cfg = ex.progression_config || {}
-  const setConfig = (key, val) => onChange('progression_config', {...cfg, [key]:val})
-
-  const inputStyle = { width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'white', outline:'none', fontFamily:'inherit', boxSizing:'border-box' }
-  const labelStyle = { fontSize:10, color:'#D4570A', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.06em', fontWeight:600 }
-  const grid2 = { display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10 }
-  const grid3 = { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginTop:10 }
-  const grid4 = { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginTop:10 }
-
-  // Anteprima settimane per progressioni con settimane
-  function WeekPreview({ weeks, startKg, increment }) {
-    if (!startKg || !weeks) return null
-    const start = parseFloat(String(startKg).replace(',','.'))
-    const inc = parseFloat(String(increment||2.5).replace(',','.'))
-    return (
-      <div style={{marginTop:8}}>
-        <label style={labelStyle}>Anteprima settimane</label>
-        <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-          {Array.from({length:parseInt(weeks)},(_,i)=>(
-            <div key={i} style={{background:'white',borderRadius:6,padding:'4px 8px',fontSize:11,textAlign:'center',border:'0.5px solid #F4C9A8'}}>
-              <div style={{fontSize:9,color:'#888780'}}>S{i+1}</div>
-              <div style={{fontWeight:700,color:'#D4570A'}}>{(start+i*inc).toFixed(1)}kg</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{gridColumn:'1/-1'}}>
-      {/* SELEZIONE TIPO */}
-      <label style={{...labelStyle, color:'#888780', fontSize:11}}>Tipo di progressione</label>
-      <select
-        value={type}
-        onChange={e=>set('progression_type', e.target.value)}
-        style={{...inputStyle, marginBottom: type==='none'?0:10}}
-      >
-        {PROGRESSION_TYPES.map(p=>(
-          <option key={p.value} value={p.value}>{p.label} — {p.desc}</option>
-        ))}
-      </select>
-
-      {/* ── LINEARE ── */}
-      {type==='linear' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={grid4}>
-            <div><label style={labelStyle}>Carico S1 (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_start_kg||''} onChange={e=>set('progression_start_kg',e.target.value)} placeholder="es. 60"/></div>
-            <div><label style={labelStyle}>+kg/settimana</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_increment_kg||2.5} onChange={e=>set('progression_increment_kg',e.target.value)}/></div>
-            <div><label style={labelStyle}>Settimane</label><input style={inputStyle} type="number" value={ex.progression_weeks||4} onChange={e=>set('progression_weeks',e.target.value)}/></div>
-            <div><label style={labelStyle}>Data inizio</label><input style={inputStyle} type="date" value={ex.progression_start_date||''} onChange={e=>set('progression_start_date',e.target.value)}/></div>
-          </div>
-          <WeekPreview weeks={ex.progression_weeks} startKg={ex.progression_start_kg} increment={ex.progression_increment_kg}/>
-        </div>
-      )}
-
-      {/* ── DOPPIA PROGRESSIONE ── */}
-      {type==='double' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8,lineHeight:1.5}}>
-            Il cliente aumenta le reps fino al massimo del range. Quando raggiunge il limite superiore, aumenta il carico e ricomincia dal minimo.
-          </div>
-          <div style={grid2}>
-            <div><label style={labelStyle}>Carico iniziale (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_start_kg||''} onChange={e=>set('progression_start_kg',e.target.value)} placeholder="es. 60"/></div>
-            <div><label style={labelStyle}>Aumento carico (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_increment_kg||2.5} onChange={e=>set('progression_increment_kg',e.target.value)}/></div>
-            <div><label style={labelStyle}>Reps minimo</label><input style={inputStyle} type="number" value={ex.progression_reps_min||8} onChange={e=>set('progression_reps_min',e.target.value)} placeholder="es. 8"/></div>
-            <div><label style={labelStyle}>Reps massimo</label><input style={inputStyle} type="number" value={ex.progression_reps_max||12} onChange={e=>set('progression_reps_max',e.target.value)} placeholder="es. 12"/></div>
-          </div>
-          {ex.progression_start_kg && (
-            <div style={{marginTop:8,fontSize:11,color:'#D4570A',background:'white',borderRadius:7,padding:'6px 10px'}}>
-              📌 Esempio: {ex.progression_start_kg}kg × {ex.progression_reps_min||8} reps → arriva a {ex.progression_reps_max||12} reps → passa a {parseFloat(String(ex.progression_start_kg).replace(',','.'))+parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))}kg × {ex.progression_reps_min||8} reps
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── WUP — ONDULAZIONE SETTIMANALE ── */}
-      {type==='wup' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8}}>Imposta il carico per ogni tipo di settimana nel ciclo.</div>
-          <div style={grid3}>
-            <div><label style={labelStyle}>Settimana PESANTE (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={cfg.heavy_kg||''} onChange={e=>setConfig('heavy_kg',e.target.value)} placeholder="es. 80"/></div>
-            <div><label style={labelStyle}>Settimana MEDIA (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={cfg.medium_kg||''} onChange={e=>setConfig('medium_kg',e.target.value)} placeholder="es. 70"/></div>
-            <div><label style={labelStyle}>Settimana LEGGERA (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={cfg.light_kg||''} onChange={e=>setConfig('light_kg',e.target.value)} placeholder="es. 60"/></div>
-            <div><label style={labelStyle}>Serie settimana pesante</label><input style={inputStyle} type="number" value={cfg.heavy_sets||5} onChange={e=>setConfig('heavy_sets',e.target.value)}/></div>
-            <div><label style={labelStyle}>Serie settimana media</label><input style={inputStyle} type="number" value={cfg.medium_sets||4} onChange={e=>setConfig('medium_sets',e.target.value)}/></div>
-            <div><label style={labelStyle}>Serie settimana leggera</label><input style={inputStyle} type="number" value={cfg.light_sets||3} onChange={e=>setConfig('light_sets',e.target.value)}/></div>
-          </div>
-          <div style={{marginTop:8}}>
-            <label style={labelStyle}>Ciclo (settimane)</label>
-            <input style={{...inputStyle,width:80}} type="number" value={cfg.cycle_weeks||3} onChange={e=>setConfig('cycle_weeks',e.target.value)}/>
-          </div>
-          <div style={{marginTop:8,fontSize:11,color:'#D4570A',background:'white',borderRadius:7,padding:'6px 10px'}}>
-            📌 Ciclo: {cfg.heavy_kg||'?'}kg (S1) → {cfg.medium_kg||'?'}kg (S2) → {cfg.light_kg||'?'}kg (S3) → ripete
-          </div>
-        </div>
-      )}
-
-      {/* ── DUP — ONDULAZIONE GIORNALIERA ── */}
-      {type==='dup' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8}}>Ogni sessione ha intensità diversa nella stessa settimana.</div>
-          <div style={grid3}>
-            <div>
-              <label style={labelStyle}>Sessione FORZA</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.strength_kg||''} onChange={e=>setConfig('strength_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.strength_reps||'3-5'} onChange={e=>setConfig('strength_reps',e.target.value)} placeholder="reps es. 3-5"/>
-            </div>
-            <div>
-              <label style={labelStyle}>Sessione IPERTROFIA</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.hypertrophy_kg||''} onChange={e=>setConfig('hypertrophy_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.hypertrophy_reps||'8-12'} onChange={e=>setConfig('hypertrophy_reps',e.target.value)} placeholder="reps es. 8-12"/>
-            </div>
-            <div>
-              <label style={labelStyle}>Sessione RESISTENZA</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.endurance_kg||''} onChange={e=>setConfig('endurance_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.endurance_reps||'15-20'} onChange={e=>setConfig('endurance_reps',e.target.value)} placeholder="reps es. 15-20"/>
-            </div>
-          </div>
-          <div style={{marginTop:8,fontSize:11,color:'#D4570A',background:'white',borderRadius:7,padding:'6px 10px'}}>
-            📌 Lun: Forza {cfg.strength_kg||'?'}kg × {cfg.strength_reps||'3-5'} | Mer: Ipertrofia {cfg.hypertrophy_kg||'?'}kg × {cfg.hypertrophy_reps||'8-12'} | Ven: Resistenza {cfg.endurance_kg||'?'}kg × {cfg.endurance_reps||'15-20'}
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP LOADING ── */}
-      {type==='step' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8}}>3 settimane di aumento progressivo + 1 settimana di deload a carico ridotto.</div>
-          <div style={grid4}>
-            <div><label style={labelStyle}>Carico S1 (kg)</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_start_kg||''} onChange={e=>set('progression_start_kg',e.target.value)} placeholder="es. 60"/></div>
-            <div><label style={labelStyle}>+kg ogni step</label><input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_increment_kg||5} onChange={e=>set('progression_increment_kg',e.target.value)}/></div>
-            <div><label style={labelStyle}>Settimane per step</label><input style={inputStyle} type="number" value={cfg.step_weeks||3} onChange={e=>setConfig('step_weeks',e.target.value)}/></div>
-            <div><label style={labelStyle}>Deload % carico</label><input style={inputStyle} type="number" value={cfg.deload_pct||60} onChange={e=>setConfig('deload_pct',e.target.value)} placeholder="es. 60"/></div>
-          </div>
-          {ex.progression_start_kg && (
-            <div style={{marginTop:8}}>
-              <label style={labelStyle}>Anteprima blocco</label>
-              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                {Array.from({length:parseInt(cfg.step_weeks||3)+1},(_,i)=>{
-                  const start = parseFloat(String(ex.progression_start_kg).replace(',','.'))
-                  const inc = parseFloat(String(ex.progression_increment_kg||5).replace(',','.'))
-                  const isDeload = i===parseInt(cfg.step_weeks||3)
-                  const kg = isDeload ? Math.round(start*(parseInt(cfg.deload_pct||60)/100)*2)/2 : start+i*inc
-                  return (
-                    <div key={i} style={{background:isDeload?'#EBF3FD':'white',borderRadius:6,padding:'4px 8px',fontSize:11,textAlign:'center',border:`0.5px solid ${isDeload?'#4A90D4':'#F4C9A8'}`}}>
-                      <div style={{fontSize:9,color:isDeload?'#4A90D4':'#888780'}}>{isDeload?'DELOAD':`S${i+1}`}</div>
-                      <div style={{fontWeight:700,color:isDeload?'#4A90D4':'#D4570A'}}>{kg.toFixed(1)}kg</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── PERIODIZZAZIONE A BLOCCHI ── */}
-      {type==='block' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8}}>3 blocchi sequenziali: accumulo (volume) → intensificazione (intensità) → picco (massimale).</div>
-          <div style={grid3}>
-            <div style={{background:'white',borderRadius:8,padding:'10px'}}>
-              <label style={{...labelStyle,color:'#3B6D11'}}>BLOCCO 1 — Accumulo</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.block1_kg||''} onChange={e=>setConfig('block1_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.block1_reps||'12-15'} onChange={e=>setConfig('block1_reps',e.target.value)} placeholder="reps"/>
-              <input style={{...inputStyle,marginTop:4}} type="number" value={cfg.block1_weeks||4} onChange={e=>setConfig('block1_weeks',e.target.value)} placeholder="settimane"/>
-            </div>
-            <div style={{background:'white',borderRadius:8,padding:'10px'}}>
-              <label style={{...labelStyle,color:'#E8A020'}}>BLOCCO 2 — Intensificazione</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.block2_kg||''} onChange={e=>setConfig('block2_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.block2_reps||'6-8'} onChange={e=>setConfig('block2_reps',e.target.value)} placeholder="reps"/>
-              <input style={{...inputStyle,marginTop:4}} type="number" value={cfg.block2_weeks||3} onChange={e=>setConfig('block2_weeks',e.target.value)} placeholder="settimane"/>
-            </div>
-            <div style={{background:'white',borderRadius:8,padding:'10px'}}>
-              <label style={{...labelStyle,color:'#E24B4A'}}>BLOCCO 3 — Picco</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={cfg.block3_kg||''} onChange={e=>setConfig('block3_kg',e.target.value)} placeholder="kg"/>
-              <input style={{...inputStyle,marginTop:4}} type="text" value={cfg.block3_reps||'1-3'} onChange={e=>setConfig('block3_reps',e.target.value)} placeholder="reps"/>
-              <input style={{...inputStyle,marginTop:4}} type="number" value={cfg.block3_weeks||2} onChange={e=>setConfig('block3_weeks',e.target.value)} placeholder="settimane"/>
-            </div>
-          </div>
-          <div style={{marginTop:8,fontSize:11,color:'#888780'}}>
-            Durata totale: {(parseInt(cfg.block1_weeks||4)+parseInt(cfg.block2_weeks||3)+parseInt(cfg.block3_weeks||2))} settimane
-          </div>
-        </div>
-      )}
-
-      {/* ── % 1RM ── */}
-      {type==='oneRm' && (
-        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px'}}>
-          <div style={{fontSize:11,color:'#888780',marginBottom:8}}>Inserisci il massimale (1RM) e imposta le % per ogni settimana.</div>
-          <div style={grid2}>
-            <div>
-              <label style={labelStyle}>1RM attuale (kg)</label>
-              <input style={inputStyle} type="text" inputMode="decimal" value={ex.progression_one_rm||''} onChange={e=>set('progression_one_rm',e.target.value)} placeholder="es. 100"/>
-            </div>
-            <div>
-              <label style={labelStyle}>Settimane totali</label>
-              <input style={inputStyle} type="number" value={ex.progression_weeks||4} onChange={e=>set('progression_weeks',e.target.value)}/>
-            </div>
-          </div>
-          <div style={{marginTop:10}}>
-            <label style={labelStyle}>% 1RM per settimana (separati da virgola)</label>
-            <input style={inputStyle} value={cfg.percentages||'65,70,75,80'} onChange={e=>setConfig('percentages',e.target.value)} placeholder="es. 65,70,75,80"/>
-          </div>
-          {ex.progression_one_rm && cfg.percentages && (
-            <div style={{marginTop:8}}>
-              <label style={labelStyle}>Carichi calcolati</label>
-              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                {cfg.percentages.split(',').map((pct,i)=>{
-                  const oneRm = parseFloat(String(ex.progression_one_rm).replace(',','.'))
-                  const kg = Math.round(oneRm*(parseFloat(pct.trim())/100)*4)/4
-                  return (
-                    <div key={i} style={{background:'white',borderRadius:6,padding:'4px 8px',fontSize:11,textAlign:'center',border:'0.5px solid #F4C9A8'}}>
-                      <div style={{fontSize:9,color:'#888780'}}>S{i+1} · {pct.trim()}%</div>
-                      <div style={{fontWeight:700,color:'#D4570A'}}>{kg}kg</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── TABELLA SETTIMANALE SERIE/REPS/KG ── */}
-      {type !== 'none' && (
-        <WeeklyTargetsTable ex={ex} onChange={onChange}/>
-      )}
-    </div>
-  )
-}
-
-function generateWeeklyTargets(ex) {
-  const type = ex.progression_type
-  const cfg = ex.progression_config || {}
-  const weeks = parseInt(ex.progression_weeks) || 4
-  const startKg = parseFloat(String(ex.progression_start_kg||0).replace(',','.'))
-  const inc = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
-  const sets = parseInt(ex.sets) || 3
-  const reps = ex.reps || '8-10'
-
-  if (type === 'linear') {
-    return Array.from({length:weeks},(_,i)=>({
-      week:i+1, sets, reps, kg: Math.round((startKg+i*inc)*4)/4
-    }))
-  }
-  if (type === 'double') {
-    const min = parseInt(ex.progression_reps_min)||8
-    const max = parseInt(ex.progression_reps_max)||12
-    return Array.from({length:weeks},(_,i)=>({
-      week:i+1, sets, reps:`${min}-${max}`,
-      kg: Math.round((startKg+Math.floor(i/(max-min+1))*inc)*4)/4,
-      note: i%(max-min+1)===0&&i>0?'↑ carico':'',
-    }))
-  }
-  if (type === 'wup') {
-    const cycle = parseInt(cfg.cycle_weeks)||3
-    const defs = [
-      {sets:parseInt(cfg.heavy_sets)||5, reps:'4-6', kg:parseFloat(cfg.heavy_kg||0)},
-      {sets:parseInt(cfg.medium_sets)||4, reps:'8-10', kg:parseFloat(cfg.medium_kg||0)},
-      {sets:parseInt(cfg.light_sets)||3, reps:'12-15', kg:parseFloat(cfg.light_kg||0)},
-    ]
-    return Array.from({length:weeks},(_,i)=>{
-      const d = defs[i%cycle]||defs[0]
-      return {week:i+1, sets:d.sets, reps:d.reps, kg:d.kg, note:['PESANTE','MEDIO','LEGGERO'][i%cycle]}
-    })
-  }
-  if (type === 'dup') {
-    return [
-      {week:1, sets, reps:cfg.strength_reps||'3-5', kg:parseFloat(cfg.strength_kg||0), note:'FORZA'},
-      {week:2, sets, reps:cfg.hypertrophy_reps||'8-12', kg:parseFloat(cfg.hypertrophy_kg||0), note:'IPERTROFIA'},
-      {week:3, sets, reps:cfg.endurance_reps||'15-20', kg:parseFloat(cfg.endurance_kg||0), note:'RESISTENZA'},
-    ]
-  }
-  if (type === 'step') {
-    const stepW = parseInt(cfg.step_weeks)||3
-    const deloadPct = parseInt(cfg.deload_pct)||60
-    const total = stepW+1
-    return Array.from({length:total},(_,i)=>{
-      const isDeload = i===stepW
-      const kg = isDeload
-        ? Math.round(startKg*(deloadPct/100)*4)/4
-        : Math.round((startKg+i*inc)*4)/4
-      return {week:i+1, sets:isDeload?Math.max(2,sets-1):sets, reps:isDeload?'12-15':reps, kg, note:isDeload?'DELOAD':''}
-    })
-  }
-  if (type === 'block') {
-    const blocks = [
-      {weeks:parseInt(cfg.block1_weeks)||4, kg:parseFloat(cfg.block1_kg||0), reps:cfg.block1_reps||'12-15', sets:sets+1, note:'ACCUMULO'},
-      {weeks:parseInt(cfg.block2_weeks)||3, kg:parseFloat(cfg.block2_kg||0), reps:cfg.block2_reps||'6-8', sets, note:'INTENSIFICAZIONE'},
-      {weeks:parseInt(cfg.block3_weeks)||2, kg:parseFloat(cfg.block3_kg||0), reps:cfg.block3_reps||'1-3', sets:sets-1, note:'PICCO'},
-    ]
-    const result = []
-    let w = 1
-    blocks.forEach(b=>{ for(let i=0;i<b.weeks;i++) result.push({week:w++,sets:b.sets,reps:b.reps,kg:b.kg,note:b.note}) })
-    return result
-  }
-  if (type === 'oneRm') {
-    const oneRm = parseFloat(String(ex.progression_one_rm||0).replace(',','.'))
-    const pcts = (cfg.percentages||'65,70,75,80').split(',').map(p=>parseFloat(p.trim()))
-    return pcts.map((pct,i)=>({
-      week:i+1, sets, reps, kg:Math.round(oneRm*(pct/100)*4)/4, note:`${pct}% 1RM`
-    }))
-  }
-  return []
-}
 
 function WeeklyTargetsTable({ ex, onChange }) {
   const targets = ex.weekly_targets || []
-
-  function generate() {
-    const generated = generateWeeklyTargets(ex)
-    if (generated.length) onChange('weekly_targets', generated)
-  }
 
   function updateRow(weekNum, field, val) {
     const updated = targets.map(t =>
@@ -356,71 +30,60 @@ function WeeklyTargetsTable({ ex, onChange }) {
   }
 
   function addWeek() {
-    const lastWeek = targets.length ? targets[targets.length-1] : {sets:3,reps:'8-10',kg:0}
+    const last = targets.length ? targets[targets.length-1] : {sets:ex.sets||3, reps:ex.reps||'8-10', kg:'', note:''}
     onChange('weekly_targets', [...targets, {
-      week: targets.length+1,
-      sets: lastWeek.sets,
-      reps: lastWeek.reps,
-      kg: lastWeek.kg,
+      week: targets.length + 1,
+      sets: last.sets,
+      reps: last.reps,
+      kg: '',
       note: ''
     }])
   }
 
   function removeWeek(weekNum) {
-    const updated = targets.filter(t=>t.week!==weekNum).map((t,i)=>({...t,week:i+1}))
-    onChange('weekly_targets', updated)
+    onChange('weekly_targets', targets.filter(t=>t.week!==weekNum).map((t,i)=>({...t,week:i+1})))
   }
 
-  const inputS = {padding:'5px 6px',border:'0.5px solid #E0DDD6',borderRadius:6,fontSize:12,color:'#111',background:'white',outline:'none',fontFamily:'inherit',width:'100%',boxSizing:'border-box',textAlign:'center'}
+  const inp = {padding:'6px 8px',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:12,color:'#111',background:'white',outline:'none',fontFamily:'inherit',width:'100%',boxSizing:'border-box',textAlign:'center'}
 
   return (
-    <div style={{marginTop:12}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-        <label style={{fontSize:10,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:700}}>
-          📅 Obiettivi settimanali — Serie · Reps · Kg
+    <div style={{gridColumn:'1/-1',marginTop:4}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <label style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em'}}>
+          📅 Progressione settimanale
         </label>
-        <div style={{display:'flex',gap:6}}>
-          <button onClick={generate} style={{background:'#D4570A',color:'white',border:'none',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-            ↻ Genera automatico
-          </button>
-          <button onClick={addWeek} style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
-            + Settimana
-          </button>
-        </div>
+        <button onClick={addWeek} style={{background:'#D4570A',color:'white',border:'none',borderRadius:7,padding:'5px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:4}}>
+          <i className="ti ti-plus" style={{fontSize:12}}/> Settimana
+        </button>
       </div>
 
       {targets.length === 0 ? (
         <div style={{background:'#F5F3EF',borderRadius:8,padding:'12px',textAlign:'center',fontSize:12,color:'#888780'}}>
-          Clicca "↻ Genera automatico" per creare il piano settimanale in base ai parametri sopra, oppure aggiungi le settimane manualmente.
+          Aggiungi le settimane con il pulsante → il cliente vedrà automaticamente la settimana corretta
         </div>
       ) : (
-        <div style={{background:'#F5F3EF',borderRadius:10,overflow:'hidden'}}>
-          {/* Header */}
-          <div style={{display:'grid',gridTemplateColumns:'40px 1fr 60px 70px 70px 28px',gap:6,padding:'7px 10px',background:'#D4570A'}}>
-            {['Sett.','Note/Tipo','Serie','Reps','Kg',''].map((h,i)=>(
-              <div key={i} style={{fontSize:10,fontWeight:700,color:'white',textTransform:'uppercase',letterSpacing:'0.06em',textAlign:'center'}}>{h}</div>
+        <div style={{borderRadius:10,overflow:'hidden',border:'0.5px solid #E0DDD6'}}>
+          <div style={{display:'grid',gridTemplateColumns:'44px 1fr 52px 72px 68px 28px',background:'#D4570A',padding:'7px 8px',gap:6}}>
+            {['Sett.','Descrizione','Serie','Reps','Kg',''].map((h,i)=>(
+              <div key={i} style={{fontSize:10,fontWeight:700,color:'white',textTransform:'uppercase',letterSpacing:'0.05em',textAlign:'center'}}>{h}</div>
             ))}
           </div>
-          {/* Righe */}
           {targets.map((t,i)=>(
-            <div key={t.week} style={{display:'grid',gridTemplateColumns:'40px 1fr 60px 70px 70px 28px',gap:6,padding:'6px 10px',background:i%2===0?'white':'#FAF9F7',alignItems:'center',borderBottom:'0.5px solid #F0EDE8'}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textAlign:'center'}}>S{t.week}</div>
-              <input style={{...inputS,textAlign:'left',fontSize:11}} value={t.note||''} onChange={e=>updateRow(t.week,'note',e.target.value)} placeholder="es. PESANTE, DELOAD..."/>
-              <input style={inputS} type="number" value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||0)} min={1} max={10}/>
-              <input style={inputS} value={t.reps||''} onChange={e=>updateRow(t.week,'reps',e.target.value)} placeholder="8-10"/>
-              <input style={{...inputS,fontWeight:700,color:'#111'}} type="text" inputMode="decimal" value={t.kg||''} onChange={e=>updateRow(t.week,'kg',e.target.value)} placeholder="kg"/>
-              <button onClick={()=>removeWeek(t.week)} style={{background:'none',border:'none',cursor:'pointer',color:'#E24B4A',fontSize:14,padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            <div key={t.week} style={{display:'grid',gridTemplateColumns:'44px 1fr 52px 72px 68px 28px',gap:6,padding:'6px 8px',background:i%2===0?'white':'#FAFAF9',alignItems:'center',borderBottom:'0.5px solid #F0EDE8'}}>
+              <div style={{fontSize:13,fontWeight:800,color:'#D4570A',textAlign:'center'}}>S{t.week}</div>
+              <input style={{...inp,textAlign:'left',fontSize:11}} value={t.note||''} onChange={e=>updateRow(t.week,'note',e.target.value)} placeholder="es. Pesante, Deload..."/>
+              <input style={inp} type="number" min={1} max={10} value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||'')}/>
+              <input style={inp} value={t.reps||''} onChange={e=>updateRow(t.week,'reps',e.target.value)} placeholder="8-10"/>
+              <input style={{...inp,fontWeight:700}} type="text" inputMode="decimal" value={t.kg||''} onChange={e=>updateRow(t.week,'kg',e.target.value)} placeholder="kg"/>
+              <button onClick={()=>removeWeek(t.week)} style={{background:'none',border:'none',cursor:'pointer',color:'#E24B4A',fontSize:15,padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
             </div>
           ))}
-          {/* Totale settimane */}
-          <div style={{padding:'7px 10px',fontSize:11,color:'#888780',textAlign:'right'}}>
-            {targets.length} settimane · dal {targets[0]?.kg||'?'}kg al {targets[targets.length-1]?.kg||'?'}kg
-          </div>
         </div>
       )}
     </div>
   )
 }
+
 
 export default function ModificaAllenamento() {
   const { planId } = useParams()
@@ -548,16 +211,6 @@ export default function ModificaAllenamento() {
           reps: ex.reps || '',
           rest_seconds: parseInt(ex.rest_seconds) || 60,
           tut: ex.tut || '',
-          progression_type: ex.progression_type || 'none',
-          progression_start_kg: ex.progression_start_kg ? parseFloat(String(ex.progression_start_kg).replace(',','.')) : null,
-          progression_increment_kg: ex.progression_increment_kg ? parseFloat(String(ex.progression_increment_kg).replace(',','.')) : 2.5,
-          progression_weeks: ex.progression_weeks ? parseInt(ex.progression_weeks) : 4,
-          progression_start_date: ex.progression_start_date || null,
-          progression_reps_min: ex.progression_reps_min ? parseInt(ex.progression_reps_min) : null,
-          progression_reps_max: ex.progression_reps_max ? parseInt(ex.progression_reps_max) : null,
-          progression_rpe_target: ex.progression_rpe_target ? parseFloat(ex.progression_rpe_target) : null,
-          progression_one_rm: ex.progression_one_rm ? parseFloat(String(ex.progression_one_rm).replace(',','.')) : null,
-          progression_config: ex.progression_config || {},
           weekly_targets: ex.weekly_targets || [],
         }
         if (ex._isNew) {
@@ -655,7 +308,7 @@ export default function ModificaAllenamento() {
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}{ex.progression_type&&ex.progression_type!=='none' ? ` · 📈 ${PROGRESSION_TYPES.find(p=>p.value===ex.progression_type)?.short||ex.progression_type}` : ''}</div>
+                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}{ex.weekly_targets?.length ? ` · 📅 ${ex.weekly_targets.length} sett.` : ''}</div>
                 </div>
                 <div style={{display:'flex',gap:4,flexShrink:0}}>
                   <button onClick={e=>{e.stopPropagation();moveEx(ex.id,'up')}} style={{...s.btnGray,padding:'4px 7px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:12}}/></button>
@@ -701,10 +354,7 @@ export default function ModificaAllenamento() {
                     </div>
 
                     {/* PROGRESSIONE */}
-                    <ProgressionForm
-                      ex={ex}
-                      onChange={(field, val) => updateEx(ex.id, field, val)}
-                    />
+                    <WeeklyTargetsTable ex={ex} onChange={(field,val)=>updateEx(ex.id,field,val)}/>
                     <div style={{gridColumn:'1/-1'}}>
                       <label style={s.label}>Note / Istruzioni esecuzione</label>
                       <textarea style={{...s.input,resize:'none',height:60}} value={ex.description||''} onChange={e=>updateEx(ex.id,'description',e.target.value)} placeholder="Istruzioni di esecuzione..."/>
@@ -752,11 +402,7 @@ export default function ModificaAllenamento() {
                   <label style={s.label}>TUT (es. 3-1-2-0)</label>
                   <input style={s.input} value={newEx.tut||''} onChange={e=>setNewEx(p=>({...p,tut:e.target.value}))} placeholder="eccentrica-pausa-concentrica-pausa"/>
                 </div>
-                <ProgressionForm
-                  ex={newEx}
-                  onChange={(field, val) => setNewEx(p=>({...p,[field]:val}))}
-                  isNew={true}
-                />
+                <WeeklyTargetsTable ex={newEx} onChange={(field,val)=>setNewEx(p=>({...p,[field]:val}))}/>
                 <div style={{gridColumn:'1/-1'}}>
                   <label style={s.label}>Note esecuzione</label>
                   <textarea style={{...s.input,resize:'none',height:50}} value={newEx.description} onChange={e=>setNewEx(p=>({...p,description:e.target.value}))}/>
