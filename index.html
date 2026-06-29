@@ -36,19 +36,26 @@
         }
       }
 
-      /* Blocca overscroll/rubber-band su mobile */
-      html, body {
+      /* Blocca overscroll/rubber-band su mobile senza rompere Android */
+      html {
         overscroll-behavior: none;
         overflow: hidden;
-        position: fixed;
-        width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
       }
+      body {
+        overscroll-behavior: none;
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        /* NO position:fixed — rompe Android WebView */
+      }
       #root {
         width: 100%;
         height: 100%;
+        height: 100dvh;
         overflow: hidden;
       }
     </style>
