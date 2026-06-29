@@ -16,7 +16,7 @@ const s = {
   label: { fontSize:10, color:'#888780', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
-const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', progression_type:'none', progression_start_kg:'', progression_increment_kg:2.5, progression_weeks:4, progression_start_date:'', progression_reps_min:8, progression_reps_max:12, progression_rpe_target:8, progression_one_rm:'', progression_config:{}, _isNew:true }
+const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', progression_type:'none', progression_start_kg:'', progression_increment_kg:2.5, progression_weeks:4, progression_start_date:'', progression_reps_min:8, progression_reps_max:12, progression_rpe_target:8, progression_one_rm:'', progression_config:{}, weekly_targets:[], _isNew:true }
 
 const PROGRESSION_TYPES = [
   { value:'none',    label:'Nessuna',                short:'—',      desc:'Nessuna progressione pianificata' },
@@ -256,6 +256,168 @@ function ProgressionForm({ ex, onChange, isNew=false }) {
           )}
         </div>
       )}
+
+      {/* ── TABELLA SETTIMANALE SERIE/REPS/KG ── */}
+      {type !== 'none' && (
+        <WeeklyTargetsTable ex={ex} onChange={onChange}/>
+      )}
+    </div>
+  )
+}
+
+function generateWeeklyTargets(ex) {
+  const type = ex.progression_type
+  const cfg = ex.progression_config || {}
+  const weeks = parseInt(ex.progression_weeks) || 4
+  const startKg = parseFloat(String(ex.progression_start_kg||0).replace(',','.'))
+  const inc = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
+  const sets = parseInt(ex.sets) || 3
+  const reps = ex.reps || '8-10'
+
+  if (type === 'linear') {
+    return Array.from({length:weeks},(_,i)=>({
+      week:i+1, sets, reps, kg: Math.round((startKg+i*inc)*4)/4
+    }))
+  }
+  if (type === 'double') {
+    const min = parseInt(ex.progression_reps_min)||8
+    const max = parseInt(ex.progression_reps_max)||12
+    return Array.from({length:weeks},(_,i)=>({
+      week:i+1, sets, reps:`${min}-${max}`,
+      kg: Math.round((startKg+Math.floor(i/(max-min+1))*inc)*4)/4,
+      note: i%(max-min+1)===0&&i>0?'↑ carico':'',
+    }))
+  }
+  if (type === 'wup') {
+    const cycle = parseInt(cfg.cycle_weeks)||3
+    const defs = [
+      {sets:parseInt(cfg.heavy_sets)||5, reps:'4-6', kg:parseFloat(cfg.heavy_kg||0)},
+      {sets:parseInt(cfg.medium_sets)||4, reps:'8-10', kg:parseFloat(cfg.medium_kg||0)},
+      {sets:parseInt(cfg.light_sets)||3, reps:'12-15', kg:parseFloat(cfg.light_kg||0)},
+    ]
+    return Array.from({length:weeks},(_,i)=>{
+      const d = defs[i%cycle]||defs[0]
+      return {week:i+1, sets:d.sets, reps:d.reps, kg:d.kg, note:['PESANTE','MEDIO','LEGGERO'][i%cycle]}
+    })
+  }
+  if (type === 'dup') {
+    return [
+      {week:1, sets, reps:cfg.strength_reps||'3-5', kg:parseFloat(cfg.strength_kg||0), note:'FORZA'},
+      {week:2, sets, reps:cfg.hypertrophy_reps||'8-12', kg:parseFloat(cfg.hypertrophy_kg||0), note:'IPERTROFIA'},
+      {week:3, sets, reps:cfg.endurance_reps||'15-20', kg:parseFloat(cfg.endurance_kg||0), note:'RESISTENZA'},
+    ]
+  }
+  if (type === 'step') {
+    const stepW = parseInt(cfg.step_weeks)||3
+    const deloadPct = parseInt(cfg.deload_pct)||60
+    const total = stepW+1
+    return Array.from({length:total},(_,i)=>{
+      const isDeload = i===stepW
+      const kg = isDeload
+        ? Math.round(startKg*(deloadPct/100)*4)/4
+        : Math.round((startKg+i*inc)*4)/4
+      return {week:i+1, sets:isDeload?Math.max(2,sets-1):sets, reps:isDeload?'12-15':reps, kg, note:isDeload?'DELOAD':''}
+    })
+  }
+  if (type === 'block') {
+    const blocks = [
+      {weeks:parseInt(cfg.block1_weeks)||4, kg:parseFloat(cfg.block1_kg||0), reps:cfg.block1_reps||'12-15', sets:sets+1, note:'ACCUMULO'},
+      {weeks:parseInt(cfg.block2_weeks)||3, kg:parseFloat(cfg.block2_kg||0), reps:cfg.block2_reps||'6-8', sets, note:'INTENSIFICAZIONE'},
+      {weeks:parseInt(cfg.block3_weeks)||2, kg:parseFloat(cfg.block3_kg||0), reps:cfg.block3_reps||'1-3', sets:sets-1, note:'PICCO'},
+    ]
+    const result = []
+    let w = 1
+    blocks.forEach(b=>{ for(let i=0;i<b.weeks;i++) result.push({week:w++,sets:b.sets,reps:b.reps,kg:b.kg,note:b.note}) })
+    return result
+  }
+  if (type === 'oneRm') {
+    const oneRm = parseFloat(String(ex.progression_one_rm||0).replace(',','.'))
+    const pcts = (cfg.percentages||'65,70,75,80').split(',').map(p=>parseFloat(p.trim()))
+    return pcts.map((pct,i)=>({
+      week:i+1, sets, reps, kg:Math.round(oneRm*(pct/100)*4)/4, note:`${pct}% 1RM`
+    }))
+  }
+  return []
+}
+
+function WeeklyTargetsTable({ ex, onChange }) {
+  const targets = ex.weekly_targets || []
+
+  function generate() {
+    const generated = generateWeeklyTargets(ex)
+    if (generated.length) onChange('weekly_targets', generated)
+  }
+
+  function updateRow(weekNum, field, val) {
+    const updated = targets.map(t =>
+      t.week === weekNum ? {...t, [field]: val} : t
+    )
+    onChange('weekly_targets', updated)
+  }
+
+  function addWeek() {
+    const lastWeek = targets.length ? targets[targets.length-1] : {sets:3,reps:'8-10',kg:0}
+    onChange('weekly_targets', [...targets, {
+      week: targets.length+1,
+      sets: lastWeek.sets,
+      reps: lastWeek.reps,
+      kg: lastWeek.kg,
+      note: ''
+    }])
+  }
+
+  function removeWeek(weekNum) {
+    const updated = targets.filter(t=>t.week!==weekNum).map((t,i)=>({...t,week:i+1}))
+    onChange('weekly_targets', updated)
+  }
+
+  const inputS = {padding:'5px 6px',border:'0.5px solid #E0DDD6',borderRadius:6,fontSize:12,color:'#111',background:'white',outline:'none',fontFamily:'inherit',width:'100%',boxSizing:'border-box',textAlign:'center'}
+
+  return (
+    <div style={{marginTop:12}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <label style={{fontSize:10,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:700}}>
+          📅 Obiettivi settimanali — Serie · Reps · Kg
+        </label>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={generate} style={{background:'#D4570A',color:'white',border:'none',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+            ↻ Genera automatico
+          </button>
+          <button onClick={addWeek} style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
+            + Settimana
+          </button>
+        </div>
+      </div>
+
+      {targets.length === 0 ? (
+        <div style={{background:'#F5F3EF',borderRadius:8,padding:'12px',textAlign:'center',fontSize:12,color:'#888780'}}>
+          Clicca "↻ Genera automatico" per creare il piano settimanale in base ai parametri sopra, oppure aggiungi le settimane manualmente.
+        </div>
+      ) : (
+        <div style={{background:'#F5F3EF',borderRadius:10,overflow:'hidden'}}>
+          {/* Header */}
+          <div style={{display:'grid',gridTemplateColumns:'40px 1fr 60px 70px 70px 28px',gap:6,padding:'7px 10px',background:'#D4570A'}}>
+            {['Sett.','Note/Tipo','Serie','Reps','Kg',''].map((h,i)=>(
+              <div key={i} style={{fontSize:10,fontWeight:700,color:'white',textTransform:'uppercase',letterSpacing:'0.06em',textAlign:'center'}}>{h}</div>
+            ))}
+          </div>
+          {/* Righe */}
+          {targets.map((t,i)=>(
+            <div key={t.week} style={{display:'grid',gridTemplateColumns:'40px 1fr 60px 70px 70px 28px',gap:6,padding:'6px 10px',background:i%2===0?'white':'#FAF9F7',alignItems:'center',borderBottom:'0.5px solid #F0EDE8'}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textAlign:'center'}}>S{t.week}</div>
+              <input style={{...inputS,textAlign:'left',fontSize:11}} value={t.note||''} onChange={e=>updateRow(t.week,'note',e.target.value)} placeholder="es. PESANTE, DELOAD..."/>
+              <input style={inputS} type="number" value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||0)} min={1} max={10}/>
+              <input style={inputS} value={t.reps||''} onChange={e=>updateRow(t.week,'reps',e.target.value)} placeholder="8-10"/>
+              <input style={{...inputS,fontWeight:700,color:'#111'}} type="text" inputMode="decimal" value={t.kg||''} onChange={e=>updateRow(t.week,'kg',e.target.value)} placeholder="kg"/>
+              <button onClick={()=>removeWeek(t.week)} style={{background:'none',border:'none',cursor:'pointer',color:'#E24B4A',fontSize:14,padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            </div>
+          ))}
+          {/* Totale settimane */}
+          <div style={{padding:'7px 10px',fontSize:11,color:'#888780',textAlign:'right'}}>
+            {targets.length} settimane · dal {targets[0]?.kg||'?'}kg al {targets[targets.length-1]?.kg||'?'}kg
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -396,6 +558,7 @@ export default function ModificaAllenamento() {
           progression_rpe_target: ex.progression_rpe_target ? parseFloat(ex.progression_rpe_target) : null,
           progression_one_rm: ex.progression_one_rm ? parseFloat(String(ex.progression_one_rm).replace(',','.')) : null,
           progression_config: ex.progression_config || {},
+          weekly_targets: ex.weekly_targets || [],
         }
         if (ex._isNew) {
           await supabase.from('workout_exercises').insert(payload)
@@ -620,3 +783,4 @@ export default function ModificaAllenamento() {
     </div>
   )
 }
+
