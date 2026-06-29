@@ -16,7 +16,7 @@ const s = {
   label: { fontSize:10, color:'#888780', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
-const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', _isNew:true }
+const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', progression_type:'none', progression_start_kg:'', progression_increment_kg:2.5, progression_weeks:4, progression_start_date:'', _isNew:true }
 
 export default function ModificaAllenamento() {
   const { planId } = useParams()
@@ -144,6 +144,11 @@ export default function ModificaAllenamento() {
           reps: ex.reps || '',
           rest_seconds: parseInt(ex.rest_seconds) || 60,
           tut: ex.tut || '',
+          progression_type: ex.progression_type || 'none',
+          progression_start_kg: ex.progression_start_kg ? parseFloat(String(ex.progression_start_kg).replace(',','.')) : null,
+          progression_increment_kg: ex.progression_increment_kg ? parseFloat(String(ex.progression_increment_kg).replace(',','.')) : 2.5,
+          progression_weeks: ex.progression_weeks ? parseInt(ex.progression_weeks) : 4,
+          progression_start_date: ex.progression_start_date || null,
         }
         if (ex._isNew) {
           await supabase.from('workout_exercises').insert(payload)
@@ -240,7 +245,7 @@ export default function ModificaAllenamento() {
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}</div>
+                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}{ex.progression_type&&ex.progression_type!=='none' ? ` · 📈 +${ex.progression_increment_kg}kg/sett` : ''}</div>
                 </div>
                 <div style={{display:'flex',gap:4,flexShrink:0}}>
                   <button onClick={e=>{e.stopPropagation();moveEx(ex.id,'up')}} style={{...s.btnGray,padding:'4px 7px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:12}}/></button>
@@ -283,6 +288,58 @@ export default function ModificaAllenamento() {
                     <div>
                       <label style={s.label}>TUT (es. 3-1-2-0)</label>
                       <input style={s.input} value={ex.tut||''} onChange={e=>updateEx(ex.id,'tut',e.target.value)} placeholder="eccentrica-pausa-concentrica-pausa"/>
+                    </div>
+
+                    {/* PROGRESSIONE */}
+                    <div style={{gridColumn:'1/-1'}}>
+                      <label style={s.label}>Progressione carico</label>
+                      <div style={{display:'flex',gap:6,marginBottom:8}}>
+                        {[{v:'none',l:'Nessuna'},{v:'linear',l:'📈 Lineare'}].map(opt=>(
+                          <button key={opt.v} onClick={()=>updateEx(ex.id,'progression_type',opt.v)} style={{
+                            flex:1, padding:'7px', borderRadius:8, border:'0.5px solid', cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:500,
+                            background:ex.progression_type===opt.v?'#D4570A':'var(--bg-card)',
+                            color:ex.progression_type===opt.v?'white':'var(--text-muted)',
+                            borderColor:ex.progression_type===opt.v?'#D4570A':'var(--border)'
+                          }}>{opt.l}</button>
+                        ))}
+                      </div>
+                      {ex.progression_type==='linear' && (
+                        <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
+                          <div>
+                            <label style={{...s.label,color:'#D4570A'}}>Carico settimana 1 (kg)</label>
+                            <input style={s.input} type="text" inputMode="decimal" value={ex.progression_start_kg||''} onChange={e=>updateEx(ex.id,'progression_start_kg',e.target.value)} placeholder="es. 60"/>
+                          </div>
+                          <div>
+                            <label style={{...s.label,color:'#D4570A'}}>Incremento/settimana (kg)</label>
+                            <input style={s.input} type="text" inputMode="decimal" value={ex.progression_increment_kg||2.5} onChange={e=>updateEx(ex.id,'progression_increment_kg',e.target.value)} placeholder="es. 2.5"/>
+                          </div>
+                          <div>
+                            <label style={{...s.label,color:'#D4570A'}}>Durata (settimane)</label>
+                            <input style={s.input} type="number" value={ex.progression_weeks||4} onChange={e=>updateEx(ex.id,'progression_weeks',e.target.value)} placeholder="es. 4"/>
+                          </div>
+                          <div>
+                            <label style={{...s.label,color:'#D4570A'}}>Data inizio</label>
+                            <input style={s.input} type="date" value={ex.progression_start_date||''} onChange={e=>updateEx(ex.id,'progression_start_date',e.target.value)}/>
+                          </div>
+                          {/* ANTEPRIMA PROGRESSIONE */}
+                          {ex.progression_start_kg && (
+                            <div style={{gridColumn:'1/-1',marginTop:4}}>
+                              <label style={s.label}>Anteprima settimane</label>
+                              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                                {Array.from({length:parseInt(ex.progression_weeks)||4},(_,i)=>{
+                                  const kg = parseFloat(String(ex.progression_start_kg).replace(',','.'))+i*(parseFloat(String(ex.progression_increment_kg).replace(',','.'))||2.5)
+                                  return (
+                                    <div key={i} style={{background:'white',borderRadius:7,padding:'5px 10px',fontSize:11,textAlign:'center',border:'0.5px solid #F4C9A8'}}>
+                                      <div style={{fontSize:9,color:'#888780',textTransform:'uppercase'}}>S{i+1}</div>
+                                      <div style={{fontWeight:700,color:'#D4570A'}}>{kg.toFixed(1)}kg</div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div style={{gridColumn:'1/-1'}}>
                       <label style={s.label}>Note / Istruzioni esecuzione</label>
@@ -330,6 +387,55 @@ export default function ModificaAllenamento() {
                 <div>
                   <label style={s.label}>TUT (es. 3-1-2-0)</label>
                   <input style={s.input} value={newEx.tut||''} onChange={e=>setNewEx(p=>({...p,tut:e.target.value}))} placeholder="eccentrica-pausa-concentrica-pausa"/>
+                </div>
+                <div style={{gridColumn:'1/-1'}}>
+                  <label style={s.label}>Progressione carico</label>
+                  <div style={{display:'flex',gap:6,marginBottom:8}}>
+                    {[{v:'none',l:'Nessuna'},{v:'linear',l:'📈 Lineare'}].map(opt=>(
+                      <button key={opt.v} onClick={()=>setNewEx(p=>({...p,progression_type:opt.v}))} style={{
+                        flex:1, padding:'7px', borderRadius:8, border:'0.5px solid', cursor:'pointer', fontFamily:'inherit', fontSize:12, fontWeight:500,
+                        background:newEx.progression_type===opt.v?'#D4570A':'var(--bg-card)',
+                        color:newEx.progression_type===opt.v?'white':'var(--text-muted)',
+                        borderColor:newEx.progression_type===opt.v?'#D4570A':'var(--border)'
+                      }}>{opt.l}</button>
+                    ))}
+                  </div>
+                  {newEx.progression_type==='linear' && (
+                    <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
+                      <div>
+                        <label style={{...s.label,color:'#D4570A'}}>Carico S1 (kg)</label>
+                        <input style={s.input} type="text" inputMode="decimal" value={newEx.progression_start_kg||''} onChange={e=>setNewEx(p=>({...p,progression_start_kg:e.target.value}))} placeholder="es. 60"/>
+                      </div>
+                      <div>
+                        <label style={{...s.label,color:'#D4570A'}}>Incremento/sett (kg)</label>
+                        <input style={s.input} type="text" inputMode="decimal" value={newEx.progression_increment_kg||2.5} onChange={e=>setNewEx(p=>({...p,progression_increment_kg:e.target.value}))} placeholder="2.5"/>
+                      </div>
+                      <div>
+                        <label style={{...s.label,color:'#D4570A'}}>Settimane</label>
+                        <input style={s.input} type="number" value={newEx.progression_weeks||4} onChange={e=>setNewEx(p=>({...p,progression_weeks:e.target.value}))} placeholder="4"/>
+                      </div>
+                      <div>
+                        <label style={{...s.label,color:'#D4570A'}}>Data inizio</label>
+                        <input style={s.input} type="date" value={newEx.progression_start_date||''} onChange={e=>setNewEx(p=>({...p,progression_start_date:e.target.value}))}/>
+                      </div>
+                      {newEx.progression_start_kg && (
+                        <div style={{gridColumn:'1/-1'}}>
+                          <label style={s.label}>Anteprima</label>
+                          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                            {Array.from({length:parseInt(newEx.progression_weeks)||4},(_,i)=>{
+                              const kg = parseFloat(String(newEx.progression_start_kg).replace(',','.'))+i*(parseFloat(String(newEx.progression_increment_kg).replace(',','.'))||2.5)
+                              return (
+                                <div key={i} style={{background:'white',borderRadius:7,padding:'5px 10px',fontSize:11,textAlign:'center',border:'0.5px solid #F4C9A8'}}>
+                                  <div style={{fontSize:9,color:'#888780',textTransform:'uppercase'}}>S{i+1}</div>
+                                  <div style={{fontWeight:700,color:'#D4570A'}}>{kg.toFixed(1)}kg</div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div style={{gridColumn:'1/-1'}}>
                   <label style={s.label}>Note esecuzione</label>
