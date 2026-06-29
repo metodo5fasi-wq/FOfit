@@ -127,9 +127,9 @@ export default function Allenamento() {
     setSessionNotes(existing?.notes || '')
   }, [activeDay, sessions])
 
-  // Calcola settimana corrente per ogni esercizio con progressione
+  // Calcola settimana corrente per ogni esercizio con weekly_targets
   async function loadProgression(exList) {
-    const progEx = exList.filter(e => e.progression_type && e.progression_type !== 'none')
+    const progEx = exList.filter(e => e.weekly_targets?.length > 0)
     if (!progEx.length) return
     const tracking = {}
     const initStatus = {}
@@ -137,39 +137,26 @@ export default function Allenamento() {
       const { data: history } = await supabase.from('progression_tracking')
         .select('*').eq('client_id', profile.id).eq('exercise_id', ex.id)
         .order('week_number', { ascending: true })
-
-      const weeklyTargets = ex.weekly_targets || []
-      const maxWeeks = weeklyTargets.length || parseInt(ex.progression_weeks) || 4
-
+      const maxWeeks = ex.weekly_targets.length
       let currentWeek = 1
       if (history?.length) {
         const lastCompleted = [...history].reverse().find(h => h.completed === true)
         const lastFailed = [...history].reverse().find(h => h.completed === false)
         if (lastCompleted) {
-          const nextWeek = lastCompleted.week_number + 1
-          currentWeek = nextWeek <= maxWeeks ? nextWeek : maxWeeks
+          currentWeek = Math.min(lastCompleted.week_number + 1, maxWeeks)
         } else if (lastFailed) {
           currentWeek = lastFailed.week_number
         }
       }
-
-      // Leggi i target dalla tabella settimanale se disponibile
-      const weekTarget = weeklyTargets.find(t => t.week === currentWeek)
-      const startKg = parseFloat(String(ex.progression_start_kg||0).replace(',','.'))
-      const increment = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
-      const targetKg = weekTarget?.kg
-        ? parseFloat(String(weekTarget.kg).replace(',','.'))
-        : Math.round((startKg + (currentWeek-1)*increment)*4)/4
-
+      const weekTarget = ex.weekly_targets.find(t => t.week === currentWeek) || ex.weekly_targets[0]
       tracking[ex.id] = {
         week: currentWeek,
-        targetKg,
+        maxWeeks,
+        targetKg: weekTarget?.kg ? parseFloat(String(weekTarget.kg).replace(',','.')) : null,
         targetSets: weekTarget?.sets || ex.sets,
         targetReps: weekTarget?.reps || ex.reps,
         weekNote: weekTarget?.note || '',
-        maxWeeks,
         history: history || [],
-        weeklyTargets,
       }
       initStatus[ex.id] = null
     }
@@ -177,7 +164,7 @@ export default function Allenamento() {
     setProgressionStatus(initStatus)
   }
 
-  async function finishSession() {
+    async function finishSession() {
     setSavingSession(true)
     const dayEx = exercises.filter(e=>e.day_label===activeDay)
     const totalSets = dayEx.reduce((s,e)=>s+(e.sets||0),0)
@@ -610,7 +597,7 @@ export default function Allenamento() {
 
             {/* SEZIONE PROGRESSIONE */}
             {(() => {
-              const dayEx = exercises.filter(e => e.day_label===activeDay && e.progression_type && e.progression_type!=='none' && progressionTracking[e.id])
+              const dayEx = exercises.filter(e => e.day_label===activeDay && e.weekly_targets?.length > 0 && progressionTracking[e.id])
               if (!dayEx.length) return null
               return (
                 <div style={{marginBottom:16}}>
