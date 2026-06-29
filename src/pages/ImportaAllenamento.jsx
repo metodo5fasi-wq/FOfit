@@ -102,6 +102,11 @@ export default function ImportaAllenamento() {
             reps: ex.reps || '',
             rest_seconds: ex.rest_seconds || 60,
             tut: ex.tut || '',
+            progression_type: ex.progression_type || 'none',
+            progression_start_kg: ex.progression_start_kg ? parseFloat(String(ex.progression_start_kg).replace(',','.')) : null,
+            progression_increment_kg: ex.progression_increment_kg ? parseFloat(String(ex.progression_increment_kg).replace(',','.')) : 2.5,
+            progression_weeks: ex.progression_weeks ? parseInt(ex.progression_weeks) : 4,
+            progression_start_date: ex.progression_start_date || null,
           })
           if (exErr) throw exErr
         }
@@ -183,6 +188,11 @@ export default function ImportaAllenamento() {
                     <span style={s.tag}>{ex.sets}x{ex.reps}</span>
                     <span style={s.tag}>{ex.rest_seconds}s</span>
                     {ex.tut && <span style={{...s.tag, background:'#EBF3FD', color:'#4A90D4'}}>TUT {ex.tut}</span>}
+                    {ex.progression_type==='linear' && ex.progression_start_kg && (
+                      <span style={{...s.tag, background:'#FEF0E7', color:'#D4570A'}}>
+                        📈 {ex.progression_start_kg}kg +{ex.progression_increment_kg||2.5}kg/sett × {ex.progression_weeks||4}w
+                      </span>
+                    )}
                     {ex.video_url && <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#D4570A'}}/>}
                   </div>
                 ))}
