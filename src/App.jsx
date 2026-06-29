@@ -30,6 +30,7 @@ import ReportPDF from './pages/ReportPDF'
 import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
+import DettaglioCliente from './pages/DettaglioCliente'
 import Layout from './components/Layout'
 
 // ─────────────────────────────────────────────────────────
@@ -230,6 +231,7 @@ export default function App() {
             <Route path="report-pdf" element={!profile ? null : profile.role === 'admin' ? <ReportPDF /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaAllenamentoCliente /> : <Navigate to="/" />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
+            <Route path="cliente/:clientId" element={!profile ? null : profile.role === 'admin' ? <DettaglioCliente /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
           </Route>
         </Routes>
