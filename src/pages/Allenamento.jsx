@@ -129,7 +129,7 @@ export default function Allenamento() {
 
   // Calcola settimana corrente per ogni esercizio con progressione
   async function loadProgression(exList) {
-    const progEx = exList.filter(e => e.progression_type === 'linear' && e.progression_start_kg)
+    const progEx = exList.filter(e => e.progression_type && e.progression_type !== 'none')
     if (!progEx.length) return
     const tracking = {}
     const initStatus = {}
@@ -137,9 +137,10 @@ export default function Allenamento() {
       const { data: history } = await supabase.from('progression_tracking')
         .select('*').eq('client_id', profile.id).eq('exercise_id', ex.id)
         .order('week_number', { ascending: true })
-      const startKg = parseFloat(String(ex.progression_start_kg).replace(',','.'))
-      const increment = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
-      const maxWeeks = parseInt(ex.progression_weeks) || 4
+
+      const weeklyTargets = ex.weekly_targets || []
+      const maxWeeks = weeklyTargets.length || parseInt(ex.progression_weeks) || 4
+
       let currentWeek = 1
       if (history?.length) {
         const lastCompleted = [...history].reverse().find(h => h.completed === true)
@@ -151,10 +152,24 @@ export default function Allenamento() {
           currentWeek = lastFailed.week_number
         }
       }
-      const currentKg = startKg + (currentWeek - 1) * increment
+
+      // Leggi i target dalla tabella settimanale se disponibile
+      const weekTarget = weeklyTargets.find(t => t.week === currentWeek)
+      const startKg = parseFloat(String(ex.progression_start_kg||0).replace(',','.'))
+      const increment = parseFloat(String(ex.progression_increment_kg||2.5).replace(',','.'))
+      const targetKg = weekTarget?.kg
+        ? parseFloat(String(weekTarget.kg).replace(',','.'))
+        : Math.round((startKg + (currentWeek-1)*increment)*4)/4
+
       tracking[ex.id] = {
-        week: currentWeek, targetKg: Math.round(currentKg*4)/4,
-        maxWeeks, startKg, increment, history: history||[],
+        week: currentWeek,
+        targetKg,
+        targetSets: weekTarget?.sets || ex.sets,
+        targetReps: weekTarget?.reps || ex.reps,
+        weekNote: weekTarget?.note || '',
+        maxWeeks,
+        history: history || [],
+        weeklyTargets,
       }
       initStatus[ex.id] = null
     }
@@ -406,7 +421,11 @@ export default function Allenamento() {
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{ex.exercise_name}</div>
                   <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
-                    {ex.muscle_group} · {ex.sets}x{ex.reps} · {completedSets}/{ex.sets} serie
+                    {ex.muscle_group} · {(() => {
+                      const prog = progressionTracking[ex.id]
+                      if (prog) return `S${prog.week}/${prog.maxWeeks} · ${prog.targetSets||ex.sets}x${prog.targetReps||ex.reps} · ${prog.targetKg}kg`
+                      return `${ex.sets}x${ex.reps}`
+                    })()} · {completedSets}/{progressionTracking[ex.id]?.targetSets||ex.sets} serie
                     {lastWeight && <span> · ultimo: {lastWeight}kg</span>}
                   </div>
                 </div>
@@ -427,8 +446,23 @@ export default function Allenamento() {
                     </div>
                   )}
                   <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'var(--text-muted)',flexWrap:'wrap'}}>
-                    <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/>{ex.sets} serie x {ex.reps} ripetizioni</span>
-                    <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                    {(() => {
+                      const prog = progressionTracking[ex.id]
+                      if (prog) {
+                        return <>
+                          <span style={{background:'#FEF0E7',color:'#D4570A',padding:'3px 10px',borderRadius:16,fontWeight:700,fontSize:12}}>
+                            📅 Settimana {prog.week}/{prog.maxWeeks}{prog.weekNote ? ` — ${prog.weekNote}` : ''}
+                          </span>
+                          <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/><strong>{prog.targetSets||ex.sets}</strong> serie x <strong>{prog.targetReps||ex.reps}</strong> reps</span>
+                          <span><i className="ti ti-barbell" style={{fontSize:12,marginRight:3}}/>Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong></span>
+                          <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                        </>
+                      }
+                      return <>
+                        <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/>{ex.sets} serie x {ex.reps} ripetizioni</span>
+                        <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                      </>
+                    })()}
                     {ex.tut && (
                       <span style={{color:'#4A90D4',fontWeight:600}}>
                         <i className="ti ti-timer" style={{fontSize:12,marginRight:3}}/>TUT {ex.tut}
@@ -576,7 +610,7 @@ export default function Allenamento() {
 
             {/* SEZIONE PROGRESSIONE */}
             {(() => {
-              const dayEx = exercises.filter(e => e.day_label===activeDay && e.progression_type==='linear' && e.progression_start_kg && progressionTracking[e.id])
+              const dayEx = exercises.filter(e => e.day_label===activeDay && e.progression_type && e.progression_type!=='none' && progressionTracking[e.id])
               if (!dayEx.length) return null
               return (
                 <div style={{marginBottom:16}}>
