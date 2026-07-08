@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
@@ -42,7 +43,7 @@ const today = new Date().toISOString().split('T')[0]
 
 export default function AdminPanel() {
   const { profile } = useAuth()
-  const [tab, setTab] = useState('overview')
+  const navigate = useNavigate()
   const [clients, setClients] = useState([])
   const [plans, setPlans] = useState([])
   const [clientStats, setClientStats] = useState({}) // { [clientId]: { diaryToday, activePlan, latestMeasure } }
@@ -437,7 +438,7 @@ export default function AdminPanel() {
           }</div>)}
         </div>
 
-        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}} onOpenReport={()=>setTab('report')} onOpenAnamnesi={()=>setTab('anamnesi')}/>}
+        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>navigate(`/cliente/${c.id}`)} onOpenReport={()=>setTab('report')} onOpenAnamnesi={()=>setTab('anamnesi')}/>}
         {tab==='clienti'&&(
           <>
           <NotifPanel/>
@@ -481,7 +482,7 @@ export default function AdminPanel() {
                     <td style={s.td}><span style={{...s.badge,background:st.diaryToday?'#EAF3DE':'#FEE2E2',color:st.diaryToday?'#3B6D11':'#E24B4A'}}>{st.diaryToday?'✓ Fatto':'✗ Da fare'}</span></td>
                     <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activePlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
                     <td style={{...s.td,fontSize:12,color:'#888780'}}>{new Date(c.created_at).toLocaleDateString('it-IT')}</td>
-                    <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}>+ Piano</button><button style={s.btnGray} onClick={()=>setSelectedClient(c)}>Dettagli</button></div></td>
+                    <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}>+ Piano</button><button style={s.btnGray} onClick={()=>navigate(`/cliente/${c.id}`)}>Dettagli</button></div></td>
                   </tr>
                 )})}</tbody>
               </table>
