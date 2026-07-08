@@ -147,6 +147,8 @@ export default function ImportaPiano() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [parsedPlan, setParsedPlan] = useState(null)
+  const [planStartDate, setPlanStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [weeklyTargets, setWeeklyTargets] = useState([])
   const [selectedClient, setSelectedClient] = useState('')
   const [planTitle, setPlanTitle] = useState('')
   const [planNotes, setPlanNotes] = useState('')
@@ -246,6 +248,43 @@ export default function ImportaPiano() {
       setPlanTitle(data.plan.titolo || 'Piano alimentare')
       setPlanNotes(data.plan.note_generali || '')
       setTargets({ kcal_target: data.plan.kcal_totali, protein_target_g: data.plan.proteine_g, carbs_target_g: data.plan.carboidrati_g, fat_target_g: data.plan.grassi_g })
+      // Pre-compila progressione settimanale per diete con variazione
+      if (mode === 'generate') {
+        const dt = gen.diet_type
+        const targets = []
+        if (dt === 'reverse') {
+          const weeks = parseInt(gen.progression_weeks || gen.kcal_target ? Math.ceil((gen.kcal_target - gen.kcal_start) / (gen.kcal_increment || 50)) : 8)
+          const numWeeks = Math.min(Math.max(weeks, 4), 16)
+          for (let i = 0; i < numWeeks; i++) {
+            targets.push({
+              week: i+1,
+              kcal: Math.round(gen.kcal_start + i*(gen.kcal_increment||50)),
+              protein: gen.protein_start || gen.protein,
+              carbs: Math.round((gen.kcal_start + i*(gen.kcal_increment||50) - (gen.protein_start||gen.protein)*4 - (gen.fat_start||gen.fat)*9) / 4),
+              fat: gen.fat_start || gen.fat,
+              note: i===0?'Partenza':i===numWeeks-1?'Obiettivo':`+${(gen.kcal_increment||50)*(i)}kcal`
+            })
+          }
+        } else if (dt === 'step') {
+          const stepW = parseInt(gen.cfg?.step_weeks||3)
+          const numCycles = Math.ceil(8/stepW)
+          for (let c = 0; c < numCycles; c++) {
+            for (let w = 0; w < stepW; w++) {
+              targets.push({ week: c*stepW+w+1, kcal: gen.kcal+c*((gen.kcal_increment||100)), protein: gen.protein, carbs: gen.carbs, fat: gen.fat, note:'' })
+            }
+            targets.push({ week: c*stepW+stepW+1, kcal: Math.round(gen.kcal*0.8), protein: gen.protein, carbs: Math.round(gen.kcal*0.8*0.4/4), fat: gen.fat, note:'DELOAD' })
+          }
+        } else if (dt === 'on_off') {
+          for (let i = 0; i < 8; i++) {
+            targets.push({ week: i+1, kcal: i%2===0?gen.kcal_on:gen.kcal_off, protein: i%2===0?gen.protein_on:gen.protein_off, carbs: i%2===0?gen.carbs_on:gen.carbs_off, fat: i%2===0?gen.fat_on:gen.fat_off, note: i%2===0?'Settimana ON':'Settimana OFF' })
+          }
+        } else if (dt === 'onde') {
+          const cycle = [{kcal:gen.kcal_high,protein:gen.protein_high,carbs:gen.carbs_high,fat:gen.fat_high,note:'ALTO'},{kcal:gen.kcal_mid,protein:gen.protein_mid,carbs:gen.carbs_mid,fat:gen.fat_mid,note:'MEDIO'},{kcal:gen.kcal_low,protein:gen.protein_low,carbs:gen.carbs_low,fat:gen.fat_low,note:'BASSO'}]
+          for (let i = 0; i < 9; i++) targets.push({week:i+1,...cycle[i%3]})
+        }
+        if (targets.length > 0) setWeeklyTargets(targets)
+      }
+
       setStep(2)
     } catch(e) { setError(e.message) }
     setLoading(false)
@@ -267,6 +306,8 @@ export default function ImportaPiano() {
         carbs_target_g: Math.round(parseInt(targets.carbs_target_g)||200),
         fat_target_g: Math.round(parseInt(targets.fat_target_g)||65),
         notes: planNotes, diet_type: parsedPlan.diet_type || 'lineare', is_active: true,
+        weekly_macro_targets: weeklyTargets.length > 0 ? weeklyTargets : null,
+        plan_start_date: weeklyTargets.length > 0 ? planStartDate : null,
       }).select().single()
       if (planErr) throw planErr
 
@@ -511,8 +552,34 @@ export default function ImportaPiano() {
               </div>
             </div>
 
-            {/* ANTEPRIMA GIORNI */}
-            {parsedPlan.varianti?.map((v, vi) => (
+            {/* PROGRESSIONE SETTIMANALE — se pre-compilata */}
+            {weeklyTargets.length > 0 && (
+              <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:12,padding:'14px',marginBottom:14}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#3B6D11',marginBottom:10,display:'flex',alignItems:'center',gap:6}}>
+                  <i className="ti ti-calendar-stats" style={{fontSize:15}}/>
+                  Progressione automatica — {weeklyTargets.length} settimane pre-compilate
+                </div>
+                {/* Data inizio */}
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                  <label style={{fontSize:11,color:'#3B6D11',fontWeight:600,whiteSpace:'nowrap'}}>Data inizio piano:</label>
+                  <input type="date" value={planStartDate} onChange={e=>setPlanStartDate(e.target.value)}
+                    style={{padding:'6px 10px',border:'0.5px solid #3B6D11',borderRadius:8,fontSize:12,background:'white',outline:'none',fontFamily:'inherit'}}/>
+                </div>
+                {/* Anteprima settimane */}
+                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                  {weeklyTargets.map((t,i)=>(
+                    <div key={i} style={{background:'white',borderRadius:8,padding:'6px 10px',textAlign:'center',border:'0.5px solid #A7D9A0',minWidth:60}}>
+                      <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',marginBottom:2}}>S{t.week}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:'#3B6D11'}}>{t.kcal} kcal</div>
+                      {t.note&&<div style={{fontSize:9,color:'#888780',marginTop:1}}>{t.note}</div>}
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:11,color:'#3B6D11',marginTop:8,opacity:0.8}}>
+                  ✓ Il cliente vedrà i macro aggiornati automaticamente ogni settimana
+                </div>
+              </div>
+            )}
               <div key={vi} style={s.dayCard}>
                 <div style={s.dayHeader}>
                   <span>{v.nome || `Giorno ${vi+1}`}</span>
