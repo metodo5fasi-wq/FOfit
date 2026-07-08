@@ -397,20 +397,22 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <textarea style={{...s.textarea,minHeight:100}} value={data.note_coach} disabled={isReadOnly} onChange={e=>set('note_coach',e.target.value)} placeholder="Scrivi liberamente..."/>
           </div>
 
-          {/* AZIONI */}
-          {!isReadOnly && (
-            <div style={{display:'flex',gap:8,flexDirection:'column',padding:'0 0 20px'}}>
-              <button onClick={submit} disabled={submitting} style={{...s.btn,justifyContent:'center',padding:'14px',fontSize:14}}>
-                <i className="ti ti-send" style={{fontSize:16}}/>
-                {submitting ? 'Invio in corso...' : '📤 Invia report al coach'}
-              </button>
-              <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,textAlign:'center',padding:'11px'}}>
-                {saving ? 'Salvataggio...' : '💾 Salva bozza'}
-              </button>
-            </div>
-          )}
+          {/* AZIONI — bottoni rimossi da qui, spostati sotto */}
         </div>
       </div>
+
+      {/* BOTTONI FISSI IN FONDO — sempre visibili */}
+      {!isReadOnly && (
+        <div style={{padding:'12px 16px',paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',background:'var(--bg-card)',borderTop:'0.5px solid var(--border)',display:'flex',gap:8,flexShrink:0}}>
+          <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,padding:'11px 16px',fontSize:13,flexShrink:0}}>
+            {saving ? '...' : '💾 Bozza'}
+          </button>
+          <button onClick={submit} disabled={submitting} style={{...s.btn,flex:1,justifyContent:'center',padding:'13px',fontSize:14}}>
+            <i className="ti ti-send" style={{fontSize:15}}/>
+            {submitting ? 'Invio...' : 'Invia al coach'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
