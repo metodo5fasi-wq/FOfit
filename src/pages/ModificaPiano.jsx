@@ -178,61 +178,62 @@ export default function ModificaPiano() {
   // Salva tutto
   async function saveAll() {
     setSaving(true)
+    setSavedMsg('')
     try {
+      // 1. Aggiorna tutti gli alimenti IN PARALLELO
+      const updatePromises = []
       for (const meal of meals) {
-        // Elimina i pasti rimossi
-        const originalMeal = meals.find(m => m.id === meal.id)
-        if (!originalMeal) continue
-
-        // Aggiorna ogni alimento
         for (const food of meal.plan_meal_foods) {
+          const payload = {
+            quantity_g: parseFloat(food.quantity_g) || 0,
+            kcal: parseInt(food.kcal) || 0,
+            protein_g: parseFloat(food.protein_g) || 0,
+            carbs_g: parseFloat(food.carbs_g) || 0,
+            fat_g: parseFloat(food.fat_g) || 0,
+          }
           if (food._isNew) {
-            // Inserisce nuovo alimento
-            await supabase.from('plan_meal_foods').insert({
-              plan_meal_id: meal.id,
-              food_name: food.food_name,
-              quantity_g: parseFloat(food.quantity_g) || 0,
-              kcal: parseInt(food.kcal) || 0,
-              protein_g: parseFloat(food.protein_g) || 0,
-              carbs_g: parseFloat(food.carbs_g) || 0,
-              fat_g: parseFloat(food.fat_g) || 0,
-              sort_order: food.sort_order || 0,
-            })
+            updatePromises.push(
+              supabase.from('plan_meal_foods').insert({
+                ...payload,
+                plan_meal_id: meal.id,
+                food_name: food.food_name,
+                sort_order: food.sort_order || 0,
+              })
+            )
           } else {
-            // Aggiorna alimento esistente
-            await supabase.from('plan_meal_foods').update({
-              quantity_g: parseFloat(food.quantity_g) || 0,
-              kcal: parseInt(food.kcal) || 0,
-              protein_g: parseFloat(food.protein_g) || 0,
-              carbs_g: parseFloat(food.carbs_g) || 0,
-              fat_g: parseFloat(food.fat_g) || 0,
-            }).eq('id', food.id)
+            updatePromises.push(
+              supabase.from('plan_meal_foods').update(payload).eq('id', food.id)
+            )
           }
         }
       }
+      await Promise.all(updatePromises)
 
-      // Elimina pasti rimossi (confronta con database)
+      // 2. Elimina pasti rimossi
       const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
       const currentIds = new Set(meals.map(m => m.id))
-      for (const dbMeal of dbMeals || []) {
-        if (!currentIds.has(dbMeal.id)) {
+      const deleteMealPromises = (dbMeals || [])
+        .filter(dbMeal => !currentIds.has(dbMeal.id))
+        .map(async dbMeal => {
           await supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id)
           await supabase.from('plan_meals').delete().eq('id', dbMeal.id)
-        }
-      }
+        })
+      await Promise.all(deleteMealPromises)
 
-      // Elimina alimenti rimossi
+      // 3. Elimina alimenti rimossi IN PARALLELO
+      const deleteFoodPromises = []
       for (const meal of meals) {
         const { data: dbFoods } = await supabase.from('plan_meal_foods').select('id').eq('plan_meal_id', meal.id)
         const currentFoodIds = new Set(meal.plan_meal_foods.filter(f=>!f._isNew).map(f=>f.id))
         for (const dbFood of dbFoods || []) {
           if (!currentFoodIds.has(dbFood.id)) {
-            await supabase.from('plan_meal_foods').delete().eq('id', dbFood.id)
+            deleteFoodPromises.push(supabase.from('plan_meal_foods').delete().eq('id', dbFood.id))
           }
         }
       }
+      await Promise.all(deleteFoodPromises)
 
-      // Ricalcola e aggiorna kcal/macro target del piano
+      // 4. Aggiorna macro target piano
       const allFoods = meals.flatMap(m => m.plan_meal_foods)
       const totalKcal = Math.round(allFoods.reduce((s,f)=>s+(f.kcal||0),0) / 7)
       const totalProt = Math.round(allFoods.reduce((s,f)=>s+(f.protein_g||0),0) / 7)
@@ -249,10 +250,11 @@ export default function ModificaPiano() {
 
       setDirty(false)
       setSavedMsg('✓ Piano salvato!')
-      setTimeout(() => setSavedMsg(''), 3000)
+      setTimeout(() => setSavedMsg(''), 4000)
       fetchPlan()
     } catch(e) {
-      setSavedMsg('Errore: ' + e.message)
+      setSavedMsg('❌ Errore: ' + e.message)
+      setTimeout(() => setSavedMsg(''), 5000)
     }
     setSaving(false)
   }
@@ -276,12 +278,21 @@ export default function ModificaPiano() {
           <div style={{fontSize:11,color:'#888780'}}>{clientName} · {plan?.kcal_target} kcal</div>
         </div>
         {dirty && (
-          <button onClick={saveAll} disabled={saving} style={s.btn}>
-            <i className="ti ti-device-floppy" style={{fontSize:14}}/>
-            {saving ? 'Salvo...' : 'Salva'}
+          <button onClick={saveAll} disabled={saving} style={{...s.btn, minWidth:90}}>
+            {saving
+              ? <><i className="ti ti-loader-2" style={{fontSize:14, animation:'spin 1s linear infinite'}}/> Salvo...</>
+              : <><i className="ti ti-device-floppy" style={{fontSize:14}}/> Salva</>
+            }
           </button>
         )}
-        {savedMsg && <div style={{fontSize:12,color:'#3B6D11',fontWeight:600}}>{savedMsg}</div>}
+        {savedMsg && (
+          <div style={{
+            fontSize:12, fontWeight:700, padding:'7px 12px', borderRadius:8,
+            background: savedMsg.startsWith('❌') ? '#FEE2E2' : '#EAF3DE',
+            color: savedMsg.startsWith('❌') ? '#E24B4A' : '#3B6D11',
+            border: `0.5px solid ${savedMsg.startsWith('❌') ? '#E24B4A' : '#3B6D11'}`,
+          }}>{savedMsg}</div>
+        )}
       </div>
 
       {/* TAB GIORNI */}
