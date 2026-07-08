@@ -180,14 +180,10 @@ export default function ModificaPiano() {
     setSaving(true)
     setSavedMsg('')
     try {
-      // DEBUG — conta quanti alimenti ci sono
-      const totalFoods = meals.reduce((s,m) => s + m.plan_meal_foods.length, 0)
-      const newFoods = meals.reduce((s,m) => s + m.plan_meal_foods.filter(f=>f._isNew).length, 0)
-      const existingFoods = totalFoods - newFoods
-      console.log(`Salvo: ${meals.length} pasti, ${totalFoods} alimenti (${newFoods} nuovi, ${existingFoods} esistenti)`)
+      // Raccogli tutti gli update/insert
+      const toUpdate = []
+      const toInsert = []
 
-      // 1. Aggiorna tutti gli alimenti IN PARALLELO
-      const updatePromises = []
       for (const meal of meals) {
         for (const food of meal.plan_meal_foods) {
           const payload = {
@@ -198,28 +194,28 @@ export default function ModificaPiano() {
             fat_g: parseFloat(food.fat_g) || 0,
           }
           if (food._isNew) {
-            updatePromises.push(
-              supabase.from('plan_meal_foods').insert({
-                ...payload,
-                plan_meal_id: meal.id,
-                food_name: food.food_name,
-                sort_order: food.sort_order || 0,
-              })
-            )
+            toInsert.push({ ...payload, plan_meal_id: meal.id, food_name: food.food_name, sort_order: food.sort_order || 0 })
           } else {
-            updatePromises.push(
-              supabase.from('plan_meal_foods').update(payload).eq('id', food.id)
-            )
+            toUpdate.push({ id: food.id, ...payload })
           }
         }
       }
-      const results = await Promise.all(updatePromises)
-      const errors = results.filter(r => r.error)
-      if (errors.length > 0) {
-        console.error('Errori:', errors.map(e=>e.error))
-        throw new Error(`${errors.length} errori: ${errors[0].error.message}`)
+
+      // INSERT tutti i nuovi in una sola chiamata
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from('plan_meal_foods').insert(toInsert)
+        if (error) throw new Error('Insert: ' + error.message)
       }
-      console.log(`Salvati ${results.length} alimenti OK`)
+
+      // UPDATE in batch da 20 alla volta
+      const batchSize = 20
+      for (let i = 0; i < toUpdate.length; i += batchSize) {
+        const batch = toUpdate.slice(i, i + batchSize)
+        await Promise.all(batch.map(f => {
+          const { id, ...data } = f
+          return supabase.from('plan_meal_foods').update(data).eq('id', id)
+        }))
+      }
 
       // 2. Elimina pasti rimossi
       const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
@@ -263,7 +259,14 @@ export default function ModificaPiano() {
       setDirty(false)
       setSavedMsg('✓ Piano salvato!')
       setTimeout(() => setSavedMsg(''), 4000)
-      fetchPlan()
+      // Non ricaricare da rete — aggiorna solo i flag _isNew localmente
+      setMeals(prev => prev.map(m => ({
+        ...m,
+        plan_meal_foods: m.plan_meal_foods.map(f => ({
+          ...f,
+          _isNew: false,
+        }))
+      })))
     } catch(e) {
       setSavedMsg('❌ Errore: ' + e.message)
       setTimeout(() => setSavedMsg(''), 5000)
