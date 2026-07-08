@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  page: { flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'0 0 120px' },
+  page: { flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'0 0 20px' },
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'var(--text-muted)', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
@@ -397,33 +397,20 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <textarea style={{...s.textarea,minHeight:100}} value={data.note_coach} disabled={isReadOnly} onChange={e=>set('note_coach',e.target.value)} placeholder="Scrivi liberamente..."/>
           </div>
 
-          {/* Spazio extra per i bottoni fissi */}
-          {!isReadOnly && <div style={{height:80}}/>}
+          {/* BOTTONI dentro lo scroll */}
+          {!isReadOnly && (
+            <div style={{display:'flex',gap:10,marginTop:8,marginBottom:40}}>
+              <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,padding:'13px 16px',fontSize:13,flexShrink:0}}>
+                {saving ? '...' : '💾 Bozza'}
+              </button>
+              <button onClick={submit} disabled={submitting} style={{...s.btn,flex:1,justifyContent:'center',padding:'14px',fontSize:14}}>
+                <i className="ti ti-send" style={{fontSize:15}}/>
+                {submitting ? 'Invio...' : 'Invia al coach'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* BOTTONI FISSI — fuori dallo scroll, sempre visibili */}
-      {!isReadOnly && (
-        <div style={{
-          position:'sticky', bottom:0, left:0, right:0,
-          padding:'12px 16px',
-          paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-          background:'var(--bg-card)',
-          borderTop:'0.5px solid var(--border)',
-          display:'flex', gap:8,
-          flexShrink:0,
-          zIndex:50,
-          boxShadow:'0 -4px 16px rgba(0,0,0,0.12)'
-        }}>
-          <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,padding:'12px 14px',fontSize:13,flexShrink:0}}>
-            {saving ? '...' : '💾 Bozza'}
-          </button>
-          <button onClick={submit} disabled={submitting} style={{...s.btn,flex:1,justifyContent:'center',padding:'13px',fontSize:14}}>
-            <i className="ti ti-send" style={{fontSize:15}}/>
-            {submitting ? 'Invio...' : 'Invia al coach'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
