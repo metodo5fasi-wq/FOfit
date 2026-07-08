@@ -207,7 +207,12 @@ export default function ModificaPiano() {
           }
         }
       }
-      await Promise.all(updatePromises)
+      const results = await Promise.all(updatePromises)
+      const errors = results.filter(r => r.error)
+      if (errors.length > 0) {
+        console.error('Errori salvataggio:', errors.map(e => e.error.message))
+        throw new Error(errors[0].error.message)
+      }
 
       // 2. Elimina pasti rimossi
       const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
