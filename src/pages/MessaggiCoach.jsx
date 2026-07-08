@@ -18,18 +18,40 @@ export default function MessaggiCoach() {
   const [loading, setLoading] = useState(true)
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
-  const pollRef = useRef(null)
-
-  const isVisible = useRef(false)
+  const channelRef = useRef(null)
 
   useEffect(() => {
     if (!profile) return
-    isVisible.current = true
-    fetchMessages(true) // prima apertura — segna come letti
-    pollRef.current = setInterval(() => fetchMessages(false), 10000) // polling — NON segna come letti
+
+    // Carica messaggi iniziali
+    fetchMessages(true)
+
+    // Supabase Realtime — aggiornamento istantaneo
+    const channel = supabase
+      .channel(`messages_${profile.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'coach_messages',
+        filter: `client_id=eq.${profile.id}`,
+      }, (payload) => {
+        const newMsg = payload.new
+        setMessages(prev => {
+          // Evita duplicati
+          if (prev.some(m => m.id === newMsg.id)) return prev
+          return [...prev, newMsg]
+        })
+        // Segna come letto se è del coach
+        if (newMsg.sender_role === 'coach') {
+          supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id)
+        }
+      })
+      .subscribe()
+
+    channelRef.current = channel
+
     return () => {
-      isVisible.current = false
-      clearInterval(pollRef.current)
+      supabase.removeChannel(channel)
     }
   }, [profile])
 
