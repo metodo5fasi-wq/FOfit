@@ -388,7 +388,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             </div>
           </div>
 
-          {/* S6 — NOTE LIBERE */}
+          {/* S6 — NOTE LIBERE + BOTTONI */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'var(--text)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
               <span>💬</span> Note libere al coach
@@ -397,22 +397,20 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <textarea style={{...s.textarea,minHeight:100}} value={data.note_coach} disabled={isReadOnly} onChange={e=>set('note_coach',e.target.value)} placeholder="Scrivi liberamente..."/>
           </div>
 
-          {/* AZIONI — bottoni rimossi da qui, spostati sotto */}
+          {/* BOTTONI — subito dopo le note, dentro lo scroll */}
+          {!isReadOnly && (
+            <div style={{display:'flex',gap:8,marginBottom:8}}>
+              <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,padding:'12px 16px',fontSize:13,flexShrink:0}}>
+                {saving ? '...' : '💾 Salva bozza'}
+              </button>
+              <button onClick={submit} disabled={submitting} style={{...s.btn,flex:1,justifyContent:'center',padding:'13px',fontSize:14}}>
+                <i className="ti ti-send" style={{fontSize:15}}/>
+                {submitting ? 'Invio...' : 'Invia al coach'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* BOTTONI FISSI IN FONDO — sempre visibili */}
-      {!isReadOnly && (
-        <div style={{padding:'12px 16px',paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',background:'var(--bg-card)',borderTop:'0.5px solid var(--border)',display:'flex',gap:8,flexShrink:0}}>
-          <button onClick={saveDraft} disabled={saving} style={{...s.btnGray,padding:'11px 16px',fontSize:13,flexShrink:0}}>
-            {saving ? '...' : '💾 Bozza'}
-          </button>
-          <button onClick={submit} disabled={submitting} style={{...s.btn,flex:1,justifyContent:'center',padding:'13px',fontSize:14}}>
-            <i className="ti ti-send" style={{fontSize:15}}/>
-            {submitting ? 'Invio...' : 'Invia al coach'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
