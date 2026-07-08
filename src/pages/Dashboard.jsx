@@ -78,18 +78,21 @@ export default function Dashboard() {
     checkNotificationStatus().then(setNotifStatus)
   }, [])
 
-  // Ricarica il piano quando la pagina torna in focus (dopo che admin ha modificato)
+  // Realtime — aggiorna piano quando admin lo modifica
   useEffect(() => {
     if (!profile) return
-    function handleVisibilityChange() {
-      if (!document.hidden) {
-        supabase.from('meal_plans').select('*')
-          .eq('client_id', profile.id).eq('is_active', true).limit(1)
-          .then(({ data }) => data?.length && setPlan(data[0]))
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    const channel = supabase
+      .channel(`dashboard_plan_${profile.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'meal_plans',
+        filter: `client_id=eq.${profile.id}`,
+      }, (payload) => {
+        setPlan(payload.new)
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
   }, [profile])
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
