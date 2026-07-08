@@ -77,6 +77,20 @@ export default function Dashboard() {
   useEffect(() => {
     checkNotificationStatus().then(setNotifStatus)
   }, [])
+
+  // Ricarica il piano quando la pagina torna in focus (dopo che admin ha modificato)
+  useEffect(() => {
+    if (!profile) return
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        supabase.from('meal_plans').select('*')
+          .eq('client_id', profile.id).eq('is_active', true).limit(1)
+          .then(({ data }) => data?.length && setPlan(data[0]))
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [profile])
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buongiorno' : hour < 18 ? 'Buon pomeriggio' : 'Buonasera'
