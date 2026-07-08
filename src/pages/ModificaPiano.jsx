@@ -180,13 +180,19 @@ export default function ModificaPiano() {
     setSaving(true)
     setSavedMsg('')
     try {
+      // DEBUG — conta quanti alimenti ci sono
+      const totalFoods = meals.reduce((s,m) => s + m.plan_meal_foods.length, 0)
+      const newFoods = meals.reduce((s,m) => s + m.plan_meal_foods.filter(f=>f._isNew).length, 0)
+      const existingFoods = totalFoods - newFoods
+      console.log(`Salvo: ${meals.length} pasti, ${totalFoods} alimenti (${newFoods} nuovi, ${existingFoods} esistenti)`)
+
       // 1. Aggiorna tutti gli alimenti IN PARALLELO
       const updatePromises = []
       for (const meal of meals) {
         for (const food of meal.plan_meal_foods) {
           const payload = {
-            quantity_g: parseFloat(food.quantity_g) || 0,
-            kcal: parseInt(food.kcal) || 0,
+            quantity_g: parseFloat(String(food.quantity_g).replace(',','.')) || 0,
+            kcal: Math.round(parseFloat(food.kcal) || 0),
             protein_g: parseFloat(food.protein_g) || 0,
             carbs_g: parseFloat(food.carbs_g) || 0,
             fat_g: parseFloat(food.fat_g) || 0,
@@ -210,9 +216,10 @@ export default function ModificaPiano() {
       const results = await Promise.all(updatePromises)
       const errors = results.filter(r => r.error)
       if (errors.length > 0) {
-        console.error('Errori salvataggio:', errors.map(e => e.error.message))
-        throw new Error(errors[0].error.message)
+        console.error('Errori:', errors.map(e=>e.error))
+        throw new Error(`${errors.length} errori: ${errors[0].error.message}`)
       }
+      console.log(`Salvati ${results.length} alimenti OK`)
 
       // 2. Elimina pasti rimossi
       const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
