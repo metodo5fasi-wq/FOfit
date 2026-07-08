@@ -29,15 +29,40 @@ export default function StoricoAllenamento() {
   const [filter, setFilter] = useState('tutti')
   const [editingSession, setEditingSession] = useState(null)
   const [editNotes, setEditNotes] = useState('')
+  const [editLogs, setEditLogs] = useState([])
   const [savingEdit, setSavingEdit] = useState(false)
+
+  async function openEdit(session) {
+    setEditingSession(session)
+    setEditNotes(session.notes || '')
+    // Carica i log della sessione
+    const { data: logs } = await supabase.from('workout_logs')
+      .select('*').eq('client_id', profile.id).eq('log_date', session.session_date)
+      .order('exercise_name').order('set_number')
+    setEditLogs(logs || [])
+  }
+
+  function updateLog(id, field, val) {
+    setEditLogs(prev => prev.map(l => l.id===id ? {...l, [field]:val} : l))
+  }
 
   async function saveEditSession() {
     if (!editingSession) return
     setSavingEdit(true)
+    // Salva note sessione
     await supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id)
     setSessions(prev => prev.map(s => s.id===editingSession.id ? {...s, notes:editNotes} : s))
+    // Salva ogni log modificato
+    for (const log of editLogs) {
+      await supabase.from('workout_logs').update({
+        weight_kg: log.weight_kg ? parseFloat(String(log.weight_kg).replace(',','.')) : null,
+        reps_done: log.reps_done ? parseInt(log.reps_done) : null,
+        exercise_note: log.exercise_note || null,
+      }).eq('id', log.id)
+    }
     setSavingEdit(false)
     setEditingSession(null)
+    setEditLogs([])
   }
   const [sharingId, setSharingId] = useState(null)
   const [shareLink, setShareLink] = useState('')
@@ -238,7 +263,7 @@ export default function StoricoAllenamento() {
                     <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
                     <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
                   </div>
-                  <button onClick={()=>{setEditingSession(sess);setEditNotes(sess.notes||'')}} style={s.shareBtn}>
+                  <button onClick={()=>openEdit(sess)} style={s.shareBtn}>
                     <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica
                   </button>
                   <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
@@ -257,24 +282,78 @@ export default function StoricoAllenamento() {
 
         {/* MODAL MODIFICA SESSIONE */}
         {editingSession && (
-          <div onClick={e=>e.target===e.currentTarget&&setEditingSession(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
-            <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:440}}>
+          <div onClick={e=>e.target===e.currentTarget&&setEditingSession(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:200}}>
+            <div style={{background:'var(--bg-card)',borderRadius:'16px 16px 0 0',padding:20,width:'100%',maxWidth:500,maxHeight:'85dvh',display:'flex',flexDirection:'column'}}>
               <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:2}}>Modifica sessione</div>
-              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:16}}>
+              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:14}}>
                 {editingSession.day_label} · {new Date(editingSession.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
               </div>
-              <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>Note</div>
-              <textarea
-                value={editNotes}
-                onChange={e=>setEditNotes(e.target.value)}
-                placeholder="Come ti sei sentito? Dolori? Note per il prossimo allenamento..."
-                style={{width:'100%',minHeight:120,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5,marginBottom:16}}
-              />
-              <div style={{display:'flex',gap:10}}>
+
+              <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
+                {/* LOG ESERCIZI */}
+                {editLogs.length > 0 && (
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8,fontWeight:600}}>Serie registrate</div>
+                    {/* Raggruppa per esercizio */}
+                    {Object.entries(editLogs.reduce((acc,l)=>{
+                      if (!acc[l.exercise_name]) acc[l.exercise_name] = []
+                      acc[l.exercise_name].push(l)
+                      return acc
+                    },{})).map(([exName, exLogs])=>(
+                      <div key={exName} style={{background:'var(--bg-input)',borderRadius:10,padding:'10px 12px',marginBottom:8}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>{exName}</div>
+                        {/* Header */}
+                        <div style={{display:'grid',gridTemplateColumns:'36px 1fr 1fr 1fr',gap:6,marginBottom:4}}>
+                          {['Serie','Kg','Reps','Note'].map(h=>(
+                            <div key={h} style={{fontSize:9,color:'var(--text-muted)',textTransform:'uppercase',fontWeight:700,letterSpacing:'0.06em',textAlign:'center'}}>{h}</div>
+                          ))}
+                        </div>
+                        {exLogs.map(log=>(
+                          <div key={log.id} style={{display:'grid',gridTemplateColumns:'36px 1fr 1fr 1fr',gap:6,marginBottom:5,alignItems:'center'}}>
+                            <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textAlign:'center'}}>S{log.set_number}</div>
+                            <input
+                              type="text" inputMode="decimal"
+                              value={log.weight_kg||''}
+                              onChange={e=>updateLog(log.id,'weight_kg',e.target.value)}
+                              placeholder="kg"
+                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',textAlign:'center',width:'100%',boxSizing:'border-box'}}
+                            />
+                            <input
+                              type="number"
+                              value={log.reps_done||''}
+                              onChange={e=>updateLog(log.id,'reps_done',e.target.value)}
+                              placeholder="reps"
+                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',textAlign:'center',width:'100%',boxSizing:'border-box'}}
+                            />
+                            <input
+                              type="text"
+                              value={log.exercise_note||''}
+                              onChange={e=>updateLog(log.id,'exercise_note',e.target.value)}
+                              placeholder="note"
+                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',width:'100%',boxSizing:'border-box'}}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* NOTE SESSIONE */}
+                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6,fontWeight:600}}>Note sessione</div>
+                <textarea
+                  value={editNotes}
+                  onChange={e=>setEditNotes(e.target.value)}
+                  placeholder="Come ti sei sentito? Dolori? Note per il prossimo allenamento..."
+                  style={{width:'100%',minHeight:80,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5,marginBottom:14}}
+                />
+              </div>
+
+              <div style={{display:'flex',gap:10,paddingTop:8}}>
                 <button onClick={saveEditSession} disabled={savingEdit} style={{flex:1,padding:12,background:'#D4570A',color:'white',border:'none',borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
                   {savingEdit ? 'Salvataggio...' : 'Salva modifiche'}
                 </button>
-                <button onClick={()=>setEditingSession(null)} style={{padding:'12px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
+                <button onClick={()=>{setEditingSession(null);setEditLogs([])}} style={{padding:'12px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
                   Annulla
                 </button>
               </div>
