@@ -24,7 +24,7 @@ export default function ReportAllenamentoPage() {
   // Se sta compilando o vedendo un report
   if (showNew || selectedReport) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0, overflow:'hidden' }}>
         <ReportAllenamento
           reportId={selectedReport?.id}
           onClose={() => { setShowNew(false); setSelectedReport(null); fetchReports() }}
