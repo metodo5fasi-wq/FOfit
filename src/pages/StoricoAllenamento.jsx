@@ -1,41 +1,86 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 
-const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 },
-  page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
-  backBtn: { width:34, height:34, borderRadius:9, border:'0.5px solid var(--border)', background:'var(--bg-input)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, color:'var(--text)', textDecoration:'none' },
-  tab: { padding:'6px 13px', borderRadius:18, fontSize:12, fontWeight:600, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', whiteSpace:'nowrap' },
-  shareBtn: { background:'var(--bg-input)', border:'0.5px solid var(--border)', borderRadius:8, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:4 },
+const DAY_LETTERS = ['L','M','M','G','V','S','D']
+
+function getWeekStart(date) {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d.toISOString().split('T')[0]
 }
 
-const DAY_LETTERS = ['L','M','M','G','V','S','D'] // Lun...Dom
-
-function colorForPct(pct) {
-  if (pct === null) return 'var(--bg-input)'
-  if (pct >= 100) return '#D4570A'
-  if (pct >= 50) return '#F4894A'
-  if (pct > 0) return '#FAC9A8'
-  return 'var(--bg-input)'
+function getWeekLabel(weekStart) {
+  const start = new Date(weekStart + 'T12:00')
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const sDay = start.getDate()
+  const eDay = end.getDate()
+  const sMonth = start.toLocaleDateString('it-IT', { month: 'short' })
+  const eMonth = end.toLocaleDateString('it-IT', { month: 'short' })
+  return sMonth === eMonth ? `${sDay}–${eDay} ${eMonth}` : `${sDay} ${sMonth} – ${eDay} ${eMonth}`
 }
 
 export default function StoricoAllenamento() {
   const { profile } = useAuth()
   const [sessions, setSessions] = useState([])
+  const [allLogs, setAllLogs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('tutti')
+  const [expandedWeek, setExpandedWeek] = useState(null)
+  const [expandedSession, setExpandedSession] = useState(null)
   const [editingSession, setEditingSession] = useState(null)
   const [editNotes, setEditNotes] = useState('')
   const [editLogs, setEditLogs] = useState([])
   const [savingEdit, setSavingEdit] = useState(false)
+  const [sharingId, setSharingId] = useState(null)
+  const [generatedLink, setGeneratedLink] = useState('')
+  const [copiedId, setCopiedId] = useState(null)
+  const [showPeriodModal, setShowPeriodModal] = useState(false)
+  const [periodStart, setPeriodStart] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]
+  })
+  const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
+  const [prs, setPrs] = useState({}) // { exercise_name: maxKg }
+
+  useEffect(() => { if (profile) fetchAll() }, [profile])
+
+  async function fetchAll() {
+    setLoading(true)
+    const threeMonthsAgo = new Date(Date.now() - 90*24*60*60*1000).toISOString().split('T')[0]
+    const [sessRes, logsRes] = await Promise.all([
+      supabase.from('workout_sessions').select('*').eq('client_id', profile.id)
+        .order('session_date', { ascending: false }),
+      supabase.from('workout_logs').select('*').eq('client_id', profile.id)
+        .gte('log_date', threeMonthsAgo).order('log_date').order('exercise_name').order('set_number'),
+    ])
+    const sessData = sessRes.data || []
+    const logsData = logsRes.data || []
+    setSessions(sessData)
+    setAllLogs(logsData)
+
+    // Calcola PR per ogni esercizio
+    const prMap = {}
+    logsData.forEach(l => {
+      if (!l.weight_kg) return
+      if (!prMap[l.exercise_name] || l.weight_kg > prMap[l.exercise_name]) {
+        prMap[l.exercise_name] = l.weight_kg
+      }
+    })
+    setPrs(prMap)
+
+    // Espandi settimana corrente di default
+    if (sessData.length) {
+      setExpandedWeek(getWeekStart(sessData[0].session_date))
+    }
+    setLoading(false)
+  }
 
   async function openEdit(session) {
     setEditingSession(session)
     setEditNotes(session.notes || '')
-    // Carica i log della sessione
     const { data: logs } = await supabase.from('workout_logs')
       .select('*').eq('client_id', profile.id).eq('log_date', session.session_date)
       .order('exercise_name').order('set_number')
@@ -43,19 +88,15 @@ export default function StoricoAllenamento() {
   }
 
   function updateLog(id, field, val) {
-    setEditLogs(prev => prev.map(l => l.id===id ? {...l, [field]:val} : l))
+    setEditLogs(prev => prev.map(l => l.id === id ? { ...l, [field]: val } : l))
   }
 
-  async function saveEditSession() {
-    if (!editingSession) return
+  async function saveEdit() {
     setSavingEdit(true)
-    // Salva note sessione
     await supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id)
-    setSessions(prev => prev.map(s => s.id===editingSession.id ? {...s, notes:editNotes} : s))
-    // Salva ogni log modificato
     for (const log of editLogs) {
       await supabase.from('workout_logs').update({
-        weight_kg: log.weight_kg ? parseFloat(String(log.weight_kg).replace(',','.')) : null,
+        weight_kg: log.weight_kg ? parseFloat(String(log.weight_kg).replace(',', '.')) : null,
         reps_done: log.reps_done ? parseInt(log.reps_done) : null,
         exercise_note: log.exercise_note || null,
       }).eq('id', log.id)
@@ -63,35 +104,23 @@ export default function StoricoAllenamento() {
     setSavingEdit(false)
     setEditingSession(null)
     setEditLogs([])
+    fetchAll()
   }
-  const [sharingId, setSharingId] = useState(null)
-  const [shareLink, setShareLink] = useState('')
-  const [showPeriodModal, setShowPeriodModal] = useState(false)
-  const [periodStart, setPeriodStart] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]
-  })
-  const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
-  const [copiedId, setCopiedId] = useState(null)
-
-  const [generatedLink, setGeneratedLink] = useState('')
-  const [previewOpen, setPreviewOpen] = useState(false)
 
   async function shareSession(session) {
     setSharingId(session.id)
     try {
       const r = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: profile.id, shareType: 'session', sessionId: session.id })
       })
       const data = await r.json()
       if (data.token) {
-        const link = `${window.location.origin}/share/${data.token}`
-        setGeneratedLink(link)
+        setGeneratedLink(`${window.location.origin}/share/${data.token}`)
         setCopiedId(session.id)
         setTimeout(() => setCopiedId(null), 3000)
       }
-    } catch(e) { alert('Errore: ' + e.message) }
+    } catch (e) { }
     setSharingId(null)
   }
 
@@ -99,344 +128,399 @@ export default function StoricoAllenamento() {
     setSharingId('period')
     try {
       const r = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: profile.id, shareType: 'period', periodStart, periodEnd })
       })
       const data = await r.json()
       if (data.token) {
-        const link = `${window.location.origin}/share/${data.token}`
-        setGeneratedLink(link)
-        setCopiedId('period')
-        setTimeout(() => setCopiedId(null), 3000)
+        setGeneratedLink(`${window.location.origin}/share/${data.token}`)
         setShowPeriodModal(false)
       }
-    } catch(e) { alert('Errore: ' + e.message) }
+    } catch (e) { }
     setSharingId(null)
   }
 
-  useEffect(() => { if (profile) fetchSessions() }, [profile])
+  // ── STATS GENERALI ─────────────────────────────────────
+  const thisMonth = new Date().toISOString().slice(0, 7)
+  const sessionsThisMonth = sessions.filter(s => s.session_date?.startsWith(thisMonth))
+  const totalSeries = allLogs.length
+  const tonnellaggio = allLogs.reduce((sum, l) => {
+    if (!l.weight_kg || !l.reps_done) return sum
+    return sum + (parseFloat(l.weight_kg) * parseInt(l.reps_done))
+  }, 0)
 
-  async function fetchSessions() {
-    setLoading(true)
-    const { data } = await supabase.from('workout_sessions')
-      .select('*').eq('client_id', profile.id).order('session_date', {ascending:false})
-    setSessions(data || [])
-    setLoading(false)
-  }
-
-  const dayLabels = [...new Set(sessions.map(s=>s.day_label))]
-  const filteredSessions = filter === 'tutti' ? sessions : sessions.filter(s=>s.day_label===filter)
-
-  // ── CONSISTENCY CALENDAR: ultime 12 settimane, griglia 12 colonne x 7 righe ──
-  const WEEKS = 12
+  // ── CALENDARIO 4 SETTIMANE ──────────────────────────────
   const today = new Date()
-  // Trova il lunedì della settimana corrente
-  const todayDow = today.getDay() // 0=Dom
-  const daysSinceMonday = todayDow === 0 ? 6 : todayDow - 1
-  const currentMonday = new Date(today)
-  currentMonday.setDate(today.getDate() - daysSinceMonday)
-
-  // Costruisci mappa data -> miglior % completamento di quel giorno
-  const sessionByDate = {}
-  sessions.forEach(s => {
-    const pct = s.sets_total > 0 ? Math.round(s.sets_completed / s.sets_total * 100) : 0
-    if (!sessionByDate[s.session_date] || pct > sessionByDate[s.session_date]) {
-      sessionByDate[s.session_date] = pct
-    }
+  const sessionDates = new Set(sessions.map(s => s.session_date))
+  const last28 = Array.from({ length: 28 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - 27 + i)
+    return d.toISOString().split('T')[0]
   })
 
-  // Genera colonne (settimane), dalla più vecchia alla più recente
-  const weeks = []
-  for (let w = WEEKS - 1; w >= 0; w--) {
-    const weekStart = new Date(currentMonday)
-    weekStart.setDate(currentMonday.getDate() - w * 7)
-    const days = []
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(weekStart)
-      date.setDate(weekStart.getDate() + d)
-      const dateKey = date.toISOString().split('T')[0]
-      const isFuture = date > today
-      days.push({ date: dateKey, pct: isFuture ? null : (sessionByDate[dateKey] ?? 0), isFuture, label: date.getDate() })
-    }
-    weeks.push(days)
+  // ── RAGGRUPPA PER SETTIMANA ─────────────────────────────
+  const byWeek = {}
+  sessions.forEach(s => {
+    const ws = getWeekStart(s.session_date)
+    if (!byWeek[ws]) byWeek[ws] = []
+    byWeek[ws].push(s)
+  })
+  const weeks = Object.keys(byWeek).sort((a, b) => b.localeCompare(a))
+
+  // ── LOG PER SESSIONE ────────────────────────────────────
+  function getLogsForSession(session) {
+    return allLogs.filter(l => l.log_date === session.session_date)
   }
 
-  // Statistiche
-  const totalSessions = sessions.length
-  const last30 = sessions.filter(s => {
-    const d = new Date(s.session_date)
-    return (today - d) / (1000*60*60*24) <= 30
-  }).length
+  // ── CONFRONTO CON SESSIONE PRECEDENTE ──────────────────
+  function getPrevSessionLogs(session, exerciseName) {
+    const prevSessions = sessions.filter(s => s.session_date < session.session_date && s.day_label === session.day_label)
+    if (!prevSessions.length) return null
+    const prevDate = prevSessions[0].session_date
+    const prevLogs = allLogs.filter(l => l.log_date === prevDate && l.exercise_name === exerciseName)
+    if (!prevLogs.length) return null
+    return Math.max(...prevLogs.map(l => parseFloat(l.weight_kg || 0)))
+  }
+
+  const s = {
+    card: { background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', marginBottom: 10, overflow: 'hidden' },
+    shareBtn: { background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 },
+    inp: { padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: 7, fontSize: 12, color: 'var(--text)', background: 'var(--bg-card)', outline: 'none', fontFamily: 'inherit', textAlign: 'center', width: '100%', boxSizing: 'border-box' },
+  }
+
+  if (loading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+      <div style={{ textAlign: 'center' }}>
+        <i className="ti ti-loader-2" style={{ fontSize: 32, display: 'block', marginBottom: 8 }} />
+        Caricamento storico...
+      </div>
+    </div>
+  )
 
   return (
-    <>
-      <div style={s.topbar}>
-        <Link to="/allenamento" style={s.backBtn}><i className="ti ti-arrow-left" style={{fontSize:17}}/></Link>
-        <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>Storico allenamenti</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>{totalSessions} sessioni totali</div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* TOPBAR */}
+      <div style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border)', padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link to="/allenamento" style={{ width: 34, height: 34, borderRadius: 9, border: '0.5px solid var(--border)', background: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', textDecoration: 'none' }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 16 }} />
+          </Link>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Storico allenamenti</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{sessions.length} sessioni totali</div>
+          </div>
         </div>
-        <button onClick={()=>setShowPeriodModal(true)} style={{...s.shareBtn, background:'#FEF0E7', color:'#D4570A', borderColor:'#D4570A'}}>
-          <i className="ti ti-share" style={{fontSize:13}}/>Condividi periodo
+        <button onClick={() => setShowPeriodModal(true)} style={s.shareBtn}>
+          <i className="ti ti-share" style={{ fontSize: 12 }} />Condividi periodo
         </button>
       </div>
 
-      <div style={s.page}>
+      <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px 14px 40px' }}>
 
-        {/* CONSISTENCY CALENDAR */}
-        <div style={s.card}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-            <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em'}}>Ultime 12 settimane</div>
-            <div style={{fontSize:12,color:'#D4570A',fontWeight:700}}>{last30} allenamenti / 30gg</div>
-          </div>
-          <div style={{display:'flex',gap:3,overflowX:'auto',paddingBottom:4}}>
-            {/* Colonna lettere giorni */}
-            <div style={{display:'flex',flexDirection:'column',gap:3,marginRight:2,flexShrink:0}}>
-              {DAY_LETTERS.map((l,i)=>(
-                <div key={i} style={{width:11,height:11,fontSize:8,color:'var(--text-muted)',display:'flex',alignItems:'center',justifyContent:'center'}}>{l}</div>
-              ))}
+        {/* STATISTICHE */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 16 }}>
+          {[
+            { icon: 'ti-calendar-check', label: 'Questo mese', value: sessionsThisMonth.length, unit: 'sess.' },
+            { icon: 'ti-layers', label: 'Serie (90gg)', value: totalSeries, unit: '' },
+            { icon: 'ti-barbell', label: 'Tonnellaggio', value: tonnellaggio >= 1000 ? (tonnellaggio / 1000).toFixed(1) + 't' : Math.round(tonnellaggio) + 'kg', unit: '' },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '12px 10px', textAlign: 'center' }}>
+              <i className={`ti ${stat.icon}`} style={{ fontSize: 18, color: '#D4570A', display: 'block', marginBottom: 4 }} />
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{stat.value}</div>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
             </div>
-            {weeks.map((week, wi) => (
-              <div key={wi} style={{display:'flex',flexDirection:'column',gap:3,flexShrink:0}}>
-                {week.map((day,di) => (
-                  <div key={di} title={`${day.date}${day.pct!==null?` — ${day.pct}%`:''}`} style={{
-                    width:11, height:11, borderRadius:3,
-                    background: colorForPct(day.pct),
-                    opacity: day.isFuture ? 0.3 : 1,
-                  }}/>
-                ))}
-              </div>
-            ))}
+          ))}
+        </div>
+
+        {/* CALENDARIO 4 SETTIMANE */}
+        <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '14px', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+            Ultime 4 settimane
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10,fontSize:10,color:'var(--text-muted)'}}>
-            <span>Meno</span>
-            <div style={{display:'flex',gap:3}}>
-              {[null,0,30,60,100].map((p,i)=>(
-                <div key={i} style={{width:11,height:11,borderRadius:3,background:colorForPct(p===null?0:p), opacity: p===null?1:1}}/>
-              ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(28,1fr)', gap: 3 }}>
+            {last28.map(date => {
+              const trained = sessionDates.has(date)
+              const isToday = date === today.toISOString().split('T')[0]
+              return (
+                <div key={date} title={date} style={{
+                  aspectRatio: '1', borderRadius: 4,
+                  background: trained ? '#D4570A' : 'var(--bg-input)',
+                  border: isToday ? '2px solid #D4570A' : 'none',
+                  opacity: date > today.toISOString().split('T')[0] ? 0.2 : 1,
+                }} />
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: 'var(--text-muted)' }}>
+            <span>4 sett. fa</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-input)' }} /><span>Riposo</span>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: '#D4570A' }} /><span>Allenato</span>
             </div>
-            <span>Più</span>
+            <span>Oggi</span>
           </div>
         </div>
 
-        {/* FILTRI */}
-        {dayLabels.length > 1 && (
-          <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto',paddingBottom:2}}>
-            {['tutti', ...dayLabels].map(d => (
-              <button key={d} onClick={()=>setFilter(d)} style={{
-                ...s.tab,
-                background: filter===d ? '#D4570A' : 'var(--bg-card)',
-                color: filter===d ? 'white' : 'var(--text-muted)',
-                borderColor: filter===d ? '#D4570A' : 'var(--border)',
-              }}>{d === 'tutti' ? 'Tutti' : d}</button>
-            ))}
+        {/* SESSIONI PER SETTIMANA */}
+        {sessions.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+            <i className="ti ti-barbell" style={{ fontSize: 40, display: 'block', marginBottom: 10, opacity: 0.3 }} />
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Nessuna sessione ancora</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>Inizia il tuo primo allenamento!</div>
           </div>
-        )}
+        ) : weeks.map(ws => {
+          const wSessions = byWeek[ws]
+          const wSeries = wSessions.reduce((s, sess) => s + (sess.sets_completed || 0), 0)
+          const wTonnellaggio = wSessions.reduce((sum, sess) => {
+            const logs = getLogsForSession(sess)
+            return sum + logs.reduce((s, l) => s + (l.weight_kg && l.reps_done ? parseFloat(l.weight_kg) * parseInt(l.reps_done) : 0), 0)
+          }, 0)
+          const isExpanded = expandedWeek === ws
 
-        {/* LISTA SESSIONI */}
-        {loading && (
-          <div style={{textAlign:'center',padding:'30px 0',color:'var(--text-muted)',fontSize:13}}>Caricamento...</div>
-        )}
-
-        {!loading && filteredSessions.length === 0 && (
-          <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
-            <i className="ti ti-history" style={{fontSize:44,color:'#E0DDD6',display:'block',marginBottom:14}}/>
-            <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>Nessun allenamento ancora</div>
-            <div style={{fontSize:13,color:'var(--text-muted)'}}>Le sessioni completate appariranno qui.</div>
-          </div>
-        )}
-
-        {!loading && filteredSessions.map(sess => {
-          const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
           return (
-            <div key={sess.id} style={s.card}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:sess.notes?10:0}}>
+            <div key={ws} style={s.card}>
+              {/* HEADER SETTIMANA */}
+              <div onClick={() => setExpandedWeek(isExpanded ? null : ws)}
+                style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: isExpanded ? '#FEF0E7' : 'var(--bg-card)' }}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{sess.day_label}</div>
-                  <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
-                    {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isExpanded ? '#D4570A' : 'var(--text)' }}>
+                    {getWeekLabel(ws)}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 10 }}>
+                    <span>🏋️ {wSessions.length} session{wSessions.length !== 1 ? 'i' : 'e'}</span>
+                    <span>📊 {wSeries} serie</span>
+                    {wTonnellaggio > 0 && <span>⚖️ {wTonnellaggio >= 1000 ? (wTonnellaggio / 1000).toFixed(1) + 't' : Math.round(wTonnellaggio) + 'kg'}</span>}
                   </div>
                 </div>
-                <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0,marginLeft:10}}>
-                  <div style={{textAlign:'right'}}>
-                    <div style={{fontSize:15,fontWeight:700,color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total}</div>
-                    <div style={{fontSize:10,color:'var(--text-muted)'}}>serie · {pct}%</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    {wSessions.map(sess => {
+                      const pct = sess.sets_total > 0 ? sess.sets_completed / sess.sets_total : 0
+                      return (
+                        <div key={sess.id} title={sess.day_label} style={{
+                          width: 8, height: 8, borderRadius: '50%',
+                          background: pct >= 1 ? '#3B6D11' : pct >= 0.5 ? '#E8A020' : '#E24B4A'
+                        }} />
+                      )
+                    })}
                   </div>
-                  <button onClick={()=>openEdit(sess)} style={s.shareBtn}>
-                    <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica
-                  </button>
-                  <button onClick={()=>shareSession(sess)} disabled={sharingId===sess.id} style={s.shareBtn}>
-                    {copiedId===sess.id ? <><i className="ti ti-check" style={{fontSize:13,color:'#3B6D11'}}/>Ok!</> : sharingId===sess.id ? '...' : <><i className="ti ti-share" style={{fontSize:13}}/>Condividi</>}
-                  </button>
+                  <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: 'var(--text-muted)' }} />
                 </div>
               </div>
-              {sess.notes && (
-                <div style={{fontSize:12,color:'var(--text)',background:'var(--bg-input)',borderRadius:8,padding:'10px 12px',lineHeight:1.5}}>
-                  {sess.notes}
-                </div>
-              )}
+
+              {/* SESSIONI DELLA SETTIMANA */}
+              {isExpanded && wSessions.map(sess => {
+                const sessLogs = getLogsForSession(sess)
+                const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed / sess.sets_total * 100) : 0
+                const isExpSess = expandedSession === sess.id
+                const byEx = {}
+                sessLogs.forEach(l => {
+                  if (!byEx[l.exercise_name]) byEx[l.exercise_name] = []
+                  byEx[l.exercise_name].push(l)
+                })
+
+                return (
+                  <div key={sess.id} style={{ borderTop: '0.5px solid var(--border)' }}>
+                    {/* HEADER SESSIONE */}
+                    <div onClick={() => setExpandedSession(isExpSess ? null : sess.id)}
+                      style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                      {/* Indicatore completamento */}
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: pct >= 100 ? '#EAF3DE' : pct >= 50 ? '#FEF0E7' : 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`ti ${pct >= 100 ? 'ti-check' : 'ti-barbell'}`} style={{ fontSize: 16, color: pct >= 100 ? '#3B6D11' : '#D4570A' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                          {sess.day_label || 'Allenamento'}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1, display: 'flex', gap: 8 }}>
+                          <span>{new Date(sess.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
+                          <span>·</span>
+                          <span>{sess.sets_completed}/{sess.sets_total} serie</span>
+                          {pct > 0 && <span style={{ color: pct >= 100 ? '#3B6D11' : '#E8A020', fontWeight: 600 }}>{pct}%</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <button onClick={e => { e.stopPropagation(); openEdit(sess) }} style={s.shareBtn}>
+                          <i className="ti ti-pencil" style={{ fontSize: 11 }} />
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); shareSession(sess) }} style={s.shareBtn} disabled={sharingId === sess.id}>
+                          <i className="ti ti-share" style={{ fontSize: 11 }} />
+                        </button>
+                        <i className={`ti ti-chevron-${isExpSess ? 'up' : 'down'}`} style={{ fontSize: 13, color: 'var(--text-muted)' }} />
+                      </div>
+                    </div>
+
+                    {/* DETTAGLIO SESSIONE */}
+                    {isExpSess && (
+                      <div style={{ padding: '0 14px 12px', borderTop: '0.5px solid var(--border)' }}>
+                        {/* Note */}
+                        {sess.notes && (
+                          <div style={{ background: 'var(--bg-input)', borderRadius: 8, padding: '8px 10px', marginTop: 10, marginBottom: 10, fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            💬 {sess.notes}
+                          </div>
+                        )}
+                        {/* Esercizi */}
+                        {Object.entries(byEx).map(([exName, exLogs]) => {
+                          const maxKg = Math.max(...exLogs.map(l => parseFloat(l.weight_kg || 0)))
+                          const prevMax = getPrevSessionLogs(sess, exName)
+                          const isPR = maxKg > 0 && maxKg >= (prs[exName] || 0)
+                          const diff = prevMax !== null && maxKg > 0 ? maxKg - prevMax : null
+
+                          return (
+                            <div key={exName} style={{ marginTop: 10 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  {exName}
+                                  {isPR && maxKg > 0 && <span style={{ fontSize: 10, background: '#FEF0E7', color: '#D4570A', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>🏆 PR</span>}
+                                </div>
+                                {diff !== null && (
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: diff > 0 ? '#3B6D11' : diff < 0 ? '#E24B4A' : '#888780' }}>
+                                    {diff > 0 ? `+${diff}kg` : diff < 0 ? `${diff}kg` : '= stallo'}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Serie */}
+                              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                                {exLogs.map(log => (
+                                  <div key={log.id} style={{ background: 'var(--bg-input)', borderRadius: 7, padding: '4px 8px', fontSize: 11, textAlign: 'center' }}>
+                                    <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>S{log.set_number}</div>
+                                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>{log.weight_kg || '—'}kg</div>
+                                    <div style={{ color: 'var(--text-muted)' }}>×{log.reps_done || '—'}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              {exLogs.some(l => l.exercise_note) && (
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, fontStyle: 'italic' }}>
+                                  {exLogs.find(l => l.exercise_note)?.exercise_note}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                        {Object.keys(byEx).length === 0 && (
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '10px 0' }}>
+                            Nessun dato registrato per questa sessione
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )
         })}
+      </div>
 
-        {/* MODAL MODIFICA SESSIONE */}
-        {editingSession && (
-          <div onClick={e=>e.target===e.currentTarget&&setEditingSession(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:200}}>
-            <div style={{background:'var(--bg-card)',borderRadius:'16px 16px 0 0',padding:20,width:'100%',maxWidth:500,maxHeight:'85dvh',display:'flex',flexDirection:'column'}}>
-              <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:2}}>Modifica sessione</div>
-              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:14}}>
-                {editingSession.day_label} · {new Date(editingSession.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
-              </div>
-
-              <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
-                {/* LOG ESERCIZI */}
-                {editLogs.length > 0 && (
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8,fontWeight:600}}>Serie registrate</div>
-                    {/* Raggruppa per esercizio */}
-                    {Object.entries(editLogs.reduce((acc,l)=>{
-                      if (!acc[l.exercise_name]) acc[l.exercise_name] = []
-                      acc[l.exercise_name].push(l)
-                      return acc
-                    },{})).map(([exName, exLogs])=>(
-                      <div key={exName} style={{background:'var(--bg-input)',borderRadius:10,padding:'10px 12px',marginBottom:8}}>
-                        <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>{exName}</div>
-                        {/* Header */}
-                        <div style={{display:'grid',gridTemplateColumns:'36px 1fr 1fr 1fr',gap:6,marginBottom:4}}>
-                          {['Serie','Kg','Reps','Note'].map(h=>(
-                            <div key={h} style={{fontSize:9,color:'var(--text-muted)',textTransform:'uppercase',fontWeight:700,letterSpacing:'0.06em',textAlign:'center'}}>{h}</div>
-                          ))}
-                        </div>
-                        {exLogs.map(log=>(
-                          <div key={log.id} style={{display:'grid',gridTemplateColumns:'36px 1fr 1fr 1fr',gap:6,marginBottom:5,alignItems:'center'}}>
-                            <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textAlign:'center'}}>S{log.set_number}</div>
-                            <input
-                              type="text" inputMode="decimal"
-                              value={log.weight_kg||''}
-                              onChange={e=>updateLog(log.id,'weight_kg',e.target.value)}
-                              placeholder="kg"
-                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',textAlign:'center',width:'100%',boxSizing:'border-box'}}
-                            />
-                            <input
-                              type="number"
-                              value={log.reps_done||''}
-                              onChange={e=>updateLog(log.id,'reps_done',e.target.value)}
-                              placeholder="reps"
-                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',textAlign:'center',width:'100%',boxSizing:'border-box'}}
-                            />
-                            <input
-                              type="text"
-                              value={log.exercise_note||''}
-                              onChange={e=>updateLog(log.id,'exercise_note',e.target.value)}
-                              placeholder="note"
-                              style={{padding:'6px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',width:'100%',boxSizing:'border-box'}}
-                            />
-                          </div>
-                        ))}
-                      </div>
+      {/* MODAL MODIFICA SESSIONE */}
+      {editingSession && (
+        <div onClick={e => e.target === e.currentTarget && setEditingSession(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px 16px 0 0', padding: 20, width: '100%', maxWidth: 500, maxHeight: '85dvh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Modifica sessione</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+              {editingSession.day_label} · {new Date(editingSession.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              {/* LOG PER ESERCIZIO */}
+              {Object.entries(editLogs.reduce((acc, l) => {
+                if (!acc[l.exercise_name]) acc[l.exercise_name] = []
+                acc[l.exercise_name].push(l)
+                return acc
+              }, {})).map(([exName, exLogs]) => (
+                <div key={exName} style={{ background: 'var(--bg-input)', borderRadius: 10, padding: '10px 12px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{exName}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 1fr 1fr', gap: 6, marginBottom: 4 }}>
+                    {['Serie', 'Kg', 'Reps', 'Note'].map(h => (
+                      <div key={h} style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em', textAlign: 'center' }}>{h}</div>
                     ))}
                   </div>
-                )}
-
-                {/* NOTE SESSIONE */}
-                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6,fontWeight:600}}>Note sessione</div>
-                <textarea
-                  value={editNotes}
-                  onChange={e=>setEditNotes(e.target.value)}
-                  placeholder="Come ti sei sentito? Dolori? Note per il prossimo allenamento..."
-                  style={{width:'100%',minHeight:80,padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5,marginBottom:14}}
-                />
-              </div>
-
-              <div style={{display:'flex',gap:10,paddingTop:8}}>
-                <button onClick={saveEditSession} disabled={savingEdit} style={{flex:1,padding:12,background:'#D4570A',color:'white',border:'none',borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
-                  {savingEdit ? 'Salvataggio...' : 'Salva modifiche'}
-                </button>
-                <button onClick={()=>{setEditingSession(null);setEditLogs([])}} style={{padding:'12px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:10,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
-                  Annulla
-                </button>
-              </div>
+                  {exLogs.map(log => (
+                    <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '36px 1fr 1fr 1fr', gap: 6, marginBottom: 5, alignItems: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#D4570A', textAlign: 'center' }}>S{log.set_number}</div>
+                      <input type="text" inputMode="decimal" value={log.weight_kg || ''} onChange={e => updateLog(log.id, 'weight_kg', e.target.value)} placeholder="kg" style={s.inp} />
+                      <input type="number" value={log.reps_done || ''} onChange={e => updateLog(log.id, 'reps_done', e.target.value)} placeholder="reps" style={s.inp} />
+                      <input type="text" value={log.exercise_note || ''} onChange={e => updateLog(log.id, 'exercise_note', e.target.value)} placeholder="nota" style={{ ...s.inp, textAlign: 'left' }} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 600 }}>Note sessione</div>
+              <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                placeholder="Come ti sei sentito? Dolori? Note..."
+                style={{ width: '100%', minHeight: 70, padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: 10, fontSize: 13, color: 'var(--text)', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5, marginBottom: 14 }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
+              <button onClick={saveEdit} disabled={savingEdit}
+                style={{ flex: 1, padding: 12, background: '#D4570A', color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {savingEdit ? 'Salvataggio...' : 'Salva modifiche'}
+              </button>
+              <button onClick={() => { setEditingSession(null); setEditLogs([]) }}
+                style={{ padding: '12px 16px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
+                Annulla
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* MODAL LINK GENERATO — sempre visibile in primo piano */}
-        {generatedLink && (
-          <div onClick={e=>e.target===e.currentTarget&&setGeneratedLink('')} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:16}}>
-            <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:400}}>
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-                <div style={{width:40,height:40,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <i className="ti ti-link" style={{fontSize:19,color:'#D4570A'}}/>
-                </div>
-                <div>
-                  <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>Link generato!</div>
-                  <div style={{fontSize:12,color:'var(--text-muted)'}}>Valido per 30 giorni</div>
-                </div>
+      {/* MODAL LINK */}
+      {generatedLink && (
+        <div onClick={e => e.target === e.currentTarget && setGeneratedLink('')}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 16 }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#FEF0E7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className="ti ti-link" style={{ fontSize: 19, color: '#D4570A' }} />
               </div>
-              <input readOnly value={generatedLink} onFocus={e=>e.target.select()}
-                style={{width:'100%',padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:9,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'monospace',boxSizing:'border-box',marginBottom:14}}/>
-              <div style={{display:'flex',gap:8,marginBottom:8}}>
-                <button onClick={()=>{
-                  if (navigator.share) { navigator.share({ url: generatedLink, title: 'Il mio allenamento FOfit' }) }
-                  else {
-                    const el = document.createElement('textarea')
-                    el.value = generatedLink; el.style.position='fixed'; el.style.opacity='0'
-                    document.body.appendChild(el); el.focus(); el.select()
-                    document.execCommand('copy'); document.body.removeChild(el)
-                  }
-                }} style={{flex:1,padding:'11px',background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>
-                  <i className="ti ti-share" style={{fontSize:14}}/>{navigator.share?'Condividi':'Copia link'}
-                </button>
-                <button onClick={()=>setPreviewOpen(true)} style={{flex:1,padding:'11px',background:'#FEF0E7',color:'#D4570A',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>
-                  <i className="ti ti-eye" style={{fontSize:14}}/>Vedi anteprima
-                </button>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Link generato!</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Valido per 30 giorni</div>
               </div>
-              <button onClick={()=>setGeneratedLink('')} style={{width:'100%',padding:11,background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>
+            </div>
+            <input readOnly value={generatedLink} onFocus={e => e.target.select()}
+              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: 9, fontSize: 12, color: 'var(--text)', background: 'var(--bg-input)', outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: 12 }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => {
+                if (navigator.share) navigator.share({ url: generatedLink, title: 'Il mio allenamento FOfit' })
+                else { navigator.clipboard?.writeText(generatedLink) }
+              }} style={{ flex: 1, padding: 11, background: '#D4570A', color: 'white', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Condividi / Copia link
+              </button>
+              <button onClick={() => setGeneratedLink('')}
+                style={{ padding: '11px 14px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 9, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
                 Chiudi
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ANTEPRIMA IN-APP (iframe, resta dentro FOfit) */}
-        {previewOpen && generatedLink && (
-          <div style={{position:'fixed',inset:0,background:'white',zIndex:400,display:'flex',flexDirection:'column'}}>
-            <div style={{background:'#111',padding:'calc(env(safe-area-inset-top) + 12px) 16px 12px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-              <button onClick={()=>setPreviewOpen(false)} style={{background:'rgba(255,255,255,0.12)',border:'none',borderRadius:9,padding:'8px 14px',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontFamily:'inherit'}}>
-                <i className="ti ti-arrow-left" style={{fontSize:15,color:'white'}}/>
-                <span style={{fontSize:12,fontWeight:600,color:'white'}}>Torna a FOfit</span>
-              </button>
-              <div style={{fontSize:12,color:'rgba(255,255,255,0.6)'}}>Anteprima link condiviso</div>
-            </div>
-            <iframe src={generatedLink} title="Anteprima" style={{flex:1,border:'none',width:'100%'}}/>
-          </div>
-        )}
-
-        {/* MODAL CONDIVIDI PERIODO */}
-        {showPeriodModal && (
-          <div onClick={e=>e.target===e.currentTarget&&setShowPeriodModal(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,padding:16}}>
-            <div style={{background:'var(--bg-card)',borderRadius:16,padding:24,width:'100%',maxWidth:380}}>
-              <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:4}}>Condividi riepilogo periodo</div>
-              <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:20}}>Scegli il periodo da condividere. Verrà generato un link pubblico valido 30 giorni.</div>
-              <div style={{marginBottom:12}}>
-                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Dal</div>
-                <input type="date" value={periodStart} onChange={e=>setPeriodStart(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+      {/* MODAL PERIODO */}
+      {showPeriodModal && (
+        <div onClick={e => e.target === e.currentTarget && setShowPeriodModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 14 }}>Condividi periodo</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Dal</label>
+                <input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)}
+                  style={{ width: '100%', padding: '9px 10px', border: '0.5px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--text)', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
               </div>
-              <div style={{marginBottom:20}}>
-                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Al</div>
-                <input type="date" value={periodEnd} onChange={e=>setPeriodEnd(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
-              </div>
-              <div style={{display:'flex',gap:10}}>
-                <button onClick={sharePeriod} disabled={sharingId==='period'} style={{flex:1,padding:11,background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                  {copiedId==='period'?<><i className="ti ti-check"/>Link copiato!</>:sharingId==='period'?'Generazione...':<><i className="ti ti-link"/>Genera e copia link</>}
-                </button>
-                <button onClick={()=>setShowPeriodModal(false)} style={{padding:'11px 16px',background:'var(--bg-input)',border:'0.5px solid var(--border)',borderRadius:9,fontSize:13,cursor:'pointer',fontFamily:'inherit',color:'var(--text-muted)'}}>Annulla</button>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Al</label>
+                <input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)}
+                  style={{ width: '100%', padding: '9px 10px', border: '0.5px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--text)', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
               </div>
             </div>
+            <button onClick={sharePeriod} disabled={sharingId === 'period'}
+              style={{ width: '100%', padding: 12, background: '#D4570A', color: 'white', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {sharingId === 'period' ? 'Generazione...' : 'Genera link periodo'}
+            </button>
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </div>
   )
 }
