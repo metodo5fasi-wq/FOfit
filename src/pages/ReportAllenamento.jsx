@@ -194,7 +194,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   const isReadOnly = readOnly || !!report?.submitted_at
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden'}}>
       {/* TOPBAR */}
       {onClose && (
         <div style={{background:'var(--bg-card)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
