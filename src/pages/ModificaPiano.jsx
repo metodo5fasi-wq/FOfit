@@ -241,20 +241,51 @@ export default function ModificaPiano() {
       }
       await Promise.all(deleteFoodPromises)
 
-      // 4. Aggiorna macro target piano
+      // 4. Aggiorna macro target piano — dividi per i giorni reali del piano
       const allFoods = meals.flatMap(m => m.plan_meal_foods)
-      const totalKcal = Math.round(allFoods.reduce((s,f)=>s+(f.kcal||0),0) / 7)
-      const totalProt = Math.round(allFoods.reduce((s,f)=>s+(f.protein_g||0),0) / 7)
-      const totalCarbs = Math.round(allFoods.reduce((s,f)=>s+(f.carbs_g||0),0) / 7)
-      const totalFat = Math.round(allFoods.reduce((s,f)=>s+(f.fat_g||0),0) / 7)
+      const numDays = new Set(meals.map(m => m.day_of_week)).size || 7
+      const totalKcal = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.kcal)||0),0) / numDays)
+      const totalProt = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0) / numDays)
+      const totalCarbs = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0) / numDays)
+      const totalFat = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.fat_g)||0),0) / numDays)
+
       if (totalKcal > 0) {
-        await supabase.from('meal_plans').update({
+        const { error: planUpdateErr } = await supabase.from('meal_plans').update({
           kcal_target: totalKcal,
           protein_target_g: totalProt,
           carbs_target_g: totalCarbs,
           fat_target_g: totalFat,
         }).eq('id', planId)
+        if (planUpdateErr) throw new Error('Errore aggiornamento macro: ' + planUpdateErr.message)
+        setPlan(prev => prev ? {...prev, kcal_target: totalKcal, protein_target_g: totalProt, carbs_target_g: totalCarbs, fat_target_g: totalFat} : prev)
       }
+
+      // 5. Aggiorna day_kcal_target per ogni giorno — così PianoAlimentare mostra il valore giusto
+      const dayTotals = {}
+      meals.forEach(m => {
+        if (!dayTotals[m.day_of_week]) dayTotals[m.day_of_week] = {kcal:0,protein:0,carbs:0,fat:0}
+        const foods = m.plan_meal_foods
+        dayTotals[m.day_of_week].kcal += foods.reduce((s,f)=>s+(parseFloat(f.kcal)||0),0)
+        dayTotals[m.day_of_week].protein += foods.reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0)
+        dayTotals[m.day_of_week].carbs += foods.reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0)
+        dayTotals[m.day_of_week].fat += foods.reduce((s,f)=>s+(parseFloat(f.fat_g)||0),0)
+      })
+      // Aggiorna il primo pasto di ogni giorno con i totali del giorno
+      const dayUpdatePromises = []
+      for (const [day, totals] of Object.entries(dayTotals)) {
+        const firstMealOfDay = meals.find(m => m.day_of_week === parseInt(day))
+        if (firstMealOfDay && !firstMealOfDay.id?.startsWith('new')) {
+          dayUpdatePromises.push(
+            supabase.from('plan_meals').update({
+              day_kcal_target: Math.round(totals.kcal),
+              day_protein_target_g: Math.round(totals.protein),
+              day_carbs_target_g: Math.round(totals.carbs),
+              day_fat_target_g: Math.round(totals.fat),
+            }).eq('id', firstMealOfDay.id)
+          )
+        }
+      }
+      await Promise.all(dayUpdatePromises)
 
       setDirty(false)
       setSavedMsg('✓ Piano salvato!')
