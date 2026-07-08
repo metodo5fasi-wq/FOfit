@@ -101,23 +101,37 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       }
 
       if (!adminView) {
-        // Carica scheda attiva e progressi automatici
-        const { data: wp } = await supabase.from('workout_plans').select('id').eq('client_id', clientId).eq('is_active', true).limit(1)
+        // Carica scheda attiva — cerca sia is_active=true che l'ultima scheda disponibile
+        let wpId = null
+        const { data: wp } = await supabase.from('workout_plans')
+          .select('id').eq('client_id', clientId).eq('is_active', true).limit(1)
         if (wp?.[0]) {
-          const { data: exs } = await supabase.from('workout_exercises').select('exercise_name,day_label').eq('plan_id', wp[0].id).order('order_index')
-          const uniqueEx = [...new Map(exs?.map(e=>[e.exercise_name,e])).values()]
+          wpId = wp[0].id
+        } else {
+          // Fallback: prendi l'ultima scheda anche se non attiva
+          const { data: wpAny } = await supabase.from('workout_plans')
+            .select('id').eq('client_id', clientId).order('created_at', {ascending:false}).limit(1)
+          if (wpAny?.[0]) wpId = wpAny[0].id
+        }
+
+        if (wpId) {
+          const { data: exs } = await supabase.from('workout_exercises')
+            .select('exercise_name,day_label').eq('plan_id', wpId).order('order_index')
+          const uniqueEx = [...new Map((exs||[]).map(e=>[e.exercise_name,e])).values()]
           setExercises(uniqueEx)
 
           // Progressi automatici: primo e ultimo carico nelle ultime 8 settimane
           const from = new Date(Date.now()-56*24*60*60*1000).toISOString().split('T')[0]
-          const { data: logs } = await supabase.from('workout_logs').select('exercise_name,weight_kg,log_date')
-            .eq('client_id', clientId).gte('log_date', from).not('weight_kg','is',null).order('log_date')
-          
-          if (!rep?.progressi_esercizi && logs?.length) {
+          const { data: logs } = await supabase.from('workout_logs').select('exercise_name,weight_kg,reps_done,log_date')
+            .eq('client_id', clientId).gte('log_date', from).order('log_date')
+
+          // Costruisci progressi sempre — anche senza log, mostra gli esercizi con campi vuoti
+          if (!rep?.progressi_esercizi) {
             const byEx = {}
-            logs.forEach(l => {
-              if (!byEx[l.exercise_name]) byEx[l.exercise_name] = { first: l.weight_kg, last: l.weight_kg, firstDate: l.log_date, lastDate: l.log_date }
-              else { byEx[l.exercise_name].last = l.weight_kg; byEx[l.exercise_name].lastDate = l.log_date }
+            ;(logs||[]).forEach(l => {
+              if (!l.weight_kg) return
+              if (!byEx[l.exercise_name]) byEx[l.exercise_name] = { first: l.weight_kg, last: l.weight_kg }
+              else byEx[l.exercise_name].last = l.weight_kg
             })
             const prog = uniqueEx.map(ex => ({
               exercise_name: ex.exercise_name,
@@ -126,7 +140,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
               carico_fine: byEx[ex.exercise_name]?.last || null,
               note: '',
             }))
-            setProgressi(prog)
+            if (prog.length) setProgressi(prog)
           }
         }
 
