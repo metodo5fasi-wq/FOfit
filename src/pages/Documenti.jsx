@@ -6,7 +6,7 @@ export default function Documenti() {
   const [tab, setTab] = useState('anamnesi')
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100dvh', background:'var(--bg)' }}>
+    <div style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0, background:'var(--bg)' }}>
       {/* TAB BAR */}
       <div style={{ display:'flex', background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', flexShrink:0 }}>
         <button onClick={()=>setTab('anamnesi')} style={{
