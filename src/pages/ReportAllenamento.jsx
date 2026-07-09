@@ -46,6 +46,18 @@ function Chips({ options, value, onChange, multi=false }) {
 export default function ReportAllenamento({ reportId, onClose, readOnly=false, adminView=false }) {
   const { profile } = useAuth()
   const clientId = profile?.id
+  const autosaveRef = React.useRef(null)
+
+  // Autosave ogni 2 minuti — non perde mai il lavoro
+  useEffect(() => {
+    if (!clientId || adminView) return
+    autosaveRef.current = setInterval(() => {
+      if (!report?.submitted_at) {
+        saveDraftSilent()
+      }
+    }, 120000) // 2 minuti
+    return () => clearInterval(autosaveRef.current)
+  }, [clientId, data, progressi, report])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -162,7 +174,30 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
     setProgressi(p => p.map((e,i) => i===idx ? {...e,[field]:val} : e))
   }
 
+  // Salvataggio silenzioso per autosave
+  async function saveDraftSilent() {
+    if (!clientId) return null
+    const payload = { ...data, client_id: clientId, progressi_esercizi: progressi,
+      peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
+      peso_fine: data.peso_fine ? parseFloat(String(data.peso_fine).replace(',','.')) : null,
+    }
+    try {
+      if (report?.id) {
+        await supabase.from('workout_reports').update(payload).eq('id', report.id)
+        return report.id
+      } else {
+        const { data: r } = await supabase.from('workout_reports').insert(payload).select().single()
+        if (r) { setReport(r); return r.id }
+      }
+    } catch(e) { /* silenzioso */ }
+    return null
+  }
+
   async function saveDraft() {
+    if (!clientId) {
+      alert('Sessione scaduta — ricarica la pagina e riprova')
+      return null
+    }
     setSaving(true)
     const payload = { ...data, client_id: clientId, progressi_esercizi: progressi,
       peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
