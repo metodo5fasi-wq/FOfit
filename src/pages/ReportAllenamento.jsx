@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -46,7 +46,7 @@ function Chips({ options, value, onChange, multi=false }) {
 export default function ReportAllenamento({ reportId, onClose, readOnly=false, adminView=false }) {
   const { profile } = useAuth()
   const clientId = profile?.id
-  const autosaveRef = React.useRef(null)
+  const autosaveRef = useRef(null)
 
   // Autosave ogni 2 minuti — non perde mai il lavoro
   useEffect(() => {
