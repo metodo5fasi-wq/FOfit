@@ -180,6 +180,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
     const payload = { ...data, client_id: clientId, progressi_esercizi: progressi,
       peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
       peso_fine: data.peso_fine ? parseFloat(String(data.peso_fine).replace(',','.')) : null,
+      period_start: data.period_start || null,
+      period_end: data.period_end || null,
     }
     try {
       if (report?.id) {
@@ -202,6 +204,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
     const payload = { ...data, client_id: clientId, progressi_esercizi: progressi,
       peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
       peso_fine: data.peso_fine ? parseFloat(String(data.peso_fine).replace(',','.')) : null,
+      period_start: data.period_start || null,
+      period_end: data.period_end || null,
     }
     let savedId = report?.id
     try {
