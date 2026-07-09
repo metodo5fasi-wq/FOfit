@@ -76,26 +76,44 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   const [data, setData] = useState({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => { if (clientId) load() }, [clientId])
 
   async function load() {
-    const { data: d } = await supabase.from('documenti').select('*').eq('client_id', clientId).maybeSingle()
-    if (d) { setData(d); setCurrent(d.current_section || 1) }
+    try {
+      const { data: d, error } = await supabase.from('anamnesi').select('*').eq('client_id', clientId).maybeSingle()
+      if (error) throw error
+      if (d) { setData(d); setCurrent(d.current_section || 1) }
+    } catch(e) {
+      console.error('Anamnesi load error:', e)
+    }
   }
 
   function set(field, val) { setData(p => ({...p, [field]:val})) }
   function setArr(field, val) { setData(p => ({...p, [field]:val})) }
 
   async function saveSection(goTo) {
+    if (!clientId) { setSaveError('Sessione scaduta — ricarica la pagina'); return }
     setSaving(true)
-    const payload = { ...data, client_id: clientId, current_section: goTo || current, updated_at: new Date().toISOString() }
-    if (goTo === 13) payload.completed_at = new Date().toISOString()
-    await supabase.from('documenti').upsert(payload, { onConflict: 'client_id' })
+    setSaveError('')
+    try {
+      const payload = { ...data, client_id: clientId, current_section: goTo || current, updated_at: new Date().toISOString() }
+      if (goTo === 13) payload.completed_at = new Date().toISOString()
+      // Pulisci campi booleani null
+      Object.keys(payload).forEach(k => {
+        if (payload[k] === '') payload[k] = null
+      })
+      const { error } = await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
+      if (error) throw error
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+      if (goTo) setCurrent(Math.min(goTo, 12))
+    } catch(e) {
+      setSaveError('Errore salvataggio: ' + e.message)
+      console.error('Anamnesi save error:', e)
+    }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-    if (goTo) setCurrent(goTo)
   }
 
   function next() { saveSection(Math.min(current+1, 12)) }
@@ -125,6 +143,13 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       <div style={{height:3,background:'var(--border)',flexShrink:0}}>
         <div style={{height:3,background:'#D4570A',width:`${pct}%`,transition:'width 0.3s'}}/>
       </div>
+
+      {/* ERRORE */}
+      {saveError && (
+        <div style={{background:'#FEE2E2',borderBottom:'0.5px solid #E24B4A',padding:'8px 16px',fontSize:12,color:'#E24B4A',flexShrink:0}}>
+          ⚠️ {saveError}
+        </div>
+      )}
 
       {/* NAV SEZIONI */}
       <div style={{padding:'10px 16px',display:'flex',gap:6,overflowX:'auto',flexShrink:0,borderBottom:'0.5px solid var(--border)'}}>
@@ -510,8 +535,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           ? <button onClick={next} style={{...s.btn,flex:1,justifyContent:'center'}}>
               {saving?'Salvataggio...':'Avanti →'}
             </button>
-          : <button onClick={()=>saveSection(13)} disabled={!data.consenso_dati||!data.consenso_trattamento} style={{...s.btn,flex:1,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
-              {saving?'Salvataggio...':`✓ Completa l'anamnesi`}
+          : <button onClick={()=>saveSection(13)} disabled={!data.consenso_dati||!data.consenso_trattamento||saving} style={{...s.btn,flex:1,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
+              {saving?'Salvataggio...':'✓ Completa l\'anamnesi'}
             </button>
         }
       </div>
