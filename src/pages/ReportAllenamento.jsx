@@ -168,25 +168,48 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
       peso_fine: data.peso_fine ? parseFloat(String(data.peso_fine).replace(',','.')) : null,
     }
-    if (report?.id) {
-      await supabase.from('workout_reports').update(payload).eq('id', report.id)
-    } else {
-      const { data: r } = await supabase.from('workout_reports').insert(payload).select().single()
-      setReport(r)
+    let savedId = report?.id
+    try {
+      if (report?.id) {
+        const { error } = await supabase.from('workout_reports').update(payload).eq('id', report.id)
+        if (error) throw error
+      } else {
+        const { data: r, error } = await supabase.from('workout_reports').insert(payload).select().single()
+        if (error) throw error
+        if (r) { setReport(r); savedId = r.id }
+      }
+    } catch(e) {
+      console.error('saveDraft error:', e)
+      throw e // propaga l'errore a submit
     }
     setSaving(false)
     setSaved(true)
     setTimeout(()=>setSaved(false), 2000)
+    return savedId // restituisce l'ID
   }
 
   async function submit() {
     setSubmitting(true)
-    await saveDraft()
-    const id = report?.id
-    if (id) await supabase.from('workout_reports').update({ submitted_at: new Date().toISOString() }).eq('id', id)
-    setSubmitting(false)
-    if (onClose) onClose()
-    else window.location.reload()
+    try {
+      const id = await saveDraft() // usa l'ID restituito direttamente
+      if (!id) throw new Error('ID report non trovato dopo il salvataggio')
+
+      const { error } = await supabase.from('workout_reports')
+        .update({ submitted_at: new Date().toISOString(), read_by_coach: false })
+        .eq('id', id)
+      if (error) throw error
+
+      setSubmitting(false)
+      // Mostra conferma prima di chiudere
+      setSaved(true)
+      setTimeout(() => {
+        if (onClose) onClose()
+        else window.location.reload()
+      }, 1500)
+    } catch(e) {
+      setSubmitting(false)
+      alert('Errore nell\'invio: ' + e.message + '\n\nI dati sono stati salvati come bozza.')
+    }
   }
 
   if (loading) return <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)',fontSize:13}}>Caricamento...</div>
