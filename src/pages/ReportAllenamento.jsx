@@ -243,7 +243,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       setSaved(true)
       setTimeout(() => {
         if (onClose) onClose()
-        else window.location.reload()
+        else { setSaved(true) }
       }, 2000)
     } catch(e) {
       setSubmitting(false)
