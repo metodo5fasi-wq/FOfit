@@ -24,6 +24,8 @@ const s = {
 export default function PianoAlimentare() {
   const { profile } = useAuth()
   const [plan, setPlan] = useState(null)
+  const [currentWeekTarget, setCurrentWeekTarget] = useState(null)
+  const [currentWeekNum, setCurrentWeekNum] = useState(null)
   const [meals, setMeals] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedDay, setSelectedDay] = useState(0)
@@ -53,6 +55,14 @@ export default function PianoAlimentare() {
 
     if (!planData) { setNoPlan(true); setLoading(false); return }
     setPlan(planData)
+    // Calcola settimana corrente per diete progressive
+    if (planData.weekly_macro_targets?.length && planData.plan_start_date) {
+      const startDate = new Date(planData.plan_start_date)
+      const weekIdx = Math.floor((Date.now() - startDate.getTime()) / (7*24*60*60*1000))
+      const idx = Math.min(Math.max(weekIdx, 0), planData.weekly_macro_targets.length - 1)
+      setCurrentWeekTarget(planData.weekly_macro_targets[idx])
+      setCurrentWeekNum(idx + 1)
+    }
 
     // Prendi tutti i pasti del piano con gli alimenti
     const { data: mealsData } = await supabase
@@ -144,12 +154,37 @@ export default function PianoAlimentare() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Piano alimentare</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>{plan?.title} — Settimana {plan?.week_number}</div>
+          <div style={{fontSize:12,color:'var(--text-muted)'}}>{plan?.title}{currentWeekNum ? ` — Settimana ${currentWeekNum}` : ''}</div>
         </div>
         <span style={s.badge}>
-          {dayTarget && dayTarget !== plan?.kcal_target ? `${dayTarget.toLocaleString('it-IT')} kcal/giorno` : `${plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno`}
+          {currentWeekTarget?.kcal
+            ? `${currentWeekTarget.kcal.toLocaleString('it-IT')} kcal`
+            : dayTarget && dayTarget !== plan?.kcal_target
+              ? `${dayTarget.toLocaleString('it-IT')} kcal/giorno`
+              : `${plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno`}
         </span>
       </div>
+
+      {/* BANNER SETTIMANA CORRENTE */}
+      {currentWeekTarget && (
+        <div style={{background:'linear-gradient(135deg,#3B6D11,#3B8C5A)',padding:'10px 16px',flexShrink:0}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:'white'}}>
+                📅 Settimana {currentWeekNum}/{plan?.weekly_macro_targets?.length}
+                {currentWeekTarget.note ? <span style={{fontWeight:400,opacity:0.85}}> — {currentWeekTarget.note}</span> : ''}
+              </div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',marginTop:1}}>Target aggiornato automaticamente</div>
+            </div>
+            <div style={{display:'flex',gap:8,fontSize:11,color:'white',fontWeight:700}}>
+              {currentWeekTarget.kcal && <span>{currentWeekTarget.kcal} kcal</span>}
+              {currentWeekTarget.protein && <span>P{currentWeekTarget.protein}g</span>}
+              {currentWeekTarget.carbs && <span>C{currentWeekTarget.carbs}g</span>}
+              {currentWeekTarget.fat && <span>G{currentWeekTarget.fat}g</span>}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={s.page}>
 
