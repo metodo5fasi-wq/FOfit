@@ -77,6 +77,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => { if (clientId) load() }, [clientId])
 
@@ -119,13 +120,33 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   function next() { saveSection(Math.min(current+1, 12)) }
   function prev() { saveSection(Math.max(current-1, 1)) }
 
+  async function submitToCoach() {
+    if (!clientId) { setSaveError('Sessione scaduta — ricarica la pagina'); return }
+    setSubmitting(true)
+    setSaveError('')
+    try {
+      // Prima salva tutto
+      await saveSection(13)
+      // Poi marca come inviata al coach
+      const { error } = await supabase.from('anamnesi')
+        .update({ submitted_at: new Date().toISOString(), read_by_coach: false })
+        .eq('client_id', clientId)
+      if (error) throw error
+      setSaved(true)
+      setData(p => ({...p, submitted_at: new Date().toISOString()}))
+    } catch(e) {
+      setSaveError('Errore invio: ' + e.message)
+    }
+    setSubmitting(false)
+  }
+
   const sec = SECTIONS[current-1]
 
   // Progress
   const pct = Math.round(((current-1)/12)*100)
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:isAdmin?'80vh':'100dvh',background:'var(--bg)'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'var(--bg)'}}>
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
@@ -535,9 +556,19 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           ? <button onClick={next} style={{...s.btn,flex:1,justifyContent:'center'}}>
               {saving?'Salvataggio...':'Avanti →'}
             </button>
-          : <button onClick={()=>saveSection(13)} disabled={!data.consenso_dati||!data.consenso_trattamento||saving} style={{...s.btn,flex:1,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
-              {saving?'Salvataggio...':'✓ Completa l\'anamnesi'}
-            </button>
+          : data.submitted_at
+            ? <div style={{flex:1,background:'#EAF3DE',borderRadius:10,padding:'12px',textAlign:'center',fontSize:13,fontWeight:700,color:'#3B6D11'}}>
+                ✓ Anamnesi inviata al coach — grazie!
+              </div>
+            : <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+                <button onClick={()=>saveSection(13)} disabled={!data.consenso_dati||!data.consenso_trattamento||saving} style={{...s.btnGray,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
+                  {saving?'Salvataggio...':'💾 Salva bozza'}
+                </button>
+                <button onClick={submitToCoach} disabled={!data.consenso_dati||!data.consenso_trattamento||submitting||saving} style={{...s.btn,flex:1,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
+                  <i className="ti ti-send" style={{fontSize:15}}/>
+                  {submitting?'Invio...':'Invia al coach'}
+                </button>
+              </div>
         }
       </div>
     </div>
