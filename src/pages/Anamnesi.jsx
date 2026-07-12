@@ -8,6 +8,7 @@ const s = {
   section: { padding:'20px 20px 0' },
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'var(--text-muted)', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  fieldLabel: { fontSize:13, fontWeight:600, color:'var(--text)', marginBottom:8, marginTop:14, display:'block' },
   input: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   textarea: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box', minHeight:80 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
@@ -19,22 +20,21 @@ const s = {
   scale: (active) => ({ width:36, height:36, borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)' }),
   sectionTitle: { fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:4 },
   sectionSub: { fontSize:13, color:'var(--text-muted)', marginBottom:18, lineHeight:1.5 },
-  fieldLabel: { fontSize:13, fontWeight:600, color:'var(--text)', marginBottom:8, marginTop:14, display:'block' },
 }
 
 const SECTIONS = [
-  { n:1, icon:'👤', title:'Dati anagrafici', sub:'Informazioni base e contatti' },
-  { n:2, icon:'🎯', title:'Obiettivo e aspettative', sub:'Cosa vuoi raggiungere e perché' },
-  { n:3, icon:'🏥', title:'Salute generale', sub:'Diagnosi, patologie e familiarità' },
-  { n:4, icon:'💊', title:'Farmaci e stimolanti', sub:'Farmaci, integratori, caffeina, fumo, alcol' },
-  { n:5, icon:'😴', title:'Sonno e recupero', sub:'Qualità del riposo e ritmo circadiano' },
-  { n:6, icon:'⚡', title:'Stress ed energia', sub:'Livelli di stress e concentrazione' },
-  { n:7, icon:'🫃', title:'Digestione e intestino', sub:'Gonfiore, transito e abitudini' },
-  { n:8, icon:'⚖️', title:'Storia peso e tentativi', sub:'Percorso passato e tentativi precedenti' },
-  { n:9, icon:'🥗', title:'Alimentazione e preferenze', sub:'Cosa mangi, cosa ami, cosa eviti' },
-  { n:10, icon:'🏋️', title:'Allenamento', sub:'Abitudini, esercizi preferiti e limitazioni' },
-  { n:11, icon:'📋', title:'Vincoli e sostenibilità', sub:'Tempo disponibile e cosa non vuoi fare' },
-  { n:12, icon:'✅', title:'Check finale', sub:'Note aggiuntive e consenso' },
+  { n:1,  icon:'👤', title:'Dati anagrafici',           sub:'Informazioni base e vita quotidiana' },
+  { n:2,  icon:'🎯', title:'Obiettivo e aspettative',    sub:'Dove vuoi arrivare e perché adesso' },
+  { n:3,  icon:'🏥', title:'Salute generale',             sub:'Diagnosi, patologie, allergie e familiarità' },
+  { n:4,  icon:'💊', title:'Farmaci e stimolanti',        sub:'Farmaci, integratori, caffeina, fumo, alcol' },
+  { n:5,  icon:'😴', title:'Sonno e recupero',            sub:'Qualità del riposo e ritmo circadiano' },
+  { n:6,  icon:'⚡', title:'Stress ed energia',           sub:'Livelli di stress e concentrazione' },
+  { n:7,  icon:'🫃', title:'Digestione e intestino',      sub:'Gonfiore, transito e abitudini' },
+  { n:8,  icon:'⚖️', title:'Storia peso e tentativi',     sub:'Percorso passato e schema ricorrente' },
+  { n:9,  icon:'🥗', title:'Alimentazione e preferenze', sub:'Cosa mangi, cosa ami, come gestisci la vita reale' },
+  { n:10, icon:'🏋️', title:'Allenamento',                sub:'Abitudini, esercizi preferiti e limitazioni' },
+  { n:11, icon:'📋', title:'Vincoli e sostenibilità',    sub:'Tempo, organizzazione e autonomia alimentare' },
+  { n:12, icon:'✅', title:'Check finale',               sub:'Note aggiuntive e consenso' },
 ]
 
 function Chips({ options, value, onChange, multi=false }) {
@@ -47,9 +47,8 @@ function Chips({ options, value, onChange, multi=false }) {
         const active = multi ? arr?.includes(v) : value===v
         return (
           <button key={v} onClick={()=>{
-            if (multi) {
-              onChange(arr?.includes(v) ? arr.filter(x=>x!==v) : [...(arr||[]),v])
-            } else { onChange(v===value?null:v) }
+            if (multi) { onChange(arr?.includes(v) ? arr.filter(x=>x!==v) : [...(arr||[]),v]) }
+            else { onChange(v===value?null:v) }
           }} style={multi?s.chipCheck(active):s.chip(active)}>{l}</button>
         )
       })}
@@ -86,9 +85,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       const { data: d, error } = await supabase.from('anamnesi').select('*').eq('client_id', clientId).maybeSingle()
       if (error) throw error
       if (d) { setData(d); setCurrent(d.current_section || 1) }
-    } catch(e) {
-      console.error('Anamnesi load error:', e)
-    }
+    } catch(e) { console.error('Anamnesi load error:', e) }
   }
 
   function set(field, val) { setData(p => ({...p, [field]:val})) }
@@ -101,10 +98,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     try {
       const payload = { ...data, client_id: clientId, current_section: goTo || current, updated_at: new Date().toISOString() }
       if (goTo === 13) payload.completed_at = new Date().toISOString()
-      // Pulisci campi booleani null
-      Object.keys(payload).forEach(k => {
-        if (payload[k] === '') payload[k] = null
-      })
+      Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
       const { error } = await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
       if (error) throw error
       setSaved(true)
@@ -125,24 +119,18 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSubmitting(true)
     setSaveError('')
     try {
-      // Prima salva tutto
       await saveSection(13)
-      // Poi marca come inviata al coach
       const { error } = await supabase.from('anamnesi')
         .update({ submitted_at: new Date().toISOString(), read_by_coach: false })
         .eq('client_id', clientId)
       if (error) throw error
       setSaved(true)
       setData(p => ({...p, submitted_at: new Date().toISOString()}))
-    } catch(e) {
-      setSaveError('Errore invio: ' + e.message)
-    }
+    } catch(e) { setSaveError('Errore invio: ' + e.message) }
     setSubmitting(false)
   }
 
   const sec = SECTIONS[current-1]
-
-  // Progress
   const pct = Math.round(((current-1)/12)*100)
 
   return (
@@ -150,7 +138,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Documenti cliente':'I tuoi documenti'}</div>
+          <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{isAdmin?'Anamnesi cliente':'La tua anamnesi'}</div>
           <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -193,7 +181,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             <div style={s.sectionSub}>{sec.sub}</div>
           </div>
 
-          {/* ─── SEZIONE 1 ─── */}
+          {/* ─── SEZIONE 1 — Dati anagrafici + vita quotidiana ─── */}
           {current===1 && <>
             <div style={s.card}>
               <div style={s.grid2}>
@@ -211,9 +199,45 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <Chips multi options={['8–17','9–18','Turni','Trasferte','Altro']} value={data.orari_lavoro} onChange={v=>setArr('orari_lavoro',v)}/>
               {data.orari_lavoro?.includes('Altro') && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Specifica..." value={data.orari_lavoro_altro||''} onChange={e=>set('orari_lavoro_altro',e.target.value)}/></div>}
             </div>
+            <div style={s.card}>
+              <label style={s.label}>Quanto cambiano gli orari da un giorno all'altro?</label>
+              <Chips options={['Sempre uguali','Cambiano un po\'','Molto variabili','Imprevedibili']} value={data.variabilita_orari} onChange={v=>set('variabilita_orari',v)}/>
+            </div>
+            <div style={s.card}>
+              <div style={s.grid2}>
+                <div><label style={s.label}>Chi fa la spesa?</label><Chips options={['Io','Partner','Dividiamo','Altro']} value={data.chi_fa_spesa} onChange={v=>set('chi_fa_spesa',v)}/></div>
+                <div><label style={s.label}>Chi cucina?</label><Chips options={['Io','Partner','Dividiamo','Nessuno','Altro']} value={data.chi_cucina} onChange={v=>set('chi_cucina',v)}/></div>
+              </div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Tempo realisticamente disponibile per la preparazione dei pasti</label>
+              <Chips options={['Quasi nessuno','10–15 min','20–30 min','30–60 min','Anche di più']} value={data.tempo_preparazione_pasti} onChange={v=>set('tempo_preparazione_pasti',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Dove consumi normalmente i pasti?</label>
+              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'var(--text-muted)'}}>Colazione</span><div style={{marginTop:4}}><Chips options={['Casa','Bar','Salto','Ufficio','Vario']} value={data.dove_colazione} onChange={v=>set('dove_colazione',v)}/></div></div>
+              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'var(--text-muted)'}}>Pranzo</span><div style={{marginTop:4}}><Chips options={['Casa','Ristorante/mensa','Portato da casa','Bar','Vario']} value={data.dove_pranzo} onChange={v=>set('dove_pranzo',v)}/></div></div>
+              <div><span style={{fontSize:12,color:'var(--text-muted)'}}>Cena</span><div style={{marginTop:4}}><Chips options={['Casa','Fuori','Vario']} value={data.dove_cena} onChange={v=>set('dove_cena',v)}/></div></div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Mangi principalmente...</label>
+              <Chips options={['Da solo','Con partner','Con famiglia','Con colleghi','Varia']} value={data.con_chi_mangia} onChange={v=>set('con_chi_mangia',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Puoi portare pasti preparati al lavoro?</label>
+              <Chips options={['Sì, sempre','A volte','No','Non mi serve']} value={data.porta_pasti_lavoro} onChange={v=>set('porta_pasti_lavoro',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Con quale frequenza hai giornate con trasferte, viaggi o imprevisti?</label>
+              <Chips options={['Raramente','1–2 volte/mese','1 volta/settimana','Spesso','Quasi sempre']} value={data.freq_imprevedibili} onChange={v=>set('freq_imprevedibili',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Racconta una giornata in cui tutto va storto: poco tempo, stress, imprevisti. Cosa succede alla tua alimentazione?</label>
+              <textarea style={{...s.textarea,minHeight:110}} placeholder="Descrivi cosa succede normalmente..." value={data.giornata_storta||''} onChange={e=>set('giornata_storta',e.target.value)}/>
+            </div>
           </>}
 
-          {/* ─── SEZIONE 2 ─── */}
+          {/* ─── SEZIONE 2 — Obiettivo e aspettative ─── */}
           {current===2 && <>
             <div style={s.card}>
               <label style={s.label}>Obiettivo principale</label>
@@ -227,8 +251,13 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               </div>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Quando vuoi vedere cambiamenti concreti?</label>
-              <Chips options={['4 settimane','8 settimane','12 settimane','6 mesi','Altro']} value={data.tempo_cambiamento} onChange={v=>set('tempo_cambiamento',v)}/>
+              <label style={s.label}>Hai una data, un evento o un momento legato al tuo obiettivo?</label>
+              <Chips options={['No','Sì']} value={data.ha_data_evento===true?'Sì':data.ha_data_evento===false?'No':null} onChange={v=>set('ha_data_evento',v==='Sì')}/>
+              {data.ha_data_evento && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Quale evento? Quando?" value={data.data_evento_dettaglio||''} onChange={e=>set('data_evento_dettaglio',e.target.value)}/></div>}
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Che aspettative hai sui tempi per raggiungere il tuo obiettivo?</label>
+              <textarea style={s.textarea} placeholder="Racconta liberamente cosa ti aspetti e in quanto tempo..." value={data.aspettative_tempi||''} onChange={e=>set('aspettative_tempi',e.target.value)}/>
             </div>
             <div style={s.card}>
               <label style={s.label}>Quanto è importante per te (0–10)?</label>
@@ -240,19 +269,40 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 3 ─── */}
+          {/* ─── SEZIONE 3 — Salute, allergie, intolleranze ─── */}
           {current===3 && <>
             <div style={s.card}>
               <label style={s.label}>Diagnosi attive</label>
               <textarea style={s.textarea} placeholder="Elenca eventuali diagnosi mediche attive..." value={data.diagnosi_attive||''} onChange={e=>set('diagnosi_attive',e.target.value)}/>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Interventi chirurgici / ricoveri importanti</label>
-              <textarea style={s.textarea} placeholder="Quali e quando..." value={data.interventi_chirurgici||''} onChange={e=>set('interventi_chirurgici',e.target.value)}/>
+              <label style={s.label}>Allergie alimentari diagnosticate</label>
+              <textarea style={s.textarea} placeholder="es. arachidi, crostacei, uova... specifica quali e come sono state diagnosticate" value={data.allergie_alimentari||''} onChange={e=>set('allergie_alimentari',e.target.value)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Intolleranze diagnosticate</label>
+              <textarea style={s.textarea} placeholder="es. lattosio, glutine, fruttosio... specifica quali e se diagnosticate o solo sospettate" value={data.intolleranze_diagnosticate||''} onChange={e=>set('intolleranze_diagnosticate',e.target.value)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Reazioni avverse a cibi che vuoi segnalare</label>
+              <textarea style={s.textarea} placeholder="Cibi che ti creano problemi anche senza diagnosi formale..." value={data.reazioni_avverse_cibi||''} onChange={e=>set('reazioni_avverse_cibi',e.target.value)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Hai indicazioni alimentari prescritte da un medico o professionista?</label>
+              <Chips options={['No','Sì']} value={data.indicazioni_mediche===true?'Sì':data.indicazioni_mediche===false?'No':null} onChange={v=>set('indicazioni_mediche',v==='Sì')}/>
+              {data.indicazioni_mediche && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Specifica cosa ti è stato prescritto o consigliato..." value={data.indicazioni_mediche_dettaglio||''} onChange={e=>set('indicazioni_mediche_dettaglio',e.target.value)}/></div>}
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Gravidanza o allattamento (se pertinente)</label>
+              <Chips options={['Non pertinente','No','Gravidanza','Allattamento']} value={data.gravidanza_allattamento} onChange={v=>set('gravidanza_allattamento',v)}/>
             </div>
             <div style={s.card}>
               <label style={s.label}>Seleziona ciò che ti riguarda (anche passato)</label>
               <Chips multi options={['Ipertensione','Colesterolo/trigliceridi alti','Glicemia alta/diabete','Russamento/apnee','Reflusso/gastrite','Gonfiore addominale','Stipsi/diarrea','Problemi renali','Problemi epatici','Dolori articolari cronici','Mal di testa ricorrenti','Ansia/stress cronico','Altro']} value={data.condizioni_salute} onChange={v=>setArr('condizioni_salute',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Interventi chirurgici / ricoveri importanti</label>
+              <textarea style={s.textarea} placeholder="Quali e quando..." value={data.interventi_chirurgici||''} onChange={e=>set('interventi_chirurgici',e.target.value)}/>
             </div>
             <div style={s.card}>
               <label style={s.label}>Familiarità in famiglia</label>
@@ -261,7 +311,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 4 ─── */}
+          {/* ─── SEZIONE 4 — Farmaci e stimolanti ─── */}
           {current===4 && <>
             <div style={s.card}>
               <label style={s.label}>Farmaci attuali (nome + dose + da quanto)</label>
@@ -297,14 +347,11 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 5 ─── */}
+          {/* ─── SEZIONE 5 — Sonno e recupero ─── */}
           {current===5 && <>
             <div style={s.card}>
               <div style={s.grid3}>
-                <div>
-                  <label style={s.label}>Ore di sonno medie</label>
-                  <Chips options={['<6','6–7','7–8','>8']} value={data.ore_sonno} onChange={v=>set('ore_sonno',v)}/>
-                </div>
+                <div><label style={s.label}>Ore di sonno medie</label><Chips options={['<6','6–7','7–8','>8']} value={data.ore_sonno} onChange={v=>set('ore_sonno',v)}/></div>
                 <div><label style={s.label}>Orario letto</label><input style={s.input} type="time" value={data.orario_letto||''} onChange={e=>set('orario_letto',e.target.value)}/></div>
                 <div><label style={s.label}>Orario sveglia</label><input style={s.input} type="time" value={data.orario_sveglia||''} onChange={e=>set('orario_sveglia',e.target.value)}/></div>
               </div>
@@ -331,7 +378,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 6 ─── */}
+          {/* ─── SEZIONE 6 — Stress ed energia ─── */}
           {current===6 && <>
             <div style={s.card}>
               <label style={s.label}>Stress medio (0–10)</label>
@@ -353,7 +400,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 7 ─── */}
+          {/* ─── SEZIONE 7 — Digestione e intestino ─── */}
           {current===7 && <>
             <div style={s.card}>
               <div style={s.grid3}>
@@ -373,10 +420,10 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 8 ─── */}
+          {/* ─── SEZIONE 8 — Storia peso, tentativi e schema ricorrente ─── */}
           {current===8 && <>
             <div style={s.card}>
-              <div style={s.grid3}>
+              <div style={s.grid2}>
                 <div><label style={s.label}>Peso minimo (5 anni)</label><input style={s.input} type="number" step="0.1" value={data.peso_minimo||''} onChange={e=>set('peso_minimo',e.target.value)}/></div>
                 <div><label style={s.label}>Peso massimo (5 anni)</label><input style={s.input} type="number" step="0.1" value={data.peso_massimo||''} onChange={e=>set('peso_massimo',e.target.value)}/></div>
               </div>
@@ -397,9 +444,18 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <label style={s.label}>Perché non hanno funzionato / cosa ti ha bloccato?</label>
               <textarea style={{...s.textarea,minHeight:100}} value={data.perche_non_funzionato||''} onChange={e=>set('perche_non_funzionato',e.target.value)}/>
             </div>
+            <div style={s.card}>
+              <label style={s.label}>Quando uscivi dal piano o mangiavi diversamente, cosa succedeva di solito dopo?</label>
+              <Chips multi options={['Tornavo normalmente alle mie abitudini','Mangiavo meno al pasto successivo','Saltavo uno o più pasti','Aumentavo cardio/allenamento per compensare','Pensavo di aver rovinato tutto e continuavo a mangiare','Aspettavo il lunedì per ricominciare','Mi sentivo in colpa ma non compensavo','Altro']} value={data.dopo_uscita_piano} onChange={v=>setArr('dopo_uscita_piano',v)}/>
+              {data.dopo_uscita_piano?.includes('Altro') && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Specifica..." value={data.dopo_uscita_piano_altro||''} onChange={e=>set('dopo_uscita_piano_altro',e.target.value)}/></div>}
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Qual è il momento in cui perdi più facilmente la direzione?</label>
+              <Chips multi options={['Weekend','Cena fuori','Aperitivo','Vacanze','Stress','Stanchezza','Fame serale','Mancanza di organizzazione','Eventi sociali','Quando non vedo risultati','Quando salto un allenamento','Altro']} value={data.momento_perdi_direzione} onChange={v=>setArr('momento_perdi_direzione',v)}/>
+            </div>
           </>}
 
-          {/* ─── SEZIONE 9 ─── */}
+          {/* ─── SEZIONE 9 — Alimentazione, preferenze e vita reale ─── */}
           {current===9 && <>
             <div style={s.card}>
               <div style={s.grid2}>
@@ -417,6 +473,18 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                 <div><label style={s.label}>Mangi fuori/delivery</label><Chips options={['0–1/sett','2–3/sett','4+/sett']} value={data.mangia_fuori} onChange={v=>set('mangia_fuori',v)}/></div>
                 <div><label style={s.label}>Weekend vs feriali</label><Chips options={['Uguale','Peggiora','Migliora','Dipende']} value={data.weekend_vs_feriali} onChange={v=>set('weekend_vs_feriali',v)}/></div>
               </div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Come vivi normalmente un pasto fuori?</label>
+              <Chips options={['Lo gestisco senza problemi','Cerco qualcosa di equilibrato','Mi mette in difficoltà','Prima/dopo mangio meno','Lo considero uno sgarro','Tendo a perdere il controllo','Altro']} value={data.gestione_pasto_fuori} onChange={v=>set('gestione_pasto_fuori',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Cosa succede alla tua alimentazione durante il weekend?</label>
+              <textarea style={s.textarea} value={data.alimentazione_weekend||''} onChange={e=>set('alimentazione_weekend',e.target.value)} placeholder="Descrivi liberamente..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Come gestisci normalmente vacanze e viaggi?</label>
+              <textarea style={s.textarea} value={data.alimentazione_vacanze||''} onChange={e=>set('alimentazione_vacanze',e.target.value)} placeholder="Descrivi liberamente..."/>
             </div>
             <div style={s.card}>
               <label style={s.label}>Proteine che mangi volentieri</label>
@@ -443,13 +511,35 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <div style={{marginTop:10}}><label style={s.label}>I 3 cibi più "critici" (ti fanno perdere controllo)</label><textarea style={s.textarea} value={data.cibi_critici||''} onChange={e=>set('cibi_critici',e.target.value)}/></div>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Mangi senza fame quando</label>
-              <Chips multi options={['Stress','Noia','Rabbia','Stanchezza','Sera','Socialità','Altro']} value={data.mangia_senza_fame} onChange={v=>setArr('mangia_senza_fame',v)}/>
+              <label style={s.label}>Ci sono alimenti che eviti anche se ti piacciono perché pensi facciano ingrassare?</label>
+              <textarea style={s.textarea} value={data.alimenti_evitati_per_paura||''} onChange={e=>set('alimenti_evitati_per_paura',e.target.value)} placeholder="es. pasta la sera, formaggi, frutta..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Ci sono regole alimentari che senti di dover rispettare per forza?</label>
+              <textarea style={s.textarea} value={data.regole_alimentari||''} onChange={e=>set('regole_alimentari',e.target.value)} placeholder="es. niente carbo la sera, compensare dopo una cena fuori, non mangiare dopo le 20..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Cosa significa per te "sgarrare"?</label>
+              <textarea style={s.textarea} value={data.significato_sgarro||''} onChange={e=>set('significato_sgarro',e.target.value)} placeholder="Descrivi con parole tue..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Quanto riesci a riconoscere quando hai realmente fame? (0–10)</label>
+              <Scale value={data.riconosce_fame} onChange={v=>set('riconosce_fame',v)}/>
+              <div style={{marginTop:14}}><label style={s.label}>Quanto riesci a riconoscere quando sei sazio/a? (0–10)</label><Scale value={data.riconosce_sazieta} onChange={v=>set('riconosce_sazieta',v)}/></div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Ti capita di continuare a mangiare anche quando sei sazio/a?</label>
+              <Chips options={['Mai','Raramente','A volte','Spesso']} value={data.mangia_oltre_sazieta} onChange={v=>set('mangia_oltre_sazieta',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Quando mangi senza fame, cosa stai cercando più spesso?</label>
+              <Chips multi options={['Stress','Noia','Rabbia','Stanchezza','Sera','Socialità','Conforto','Abitudine','Altro']} value={data.mangia_senza_fame} onChange={v=>setArr('mangia_senza_fame',v)}/>
+              {data.mangia_senza_fame?.length > 0 && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Vuoi aggiungere qualcosa?" value={data.mangia_senza_fame_note||''} onChange={e=>set('mangia_senza_fame_note',e.target.value)}/></div>}
               <div style={{marginTop:10}}><label style={s.label}>Quanto sei disposto a monitorare?</label><Chips options={['Niente tracking','Porzioni "a mano"','Tracking parziale','Tracking completo']} value={data.livello_tracking} onChange={v=>set('livello_tracking',v)}/></div>
             </div>
           </>}
 
-          {/* ─── SEZIONE 10 ─── */}
+          {/* ─── SEZIONE 10 — Allenamento ─── */}
           {current===10 && <>
             <div style={s.card}>
               <label style={s.label}>Ti alleni attualmente?</label>
@@ -470,7 +560,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <div style={s.grid2}>
                 <div><label style={s.label}>Energia in allenamento (0–10)</label><Scale value={data.energia_allenamento} onChange={v=>set('energia_allenamento',v)}/></div>
                 <div>
-                  <label style={s.label}>Recupero tra sedute</label><Chips options={['Buono','Medio','Scarso']} value={data.recupero} onChange={v=>set('recupero',v)}/>
+                  <label style={s.label}>Recupero tra sedute</label>
+                  <Chips options={['Buono','Medio','Scarso']} value={data.recupero} onChange={v=>set('recupero',v)}/>
                   <div style={{marginTop:8}}><label style={s.label}>DOMS dopo allenamento</label><Chips options={['Rari','Normali','Molto frequenti','Invalidanti']} value={data.doms} onChange={v=>set('doms',v)}/></div>
                 </div>
               </div>
@@ -502,7 +593,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 11 ─── */}
+          {/* ─── SEZIONE 11 — Vincoli, sostenibilità e autonomia ─── */}
           {current===11 && <>
             <div style={s.card}>
               <div style={s.grid2}>
@@ -519,9 +610,51 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <label style={s.label}>Sei disposto a...</label>
               <Chips multi options={['Preparare i pasti','Portarmi il pranzo','Cucinare 2–3x settimana','Pianificare la spesa']} value={data.abitudini_pratiche} onChange={v=>setArr('abitudini_pratiche',v)}/>
             </div>
+
+            {/* RAPPORTO CON CONTROLLO E FLESSIBILITÀ */}
+            <div style={s.card}>
+              <label style={s.label}>Quanto ti senti tranquillo/a nel scegliere cosa mangiare senza un piano preciso? (0–10)</label>
+              <Scale value={data.autonomia_senza_piano} onChange={v=>set('autonomia_senza_piano',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Se non hai quantità o indicazioni precise, cosa provi?</label>
+              <Chips options={['Mi gestisco tranquillamente','Ho qualche dubbio ma riesco a scegliere','Ho paura di sbagliare','Tendo a perdere la direzione','Dipende dalla situazione']} value={data.senza_indicazioni_provo} onChange={v=>set('senza_indicazioni_provo',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Quale tipo di guida pensi ti aiuterebbe di più all'inizio?</label>
+              <Chips options={['Indicazioni molto precise','Struttura con diverse alternative','Principi e porzioni di riferimento','Molta libertà con obiettivi generali','Non lo so, preferisco che valuti il coach']} value={data.preferenza_guida} onChange={v=>set('preferenza_guida',v)}/>
+            </div>
+
+            {/* AUTONOMIA INIZIALE */}
+            <div style={s.card}>
+              <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:12}}>Quanto ti senti capace oggi di… (0–10)</div>
+              {[
+                ['autonomia_costruire_pasto','Costruire autonomamente un pasto completo'],
+                ['autonomia_ristorante','Scegliere cosa mangiare al ristorante senza ansia'],
+                ['autonomia_giornata_imprevista','Gestire una giornata imprevista'],
+                ['autonomia_dopo_abbondante','Tornare alla normalità dopo un pasto più abbondante senza compensare'],
+                ['autonomia_cambio_routine','Adattare l\'alimentazione quando cambia la tua routine'],
+                ['autonomia_senza_piano_scritto','Mantenere buone abitudini senza un piano scritto'],
+              ].map(([field,label])=>(
+                <div key={field} style={{marginBottom:14}}>
+                  <label style={{fontSize:12,color:'var(--text-muted)',display:'block',marginBottom:6}}>{label}</label>
+                  <Scale value={data[field]} onChange={v=>set(field,v)}/>
+                </div>
+              ))}
+            </div>
+
+            {/* PRIMA COMPETENZA */}
+            <div style={s.card}>
+              <label style={s.label}>Se alla fine del percorso potessi imparare UNA cosa che oggi non gestisci bene, quale vorresti che fosse?</label>
+              <textarea style={s.textarea} value={data.prima_competenza||''} onChange={e=>set('prima_competenza',e.target.value)} placeholder="Descrivi liberamente..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Quale situazione vorresti riuscire a vivere con molta più serenità rispetto a oggi?</label>
+              <textarea style={s.textarea} value={data.situazione_piu_serena||''} onChange={e=>set('situazione_piu_serena',e.target.value)} placeholder="Descrivi liberamente..."/>
+            </div>
           </>}
 
-          {/* ─── SEZIONE 12 ─── */}
+          {/* ─── SEZIONE 12 — Check finale ─── */}
           {current===12 && <>
             <div style={s.card}>
               <label style={s.label}>C'è qualcosa di importante che non ti è stato chiesto?</label>
