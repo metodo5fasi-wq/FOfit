@@ -130,7 +130,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSubmitting(false)
   }
 
-  const sec = SECTIONS[current-1]
+  const sec = SECTIONS[Math.min(current, 12) - 1] || SECTIONS[11]
   const pct = Math.round(((current-1)/12)*100)
 
   return (
