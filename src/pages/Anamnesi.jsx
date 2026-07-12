@@ -77,6 +77,26 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const autosaveRef = useRef(null)
+  const dataRef = useRef({})
+
+  // Tieni dataRef sincronizzato con data per l'autosave
+  useEffect(() => { dataRef.current = data }, [data])
+
+  // Autosave ogni 60 secondi in background
+  useEffect(() => {
+    if (!clientId || isAdmin) return
+    autosaveRef.current = setInterval(async () => {
+      const d = dataRef.current
+      if (!d.client_id) return // non ancora caricato
+      try {
+        const payload = { ...d, client_id: clientId, updated_at: new Date().toISOString() }
+        Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
+        await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
+      } catch(e) { /* silenzioso */ }
+    }, 60000)
+    return () => { if (autosaveRef.current) clearInterval(autosaveRef.current) }
+  }, [clientId, isAdmin])
 
   useEffect(() => { if (clientId) load() }, [clientId])
 
@@ -689,19 +709,22 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           ? <button onClick={next} style={{...s.btn,flex:1,justifyContent:'center'}}>
               {saving?'Salvataggio...':'Avanti →'}
             </button>
-          : data.submitted_at
-            ? <div style={{flex:1,background:'#EAF3DE',borderRadius:10,padding:'12px',textAlign:'center',fontSize:13,fontWeight:700,color:'#3B6D11'}}>
-                ✓ Anamnesi inviata al coach — grazie!
-              </div>
-            : <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+          : <>
+              {data.submitted_at && (
+                <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#3B6D11',fontWeight:600}}>
+                  ✓ Inviata il {new Date(data.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})} — puoi modificare e reinviare
+                </div>
+              )}
+              <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
                 <button onClick={()=>saveSection(13)} disabled={!data.consenso_dati||!data.consenso_trattamento||saving} style={{...s.btnGray,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
                   {saving?'Salvataggio...':'💾 Salva bozza'}
                 </button>
                 <button onClick={submitToCoach} disabled={!data.consenso_dati||!data.consenso_trattamento||submitting||saving} style={{...s.btn,flex:1,justifyContent:'center',opacity:(!data.consenso_dati||!data.consenso_trattamento)?0.5:1}}>
                   <i className="ti ti-send" style={{fontSize:15}}/>
-                  {submitting?'Invio...':'Invia al coach'}
+                  {submitting?'Invio...' : data.submitted_at ? 'Aggiorna e reinvia' : 'Invia al coach'}
                 </button>
               </div>
+            </>
         }
       </div>
     </div>
