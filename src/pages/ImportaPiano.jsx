@@ -213,41 +213,84 @@ export default function ImportaPiano() {
     if (mode === 'import' && rawText.trim().length < 20) { setError('Incolla il testo del piano alimentare.'); return }
     setLoading(true)
     try {
-      const body = mode === 'generate'
-        ? { mode:'generate', preferences:{
-            kcal:gen.kcal, protein:gen.protein, carbs:gen.carbs, fat:gen.fat,
-            meals_per_day:gen.meals_per_day, goal:gen.goal, diet_type:gen.diet_type,
-            foods_liked:gen.foods_liked, foods_avoided:gen.foods_avoided, lifestyle:gen.lifestyle,
-            // Parametri multi-fase
-            phases: gen.diet_type==='on_off' ? [
-              {label:'Giorno ON',kcal:gen.kcal_on,protein:gen.protein_on,carbs:gen.carbs_on,fat:gen.fat_on},
-              {label:'Giorno OFF',kcal:gen.kcal_off,protein:gen.protein_off,carbs:gen.carbs_off,fat:gen.fat_off},
-            ] : gen.diet_type==='onde' ? [
-              {label:'Giorno Alto',kcal:gen.kcal_high,protein:gen.protein_high,carbs:gen.carbs_high,fat:gen.fat_high},
-              {label:'Giorno Medio',kcal:gen.kcal_mid,protein:gen.protein_mid,carbs:gen.carbs_mid,fat:gen.fat_mid},
-              {label:'Giorno Basso',kcal:gen.kcal_low,protein:gen.protein_low,carbs:gen.carbs_low,fat:gen.fat_low},
-            ] : gen.diet_type==='ciclico' ? [
-              {label:'Giorno Deficit',kcal:gen.kcal_deficit,protein:gen.protein_deficit,carbs:gen.carbs_deficit,fat:gen.fat_deficit},
-              {label:'Giorno Surplus',kcal:gen.kcal_surplus,protein:gen.protein_surplus,carbs:gen.carbs_surplus,fat:gen.fat_surplus},
-            ] : gen.diet_type==='reverse' ? [
-              {label:'Settimana 1',kcal:gen.kcal_start,protein:gen.protein_start,carbs:gen.carbs_start,fat:gen.fat_start},
-              {label:'Progressione',kcal_increment:gen.kcal_increment,kcal_target:gen.kcal_target},
-            ] : gen.diet_type==='refeed' ? [
-              {label:'Giorno Base',kcal:gen.kcal_base,protein:gen.protein_base,carbs:gen.carbs_base,fat:gen.fat_base},
-              {label:'Giorno Refeed',kcal:gen.kcal_refeed,protein:gen.protein_refeed,carbs:gen.carbs_refeed,fat:gen.fat_refeed,days:gen.refeed_days},
-            ] : null,
-          }}
-        : { textContent: rawText }
+      let planData = null
 
-      const r = await fetch('/api/parse-plan', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || 'Errore')
-      if (!data.plan) throw new Error('Piano non ricevuto. Riprova.')
+      if (mode === 'generate') {
+        // Genera 7 giorni in 3 chiamate parallele (2+2+3 giorni) — ognuna < 10 secondi
+        const p = gen
+        let parametriStr = ''
+        if (!p.diet_type || p.diet_type === 'lineare') {
+          parametriStr = `Kcal: ${p.kcal} | P: ${p.protein}g | C: ${p.carbs}g | G: ${p.fat}g`
+        } else if (p.diet_type === 'on_off') {
+          parametriStr = `ON: ${p.kcal_on}kcal P${p.protein_on}g C${p.carbs_on}g G${p.fat_on}g | OFF: ${p.kcal_off}kcal P${p.protein_off}g C${p.carbs_off}g G${p.fat_off}g`
+        } else if (p.diet_type === 'onde') {
+          parametriStr = `Alto: ${p.kcal_high}kcal P${p.protein_high}g C${p.carbs_high}g G${p.fat_high}g | Medio: ${p.kcal_mid}kcal P${p.protein_mid}g C${p.carbs_mid}g G${p.fat_mid}g | Basso: ${p.kcal_low}kcal P${p.protein_low}g C${p.carbs_low}g G${p.fat_low}g`
+        } else if (p.diet_type === 'reverse') {
+          parametriStr = `S1: ${p.kcal_start}kcal P${p.protein_start}g C${p.carbs_start}g G${p.fat_start}g | +${p.kcal_increment}kcal/sett`
+        } else if (p.diet_type === 'refeed') {
+          parametriStr = `Base: ${p.kcal_base}kcal P${p.protein_base}g C${p.carbs_base}g G${p.fat_base}g | Refeed: ${p.kcal_refeed}kcal P${p.protein_refeed}g C${p.carbs_refeed}g G${p.fat_refeed}g`
+        } else if (p.diet_type === 'ciclico') {
+          parametriStr = `Deficit: ${p.kcal_deficit}kcal P${p.protein_deficit}g C${p.carbs_deficit}g G${p.fat_deficit}g | Surplus: ${p.kcal_surplus}kcal P${p.protein_surplus}g C${p.carbs_surplus}g G${p.fat_surplus}g`
+        }
 
-      setParsedPlan(data.plan)
-      setPlanTitle(data.plan.titolo || 'Piano alimentare')
-      setPlanNotes(data.plan.note_generali || '')
-      setTargets({ kcal_target: data.plan.kcal_totali, protein_target_g: data.plan.proteine_g, carbs_target_g: data.plan.carboidrati_g, fat_target_g: data.plan.grassi_g })
+        const giorni = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
+        const batches = [giorni.slice(0,3), giorni.slice(3,5), giorni.slice(5,7)]
+
+        const makePrompt = (days) => `Crea ${days.length} giorni di piano alimentare per: ${days.join(', ')}.
+PARAMETRI: ${parametriStr}
+Pasti/die: ${p.meals_per_day} | Obiettivo: ${p.goal}
+Preferiti: ${p.foods_liked||'vari'} | Evitare: ${p.foods_avoided||'nessuno'}
+Giorni diversi tra loro, rispetta macro ±5%, 1 alternativa per alimento, nomi pasti italiani, kcal e macro precisi per ogni alimento.
+JSON grezzo (solo JSON):
+{"varianti":[{"nome":"${days[0]}","kcal":${Math.round(p.kcal||2000)},"proteine_g":${Math.round(p.protein||150)},"carboidrati_g":${Math.round(p.carbs||200)},"grassi_g":${Math.round(p.fat||65)},"pasti":[{"nome":"Colazione","tipo":"colazione","orario":"07:30","alimenti":[{"nome":"Fiocchi avena","quantita_g":80,"kcal":300,"proteine_g":10,"carboidrati_g":55,"grassi_g":5,"opzioni":[{"nome":"Yogurt greco","quantita_g":200,"kcal":120,"proteine_g":20,"carboidrati_g":6,"grassi_g":1}]}]}]}]}`
+
+        // 3 chiamate parallele
+        const [r1, r2, r3] = await Promise.all(
+          batches.map(days =>
+            fetch('/api/parse-plan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'generate_batch', preferences: p, days, parametriStr, prompt: makePrompt(days) })
+            }).then(r => r.json())
+          )
+        )
+
+        const allVarianti = [
+          ...(r1.varianti || []),
+          ...(r2.varianti || []),
+          ...(r3.varianti || []),
+        ]
+        if (allVarianti.length === 0) throw new Error('Piano non generato. Riprova.')
+
+        planData = {
+          titolo: 'Piano alimentare personalizzato',
+          kcal_totali: Math.round(p.kcal || 2000),
+          proteine_g: Math.round(p.protein || 150),
+          carboidrati_g: Math.round(p.carbs || 200),
+          grassi_g: Math.round(p.fat || 65),
+          diet_type: p.diet_type || 'lineare',
+          note_generali: `Piano generato su misura. Obiettivo: ${p.goal}.`,
+          varianti: allVarianti,
+          integratori: [],
+          generated: true,
+        }
+      } else {
+        // Modalità importa testo
+        const r = await fetch('/api/parse-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ textContent: rawText })
+        })
+        const data = await r.json()
+        if (!r.ok) throw new Error(data.error || 'Errore')
+        if (!data.plan) throw new Error('Piano non ricevuto. Riprova.')
+        planData = data.plan
+      }
+
+      setParsedPlan(planData)
+      setPlanTitle(planData.titolo || 'Piano alimentare')
+      setPlanNotes(planData.note_generali || '')
+      setTargets({ kcal_target: planData.kcal_totali, protein_target_g: planData.proteine_g, carbs_target_g: planData.carboidrati_g, fat_target_g: planData.grassi_g })
       // Pre-compila progressione settimanale per diete con variazione
       if (mode === 'generate') {
         const dt = gen.diet_type
