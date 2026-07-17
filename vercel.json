@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/parse-plan.js": { "maxDuration": 60 },
+    "api/parse-workout.js": { "maxDuration": 60 },
+    "api/ai-coach.js": { "maxDuration": 30 },
+    "api/monthly-report.js": { "maxDuration": 30 }
+  }
+}
