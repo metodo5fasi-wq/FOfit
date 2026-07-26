@@ -34,44 +34,137 @@ export default function ImportaPiano() {
       .then(({data}) => setClients(data||[]))
   }, [])
 
+  const [progress, setProgress] = useState({ current: 0, total: 0, label: '' })
+
+  // Estrai macro dal testo "TOTALE: 2198 kcal | P: 174g | C: 261g | G: 64g"
+  function extractMacros(text) {
+    const m = text.match(/TOTALE:\s*([\d.,]+)\s*kcal\s*\|\s*P:\s*([\d.,]+)g\s*\|\s*C:\s*([\d.,]+)g\s*\|\s*G:\s*([\d.,]+)g/i)
+    if (m) return { kcal: Math.round(parseFloat(m[1])), proteine_g: Math.round(parseFloat(m[2])), carboidrati_g: Math.round(parseFloat(m[3])), grassi_g: Math.round(parseFloat(m[4])) }
+    return null
+  }
+
+  // Dividi il testo in blocchi per giorno
+  function splitByDay(text) {
+    const dayNames = ['LUNEDÌ','MARTEDÌ','MERCOLEDÌ','GIOVEDÌ','VENERDÌ','SABATO','DOMENICA']
+    const dayMap = { 'LUNEDÌ':1,'MARTEDÌ':2,'MERCOLEDÌ':3,'GIOVEDÌ':4,'VENERDÌ':5,'SABATO':6,'DOMENICA':7 }
+
+    // Tronca prima del riepilogo
+    const cleanText = text.split(/RIEPILOGO|FONTI PROTEICHE|CONSIGLI PRATICI|={20,}\s*\n[A-Z\s]+\s*\n={20,}\s*\nGiorno/i)[0]
+
+    // Trova tutte le occorrenze dei giorni
+    const pattern = /(?:={3,}[^\n]*\n)?(LUNEDÌ|MARTEDÌ|MERCOLEDÌ|GIOVEDÌ|VENERDÌ|SABATO|DOMENICA)(?:\s*\n={3,})?/gi
+    const matches = [...cleanText.matchAll(pattern)]
+
+    // Deduplicati
+    const seen = new Set()
+    const unique = matches.filter(m => {
+      const d = m[1].toUpperCase()
+      if (seen.has(d)) return false
+      seen.add(d); return true
+    })
+
+    const blocks = []
+    for (let i = 0; i < unique.length; i++) {
+      const m = unique[i]
+      const dayName = m[1].toUpperCase()
+      const start = m.index + m[0].length
+      const end = i + 1 < unique.length ? unique[i+1].index : cleanText.length
+      const body = cleanText.substring(start, end).replace(/={3,}/g,'').trim()
+      if (body.length > 30) {
+        blocks.push({ dayName, dayNum: dayMap[dayName]||1, body, macros: extractMacros(body) })
+      }
+    }
+    return blocks
+  }
+
   async function elabora() {
     setError('')
     if (rawText.trim().length < 20) { setError('Incolla il testo del piano alimentare.'); return }
     setLoading(true)
-    try {
-      const r = await fetch('/api/parse-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ textContent: rawText })
-      })
+    setProgress({ current: 0, total: 0, label: 'Analisi struttura...' })
 
-      // Leggi prima come testo per gestire errori non-JSON di Vercel
-      const text = await r.text()
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch(e) {
-        // Vercel ha restituito un errore non-JSON (es. timeout, crash)
-        if (text.includes('FUNCTION_INVOCATION_TIMEOUT') || text.includes('timeout')) {
-          throw new Error('Elaborazione troppo lunga. Prova con un piano più corto o dividi in più parti.')
-        }
-        throw new Error('Errore server. Riprova tra qualche secondo.')
+    try {
+      // Dividi in giorni lato frontend
+      const dayBlocks = splitByDay(rawText)
+
+      if (dayBlocks.length === 0) {
+        // Piano senza giorni espliciti — una sola chiamata
+        setProgress({ current: 0, total: 1, label: 'Elaborazione piano...' })
+        const r = await fetch('/api/parse-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ textContent: rawText })
+        })
+        const text = await r.text()
+        let data
+        try { data = JSON.parse(text) } catch(e) { throw new Error('Errore server. Riprova tra qualche secondo.') }
+        if (!r.ok) throw new Error(data.error || 'Errore elaborazione')
+        if (!data.plan) throw new Error('Piano non riconosciuto. Riprova.')
+        const plan = data.plan
+        setParsedPlan(plan)
+        setPlanTitle(plan.titolo || 'Piano alimentare')
+        setPlanNotes(plan.note_generali || '')
+        setTargets({ kcal_target: plan.kcal_totali, protein_target_g: plan.proteine_g, carbs_target_g: plan.carboidrati_g, fat_target_g: plan.grassi_g })
+        setProgress({ current: 1, total: 1, label: 'Completato!' })
+        setStep(2)
+        return
       }
 
-      if (!r.ok) throw new Error(data.error || 'Errore elaborazione')
-      if (!data.plan) throw new Error('Piano non riconosciuto. Riprova.')
+      // Piano con giorni — elabora UN GIORNO ALLA VOLTA
+      setProgress({ current: 0, total: dayBlocks.length, label: `0 / ${dayBlocks.length} giorni` })
+      const varianti = []
 
-      const plan = data.plan
+      for (let i = 0; i < dayBlocks.length; i++) {
+        const db = dayBlocks[i]
+        const dayLabel = db.dayName.charAt(0) + db.dayName.slice(1).toLowerCase()
+        setProgress({ current: i, total: dayBlocks.length, label: `${dayLabel}...` })
+
+        const r = await fetch('/api/parse-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
+        })
+        const text = await r.text()
+        let data
+        try { data = JSON.parse(text) } catch(e) { continue } // salta giorni con errore
+        if (data.pasti?.length > 0) {
+          const macros = db.macros || {}
+          const totKcal = data.pasti.reduce((s,p) => (p.alimenti||[]).reduce((ss,a) => ss+(a.kcal||0), s), 0)
+          varianti.push({
+            nome: dayLabel,
+            kcal: macros.kcal || totKcal || 2000,
+            proteine_g: macros.proteine_g || 0,
+            carboidrati_g: macros.carboidrati_g || 0,
+            grassi_g: macros.grassi_g || 0,
+            pasti: data.pasti,
+          })
+        }
+        setProgress({ current: i+1, total: dayBlocks.length, label: `${i+1} / ${dayBlocks.length} giorni` })
+      }
+
+      if (varianti.length === 0) throw new Error('Nessun giorno elaborato. Controlla il formato del piano.')
+
+      // Calcola macro medi
+      const avg = (arr, key) => Math.round(arr.reduce((s,v) => s+(v[key]||0), 0) / arr.length)
+      const plan = {
+        titolo: 'Piano alimentare',
+        kcal_totali: avg(varianti, 'kcal'),
+        proteine_g: avg(varianti, 'proteine_g'),
+        carboidrati_g: avg(varianti, 'carboidrati_g'),
+        grassi_g: avg(varianti, 'grassi_g'),
+        diet_type: 'lineare',
+        note_generali: '',
+        varianti,
+        integratori: [],
+      }
+
       setParsedPlan(plan)
-      setPlanTitle(plan.titolo || 'Piano alimentare')
-      setPlanNotes(plan.note_generali || '')
-      setTargets({
-        kcal_target: plan.kcal_totali || 2000,
-        protein_target_g: plan.proteine_g || 150,
-        carbs_target_g: plan.carboidrati_g || 200,
-        fat_target_g: plan.grassi_g || 65,
-      })
+      setPlanTitle(plan.titolo)
+      setPlanNotes('')
+      setTargets({ kcal_target: plan.kcal_totali, protein_target_g: plan.proteine_g, carbs_target_g: plan.carboidrati_g, fat_target_g: plan.grassi_g })
+      setProgress({ current: dayBlocks.length, total: dayBlocks.length, label: 'Completato!' })
       setStep(2)
+
     } catch(e) { setError(e.message) }
     setLoading(false)
   }
@@ -195,10 +288,23 @@ export default function ImportaPiano() {
             <div style={{fontSize:11,color:'#888780',marginTop:6}}>{rawText.length} caratteri</div>
           </div>
 
+          {/* PROGRESS BAR ELABORAZIONE */}
+          {loading && progress.total > 0 && (
+            <div style={{marginBottom:10,background:'white',borderRadius:10,padding:'12px',border:'0.5px solid #E0DDD6'}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888780',marginBottom:6}}>
+                <span>📅 {progress.label}</span>
+                <span style={{fontWeight:600,color:'#D4570A'}}>{progress.current}/{progress.total}</span>
+              </div>
+              <div style={{height:6,background:'#E0DDD6',borderRadius:4}}>
+                <div style={{height:6,background:'#D4570A',borderRadius:4,width:`${progress.total>0?Math.round(progress.current/progress.total*100):0}%`,transition:'width 0.4s'}}/>
+              </div>
+            </div>
+          )}
+
           <button onClick={elabora} disabled={loading||rawText.trim().length<20} style={{...s.btn,width:'100%',justifyContent:'center',padding:'14px',fontSize:14,opacity:rawText.trim().length<20?0.5:1}}>
             {loading ? <>
               <i className="ti ti-loader-2" style={{fontSize:15}}/>
-              Elaborazione in corso... (~30 secondi)
+              {progress.total > 1 ? `Elaboro ${progress.label}` : 'Elaborazione...'}
             </> : <>
               <i className="ti ti-wand" style={{fontSize:15}}/>
               Elabora piano
