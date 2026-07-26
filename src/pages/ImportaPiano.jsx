@@ -100,23 +100,37 @@ export default function ImportaPiano() {
       const dayBlocks = splitByDay(rawText)
 
       if (dayBlocks.length === 0) {
-        // Nessun giorno trovato — manda tutto all'API in una chiamata
+        // Nessun giorno trovato — piano giornaliero singolo, usa parse-day
         setProgress({ current: 0, total: 1, label: 'Elaborazione piano...' })
-        const r = await fetch('/api/parse-plan', {
+        const r = await fetch('/api/parse-day', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ textContent: rawText })
+          body: JSON.stringify({ dayText: rawText, macros: null })
         })
         const txt = await r.text()
-        let data
-        try { data = JSON.parse(txt) } catch(e) { throw new Error('Errore server. Riprova.') }
-        if (!r.ok) throw new Error(data.error || 'Errore elaborazione')
-        if (!data.plan) throw new Error('Piano non riconosciuto. Riprova.')
-        const plan = data.plan
+        let dayData = { pasti: [] }
+        try { dayData = JSON.parse(txt) } catch(e) {}
+
+        if (!dayData.pasti?.length) throw new Error('Piano non riconosciuto. Controlla il formato.')
+
+        // Estrai macro dal testo
+        const macroMatch = rawText.match(/(\d+)\s*kcal[^\n]*P[:\s]*(\d+)g[^\n]*C[:\s]*(\d+)g[^\n]*G[:\s]*(\d+)g/i)
+        const kcal = macroMatch ? parseInt(macroMatch[1]) : 2000
+        const prot = macroMatch ? parseInt(macroMatch[2]) : 150
+        const carb = macroMatch ? parseInt(macroMatch[3]) : 200
+        const fat  = macroMatch ? parseInt(macroMatch[4]) : 65
+
+        const plan = {
+          titolo: 'Piano alimentare',
+          kcal_totali: kcal, proteine_g: prot, carboidrati_g: carb, grassi_g: fat,
+          diet_type: 'lineare', note_generali: '',
+          varianti: [{ nome: 'Piano giornaliero', kcal, proteine_g: prot, carboidrati_g: carb, grassi_g: fat, pasti: dayData.pasti }],
+          integratori: [],
+        }
         setParsedPlan(plan)
-        setPlanTitle(plan.titolo || 'Piano alimentare')
-        setPlanNotes(plan.note_generali || '')
-        setTargets({ kcal_target: plan.kcal_totali, protein_target_g: plan.proteine_g, carbs_target_g: plan.carboidrati_g, fat_target_g: plan.grassi_g })
+        setPlanTitle(plan.titolo)
+        setPlanNotes('')
+        setTargets({ kcal_target: kcal, protein_target_g: prot, carbs_target_g: carb, fat_target_g: fat })
         setProgress({ current: 1, total: 1, label: 'Completato!' })
         setStep(2)
         return
@@ -133,16 +147,32 @@ export default function ImportaPiano() {
 
         let data = { pasti: [] }
         try {
+          // Prima chiamata — warm up se necessario
           const r = await fetch('/api/parse-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ dayText: db.body, macros: db.macros })
           })
           const txt = await r.text()
-          try {
-            const parsed = JSON.parse(txt)
-            if (parsed?.pasti?.length) data = parsed
-          } catch(e) {}
+          let parsed = null
+          try { parsed = JSON.parse(txt) } catch(e) {}
+          
+          if (parsed?.pasti?.length) {
+            data = parsed
+          } else {
+            // Riprova dopo 800ms (cold start Vercel)
+            await new Promise(res => setTimeout(res, 800))
+            const r2 = await fetch('/api/parse-day', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dayText: db.body, macros: db.macros })
+            })
+            const txt2 = await r2.text()
+            try {
+              const parsed2 = JSON.parse(txt2)
+              if (parsed2?.pasti?.length) data = parsed2
+            } catch(e) {}
+          }
         } catch(e) { continue }
         if (data.pasti?.length > 0) {
           const macros = db.macros || {}
@@ -157,6 +187,8 @@ export default function ImportaPiano() {
           })
         }
         setProgress({ current: i+1, total: dayBlocks.length, label: `${i+1} / ${dayBlocks.length} giorni` })
+        // Piccola pausa tra chiamate per evitare rate limit
+        if (i < dayBlocks.length - 1) await new Promise(res => setTimeout(res, 300))
       }
 
       if (varianti.length === 0) throw new Error('Nessun giorno elaborato. Controlla il formato del piano.')
