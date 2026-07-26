@@ -45,38 +45,50 @@ export default function ImportaPiano() {
 
   // Dividi il testo in blocchi per giorno
   function splitByDay(text) {
-    const dayNames = ['LUNEDÌ','MARTEDÌ','MERCOLEDÌ','GIOVEDÌ','VENERDÌ','SABATO','DOMENICA']
     const dayMap = { 'LUNEDÌ':1,'MARTEDÌ':2,'MERCOLEDÌ':3,'GIOVEDÌ':4,'VENERDÌ':5,'SABATO':6,'DOMENICA':7 }
+    const dayKeys = Object.keys(dayMap)
 
-    // Tronca prima del riepilogo
-    const cleanText = text.split(/RIEPILOGO|FONTI PROTEICHE|CONSIGLI PRATICI|={20,}\s*\n[A-Z\s]+\s*\n={20,}\s*\nGiorno/i)[0]
+    // Tronca prima del riepilogo/sezioni extra
+    let clean = text
+    for (const stop of ['RIEPILOGO SETTIMANALE','RIEPILOGO','FONTI PROTEICHE','CONSIGLI PRATICI']) {
+      const idx = clean.toUpperCase().indexOf(stop)
+      if (idx > 100) { clean = clean.substring(0, idx); break }
+    }
 
-    // Trova tutte le occorrenze dei giorni
-    const pattern = /(?:={3,}[^\n]*\n)?(LUNEDÌ|MARTEDÌ|MERCOLEDÌ|GIOVEDÌ|VENERDÌ|SABATO|DOMENICA)(?:\s*\n={3,})?/gi
-    const matches = [...cleanText.matchAll(pattern)]
+    // Trova tutte le posizioni dei giorni (nome giorno preceduto da = o da inizio riga)
+    const positions = []
+    for (const day of dayKeys) {
+      // Cerca il giorno come parola intera, preceduto da = o newline o inizio testo
+      const re = new RegExp('(?:={3,}[^\n]*\n)?' + day + '(?:\s*\n={3,})?', 'gi')
+      let m
+      while ((m = re.exec(clean)) !== null) {
+        positions.push({ dayName: day, index: m.index, len: m[0].length })
+      }
+    }
 
-    // Deduplicati
+    // Ordina per posizione e deduplicata (primo occorrenza di ogni giorno)
+    positions.sort((a, b) => a.index - b.index)
     const seen = new Set()
-    const unique = matches.filter(m => {
-      const d = m[1].toUpperCase()
-      if (seen.has(d)) return false
-      seen.add(d); return true
+    const unique = positions.filter(p => {
+      if (seen.has(p.dayName)) return false
+      seen.add(p.dayName); return true
     })
 
+    if (unique.length === 0) return []
+
+    // Estrai blocchi
     const blocks = []
     for (let i = 0; i < unique.length; i++) {
-      const m = unique[i]
-      const dayName = m[1].toUpperCase()
-      const start = m.index + m[0].length
-      const end = i + 1 < unique.length ? unique[i+1].index : cleanText.length
-      const body = cleanText.substring(start, end).replace(/={3,}/g,'').trim()
+      const { dayName, index, len } = unique[i]
+      const start = index + len
+      const end = i + 1 < unique.length ? unique[i+1].index : clean.length
+      const body = clean.substring(start, end).replace(/={3,}/g, '').trim()
       if (body.length > 30) {
         blocks.push({ dayName, dayNum: dayMap[dayName]||1, body, macros: extractMacros(body) })
       }
     }
     return blocks
   }
-
   async function elabora() {
     setError('')
     if (rawText.trim().length < 20) { setError('Incolla il testo del piano alimentare.'); return }
@@ -88,16 +100,16 @@ export default function ImportaPiano() {
       const dayBlocks = splitByDay(rawText)
 
       if (dayBlocks.length === 0) {
-        // Piano senza giorni espliciti — una sola chiamata
+        // Nessun giorno trovato — manda tutto all'API in una chiamata
         setProgress({ current: 0, total: 1, label: 'Elaborazione piano...' })
         const r = await fetch('/api/parse-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ textContent: rawText })
         })
-        const text = await r.text()
+        const txt = await r.text()
         let data
-        try { data = JSON.parse(text) } catch(e) { throw new Error('Errore server. Riprova tra qualche secondo.') }
+        try { data = JSON.parse(txt) } catch(e) { throw new Error('Errore server. Riprova.') }
         if (!r.ok) throw new Error(data.error || 'Errore elaborazione')
         if (!data.plan) throw new Error('Piano non riconosciuto. Riprova.')
         const plan = data.plan
@@ -124,9 +136,19 @@ export default function ImportaPiano() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
         })
-        const text = await r.text()
+        const txt = await r.text()
         let data
-        try { data = JSON.parse(text) } catch(e) { continue } // salta giorni con errore
+        try { data = JSON.parse(txt) } catch(e) {
+          // Riprova una volta
+          await new Promise(res => setTimeout(res, 1000))
+          const r2 = await fetch('/api/parse-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
+          })
+          const txt2 = await r2.text()
+          try { data = JSON.parse(txt2) } catch(e2) { continue }
+        }
         if (data.pasti?.length > 0) {
           const macros = db.macros || {}
           const totKcal = data.pasti.reduce((s,p) => (p.alimenti||[]).reduce((ss,a) => ss+(a.kcal||0), s), 0)
