@@ -122,7 +122,7 @@ export default function ImportaPiano() {
         return
       }
 
-      // Piano con giorni — elabora UN GIORNO ALLA VOLTA
+      // Piano con giorni — elabora UN GIORNO ALLA VOLTA direttamente con Anthropic
       setProgress({ current: 0, total: dayBlocks.length, label: `0 / ${dayBlocks.length} giorni` })
       const varianti = []
 
@@ -131,32 +131,19 @@ export default function ImportaPiano() {
         const dayLabel = db.dayName.charAt(0) + db.dayName.slice(1).toLowerCase()
         setProgress({ current: i, total: dayBlocks.length, label: `${dayLabel}...` })
 
-        const r = await fetch('/api/parse-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
-        })
-        const txt = await r.text()
-        let data
+        let data = { pasti: [] }
         try {
-          data = JSON.parse(txt)
-        } catch(e) {
-          // Riprova una volta
-          await new Promise(res => setTimeout(res, 1000))
-          const r2 = await fetch('/api/parse-plan', {
+          const r = await fetch('/api/parse-day', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
+            body: JSON.stringify({ dayText: db.body, macros: db.macros })
           })
-          const txt2 = await r2.text()
-          try { data = JSON.parse(txt2) } catch(e2) {
-            setError(`Errore su ${db.dayName}: risposta server non valida. Dettaglio: ${txt2.substring(0,100)}`)
-            continue
-          }
-        }
-        if (!data.pasti?.length) {
-          console.warn(`${db.dayName}: 0 pasti. Risposta:`, data)
-        }
+          const txt = await r.text()
+          try {
+            const parsed = JSON.parse(txt)
+            if (parsed?.pasti?.length) data = parsed
+          } catch(e) {}
+        } catch(e) { continue }
         if (data.pasti?.length > 0) {
           const macros = db.macros || {}
           const totKcal = data.pasti.reduce((s,p) => (p.alimenti||[]).reduce((ss,a) => ss+(a.kcal||0), s), 0)
