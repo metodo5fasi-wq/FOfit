@@ -138,7 +138,9 @@ export default function ImportaPiano() {
         })
         const txt = await r.text()
         let data
-        try { data = JSON.parse(txt) } catch(e) {
+        try {
+          data = JSON.parse(txt)
+        } catch(e) {
           // Riprova una volta
           await new Promise(res => setTimeout(res, 1000))
           const r2 = await fetch('/api/parse-plan', {
@@ -147,7 +149,13 @@ export default function ImportaPiano() {
             body: JSON.stringify({ mode: 'parse_day', dayName: db.dayName, dayText: db.body, macros: db.macros })
           })
           const txt2 = await r2.text()
-          try { data = JSON.parse(txt2) } catch(e2) { continue }
+          try { data = JSON.parse(txt2) } catch(e2) {
+            setError(`Errore su ${db.dayName}: risposta server non valida. Dettaglio: ${txt2.substring(0,100)}`)
+            continue
+          }
+        }
+        if (!data.pasti?.length) {
+          console.warn(`${db.dayName}: 0 pasti. Risposta:`, data)
         }
         if (data.pasti?.length > 0) {
           const macros = db.macros || {}
