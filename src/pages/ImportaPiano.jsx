@@ -44,7 +44,20 @@ export default function ImportaPiano() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ textContent: rawText })
       })
-      const data = await r.json()
+
+      // Leggi prima come testo per gestire errori non-JSON di Vercel
+      const text = await r.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch(e) {
+        // Vercel ha restituito un errore non-JSON (es. timeout, crash)
+        if (text.includes('FUNCTION_INVOCATION_TIMEOUT') || text.includes('timeout')) {
+          throw new Error('Elaborazione troppo lunga. Prova con un piano più corto o dividi in più parti.')
+        }
+        throw new Error('Errore server. Riprova tra qualche secondo.')
+      }
+
       if (!r.ok) throw new Error(data.error || 'Errore elaborazione')
       if (!data.plan) throw new Error('Piano non riconosciuto. Riprova.')
 
