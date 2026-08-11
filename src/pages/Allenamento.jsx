@@ -205,8 +205,11 @@ export default function Allenamento() {
   }
 
   // Trova il log di oggi per un esercizio + numero serie
-  function getLog(exerciseName, setNumber) {
-    return logs.find(l => l.exercise_name === exerciseName && l.set_number === setNumber)
+  function getLog(ex, setNumber) {
+    return logs.find(l =>
+      l.set_number === setNumber &&
+      (l.exercise_id ? l.exercise_id === ex.id : l.exercise_name === ex.exercise_name && !logs.some(ll => ll.exercise_id === ex.id))
+    )
   }
 
   const [inputValues, setInputValues] = useState({}) // { 'exerciseName-setNum-kg': '80', ... }
@@ -223,17 +226,17 @@ export default function Allenamento() {
   }
 
   async function toggleSet(ex, setNumber) {
-    const existing = getLog(ex.exercise_name, setNumber)
+    const existing = getLog(ex, setNumber)
     if (existing) {
       await supabase.from('workout_logs').delete().eq('id', existing.id)
       setLogs(prev => prev.filter(l => l.id !== existing.id))
     } else {
-      // Prendi i valori già inseriti nei campi input (se presenti)
-      const weightVal = inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
-      const repsVal = inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
-      const noteVal = inputValues[`${ex.exercise_name}-note`] || null
+      const weightVal = inputValues[`${ex.id}-${setNumber}-weight_kg`] || inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
+      const repsVal = inputValues[`${ex.id}-${setNumber}-reps_done`] || inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
+      const noteVal = inputValues[`${ex.id}-note`] || inputValues[`${ex.id}-note`] || null
       const { data, error } = await supabase.from('workout_logs').insert({
         client_id: profile.id,
+        exercise_id: ex.id,
         exercise_name: ex.exercise_name,
         log_date: today,
         set_number: setNumber,
@@ -247,7 +250,7 @@ export default function Allenamento() {
 
   function updateNote(ex, note) {
     // Aggiorna subito lo stato locale — nessun lag
-    setInputValues(prev => ({...prev, [`${ex.exercise_name}-note`]: note}))
+    setInputValues(prev => ({...prev, [`${ex.id}-note`]: note}))
     setLogs(prev => prev.map(l =>
       l.exercise_name === ex.exercise_name ? {...l, exercise_note: note} : l
     ))
@@ -274,7 +277,7 @@ export default function Allenamento() {
   }
 
   async function updateWeight(ex, setNumber, weight) {
-    const existing = getLog(ex.exercise_name, setNumber)
+    const existing = getLog(ex, setNumber)
     const normalized = typeof weight === 'string' ? weight.replace(',', '.') : weight
     const weightNum = normalized === '' ? null : parseFloat(normalized)
     if (existing) {
@@ -285,7 +288,7 @@ export default function Allenamento() {
   }
 
   async function updateReps(ex, setNumber, reps) {
-    const existing = getLog(ex.exercise_name, setNumber)
+    const existing = getLog(ex, setNumber)
     const repsNum = reps === '' ? null : parseInt(reps)
     if (existing) {
       await supabase.from('workout_logs').update({ reps_done: repsNum }).eq('id', existing.id)
@@ -390,7 +393,7 @@ export default function Allenamento() {
           const prog = progressionTracking[ex.id]
           const activeSets = prog?.targetSets || ex.sets || 0
           const setsArray = Array.from({length: activeSets}, (_,i) => i+1)
-          const completedSets = setsArray.filter(n => getLog(ex.exercise_name, n)).length
+          const completedSets = setsArray.filter(n => getLog(ex, n)).length
 
           return (
             <div key={ex.id} style={s.card}>
@@ -482,7 +485,7 @@ export default function Allenamento() {
                   {/* SERIE CON CHECKBOX E PESO */}
                   <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
                     {setsArray.map(setNum => {
-                      const log = getLog(ex.exercise_name, setNum)
+                      const log = getLog(ex, setNum)
                       return (
                         <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
                           <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
