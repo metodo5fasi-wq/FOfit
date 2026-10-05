@@ -31,6 +31,7 @@ import AdminPanel from './pages/AdminPanel'
 import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
 import DettaglioCliente from './pages/DettaglioCliente'
+import Notifiche from './pages/Notifiche'
 import Layout from './components/Layout'
 
 // ─────────────────────────────────────────────────────────
@@ -214,6 +215,7 @@ export default function App() {
             <Route path="spesa" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <ListaSpesa />} />
             <Route path="ai" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <AssistenteAI />} />
             <Route path="calendario" element={<Calendario />} />
+            <Route path="notifiche" element={<Notifiche />} />
             <Route path="allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <Allenamento />} />
             <Route path="storico-allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <StoricoAllenamento />} />
             <Route path="importa-allenamento" element={!profile ? null : profile.role === 'admin' ? <ImportaAllenamento /> : <Navigate to="/" />} />
