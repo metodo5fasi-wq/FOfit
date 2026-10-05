@@ -140,19 +140,27 @@ export default function Calendario() {
 
   async function notifyAdmin(date, slot) {
     try {
-      // Trova l'admin
       const { data: admins } = await supabase.from('profiles').select('id').eq('role','admin').limit(1)
       if (!admins?.[0]) return
       const dateLabel = date.toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' })
+      const adminId = admins[0].id
+      // Notifica push
       await fetch('/api/push-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientId: admins[0].id,
+          clientId: adminId,
           title: '📅 Nuova prenotazione chiamata',
           body: `${profile.full_name} ha prenotato per ${dateLabel} alle ${slot}`,
           url: '/admin'
         })
+      })
+      // Notifica DB
+      await supabase.from('notifications').insert({
+        client_id: adminId,
+        type: 'call_booking',
+        title: '📅 Nuova prenotazione chiamata',
+        body: `${profile.full_name} ha prenotato una chiamata per ${dateLabel} alle ${slot}`,
       })
     } catch(e) { /* silenzioso */ }
   }
