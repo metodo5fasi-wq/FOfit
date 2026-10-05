@@ -11,6 +11,8 @@ const NAV_CLIENT = [
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#4A90D4' },
   { to:'/messaggi', icon:'ti-message-2', label:'Messaggi', color:'#D4570A' },
   { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
+  { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#4A90D4' },
+  { to:'/notifiche', icon:'ti-bell', label:'Notifiche', color:'#E8A020' },
   { to:'/documenti', icon:'ti-folder', label:'Documenti', color:'#3B8C5A' },
 ]
 
@@ -208,6 +210,14 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
+  // Controlla abbonamento scaduto per clienti
+  const isClient = profile?.role !== 'admin'
+  const subEnd = profile?.subscription_end
+  const subBlocked = isClient && subEnd && new Date(subEnd) < new Date()
+  const installBlocked = isClient && profile?.payment_type === 'rate' &&
+    profile?.installments_paid < profile?.installments &&
+    profile?.installments_paid !== null
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
@@ -217,6 +227,33 @@ export default function Layout() {
   async function handleLogout() {
     await supabase.auth.signOut()
     navigate('/login')
+  }
+
+  // Schermata blocco abbonamento
+  if (subBlocked || installBlocked) {
+    return (
+      <div style={{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--bg)',padding:24,textAlign:'center'}}>
+        <div style={{width:80,height:80,borderRadius:'50%',background:'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>
+          <i className="ti ti-lock" style={{fontSize:36,color:'#E24B4A'}}/>
+        </div>
+        <div style={{fontSize:22,fontWeight:800,color:'var(--text)',marginBottom:8}}>
+          {installBlocked ? 'Rata non saldata' : 'Abbonamento scaduto'}
+        </div>
+        <div style={{fontSize:14,color:'var(--text-muted)',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
+          {installBlocked
+            ? 'Non hai saldato una o più rate del tuo abbonamento. Contatta il coach per sbloccare l\'accesso.'
+            : 'Il tuo abbonamento è scaduto. Contatta il coach per rinnovarlo e tornare ad accedere all\'app.'}
+        </div>
+        <div style={{background:'var(--bg-card)',borderRadius:12,padding:'16px 20px',border:'0.5px solid var(--border)',marginBottom:16}}>
+          <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>Per assistenza contatta</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#D4570A'}}>Federico Obinu — FOfit Coach</div>
+        </div>
+        <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+          style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+          Esci dall'account
+        </button>
+      </div>
+    )
   }
 
   return (
