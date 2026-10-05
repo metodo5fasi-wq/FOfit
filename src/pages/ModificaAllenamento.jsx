@@ -100,6 +100,11 @@ export default function ModificaAllenamento() {
   const [addingExToDay, setAddingExToDay] = useState(null)
   const [newEx, setNewEx] = useState({ ...EMPTY_EX })
   const [expandedEx, setExpandedEx] = useState(null)
+  const [allExpanded, setAllExpanded] = useState(false)
+  const [searchEx, setSearchEx] = useState('')
+  const [dragId, setDragId] = useState(null)
+  const [dragOverId, setDragOverId] = useState(null)
+  const [showCopyModal, setShowCopyModal] = useState(null) // exercise id to copy
 
   useEffect(() => { if (planId) fetchPlan() }, [planId])
 
@@ -144,6 +149,60 @@ export default function ModificaAllenamento() {
     setExercises([...otherExs, ...newDayExs])
     setDirty(true)
   }
+
+  function duplicateEx(id) {
+    const ex = exercises.find(e => e.id === id)
+    if (!ex) return
+    const newE = {
+      ...ex,
+      id: 'new-' + Date.now(),
+      order_index: dayExercises.length,
+      _isNew: true,
+    }
+    setExercises(prev => [...prev, newE])
+    setDirty(true)
+  }
+
+  function copyExToDay(id, targetDay) {
+    const ex = exercises.find(e => e.id === id)
+    if (!ex) return
+    const targetDayExs = exercises.filter(e => e.day_label === targetDay)
+    const newE = {
+      ...ex,
+      id: 'new-' + Date.now(),
+      day_label: targetDay,
+      order_index: targetDayExs.length,
+      _isNew: true,
+    }
+    setExercises(prev => [...prev, newE])
+    setShowCopyModal(null)
+    setDirty(true)
+  }
+
+  // Drag and drop handlers
+  function handleDragStart(id) { setDragId(id) }
+  function handleDragOver(e, id) { e.preventDefault(); setDragOverId(id) }
+  function handleDrop(targetId) {
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return }
+    const dayExs = exercises.filter(e => e.day_label === selectedDay)
+    const fromIdx = dayExs.findIndex(e => e.id === dragId)
+    const toIdx = dayExs.findIndex(e => e.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDragId(null); setDragOverId(null); return }
+    const newDayExs = [...dayExs]
+    const [moved] = newDayExs.splice(fromIdx, 1)
+    newDayExs.splice(toIdx, 0, moved)
+    const otherExs = exercises.filter(e => e.day_label !== selectedDay)
+    setExercises([...otherExs, ...newDayExs])
+    setDragId(null); setDragOverId(null)
+    setDirty(true)
+  }
+  function handleDragEnd() { setDragId(null); setDragOverId(null) }
+
+  // Filtra esercizi per ricerca
+  const filteredDayExercises = dayExercises.filter(ex =>
+    !searchEx || ex.exercise_name?.toLowerCase().includes(searchEx.toLowerCase()) ||
+    ex.muscle_group?.toLowerCase().includes(searchEx.toLowerCase())
+  )
 
   function addExercise() {
     if (!newEx.exercise_name.trim()) return
@@ -297,26 +356,85 @@ export default function ModificaAllenamento() {
           </div>
         )}
 
-        {dayExercises.map((ex, ei) => {
-          const isExpanded = expandedEx === ex.id
+        {/* BARRA RICERCA + COMPATTA TUTTI */}
+        {dayExercises.length > 2 && (
+          <div style={{display:'flex',gap:8,marginBottom:8,alignItems:'center'}}>
+            <div style={{flex:1,position:'relative'}}>
+              <i className="ti ti-search" style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>
+              <input
+                value={searchEx}
+                onChange={e=>setSearchEx(e.target.value)}
+                placeholder="Cerca esercizio..."
+                style={{...s.input,paddingLeft:30,fontSize:12,height:34}}
+              />
+              {searchEx && <button onClick={()=>setSearchEx('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:14}}>✕</button>}
+            </div>
+            <button onClick={()=>{
+              if (allExpanded) { setExpandedEx(null); setAllExpanded(false) }
+              else { setExpandedEx('all'); setAllExpanded(true) }
+            }} style={{...s.btnGray,padding:'6px 10px',fontSize:11,whiteSpace:'nowrap'}}>
+              {allExpanded ? '⊖ Collassa' : '⊕ Espandi tutti'}
+            </button>
+          </div>
+        )}
+
+        {filteredDayExercises.map((ex, ei) => {
+          const isExpanded = expandedEx === ex.id || expandedEx === 'all'
           return (
-            <div key={ex.id} style={s.card}>
+            <div key={ex.id}
+              draggable
+              onDragStart={()=>handleDragStart(ex.id)}
+              onDragOver={e=>handleDragOver(e,ex.id)}
+              onDrop={()=>handleDrop(ex.id)}
+              onDragEnd={handleDragEnd}
+              style={{...s.card,
+                opacity: dragId===ex.id ? 0.4 : 1,
+                border: dragOverId===ex.id ? '1.5px solid #D4570A' : '0.5px solid #E0DDD6',
+                transition:'border 0.15s',
+              }}>
               {/* HEADER ESERCIZIO */}
-              <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',cursor:'pointer'}} onClick={()=>setExpandedEx(isExpanded?null:ex.id)}>
-                <div style={{width:34,height:34,borderRadius:9,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <i className="ti ti-barbell" style={{fontSize:16,color:'#D4570A'}}/>
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',cursor:'pointer'}} onClick={()=>{
+                if (expandedEx==='all') { setAllExpanded(false); setExpandedEx(ex.id) }
+                else setExpandedEx(isExpanded?null:ex.id)
+              }}>
+                {/* Drag handle + numero */}
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 4px',color:'#C0BDB8',flexShrink:0}} title="Trascina per riordinare">
+                  <i className="ti ti-grip-vertical" style={{fontSize:16}}/>
+                  <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
+                </div>
+                <div style={{width:32,height:32,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <i className="ti ti-barbell" style={{fontSize:15,color:'#D4570A'}}/>
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut ? ` · TUT ${ex.tut}` : ''}{ex.weekly_targets?.length ? ` · 📅 ${ex.weekly_targets.length} sett.` : ''}</div>
+                  <div style={{fontSize:10,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut?` · TUT ${ex.tut}`:''}{ex.weekly_targets?.length?` · 📅 ${ex.weekly_targets.length}sett`:''}</div>
                 </div>
-                <div style={{display:'flex',gap:4,flexShrink:0}}>
-                  <button onClick={e=>{e.stopPropagation();moveEx(ex.id,'up')}} style={{...s.btnGray,padding:'4px 7px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:12}}/></button>
-                  <button onClick={e=>{e.stopPropagation();moveEx(ex.id,'down')}} style={{...s.btnGray,padding:'4px 7px'}} title="Giù"><i className="ti ti-arrow-down" style={{fontSize:12}}/></button>
-                  <button onClick={e=>{e.stopPropagation();removeEx(ex.id)}} style={{...s.btnDanger,padding:'4px 7px'}}><i className="ti ti-trash" style={{fontSize:12}}/></button>
+                <div style={{display:'flex',gap:3,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                  <button onClick={()=>moveEx(ex.id,'up')} style={{...s.btnGray,padding:'3px 6px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:11}}/></button>
+                  <button onClick={()=>moveEx(ex.id,'down')} style={{...s.btnGray,padding:'3px 6px'}} title="Giù"><i className="ti ti-arrow-down" style={{fontSize:11}}/></button>
+                  <button onClick={()=>duplicateEx(ex.id)} style={{...s.btnGray,padding:'3px 6px'}} title="Duplica"><i className="ti ti-copy" style={{fontSize:11}}/></button>
+                  {days.length > 1 && (
+                    <button onClick={()=>setShowCopyModal(showCopyModal===ex.id?null:ex.id)} style={{...s.btnGray,padding:'3px 6px'}} title="Copia su altro giorno"><i className="ti ti-transfer" style={{fontSize:11}}/></button>
+                  )}
+                  <button onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 6px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                 </div>
-                <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:14,color:'#888780'}}/>
+                <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:13,color:'#888780',flexShrink:0}}/>
               </div>
+
+              {/* MODAL COPIA SU ALTRO GIORNO */}
+              {showCopyModal===ex.id && (
+                <div style={{padding:'8px 12px 10px',borderTop:'0.5px solid #F5F3EF',background:'#FEF0E7'}}>
+                  <div style={{fontSize:11,fontWeight:600,color:'#D4570A',marginBottom:6}}>Copia su giorno:</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {days.filter(d=>d!==selectedDay).map(d=>(
+                      <button key={d} onClick={()=>copyExToDay(ex.id,d)}
+                        style={{...s.btnGray,padding:'5px 10px',fontSize:11,fontWeight:600,background:'white',color:'#D4570A',borderColor:'#D4570A'}}>
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* FORM MODIFICA */}
               {isExpanded && (
