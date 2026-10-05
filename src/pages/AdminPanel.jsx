@@ -1912,6 +1912,14 @@ function ReportTab({ clients, clientStats, onRefresh }) {
   async function markRead(reportId) {
     await supabase.from('workout_reports').update({ read_by_coach: true }).eq('id', reportId)
     setReports(p => p.map(r => r.id === reportId ? { ...r, read_by_coach: true } : r))
+    // Rimuovi badge newReport dalla lista clienti
+    const rep = reports.find(r => r.id === reportId)
+    if (rep) {
+      setClientStats(prev => ({
+        ...prev,
+        [rep.client_id]: { ...prev[rep.client_id], newReport: null }
+      }))
+    }
   }
 
   const nonLetti = reports.filter(r => !r.read_by_coach)
