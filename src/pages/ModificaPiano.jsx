@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { searchFoods } from '../data/foodDatabase.js'
 
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
 const MEAL_TYPES = ['colazione','spuntino','pranzo','pre-workout','merenda','cena']
@@ -63,9 +64,6 @@ export default function ModificaPiano() {
 
       if (error) throw error
       if (!foods?.length) { alert('Nessun alimento da sistemare!'); setFixingMacros(false); return }
-
-      // Importa il database locale
-      const { searchFoods } = await import('../data/foodDatabase.js')
 
       let fixed = 0
       for (const food of foods) {
