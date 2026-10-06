@@ -61,7 +61,7 @@ const STEPS = [
 ]
 
 export default function Onboarding() {
-  const { profile, markOnboarded } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const current = STEPS[step]
@@ -72,8 +72,7 @@ export default function Onboarding() {
   async function finish() {
     // Salva in localStorage che l'onboarding è stato completato
     localStorage.setItem(`fofit_onboarded_${profile.id}`, 'true')
-    markOnboarded()
-    navigate('/', { replace: true })
+    navigate('/')
   }
 
   function next() {

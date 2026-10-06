@@ -107,30 +107,23 @@ export default function AssistenteAI() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
 
   async function loadContext() {
-    const today = new Date().toISOString().split('T')[0]
+    const { data: planData } = await supabase.from('meal_plans').select('*')
+      .eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()
+    const { data: progress } = await supabase.from('progress_entries').select('*')
+      .eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle()
 
-    const [planRes, progressRes, anamnesiRes, workoutRes, diaryRes, checkinRes] = await Promise.all([
-      supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
-      supabase.from('progress_entries').select('*').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('anamnesi').select('*').eq('client_id', profile.id).maybeSingle(),
-      supabase.from('workout_plans').select('id,title').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
-      supabase.from('diary_entries').select('*').eq('client_id', profile.id).eq('entry_date', today),
-      supabase.from('weekly_checkins').select('*').eq('client_id', profile.id).order('week_date', {ascending:false}).limit(1).maybeSingle(),
-    ])
-
-    // Piano alimentare completo
     let pianoParsed = null
-    if (planRes.data) {
+    if (planData) {
       const { data: meals } = await supabase.from('plan_meals')
-        .select('*, plan_meal_foods(*)').eq('plan_id', planRes.data.id).order('meal_order')
+        .select('*, plan_meal_foods(*)').eq('plan_id', planData.id).order('meal_order')
       const giorni = []
       for (let d = 1; d <= 7; d++) {
         const dayMeals = (meals || []).filter(m => m.day_of_week === d)
         if (dayMeals.length > 0) {
           giorni.push({
-            giorno: dayMeals[0]?.day_label || ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][d-1],
+            giorno: ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][d-1],
             pasti: dayMeals.map(m => ({
-              nome: m.meal_name || m.meal_type,
+              nome: m.meal_type,
               alimenti: (m.plan_meal_foods || []).map(f => ({
                 nome: f.food_name, quantita_g: f.quantity_g,
                 kcal: f.kcal, proteine_g: f.protein_g, carboidrati_g: f.carbs_g, grassi_g: f.fat_g,
@@ -142,54 +135,30 @@ export default function AssistenteAI() {
       pianoParsed = { giorni }
     }
 
-    // Scheda allenamento
-    let workoutParsed = null
-    if (workoutRes.data) {
-      const { data: exercises } = await supabase.from('workout_exercises')
-        .select('*').eq('plan_id', workoutRes.data.id).order('order_index')
-      if (exercises?.length) {
-        const byDay = {}
-        exercises.forEach(e => {
-          const key = e.day_label || 'Giorno A'
-          if (!byDay[key]) byDay[key] = []
-          byDay[key].push({ nome: e.exercise_name, serie: e.sets, reps: e.reps })
-        })
-        workoutParsed = { giorni: Object.entries(byDay).map(([label, esercizi]) => ({ label, esercizi })) }
-      }
-    }
-
     setClientContext({
       clientName: profile.full_name,
       goal: profile.goal,
-      kcalTarget: planRes.data?.kcal_target,
-      proteinTarget: planRes.data?.protein_target_g,
-      carbsTarget: planRes.data?.carbs_target_g,
-      fatTarget: planRes.data?.fat_target_g,
-      dietType: planRes.data?.diet_type,
+      kcalTarget: planData?.kcal_target,
+      proteinTarget: planData?.protein_target_g,
+      carbsTarget: planData?.carbs_target_g,
+      fatTarget: planData?.fat_target_g,
       plan: pianoParsed,
-      recentProgress: progressRes.data,
-      anamnesi: anamnesiRes.data,
-      workoutPlan: workoutParsed,
-      todayDiary: diaryRes.data || [],
-      weeklyCheckin: checkinRes.data,
+      recentProgress: progress,
     })
   }
 
   async function loadHistory() {
-    try {
-      const { data } = await supabase.from('ai_chat_messages').select('*')
-        .eq('client_id', profile.id).order('created_at').limit(50)
-      if (data && data.length > 0) {
-        setMessages(data.map(m => ({ role: m.role, content: m.content, id: m.id, recipe: m.recipe || null })))
-        return
-      }
-    } catch(e) { /* tabella non ancora creata */ }
-    // Messaggio di benvenuto di default
-    setMessages([{
-      role: 'assistant',
-      content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nPosso suggerirti ricette sfiziose calibrate sui tuoi macro e aggiungerle direttamente al tuo diario con un click. Posso anche aiutarti con sostituzioni creative o analizzare il tuo piano.\n\nCosa ti preparo oggi?`,
-      id: 'welcome'
-    }])
+    const { data } = await supabase.from('ai_chat_messages').select('*')
+      .eq('client_id', profile.id).order('created_at').limit(50)
+    if (data && data.length > 0) {
+      setMessages(data.map(m => ({ role: m.role, content: m.content, id: m.id, recipe: m.recipe || null })))
+    } else {
+      setMessages([{
+        role: 'assistant',
+        content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nPosso suggerirti ricette sfiziose calibrate sui tuoi macro e aggiungerle direttamente al tuo diario con un click. Posso anche aiutarti con sostituzioni creative o analizzare il tuo piano.\n\nCosa ti preparo oggi?`,
+        id: 'welcome'
+      }])
+    }
   }
 
   async function addRecipeToDiary(recipe, mealType) {
@@ -220,12 +189,9 @@ export default function AssistenteAI() {
     setMessages(newMessages)
     setLoading(true)
 
-    // Salva messaggio utente — non blocca se tabella mancante
-    try {
-      await supabase.from('ai_chat_messages').insert({
-        client_id: profile.id, role: 'user', content: userText
-      })
-    } catch(e) { /* tabella non ancora creata */ }
+    await supabase.from('ai_chat_messages').insert({
+      client_id: profile.id, role: 'user', content: userText
+    })
 
     try {
       const res = await fetch('/api/ai-coach', {
@@ -236,29 +202,18 @@ export default function AssistenteAI() {
           clientContext
         })
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      const reply = data.reply || 'Nessuna risposta ricevuta.'
+      const reply = data.reply || 'Errore. Riprova!'
       const recipe = data.recipe || null
 
       const aiMsg = { role: 'assistant', content: reply, id: Date.now().toString() + '_ai', recipe }
       setMessages(prev => [...prev, aiMsg])
 
-      // Salva risposta AI — non blocca se tabella mancante
-      try {
-        await supabase.from('ai_chat_messages').insert({
-          client_id: profile.id, role: 'assistant', content: reply
-        })
-      } catch(e) { /* tabella non ancora creata */ }
-
+      await supabase.from('ai_chat_messages').insert({
+        client_id: profile.id, role: 'assistant', content: reply
+      })
     } catch(e) {
-      console.error('AI Coach error:', e)
-      setMessages(prev => [...prev, {
-        role:'assistant',
-        content:`⚠️ Errore: ${e.message}. Riprova tra qualche secondo.`,
-        id:'err'
-      }])
+      setMessages(prev => [...prev, { role:'assistant', content:'Errore di connessione. Riprova.', id:'err' }])
     }
     setLoading(false)
   }

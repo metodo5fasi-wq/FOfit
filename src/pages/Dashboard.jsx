@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useTheme } from '../App'
 import { Link } from 'react-router-dom'
@@ -8,7 +8,6 @@ import { requestNotificationPermission, checkNotificationStatus, sendTestNotific
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
   { to:'/diario', icon:'ti-pencil', label:'Diario di oggi', sub:'Registra quello che mangi', color:'#E8803A', bg:'#FEF3EC' },
-  { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', sub:'La tua scheda di oggi', color:'#D4570A', bg:'#FEF0E7' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', sub:'Peso e misurazioni', color:'#3B8C5A', bg:'#EAF3DE' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', sub:'Generata dal tuo piano', color:'#4A90D4', bg:'#EBF3FD' },
   { to:'/ai', icon:'ti-robot', label:'FO Coach AI', sub:'Sostituzioni e consigli', color:'#9B59B6', bg:'#F5EEF8' },
@@ -68,32 +67,11 @@ export default function Dashboard() {
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
-  const [nextCall, setNextCall] = useState(null)
-  const [unreadMessages, setUnreadMessages] = useState(0)
-  const [workoutPlan, setWorkoutPlan] = useState(null)
-  const [workoutToday, setWorkoutToday] = useState({ done:0, total:0 })
   const prevKcalRef = React.useRef(0)
 
   useEffect(() => {
     checkNotificationStatus().then(setNotifStatus)
   }, [])
-
-  // Realtime — aggiorna piano quando admin lo modifica
-  useEffect(() => {
-    if (!profile) return
-    const channel = supabase
-      .channel(`dashboard_plan_${profile.id}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'meal_plans',
-        filter: `client_id=eq.${profile.id}`,
-      }, (payload) => {
-        setPlan(payload.new)
-      })
-      .subscribe()
-    return () => supabase.removeChannel(channel)
-  }, [profile])
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buongiorno' : hour < 18 ? 'Buon pomeriggio' : 'Buonasera'
@@ -121,38 +99,8 @@ export default function Dashboard() {
     supabase.from('meal_plans').select('*')
       .eq('client_id', profile.id).eq('is_active', true).limit(1)
       .then(({ data }) => data?.length && setPlan(data[0]))
-    // Prossima chiamata prenotata
-    supabase.from('call_bookings').select('*')
-      .eq('client_id', profile.id).eq('status','confirmed')
-      .gte('booking_date', today)
-      .order('booking_date', { ascending: true }).order('time_slot', { ascending: true })
-      .limit(1)
-      .then(({ data }) => data?.length && setNextCall(data[0]))
     // Calcola streak
     calcStreak()
-    // Messaggi non letti
-    supabase.from('coach_messages').select('id', { count:'exact', head:true })
-      .eq('client_id', profile.id).eq('sender_role','coach').eq('is_read', false)
-      .then(({ count }) => setUnreadMessages(count || 0))
-    // Scheda allenamento attiva
-    supabase.from('workout_plans').select('*')
-      .eq('client_id', profile.id).eq('is_active', true).limit(1)
-      .then(async ({ data }) => {
-        if (data?.length) {
-          setWorkoutPlan(data[0])
-          const { data: exData } = await supabase.from('workout_exercises')
-            .select('day_label,exercise_name,sets').eq('plan_id', data[0].id)
-          if (exData?.length) {
-            const days = [...new Set(exData.map(e=>e.day_label))]
-            const todayDay = days[0] // mostra il primo giorno come riferimento "di oggi"
-            const dayExercises = exData.filter(e=>e.day_label===todayDay)
-            const totalSets = dayExercises.reduce((s,e)=>s+(e.sets||0),0)
-            const { data: logsToday } = await supabase.from('workout_logs')
-              .select('id').eq('client_id', profile.id).eq('log_date', today)
-            setWorkoutToday({ done: logsToday?.length || 0, total: totalSets })
-          }
-        }
-      })
   }, [profile])
 
   async function calcStreak() {
@@ -199,7 +147,6 @@ export default function Dashboard() {
   const pTarget = plan?.protein_target_g || 150
   const cTarget = plan?.carbs_target_g || 220
   const gTarget = plan?.fat_target_g || 65
-  const kcalTarget = plan?.kcal_target || 2200
   const remaining = Math.max(0, kcalTarget - Math.round(todayKcal))
   const firstName = profile?.full_name?.split(' ')[0] || 'utente'
 
@@ -295,29 +242,6 @@ export default function Dashboard() {
           </FadeIn>
         )}
 
-        {/* ALLENAMENTO DI OGGI */}
-        {workoutPlan && workoutToday.total > 0 && (
-          <FadeIn delay={110}>
-          <Link to="/allenamento" style={{textDecoration:'none'}}>
-            <div style={{background:'var(--bg-card)',borderRadius:12,padding:'14px 16px',marginBottom:14,border:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:12,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-              <div style={{width:38,height:38,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <i className="ti ti-barbell" style={{fontSize:18,color:'#D4570A'}}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Allenamento di oggi</div>
-                <div style={{fontSize:14,fontWeight:700,color:'var(--text)',marginTop:2}}>
-                  {workoutToday.done}/{workoutToday.total} serie completate
-                </div>
-                <div style={{height:5,background:'var(--bg-input)',borderRadius:3,marginTop:6,overflow:'hidden'}}>
-                  <div style={{height:'100%',width:`${Math.min(100,Math.round(workoutToday.done/workoutToday.total*100))}%`,background:'#D4570A',borderRadius:3,transition:'width 0.4s'}}/>
-                </div>
-              </div>
-              <i className="ti ti-chevron-right" style={{fontSize:18,color:'var(--text-muted)'}}/>
-            </div>
-          </Link>
-          </FadeIn>
-        )}
-
         {/* QUICK LINKS */}
         <FadeIn delay={100}>
         <div style={{marginBottom:16}}>
@@ -341,49 +265,6 @@ export default function Dashboard() {
           </div>
         </div>
         </FadeIn>
-
-        {/* MESSAGGI NON LETTI */}
-        {unreadMessages > 0 && (
-          <FadeIn delay={115}>
-          <Link to="/messaggi" style={{textDecoration:'none'}}>
-            <div style={{background:'var(--bg-card)',borderRadius:12,padding:'14px 16px',marginBottom:14,border:'0.5px solid #D4570A',display:'flex',alignItems:'center',gap:12,boxShadow:'0 1px 3px rgba(212,87,10,0.12)'}}>
-              <div style={{width:38,height:38,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,position:'relative'}}>
-                <i className="ti ti-message" style={{fontSize:18,color:'#D4570A'}}/>
-                <div style={{position:'absolute',top:-4,right:-4,width:16,height:16,borderRadius:'50%',background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <span style={{fontSize:9,fontWeight:700,color:'white'}}>{unreadMessages}</span>
-                </div>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:11,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:700}}>Nuovo messaggio dal coach</div>
-                <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginTop:2}}>
-                  {unreadMessages === 1 ? '1 messaggio non letto' : `${unreadMessages} messaggi non letti`}
-                </div>
-              </div>
-              <i className="ti ti-chevron-right" style={{fontSize:18,color:'#D4570A'}}/>
-            </div>
-          </Link>
-          </FadeIn>
-        )}
-
-        {/* PROSSIMA CHIAMATA */}
-        {nextCall && (
-          <FadeIn delay={120}>
-          <Link to="/calendario" style={{textDecoration:'none'}}>
-            <div style={{background:'linear-gradient(135deg,#D4570A,#F4894A)',borderRadius:12,padding:'14px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:12,boxShadow:'0 2px 8px rgba(212,87,10,0.25)'}}>
-              <div style={{width:38,height:38,borderRadius:10,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <i className="ti ti-phone" style={{fontSize:18,color:'white'}}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Prossima chiamata</div>
-                <div style={{fontSize:14,fontWeight:700,color:'white',marginTop:2}}>
-                  {new Date(nextCall.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})} alle {nextCall.time_slot}
-                </div>
-              </div>
-              <i className="ti ti-chevron-right" style={{fontSize:18,color:'rgba(255,255,255,0.7)'}}/>
-            </div>
-          </Link>
-          </FadeIn>
-        )}
 
         {/* STATO FISICO */}
         {measurements && (
