@@ -65,16 +65,30 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
 
   useEffect(() => { if (clientId || reportId) load() }, [clientId, reportId])
 
+  // Ref per evitare stale closure nell'autosave
+  const dataRef = useRef(data)
+  const progressiRef = useRef(progressi)
+  useEffect(() => { dataRef.current = data }, [data])
+  useEffect(() => { progressiRef.current = progressi }, [progressi])
+
   // Autosave ogni 2 minuti
   useEffect(() => {
     if (!clientId || adminView) return
     autosaveRef.current = setInterval(() => {
       const currentId = reportIdRef.current
-      if (currentId) {
-        const payload = buildPayload()
-        supabase.from('workout_reports').update(payload).eq('id', currentId)
-          .then(() => { setSaved(true); setTimeout(()=>setSaved(false),1500) })
+      if (!currentId) return
+      // Usa i ref per avere sempre i dati aggiornati
+      const payload = {
+        ...dataRef.current,
+        client_id: clientId,
+        progressi_esercizi: progressiRef.current,
+        period_start: dataRef.current.period_start || null,
+        period_end: dataRef.current.period_end || null,
+        peso_inizio: dataRef.current.peso_inizio ? parseFloat(String(dataRef.current.peso_inizio).replace(',','.')) : null,
+        peso_fine: dataRef.current.peso_fine ? parseFloat(String(dataRef.current.peso_fine).replace(',','.')) : null,
       }
+      supabase.from('workout_reports').update(payload).eq('id', currentId)
+        .then(() => { setSaved(true); setTimeout(()=>setSaved(false),1500) })
     }, 120000)
     return () => { if (autosaveRef.current) clearInterval(autosaveRef.current) }
   }, [clientId, adminView])
