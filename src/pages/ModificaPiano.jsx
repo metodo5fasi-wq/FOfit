@@ -52,17 +52,38 @@ export default function ModificaPiano() {
   const [fixingMacros, setFixingMacros] = useState(false)
 
   async function fixMacros() {
-    if (!confirm('Ricalcola i macro di tutti gli alimenti con kcal = 0 dal database? Questa operazione sovrascrive i valori esistenti.')) return
+    if (!confirm('Ricalcola i macro degli alimenti con kcal = 0 usando il database integrato?')) return
     setFixingMacros(true)
     try {
-      const r = await fetch('/api/fix-food-macros', { method: 'POST' })
-      const data = await r.json()
-      if (data.fixed >= 0) {
-        alert(`✅ Sistemati ${data.fixed} alimenti su ${data.total} con macro mancanti. Ricarica la pagina per vedere i valori aggiornati.`)
-        window.location.reload()
-      } else {
-        alert('Errore: ' + (data.error || 'sconosciuto'))
+      // Cerca alimenti con kcal = 0 nel piano corrente
+      const { data: foods, error } = await supabase
+        .from('plan_meal_foods')
+        .select('id, food_name, quantity_g')
+        .or('kcal.is.null,kcal.eq.0')
+
+      if (error) throw error
+      if (!foods?.length) { alert('Nessun alimento da sistemare!'); setFixingMacros(false); return }
+
+      // Importa il database locale
+      const { searchFoods } = await import('../data/foodDatabase.js')
+
+      let fixed = 0
+      for (const food of foods) {
+        const results = searchFoods(food.food_name)
+        if (!results?.length) continue
+        const match = results[0]
+        const qty = parseFloat(food.quantity_g) || 100
+        await supabase.from('plan_meal_foods').update({
+          kcal: Math.round(match.kcal100 * qty / 100),
+          protein_g: Math.round(match.p * qty / 100 * 10) / 10,
+          carbs_g: Math.round(match.c * qty / 100 * 10) / 10,
+          fat_g: Math.round(match.g * qty / 100 * 10) / 10,
+        }).eq('id', food.id)
+        fixed++
       }
+
+      alert(`✅ Sistemati ${fixed} alimenti su ${foods.length}. Ricarica la pagina.`)
+      window.location.reload()
     } catch(e) { alert('Errore: ' + e.message) }
     setFixingMacros(false)
   }
