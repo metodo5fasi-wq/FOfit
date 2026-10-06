@@ -761,7 +761,8 @@ export function searchFoods(query) {
       if (n.startsWith(q)) score += 40
       if (n.includes(q)) score += 30
       if (b.includes(q)) score += 20
-      if (c.includes(q)) score += 10
+      if (c === q || c.startsWith(q)) score += 35  // match categoria esatta
+      if (c.includes(q)) score += 15
       words.forEach(w => { if (full.includes(w)) score += 5 })
       return { ...f, score }
     })
