@@ -212,11 +212,24 @@ export default function Layout() {
 
   // Controlla abbonamento scaduto per clienti
   const isClient = profile?.role !== 'admin'
-  const subEnd = profile?.subscription_end
-  const subBlocked = isClient && subEnd && new Date(subEnd) < new Date()
-  const installBlocked = isClient && profile?.payment_type === 'rate' &&
-    profile?.installments_paid < profile?.installments &&
-    profile?.installments_paid !== null
+  const [freshProfile, setFreshProfile] = useState(null)
+
+  useEffect(() => {
+    if (!profile?.id || !isClient) return
+    // Ricarica profilo fresco da Supabase ad ogni mount
+    supabase.from('profiles').select('subscription_end,payment_type,installments,installments_paid')
+      .eq('id', profile.id).single()
+      .then(({ data }) => { if (data) setFreshProfile(data) })
+  }, [profile?.id])
+
+  const activeProfile = freshProfile || profile
+  const subEnd = activeProfile?.subscription_end
+  const subBlocked = isClient && subEnd && new Date(subEnd+'T23:59:59') < new Date()
+  const installBlocked = isClient &&
+    activeProfile?.payment_type === 'rate' &&
+    activeProfile?.installments_paid !== null &&
+    activeProfile?.installments_paid !== undefined &&
+    parseInt(activeProfile?.installments_paid||0) < parseInt(activeProfile?.installments||1)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
