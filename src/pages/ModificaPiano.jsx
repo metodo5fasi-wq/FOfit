@@ -49,6 +49,23 @@ export default function ModificaPiano() {
   const [selectedDay, setSelectedDay] = useState(1)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [fixingMacros, setFixingMacros] = useState(false)
+
+  async function fixMacros() {
+    if (!confirm('Ricalcola i macro di tutti gli alimenti con kcal = 0 dal database? Questa operazione sovrascrive i valori esistenti.')) return
+    setFixingMacros(true)
+    try {
+      const r = await fetch('/api/fix-food-macros', { method: 'POST' })
+      const data = await r.json()
+      if (data.fixed >= 0) {
+        alert(`✅ Sistemati ${data.fixed} alimenti su ${data.total} con macro mancanti. Ricarica la pagina per vedere i valori aggiornati.`)
+        window.location.reload()
+      } else {
+        alert('Errore: ' + (data.error || 'sconosciuto'))
+      }
+    } catch(e) { alert('Errore: ' + e.message) }
+    setFixingMacros(false)
+  }
   const [savedMsg, setSavedMsg] = useState('')
   const [dirty, setDirty] = useState(false)
 
@@ -480,6 +497,9 @@ export default function ModificaPiano() {
           <div style={{fontSize:15,fontWeight:700,color:'#111'}}>{plan?.title}</div>
           <div style={{fontSize:11,color:'#888780'}}>{clientName} · {plan?.kcal_target} kcal</div>
         </div>
+        <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola macro alimenti esistenti" style={{...s.btnGray,padding:'7px 10px',fontSize:11}}>
+          {fixingMacros ? '...' : '🔄'}
+        </button>
         {dirty && (
           <button onClick={saveAll} disabled={saving} style={{...s.btn, minWidth:90}}>
             {saving
