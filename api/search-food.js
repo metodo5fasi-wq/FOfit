@@ -1,4 +1,4 @@
-import { searchFoods } from './foodDatabase.js'
+import { searchFoods } from '../src/data/foodDatabase.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
