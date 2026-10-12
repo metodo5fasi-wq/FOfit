@@ -297,23 +297,84 @@ export default function Layout() {
         {/* TOPBAR MOBILE */}
         {isMobile && (
           <div style={{
-            background:'#0F0F0F', minHeight:52, display:'flex', alignItems:'center',
-            justifyContent:'space-between', padding:'10px 14px',
-            flexShrink:0
+            background:'rgba(15,15,15,0.95)',
+            backdropFilter:'blur(20px)',
+            WebkitBackdropFilter:'blur(20px)',
+            minHeight:52,
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'space-between',
+            padding:'10px 16px',
+            paddingTop:'calc(10px + env(safe-area-inset-top, 0px))',
+            flexShrink:0,
+            borderBottom:'0.5px solid rgba(255,255,255,0.06)',
+            position:'sticky',
+            top:0,
+            zIndex:50,
           }}>
-            <button
-              onClick={()=>setMobileOpen(true)}
-              style={{background:'#D4570A',border:'none',color:'white',width:38,height:38,borderRadius:9,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,touchAction:'manipulation',WebkitTapHighlightColor:'transparent',boxShadow:'0 2px 8px rgba(212,87,10,0.5)'}}>
-              <i className="ti ti-menu-2" style={{fontSize:20,pointerEvents:'none'}}/>
+            <button onClick={()=>setMobileOpen(true)} style={{
+              background:'linear-gradient(135deg,#D4570A,#F4894A)',
+              border:'none', color:'white', width:36, height:36, borderRadius:10,
+              cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+              flexShrink:0, touchAction:'manipulation', WebkitTapHighlightColor:'transparent',
+              boxShadow:'0 2px 10px rgba(212,87,10,0.5)',
+            }}>
+              <i className="ti ti-menu-2" style={{fontSize:18,pointerEvents:'none'}}/>
             </button>
-            <div style={{fontSize:17,fontWeight:700,color:'white',letterSpacing:-0.5}}>
-              FO<span style={{color:'#F4894A'}}>fit</span>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:26,height:26,borderRadius:8,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <i className="ti ti-bolt" style={{color:'white',fontSize:14}}/>
+              </div>
+              <div style={{fontSize:16,fontWeight:800,color:'white',letterSpacing:-0.5}}>
+                FO<span style={{color:'#F4894A'}}>fit</span>
+              </div>
             </div>
-            <div style={{width:38}}/>
+            <div style={{width:36}}/>
           </div>
         )}
 
-        <Outlet/>
+        <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+          <Outlet/>
+        </div>
+
+        {/* BOTTOM NAV MOBILE — solo per clienti */}
+        {isMobile && profile?.role !== 'admin' && (
+          <div style={{
+            background:'rgba(15,15,15,0.97)',
+            backdropFilter:'blur(20px)',
+            WebkitBackdropFilter:'blur(20px)',
+            borderTop:'0.5px solid rgba(255,255,255,0.08)',
+            paddingBottom:'env(safe-area-inset-bottom,0px)',
+            display:'flex',
+            flexShrink:0,
+            zIndex:50,
+          }}>
+            {[
+              { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true },
+              { to:'/piano', icon:'ti-clipboard-list', label:'Piano' },
+              { to:'/diario', icon:'ti-pencil', label:'Diario' },
+              { to:'/allenamento', icon:'ti-barbell', label:'Allenamento' },
+              { to:'/progressi', icon:'ti-chart-line', label:'Progressi' },
+            ].map(item => (
+              <NavLink key={item.to} to={item.to} end={item.exact} style={({isActive})=>({
+                flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                padding:'10px 4px 8px', textDecoration:'none', color: isActive ? '#F4894A' : 'rgba(255,255,255,0.35)',
+                transition:'color 0.15s',
+              })}>
+                {({isActive}) => <>
+                  <div style={{
+                    width:36, height:36, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center',
+                    background: isActive ? 'rgba(212,87,10,0.2)' : 'transparent',
+                    transition:'background 0.15s',
+                  }}>
+                    <i className={`ti ${item.icon}`} style={{fontSize:20, color: isActive ? '#F4894A' : 'rgba(255,255,255,0.4)'}}/>
+                  </div>
+                  <span style={{fontSize:9, marginTop:2, fontWeight: isActive ? 700 : 400, letterSpacing:'0.02em'}}>{item.label}</span>
+                </>}
+              </NavLink>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
