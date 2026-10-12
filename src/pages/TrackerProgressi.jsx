@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 
 const MISURE = [
@@ -66,6 +67,7 @@ function PesoChart({ entries }) {
 }
 
 export default function TrackerProgressi() {
+  const toast = useToast()
   const { profile } = useAuth()
   const [activeTab, setActiveTab] = useState('misure')
   const [entries, setEntries] = useState([])
@@ -143,9 +145,9 @@ export default function TrackerProgressi() {
 
       setPhotoNotes('')
       await fetchPhotos()
-      alert('✅ Foto salvata!')
+      toast('✅ Foto salvata!', 'success')
     } catch(err) {
-      alert('Errore: ' + err.message)
+      toast('Errore imprevisto', 'error')
     }
     setUploading(false)
     e.target.value = ''
@@ -367,7 +369,7 @@ export default function TrackerProgressi() {
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8}}>
                   {dayPhotos.map(photo => (
                     <div key={photo.id} style={{position:'relative'}}>
-                      <img
+                      <img loading="lazy"
                         src={photo.photo_url}
                         alt={photo.label}
                         onClick={() => setLightbox(photo)}
@@ -396,7 +398,7 @@ export default function TrackerProgressi() {
 
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:999, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:20}}>
-          <img src={lightbox.photo_url} alt={lightbox.label}
+          <img loading="lazy" src={lightbox.photo_url} alt={lightbox.label}
             style={{maxWidth:'100%', maxHeight:'80vh', objectFit:'contain', borderRadius:12}}/>
           <div style={{color:'white', marginTop:12, fontSize:13, fontWeight:600}}>{lightbox.label}</div>
           {lightbox.notes && <div style={{color:'rgba(255,255,255,0.6)', fontSize:12, marginTop:4}}>{lightbox.notes}</div>}
