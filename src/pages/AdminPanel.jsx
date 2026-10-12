@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 import NotifPanel from '../components/NotifPanel'
 import Anamnesi from './Anamnesi'
@@ -41,6 +42,7 @@ const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2)
 const today = new Date().toISOString().split('T')[0]
 
 export default function AdminPanel() {
+  const toast = useToast()
   const { profile } = useAuth()
   const [tab, setTab] = useState('overview')
   const [clients, setClients] = useState([])
