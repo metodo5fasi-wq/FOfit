@@ -1,3 +1,4 @@
+import { ToastProvider } from './components/Toast'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -110,7 +111,7 @@ const globalStyles = `
     --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; touch-action: pan-x pan-y; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--gray);
@@ -280,6 +281,7 @@ export default function App() {
 
   return (
     <ThemeContext.Provider value={{theme, darkMode, toggleTheme: handleToggleTheme}}>
+      <ToastProvider>
     <AuthContext.Provider value={{ session, profile, setProfile, markOnboarded }}>
       <BrowserRouter>
         <OfflineBanner/>
@@ -331,6 +333,7 @@ export default function App() {
         </div>
       </BrowserRouter>
     </AuthContext.Provider>
+    </ToastProvider>
     </ThemeContext.Provider>
   )
 }
