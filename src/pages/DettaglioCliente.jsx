@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
@@ -33,6 +34,7 @@ const TABS = [
 ]
 
 export default function DettaglioCliente() {
+  const toast = useToast()
   const { clientId } = useParams()
   const navigate = useNavigate()
   const [client, setClient] = useState(null)
@@ -78,6 +80,18 @@ function ClientDetail({ client, navigate }) {
   const [expandedReport, setExpandedReport] = useState(null)
 
   useEffect(() => { loadAll() }, [client.id])
+  useEffect(() => { if (tab === 'allenamento' && !data.sessions?.length) loadAllenamento() }, [tab])
+
+  async function loadAllenamento() {
+    const ago7 = new Date(Date.now()-7*86400000).toISOString().split('T')[0]
+    const [sessR, logsR, repR] = await Promise.all([
+      supabase.from('workout_sessions').select('*').eq('client_id',client.id).order('session_date',{ascending:false}).limit(10),
+      supabase.from('workout_logs').select('*').eq('client_id',client.id).gte('log_date',ago7),
+      supabase.from('workout_reports').select('*').eq('client_id',client.id).not('submitted_at','is',null).order('submitted_at',{ascending:false}).limit(5),
+    ])
+    setData(prev => ({ ...prev, sessions: sessR.data||[], logs: logsR.data||[] }))
+    setReports(repR.data||[])
+  }
 
   async function loadAll() {
     setLoading(true)
@@ -132,7 +146,7 @@ function ClientDetail({ client, navigate }) {
     setSendingMsg(true)
     await supabase.from('coach_messages').insert({ client_id:client.id, sender_role:'admin', content:quickMsg.trim(), is_read:false })
     setQuickMsg(''); setSendingMsg(false)
-    alert('Messaggio inviato!')
+    toast('Messaggio inviato!', 'success')
   }
 
   function toggleCompare(photo) {
@@ -568,7 +582,7 @@ function ClientDetail({ client, navigate }) {
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     {comparePair.map(p=>(
                       <div key={p.id} style={{borderRadius:9,overflow:'hidden',aspectRatio:'3/4',position:'relative'}}>
-                        <img src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                        <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                         <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.7)',padding:'12px 6px 5px'}}>
                           <div style={{fontSize:9,color:'white',fontWeight:700}}>{p.label}</div>
                           <div style={{fontSize:8,color:'rgba(255,255,255,0.7)'}}>{p.photo_date?new Date(p.photo_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'}):''}</div>
@@ -588,7 +602,7 @@ function ClientDetail({ client, navigate }) {
                   return (
                     <div key={p.id} style={{position:'relative',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#F0EDE8',cursor:'pointer',border:isSelected?'2.5px solid #D4570A':'2.5px solid transparent'}}
                       onClick={()=>setLightbox({url:p.photo_url,label:p.label,date:p.photo_date})}>
-                      <img src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+                      <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                       <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.65))',padding:'14px 5px 4px'}}>
                         <div style={{fontSize:8,color:'white',fontWeight:600,textTransform:'uppercase'}}>{p.label}</div>
                         {p.photo_date&&<div style={{fontSize:7,color:'rgba(255,255,255,0.7)'}}>{new Date(p.photo_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>}
@@ -678,7 +692,7 @@ function ClientDetail({ client, navigate }) {
           <button onClick={()=>setLightbox(null)} style={{position:'absolute',top:16,right:16,width:38,height:38,borderRadius:'50%',background:'rgba(255,255,255,0.15)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
             <i className="ti ti-x" style={{fontSize:18,color:'white'}}/>
           </button>
-          <img src={lightbox.url} alt={lightbox.label} onClick={e=>e.stopPropagation()}
+          <img loading="lazy" src={lightbox.url} alt={lightbox.label} onClick={e=>e.stopPropagation()}
             style={{maxWidth:'100%',maxHeight:'82vh',objectFit:'contain',borderRadius:12}}/>
           <div style={{marginTop:12,textAlign:'center'}}>
             <div style={{fontSize:13,fontWeight:700,color:'white',textTransform:'uppercase',letterSpacing:'0.05em'}}>{lightbox.label}</div>
