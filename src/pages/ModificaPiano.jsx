@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 import { searchFoods } from '../data/foodDatabase.js'
 
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -42,6 +43,7 @@ function recalc(food, newQty) {
 }
 
 export default function ModificaPiano() {
+  const toast = useToast()
   const { planId } = useParams()
   const navigate = useNavigate()
   const [plan, setPlan] = useState(null)
@@ -63,7 +65,7 @@ export default function ModificaPiano() {
         .or('kcal.is.null,kcal.eq.0')
 
       if (error) throw error
-      if (!foods?.length) { alert('Nessun alimento da sistemare!'); setFixingMacros(false); return }
+      if (!foods?.length) { toast('Nessun alimento da sistemare!', 'success'); setFixingMacros(false); return }
 
       let fixed = 0
       for (const food of foods) {
@@ -80,9 +82,9 @@ export default function ModificaPiano() {
         fixed++
       }
 
-      alert(`✅ Sistemati ${fixed} alimenti su ${foods.length}. Ricarica la pagina.`)
-      window.location.reload()
-    } catch(e) { alert('Errore: ' + e.message) }
+      toast('Operazione completata', 'success')
+      loadPlan()
+    } catch(e) { toast('Errore imprevisto', 'error') }
     setFixingMacros(false)
   }
   const [savedMsg, setSavedMsg] = useState('')
@@ -254,7 +256,7 @@ export default function ModificaPiano() {
     try { localStorage.setItem('fofit_meal_templates', JSON.stringify(updated)) } catch(e) {}
     setShowSaveTemplate(null)
     setTemplateName('')
-    alert(`Template "${template.name}" salvato!`)
+    toast('Operazione completata', 'success')
   }
 
   function loadTemplates() {
