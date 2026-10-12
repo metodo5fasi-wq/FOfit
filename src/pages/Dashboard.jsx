@@ -144,6 +144,7 @@ export default function Dashboard() {
     }
     prevKcalRef.current = todayKcal
   }, [todayKcal, todayP, plan])
+  const kcalTarget = plan?.kcal_target || 2200
   const pTarget = plan?.protein_target_g || 150
   const cTarget = plan?.carbs_target_g || 220
   const gTarget = plan?.fat_target_g || 65
