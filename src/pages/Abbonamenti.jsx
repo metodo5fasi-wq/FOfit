@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 
 const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -34,6 +35,7 @@ function StatusBadge({ days }) {
 }
 
 export default function Abbonamenti() {
+  const toast = useToast()
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
