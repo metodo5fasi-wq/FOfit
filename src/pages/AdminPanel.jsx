@@ -412,132 +412,317 @@ export default function AdminPanel() {
   const countNoPiano = clients.filter(c => clientStats[c.id] && !clientStats[c.id].activePlan).length
   const countNoDiario = clients.filter(c => clientStats[c.id] && !clientStats[c.id].diaryToday).length
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+
+  const SIDEBAR_TABS = [
+    { id:'clienti', icon:'ti-users', label:'Clienti' },
+    { id:'report', icon:'ti-clipboard-check', label:'Report' },
+    { id:'anamnesi', icon:'ti-clipboard-heart', label:'Anamnesi' },
+    { id:'check-in', icon:'ti-activity', label:'Check-in' },
+    { id:'calendario', icon:'ti-calendar', label:'Calendario' },
+  ]
+
   return (
-    <>
-      <div style={s.topbar}>
-        <div>
-          <div style={{fontSize:15,fontWeight:500,color:'#111'}}>FOfit Coach</div>
-          <div style={{fontSize:12,color:'#888780'}}>{new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}</div>
-        </div>
-        <div style={{display:'flex',gap:8}}>
-          {tab==='clienti'&&<button style={s.btn} onClick={()=>setShowNewClient(true)}><i className="ti ti-user-plus" style={{fontSize:15}}/> Nuovo cliente</button>}
-          {tab==='piani'&&<button style={s.btn} onClick={()=>setShowNewPlan(true)}><i className="ti ti-plus" style={{fontSize:15}}/> Nuovo piano</button>}
-        </div>
-      </div>
-      <div style={s.page}>
-        {msg&&<div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
+    <div style={{display:'flex',height:'100dvh',overflow:'hidden',background:'#F5F3EF'}}>
 
-        <div style={s.tabs}>
-          {['overview','clienti','report','anamnesi','messaggi','calendario','check-in'].map(t=><div key={t} style={tab===t?s.tabActive:s.tab} onClick={()=>setTab(t)}>{
-            t==='overview'?'📊 Overview':
-            t==='clienti'?'👥 Clienti':
-            t==='messaggi'?'💬 Messaggi':
-            t==='calendario'?'📅 Calendario':
-            t==='report'?'📋 Report':
-            t==='anamnesi'?'📝 Anamnesi':
-            '✅ Check-in'
-          }</div>)}
-        </div>
-
-        {tab==='overview'&&<DashboardCoach clients={clients} clientStats={clientStats} plans={plans} onOpenClient={c=>{setSelectedClient(c);setTab('clienti')}} onOpenReport={()=>setTab('report')} onOpenAnamnesi={()=>setTab('anamnesi')}/>}
-        {tab==='clienti'&&(
-          <>
-          <NotifPanel/>
-          <div style={s.card}>
-            <div style={s.cardTitle}><i className="ti ti-users" style={{fontSize:16,color:'#D4570A'}}/> Clienti ({filteredClients.length}{filteredClients.length!==clients.length?` di ${clients.length}`:''})</div>
-
-            {/* Ricerca */}
-            <div style={{position:'relative',marginBottom:10}}>
-              <i className="ti ti-search" style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:'#888780'}}/>
-              <input style={{...s.input,paddingLeft:36}} placeholder="Cerca cliente per nome..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      {/* ── SIDEBAR PC ── */}
+      {!isMobile && (
+        <div style={{width:220,flexShrink:0,background:'#111',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+          {/* BRAND */}
+          <div style={{padding:'20px 18px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.07)'}}>
+            <div style={{fontSize:20,fontWeight:900,color:'white',letterSpacing:-0.5}}>
+              FO<span style={{color:'#D4570A'}}>fit</span>
             </div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.35)',marginTop:2}}>Dashboard Coach</div>
+          </div>
 
-            {/* Filtri rapidi */}
-            <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-              {[
-                {id:'tutti', label:`Tutti (${clients.length})`},
-                {id:'no-diario', label:`✗ Diario non fatto (${countNoDiario})`},
-                {id:'no-piano', label:`Senza piano (${countNoPiano})`},
-                {id:'piano-attivo', label:'Con piano attivo'},
-              ].map(f=>(
-                <button key={f.id} onClick={()=>setFilter(f.id)} style={{
-                  padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-                  background:filter===f.id?'#D4570A':'white',
-                  color:filter===f.id?'white':'#888780',
-                  borderColor:filter===f.id?'#D4570A':'#E0DDD6'
-                }}>{f.label}</button>
-              ))}
+          {/* QUICK ACTIONS */}
+          <div style={{padding:'12px 12px 8px'}}>
+            <button onClick={()=>setShowNewClient(true)} style={{
+              width:'100%',padding:'9px 12px',background:'linear-gradient(135deg,#D4570A,#E8703A)',
+              color:'white',border:'none',borderRadius:9,fontSize:12,fontWeight:700,cursor:'pointer',
+              fontFamily:'inherit',display:'flex',alignItems:'center',gap:7,marginBottom:6,
+              boxShadow:'0 2px 8px rgba(212,87,10,0.4)'
+            }}>
+              <i className="ti ti-user-plus" style={{fontSize:15}}/>Nuovo cliente
+            </button>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              <a href="/importa-piano" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <i className="ti ti-salad" style={{fontSize:16}}/>Piano
+              </a>
+              <a href="/importa-allenamento" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <i className="ti ti-barbell" style={{fontSize:16}}/>Allenamento
+              </a>
             </div>
+          </div>
 
-            {loading?<div style={{textAlign:'center',padding:'30px 0',color:'#888780'}}>Caricamento...</div>:filteredClients.length===0?(
-              <div style={{textAlign:'center',padding:'30px 0'}}><i className="ti ti-users" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/><div style={{fontSize:13,color:'#888780'}}>{clients.length===0?'Nessun cliente ancora.':'Nessun cliente trovato con questi filtri.'}</div></div>
-            ):(
-              <table style={s.table}>
-                <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Obiettivo</th><th style={s.th}>Diario oggi</th><th style={s.th}>Piano</th><th style={s.th}>Iscritto</th><th style={s.th}>Azioni</th></tr></thead>
-                <tbody>{filteredClients.map(c=>{
-                  const st = clientStats[c.id] || {}
-                  return(
-                  <tr key={c.id}>
-                    <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={s.avatar}>{initials(c.full_name)}</div><div><div style={{fontWeight:500}}>{c.full_name}</div><div style={{fontSize:11,color:'#888780'}}>{c.height_cm?`${c.height_cm}cm`:'—'}</div></div></div></td>
-                    <td style={s.td}><span style={{...s.badge,background:goalColor[c.goal]||'#F5F3EF',color:goalTextColor[c.goal]||'#888780'}}>{goalLabel[c.goal]||'—'}</span></td>
-                    <td style={s.td}><span style={{...s.badge,background:st.diaryToday?'#EAF3DE':'#FEE2E2',color:st.diaryToday?'#3B6D11':'#E24B4A'}}>{st.diaryToday?'✓ Fatto':'✗ Da fare'}</span></td>
-                    <td style={s.td}>{st.activePlan?<span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>{st.activePlan.title}</span>:<span style={{fontSize:11,color:'#888780'}}>Nessuno</span>}</td>
-                    <td style={{...s.td,fontSize:12,color:'#888780'}}>{new Date(c.created_at).toLocaleDateString('it-IT')}</td>
-                    <td style={s.td}><div style={{display:'flex',gap:6}}><button style={s.btnSm} onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}>+ Piano</button><button style={s.btnGray} onClick={()=>setSelectedClient(c)}>Dettagli</button></div></td>
-                  </tr>
-                )})}</tbody>
-              </table>
+          {/* NAVIGATION */}
+          <nav style={{flex:1,overflowY:'auto',padding:'4px 8px'}}>
+            {SIDEBAR_TABS.map(t => (
+              <button key={t.id} onClick={()=>{setTab(t.id);setSelectedClient(null)}} style={{
+                width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 10px',
+                borderRadius:9,border:'none',cursor:'pointer',fontFamily:'inherit',
+                background:tab===t.id?'rgba(212,87,10,0.15)':'transparent',
+                color:tab===t.id?'#F4894A':'rgba(255,255,255,0.45)',
+                fontSize:13,fontWeight:tab===t.id?700:400,
+                marginBottom:2,textAlign:'left',
+                borderLeft:tab===t.id?'3px solid #D4570A':'3px solid transparent',
+                transition:'all 0.15s',
+              }}>
+                <i className={`ti ${t.icon}`} style={{fontSize:17,flexShrink:0}}/>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* FOOTER SIDEBAR */}
+          <div style={{padding:'12px 14px',borderTop:'0.5px solid rgba(255,255,255,0.07)'}}>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.25)',marginBottom:2}}>
+              {new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
+            </div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.25)'}}>
+              {clients.length} clienti · {Object.values(clientStats).filter(s=>s.newReport).length} nuovi report
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <div style={{flex:1,display:'flex',overflow:'hidden',flexDirection:'column'}}>
+
+        {/* TOPBAR */}
+        <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 20px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            {isMobile && (
+              <div style={{fontSize:16,fontWeight:900,color:'#111'}}>FO<span style={{color:'#D4570A'}}>fit</span></div>
+            )}
+            <div>
+              <div style={{fontSize:14,fontWeight:700,color:'#111'}}>
+                {tab==='clienti'?'👥 Clienti':tab==='report'?'📋 Report':tab==='anamnesi'?'📝 Anamnesi':tab==='check-in'?'✅ Check-in':tab==='calendario'?'📅 Calendario':'Dashboard'}
+              </div>
+              {!isMobile && <div style={{fontSize:11,color:'#888780'}}>{filteredClients.length} clienti visualizzati</div>}
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <NotifPanel/>
+            {tab==='clienti' && (
+              <>
+                <button style={s.btnSm} onClick={()=>setShowNewClient(true)}>
+                  <i className="ti ti-user-plus" style={{fontSize:13}}/>
+                  {!isMobile && ' Nuovo'}
+                </button>
+                <button style={s.btnGray} onClick={fetchAll}>
+                  <i className="ti ti-refresh" style={{fontSize:13}}/>
+                </button>
+              </>
             )}
           </div>
-          </>
-        )}
+        </div>
 
-        {tab==='piani'&&(
-          <div style={s.card}>
-            <div style={s.cardTitle}><i className="ti ti-clipboard-list" style={{fontSize:16,color:'#D4570A'}}/> Piani ({plans.length})</div>
-            {plans.length===0?<div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#888780'}}>Nessun piano ancora.</div>:(
-              <table style={s.table}>
-                <thead><tr><th style={s.th}>Piano</th><th style={s.th}>Cliente</th><th style={s.th}>Kcal</th><th style={s.th}>Macro</th><th style={s.th}>Stato</th><th style={s.th}>Azioni</th></tr></thead>
-                <tbody>{plans.map(p=>(
-                  <tr key={p.id}>
-                    <td style={s.td}><div style={{fontWeight:500}}>{p.title}</div><div style={{fontSize:11,color:'#888780'}}>Sett. {p.week_number}</div></td>
-                    <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={{...s.avatar,width:24,height:24,fontSize:10,marginRight:6}}>{initials(p.profiles?.full_name||'')}</div><span style={{fontSize:12}}>{p.profiles?.full_name||'—'}</span></div></td>
-                    <td style={s.td}><span style={{fontWeight:500}}>{p.kcal_target}</span><span style={{fontSize:11,color:'#888780'}}> kcal</span></td>
-                    <td style={s.td}><div style={{fontSize:11,color:'#888780'}}>P{p.protein_target_g}g C{p.carbs_target_g}g G{p.fat_target_g}g</div></td>
-                    <td style={s.td}><span style={{...s.badge,background:p.is_active?'#EAF3DE':'#F5F3EF',color:p.is_active?'#3B6D11':'#888780'}}>{p.is_active?'Attivo':'Inattivo'}</span></td>
-                    <td style={s.td}><div style={{display:'flex',gap:6}}>
-                      <a href={`/modifica-piano/${p.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
-                        <i className="ti ti-pencil" style={{fontSize:12}}/>Modifica pasti
-                      </a>
-                      <button style={s.btnSm} onClick={()=>togglePlan(p.id,p.is_active)}>{p.is_active?'Disattiva':'Attiva'}</button>
-                      <button style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>deletePlan(p.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button>
-                    </div></td>
-                  </tr>
-                ))}</tbody>
-              </table>
+        {/* CONTENT AREA — con eventuale pannello cliente affiancato */}
+        <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+
+          {/* CONTENUTO PRINCIPALE */}
+          <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'16px'}}>
+            {msg && <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
+
+            {/* TAB MOBILE */}
+            {isMobile && (
+              <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto',paddingBottom:4}}>
+                {SIDEBAR_TABS.map(t=>(
+                  <button key={t.id} onClick={()=>{setTab(t.id);setSelectedClient(null)}} style={{
+                    flexShrink:0,padding:'6px 14px',borderRadius:16,fontSize:11,fontWeight:600,cursor:'pointer',
+                    border:'0.5px solid',fontFamily:'inherit',
+                    background:tab===t.id?'#D4570A':'white',
+                    color:tab===t.id?'white':'#888780',
+                    borderColor:tab===t.id?'#D4570A':'#E0DDD6',
+                  }}>{t.label}</button>
+                ))}
+              </div>
             )}
-          </div>
-        )}
 
-        {tab==='progressi'&&(
-          <div style={s.card}>
-            <div style={s.cardTitle}><i className="ti ti-chart-line" style={{fontSize:16,color:'#D4570A'}}/> Progressi clienti</div>
-            {clients.length===0?<div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#888780'}}>Nessun cliente ancora.</div>:<div style={{display:'flex',flexDirection:'column',gap:10}}>{clients.map(c=><ClientProgress key={c.id} client={c}/>)}</div>}
-          </div>
-        )}
+            {/* TAB CLIENTI */}
+            {tab==='clienti' && (
+              <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',overflow:'hidden'}}>
+                {/* FILTRI */}
+                <div style={{padding:'12px 16px',borderBottom:'0.5px solid #F0EDE8',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                  <div style={{position:'relative',flex:1,minWidth:180}}>
+                    <i className="ti ti-search" style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>
+                    <input style={{...s.input,paddingLeft:32,fontSize:13,height:34}} placeholder="Cerca cliente..." value={search} onChange={e=>setSearch(e.target.value)}/>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                    {[
+                      {id:'tutti',label:`Tutti (${clients.length})`},
+                      {id:'no-diario',label:`✗ Diario (${countNoDiario})`},
+                      {id:'no-piano',label:`Senza piano (${countNoPiano})`},
+                      {id:'piano-attivo',label:'Con piano'},
+                    ].map(f=>(
+                      <button key={f.id} onClick={()=>setFilter(f.id)} style={{
+                        padding:'5px 11px',borderRadius:14,fontSize:11,fontWeight:filter===f.id?700:500,
+                        cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
+                        background:filter===f.id?'#D4570A':'#F5F3EF',
+                        color:filter===f.id?'white':'#888780',
+                        borderColor:filter===f.id?'#D4570A':'#E0DDD6',
+                      }}>{f.label}</button>
+                    ))}
+                  </div>
+                </div>
 
-        {tab==='calendario'&&<CalendarioAdmin/>}
-        {tab==='messaggi'&&<MessaggiAdmin/>}
-        {tab==='overview'&&false&&null}
-        {tab==='check-in'&&<CheckinAdmin/>}
-        {tab==='report'&&<ReportTab clients={clients} clientStats={clientStats} onRefresh={fetchAll}/>}
-        {tab==='anamnesi'&&<AnamnesiTab clients={clients} onRefresh={fetchAll}/>}
+                {/* GRIGLIA CLIENTI */}
+                {loading ? (
+                  <div style={{textAlign:'center',padding:'40px',color:'#888780'}}>Caricamento...</div>
+                ) : filteredClients.length === 0 ? (
+                  <div style={{textAlign:'center',padding:'40px',color:'#888780'}}>
+                    <i className="ti ti-users" style={{fontSize:36,display:'block',marginBottom:8,opacity:0.3}}/>
+                    {clients.length===0?'Nessun cliente ancora.':'Nessun risultato per questi filtri.'}
+                  </div>
+                ) : (
+                  <div style={{
+                    display:'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap:1,
+                    background:'#F0EDE8',
+                  }}>
+                    {filteredClients.map(c => {
+                      const st = clientStats[c.id] || {}
+                      const isSelected = selectedClient?.id === c.id
+                      const days = c.subscription_end ? Math.ceil((new Date(c.subscription_end)-new Date())/86400000) : null
+                      const sessWeek = (st.sessions7||[]).length
+                      const adherencePct = st.adherence ? Math.round(st.adherence.followed/st.adherence.total*100) : null
+
+                      return (
+                        <div key={c.id} onClick={()=>setSelectedClient(isSelected?null:c)}
+                          style={{
+                            background: isSelected ? '#FEF8F5' : 'white',
+                            padding:'14px 16px',cursor:'pointer',
+                            borderLeft: isSelected ? '3px solid #D4570A' : '3px solid transparent',
+                            transition:'all 0.15s',
+                          }}>
+                          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                            {/* AVATAR */}
+                            <div style={{
+                              width:42,height:42,borderRadius:12,flexShrink:0,
+                              background:`linear-gradient(135deg,${goalColor[c.goal]||'#FEF0E7'},${goalColor[c.goal]||'#FEF0E7'})`,
+                              display:'flex',alignItems:'center',justifyContent:'center',
+                              fontSize:14,fontWeight:800,color:goalTextColor[c.goal]||'#D4570A',
+                              border:`1.5px solid ${isSelected?'#D4570A':'transparent'}`,
+                            }}>{initials(c.full_name)}</div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+                              <div style={{fontSize:11,color:'#888780',marginTop:1}}>{goalLabel[c.goal]||'—'}{c.height_cm?` · ${c.height_cm}cm`:''}</div>
+                            </div>
+                            {/* BADGES */}
+                            <div style={{display:'flex',gap:4,flexShrink:0}}>
+                              {st.newReport && <span title="Nuovo report" style={{width:20,height:20,borderRadius:'50%',background:'#7C3AED',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>R</span>}
+                              {st.newAnamnesi && <span title="Nuova anamnesi" style={{width:20,height:20,borderRadius:'50%',background:'#4A90D4',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>A</span>}
+                              {st.unreadMessages>0 && <span title="Messaggi non letti" style={{width:20,height:20,borderRadius:'50%',background:'#D4570A',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>{st.unreadMessages}</span>}
+                            </div>
+                          </div>
+
+                          {/* STATS RAPIDE */}
+                          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+                            {[
+                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:'#111'},
+                              {l:'Diario',v:st.diaryToday?'✓':'✗',c:st.diaryToday?'#3B6D11':'#E24B4A'},
+                              {l:'Sessioni',v:sessWeek,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
+                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct>=70?'#3B6D11':adherencePct>=50?'#E8A020':'#E24B4A'},
+                            ].map(stat=>(
+                              <div key={stat.l} style={{background:'#F5F3EF',borderRadius:7,padding:'5px 4px',textAlign:'center'}}>
+                                <div style={{fontSize:13,fontWeight:700,color:stat.c,lineHeight:1.1}}>{stat.v}</div>
+                                <div style={{fontSize:8,color:'#B0ADA8',textTransform:'uppercase',marginTop:1}}>{stat.l}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* PIANO + ABBONAMENTO */}
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
+                            <div style={{fontSize:11,color:st.activePlan?'#D4570A':'#B0ADA8',fontWeight:st.activePlan?600:400}}>
+                              {st.activePlan?`📋 ${st.activePlan.title}·${st.activePlan.kcal_target}kcal`:'Nessun piano attivo'}
+                            </div>
+                            {days!==null && (
+                              <span style={{fontSize:9,padding:'2px 7px',borderRadius:8,fontWeight:600,
+                                background:days<0?'#FEE2E2':days<=7?'#FEF0E7':'#EAF3DE',
+                                color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B6D11',
+                              }}>
+                                {days<0?'Scaduto':days<=7?`${days}gg`:`${days}gg`}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* AZIONI RAPIDE */}
+                          <div style={{display:'flex',gap:6,marginTop:10}} onClick={e=>e.stopPropagation()}>
+                            <a href={`/modifica-piano/${st.activePlan?.id||''}`} onClick={e=>!st.activePlan&&e.preventDefault()}
+                              style={{flex:1,padding:'6px',background:st.activePlan?'#FEF0E7':'#F5F3EF',color:st.activePlan?'#D4570A':'#B0ADA8',border:`0.5px solid ${st.activePlan?'#D4570A':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center',cursor:st.activePlan?'pointer':'not-allowed'}}>
+                              🥗 Piano
+                            </a>
+                            <button onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}
+                              style={{flex:1,padding:'6px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                              + Nuovo piano
+                            </button>
+                            <button onClick={()=>setSelectedClient(isSelected?null:c)}
+                              style={{flex:1,padding:'6px',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#888780',border:`0.5px solid ${isSelected?'#D4570A':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                              {isSelected?'✕ Chiudi':'Dettagli'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab==='calendario' && <CalendarioAdmin/>}
+            {tab==='check-in' && <CheckinAdmin/>}
+            {tab==='report' && <ReportTab clients={clients} clientStats={clientStats} onRefresh={fetchAll}/>}
+            {tab==='anamnesi' && <AnamnesiTab clients={clients} onRefresh={fetchAll}/>}
+          </div>
+
+          {/* PANNELLO DETTAGLIO CLIENTE — slide-in a destra su PC */}
+          {selectedClient && !isMobile && (
+            <div style={{
+              width:440,flexShrink:0,borderLeft:'0.5px solid #E0DDD6',
+              overflowY:'auto',background:'white',
+              WebkitOverflowScrolling:'touch',
+              animation:'slideInRight 0.2s ease-out',
+            }}>
+              <ClientDetailModal
+                client={selectedClient}
+                plans={plans.filter(p=>p.client_id===selectedClient.id)}
+                onClose={()=>setSelectedClient(null)}
+                onSaved={fetchAll}
+                onNewPlan={()=>{setNewPlan(p=>({...p,client_id:selectedClient.id}));setShowNewPlan(true)}}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {showNewClient&&(
+      {/* MODAL DETTAGLIO MOBILE */}
+      {selectedClient && isMobile && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}} onClick={e=>e.target===e.currentTarget&&setSelectedClient(null)}>
+          <div style={{background:'white',borderRadius:'16px 16px 0 0',width:'100%',maxHeight:'90dvh',overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
+            <ClientDetailModal
+              client={selectedClient}
+              plans={plans.filter(p=>p.client_id===selectedClient.id)}
+              onClose={()=>setSelectedClient(null)}
+              onSaved={fetchAll}
+              onNewPlan={()=>{setNewPlan(p=>({...p,client_id:selectedClient.id}));setShowNewPlan(true);setSelectedClient(null)}}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NUOVO CLIENTE */}
+      {showNewClient && (
         <div style={s.modal} onClick={e=>e.target===e.currentTarget&&setShowNewClient(false)}>
           <div style={s.modalCard}>
-            <div style={{fontSize:16,fontWeight:500,color:'#111',marginBottom:4}}>Nuovo cliente</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#111',marginBottom:4}}>Nuovo cliente</div>
             <div style={{fontSize:12,color:'#888780',marginBottom:20}}>Crea l'account e comunicagli le credenziali.</div>
             <div style={s.formGroup}><label style={s.label}>Nome completo *</label><input style={s.input} placeholder="Es. Marco Rossi" value={newClient.full_name} onChange={e=>setNewClient(p=>({...p,full_name:e.target.value}))}/></div>
             <div style={s.grid2}>
@@ -554,20 +739,18 @@ export default function AdminPanel() {
               </select>
             </div>
             <div style={s.formGroup}><label style={s.label}>Note</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))}/></div>
-            {msg&&<div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
+            {msg && <div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
             <button style={s.saveBtn} onClick={createClient} disabled={saving}>{saving?'Creazione...':'Crea cliente'}</button>
             <button style={s.cancelBtn} onClick={()=>setShowNewClient(false)}>Annulla</button>
           </div>
         </div>
       )}
 
-      {showNewPlan&&(
+      {showNewPlan && (
         <div style={s.modal} onClick={e=>e.target===e.currentTarget&&setShowNewPlan(false)}>
           <div style={{...s.modalCard, maxWidth:620}}>
-            <div style={{fontSize:16,fontWeight:500,color:'#111',marginBottom:4}}>Nuovo piano alimentare</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#111',marginBottom:4}}>Nuovo piano alimentare</div>
             <div style={{fontSize:12,color:'#888780',marginBottom:16}}>Assegna un piano a un cliente.</div>
-
-            {/* CLIENTE E TITOLO */}
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Cliente *</label>
                 <select style={s.select} value={newPlan.client_id} onChange={e=>setNewPlan(p=>({...p,client_id:e.target.value}))}>
@@ -576,22 +759,15 @@ export default function AdminPanel() {
               </div>
               <div style={s.formGroup}><label style={s.label}>Titolo</label><input style={s.input} value={newPlan.title} onChange={e=>setNewPlan(p=>({...p,title:e.target.value}))}/></div>
             </div>
-
-            {/* TIPO DI DIETA */}
             <div style={s.formGroup}>
               <label style={s.label}>Tipo di approccio alimentare</label>
               <select style={{...s.select, fontWeight:500}} value={dietType} onChange={e=>setDietType(e.target.value)}>
                 {DIET_TYPES.map(d=><option key={d.value} value={d.value}>{d.label} — {d.desc}</option>)}
               </select>
             </div>
-
-            {/* LINEARE */}
             {dietType==='lineare' && (
               <>
-                <div style={s.formGroup}>
-                  <label style={s.label}>Calorie target (kcal)</label>
-                  <input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/>
-                </div>
+                <div style={s.formGroup}><label style={s.label}>Calorie target (kcal)</label><input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/></div>
                 <div style={s.grid2}>
                   <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
@@ -600,97 +776,24 @@ export default function AdminPanel() {
                 </div>
               </>
             )}
-
-            {/* ON/OFF */}
-            {dietType==='on_off' && (
-              <>
-                <MacroBox label="🟠 Giorni ON (allenamento)" prefix="on" color="#D4570A" bg="#FEF0E7"/>
-                <div style={{fontSize:11,color:'#888780',marginBottom:6,marginTop:-4}}>Giorni ON</div>
-                <DayPicker field="on_days" color="#D4570A"/>
-                <div style={{height:12}}/>
-                <MacroBox label="🔵 Giorni OFF (riposo)" prefix="off" color="#4A90D4" bg="#EBF3FD"/>
-                <div style={{fontSize:11,color:'#888780',marginTop:6}}>I giorni non selezionati come ON saranno automaticamente OFF.</div>
-              </>
+            {dietType!=='lineare' && (
+              <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px',marginBottom:12}}>
+                <div style={{fontSize:12,color:'#D4570A',fontWeight:600}}>Per i piani avanzati (ON/OFF, Ad onde, ecc.) usa la sezione Importa piano.</div>
+              </div>
             )}
-
-            {/* AD ONDE */}
-            {dietType==='onde' && (
-              <>
-                <MacroBox label="🔴 Giorni ALTO" prefix="high" color="#D4570A" bg="#FEF0E7"/>
-                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni ALTO</div><DayPicker field="high_days" color="#D4570A"/>
-                <div style={{height:10}}/>
-                <MacroBox label="🟡 Giorni MEDIO" prefix="mid" color="#E8A020" bg="#FEF8E7"/>
-                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni MEDIO</div><DayPicker field="mid_days" color="#E8A020"/>
-                <div style={{height:10}}/>
-                <MacroBox label="🟢 Giorni BASSO" prefix="low" color="#3B6D11" bg="#EAF3DE"/>
-                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni BASSO</div><DayPicker field="low_days" color="#3B6D11"/>
-              </>
-            )}
-
-            {/* REVERSE */}
-            {dietType==='reverse' && (
-              <>
-                <MacroBox label="📈 Kcal di partenza (Settimana 1)" prefix="base" color="#9B59B6" bg="#F5EEF8"/>
-                <div style={s.grid2}>
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Aumento settimanale (%)</label>
-                    <input style={s.input} type="number" value={dietConfig.weekly_increase_pct} onChange={e=>setDietConfig(p=>({...p,weekly_increase_pct:parseFloat(e.target.value)||0}))}/>
-                  </div>
-                  <div style={s.formGroup}>
-                    <label style={s.label}>Numero settimane</label>
-                    <input style={s.input} type="number" value={dietConfig.weeks} onChange={e=>setDietConfig(p=>({...p,weeks:parseInt(e.target.value)||1}))}/>
-                  </div>
-                </div>
-                <div style={{background:'#F5EEF8',borderRadius:9,padding:'10px 12px',fontSize:12,color:'#9B59B6'}}>
-                  Progressione stimata: {Array.from({length:Math.min(dietConfig.weeks,6)},(_,i)=>Math.round(dietConfig.base_kcal*Math.pow(1+dietConfig.weekly_increase_pct/100,i))).join(' → ')} {dietConfig.weeks>6?'→ ...':''} kcal
-                </div>
-              </>
-            )}
-
-            {/* CICLICO */}
-            {dietType==='ciclico' && (
-              <>
-                <MacroBox label="🔻 Settimana DEFICIT" prefix="deficit" color="#E24B4A" bg="#FEE2E2"/>
-                <MacroBox label="🔺 Settimana SURPLUS" prefix="surplus" color="#3B6D11" bg="#EAF3DE"/>
-                <div style={{fontSize:11,color:'#888780'}}>Le settimane si alternano automaticamente: A=Deficit, B=Surplus.</div>
-              </>
-            )}
-
-            {/* REFEED */}
-            {dietType==='refeed' && (
-              <>
-                <MacroBox label="📊 Giorni normali" prefix="normal" color="#4A90D4" bg="#EBF3FD"/>
-                <MacroBox label="⚡ Giorni Refeed" prefix="refeed" color="#D4570A" bg="#FEF0E7"/>
-                <div style={{fontSize:11,color:'#888780',marginBottom:6}}>Giorni Refeed</div>
-                <DayPicker field="refeed_days" color="#D4570A"/>
-              </>
-            )}
-
-            <div style={{height:12}}/>
-            <div style={s.formGroup}><label style={s.label}>Note coach</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newPlan.notes} onChange={e=>setNewPlan(p=>({...p,notes:e.target.value}))}/></div>
-            {msg&&<div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
+            <div style={s.formGroup}><label style={s.label}>Note per il cliente</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newPlan.notes} onChange={e=>setNewPlan(p=>({...p,notes:e.target.value}))}/></div>
+            {msg && <div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
             <button style={s.saveBtn} onClick={createPlan} disabled={saving}>{saving?'Creazione...':'Crea piano'}</button>
             <button style={s.cancelBtn} onClick={()=>setShowNewPlan(false)}>Annulla</button>
           </div>
         </div>
       )}
 
-      {selectedClient&&(
-        <ClientDetailModal
-          client={selectedClient}
-          plans={plans.filter(p=>p.client_id===selectedClient.id)}
-          onClose={()=>setSelectedClient(null)}
-          onSaved={fetchAll}
-          onNewPlan={()=>{setNewPlan(p=>({...p,client_id:selectedClient.id}));setSelectedClient(null);setShowNewPlan(true)}}
-        />
-      )}
-    </>
+    </div>
   )
 }
 
-// ─────────────────────────────────────────────────────────
-// VISTA DETTAGLIO CLIENTE COMPLETA
-// ─────────────────────────────────────────────────────────
+
 function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
