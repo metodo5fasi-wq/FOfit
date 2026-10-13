@@ -9,10 +9,8 @@ const NAV_CLIENT = [
   { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#E8803A' },
   { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', color:'#D4570A' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#4A90D4' },
-  { to:'/messaggi', icon:'ti-message-2', label:'Messaggi', color:'#D4570A' },
   { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
   { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#4A90D4' },
-  { to:'/obiettivi', icon:'ti-trophy', label:'Obiettivi', color:'#E8A020' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', color:'#3B8C5A' },
   { to:'/notifiche', icon:'ti-bell', label:'Notifiche', color:'#E8A020' },
   { to:'/documenti', icon:'ti-folder', label:'Documenti', color:'#3B8C5A' },
@@ -120,11 +118,6 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                 </div>
                 <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
                 {item.to==='/ai'&&<span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>}
-                {item.to==='/messaggi'&&unreadMessages>0&&(
-                  <span style={{marginLeft:'auto',minWidth:18,height:18,borderRadius:9,background:'#D4570A',color:'white',fontSize:10,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>
-                    {unreadMessages}
-                  </span>
-                )}
               </NavLink>
             ))}
           </>
