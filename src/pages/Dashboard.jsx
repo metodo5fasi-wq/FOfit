@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useTheme } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber, FadeIn, PulseDot } from '../components/Animations'
 import { requestNotificationPermission, checkNotificationStatus, sendTestNotification } from '../lib/notifications'
+import { GraficoPeso, GraficoKcal } from '../components/GraficiProgressi'
 
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
@@ -67,7 +68,9 @@ export default function Dashboard() {
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
-  const prevKcalRef = React.useRef(0)
+  const [weeklyComp, setWeeklyComp] = useState(null) // confronto settimana precedente
+  const [nextWorkout, setNextWorkout] = useState(null)
+  const prevKcalRef = useRef(0)
 
   useEffect(() => {
     checkNotificationStatus().then(setNotifStatus)
@@ -101,6 +104,10 @@ export default function Dashboard() {
       .then(({ data }) => data?.length && setPlan(data[0]))
     // Calcola streak
     calcStreak()
+    // Confronto settimana precedente
+    calcWeeklyComparison()
+    // Prossimo allenamento
+    loadNextWorkout()
   }, [profile])
 
   async function calcStreak() {
@@ -122,6 +129,38 @@ export default function Dashboard() {
       else break
     }
     setStreak(count)
+  }
+
+  async function calcWeeklyComparison() {
+    const thisWeekStart = new Date(); thisWeekStart.setDate(thisWeekStart.getDate() - 7)
+    const lastWeekStart = new Date(); lastWeekStart.setDate(lastWeekStart.getDate() - 14)
+    const [thisW, lastW, thisSess, lastSess] = await Promise.all([
+      supabase.from('diary_entries').select('kcal').eq('client_id', profile.id)
+        .gte('entry_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('diary_entries').select('kcal').eq('client_id', profile.id)
+        .gte('entry_date', lastWeekStart.toISOString().split('T')[0])
+        .lt('entry_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('client_id', profile.id)
+        .gte('session_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('client_id', profile.id)
+        .gte('session_date', lastWeekStart.toISOString().split('T')[0])
+        .lt('session_date', thisWeekStart.toISOString().split('T')[0]),
+    ])
+    const thisKcal = Math.round((thisW.data || []).reduce((s, r) => s + (r.kcal || 0), 0) / Math.max((thisW.data?.length || 1), 1))
+    const lastKcal = Math.round((lastW.data || []).reduce((s, r) => s + (r.kcal || 0), 0) / Math.max((lastW.data?.length || 1), 1))
+    setWeeklyComp({
+      kcalDiff: thisKcal - lastKcal,
+      sessDiff: (thisSess.count || 0) - (lastSess.count || 0),
+      thisSess: thisSess.count || 0,
+      lastSess: lastSess.count || 0,
+    })
+  }
+
+  async function loadNextWorkout() {
+    const { data } = await supabase.from('workout_plans')
+      .select('name, days_per_week').eq('client_id', profile.id)
+      .eq('is_active', true).limit(1)
+    if (data?.[0]) setNextWorkout(data[0])
   }
 
   function showToast(message, emoji) {
@@ -287,6 +326,46 @@ export default function Dashboard() {
               {new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
             </div>
           </div>
+        )}
+
+        {/* CONFRONTO SETTIMANA PRECEDENTE */}
+        {weeklyComp && (weeklyComp.thisSess > 0 || weeklyComp.kcalDiff !== 0) && (
+          <FadeIn delay={150}>
+          <div style={{background:'white',borderRadius:12,padding:'14px 16px',border:'0.5px solid #E0DDD6',marginBottom:14,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+            <div style={{fontSize:11,fontWeight:600,color:'#888780',textTransform:'uppercase',letterSpacing:'0.09em',marginBottom:12}}>
+              📊 Vs settimana scorsa
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div style={{background:'#F5F3EF',borderRadius:10,padding:'10px 12px',textAlign:'center'}}>
+                <div style={{fontSize:18,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B6D11':'#E24B4A'}}>
+                  {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
+                </div>
+                <div style={{fontSize:10,color:'#888780',marginTop:2}}>sessioni allenamento</div>
+                <div style={{fontSize:9,color:'#B0ADA8'}}>{weeklyComp.thisSess} questa / {weeklyComp.lastSess} scorsa</div>
+              </div>
+              <div style={{background:'#F5F3EF',borderRadius:10,padding:'10px 12px',textAlign:'center'}}>
+                <div style={{fontSize:18,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B6D11':'#E8A020'}}>
+                  {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
+                </div>
+                <div style={{fontSize:10,color:'#888780',marginTop:2}}>kcal medie/giorno</div>
+                <div style={{fontSize:9,color:'#B0ADA8'}}>rispetto alla settimana scorsa</div>
+              </div>
+            </div>
+          </div>
+          </FadeIn>
+        )}
+
+        {/* MINI GRAFICO PESO */}
+        {measurements && (
+          <FadeIn delay={200}>
+          <div style={{background:'white',borderRadius:12,padding:'14px 16px',border:'0.5px solid #E0DDD6',marginBottom:14,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:600,color:'#888780',textTransform:'uppercase',letterSpacing:'0.09em'}}>Andamento peso</div>
+              <Link to="/progressi" style={{fontSize:11,color:'#D4570A',fontWeight:600,textDecoration:'none'}}>Vedi tutto →</Link>
+            </div>
+            <GraficoPeso compact={true}/>
+          </div>
+          </FadeIn>
         )}
 
         {/* NOTE COACH */}
