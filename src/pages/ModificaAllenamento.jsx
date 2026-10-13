@@ -296,255 +296,229 @@ export default function ModificaAllenamento() {
     </div>
   )
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
+
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <Link to="/admin" style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',color:'#111',textDecoration:'none',flexShrink:0}}>
+        <a href="/admin" style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',color:'#111',textDecoration:'none',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
-        </Link>
-        <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#111'}}>{plan?.title}</div>
-          <div style={{fontSize:11,color:'#888780'}}>{clientName} · {days.length} giorni · {exercises.length} esercizi</div>
+        </a>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.name || 'Modifica scheda'}</div>
+          <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan ? ` · ${plan.days_per_week} giorni/sett · ${plan.weeks_duration} settimane` : ''}</div>
         </div>
-        {dirty && (
-          <button onClick={saveAll} disabled={saving} style={s.btn}>
-            <i className="ti ti-device-floppy" style={{fontSize:14}}/>
-            {saving ? 'Salvo...' : 'Salva'}
-          </button>
-        )}
-        {savedMsg && <div style={{fontSize:12,color:'#3B6D11',fontWeight:600}}>{savedMsg}</div>}
+        <div style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
+          {saving && <span style={{fontSize:11,color:'#888780'}}>Salvo...</span>}
+          {!saving && dirty && (
+            <button onClick={saveAll} style={{...s.btn,minWidth:80}}>💾 Salva</button>
+          )}
+          {!dirty && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ Salvato</span>}
+        </div>
       </div>
 
-      {/* TAB GIORNI */}
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'8px 16px',display:'flex',gap:6,overflowX:'auto',flexShrink:0,alignItems:'center'}}>
-        {days.map(day => (
-          <div key={day} style={{display:'flex',alignItems:'center',gap:2,flexShrink:0}}>
-            <button onClick={()=>setSelectedDay(day)} style={{
-              padding:'6px 12px',borderRadius:18,fontSize:12,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-              background: selectedDay===day ? '#D4570A' : 'white',
-              color: selectedDay===day ? 'white' : '#111',
-              borderColor: selectedDay===day ? '#D4570A' : '#E0DDD6',
-            }}>{day}</button>
-            {selectedDay===day && (
-              <button onClick={()=>removeDay(day)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',padding:'0 2px',fontSize:14}}>×</button>
+      {/* LAYOUT */}
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+
+        {/* SIDEBAR GIORNI (PC) */}
+        {!isMobile && (
+          <div style={{width:140,flexShrink:0,background:'white',borderRight:'0.5px solid #E0DDD6',overflowY:'auto'}}>
+            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
+            {days.map(day => {
+              const dayExs = exercises.filter(e=>e.day_label===day)
+              return (
+                <div key={day} onClick={()=>setSelectedDay(day)} style={{
+                  padding:'10px 12px',cursor:'pointer',
+                  background:selectedDay===day?'#FEF0E7':'transparent',
+                  borderLeft:selectedDay===day?'3px solid #D4570A':'3px solid transparent',
+                  transition:'all 0.1s',
+                }}>
+                  <div style={{fontSize:12,fontWeight:selectedDay===day?700:500,color:selectedDay===day?'#D4570A':'#111'}}>{day}</div>
+                  <div style={{fontSize:10,color:'#888780',marginTop:1}}>{dayExs.length} esercizi</div>
+                </div>
+              )
+            })}
+            <div style={{padding:'8px 10px'}}>
+              <button onClick={addDay} style={{width:'100%',padding:'6px',background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:'inherit',color:'#888780',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                <i className="ti ti-plus" style={{fontSize:12}}/>Giorno
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* CONTENUTO */}
+        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+
+          {/* TAB GIORNI MOBILE */}
+          {isMobile && (
+            <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',display:'flex',overflowX:'auto',flexShrink:0,padding:'8px 10px',gap:6}}>
+              {days.map(day => (
+                <button key={day} onClick={()=>setSelectedDay(day)} style={{
+                  flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:600,
+                  cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
+                  background:selectedDay===day?'#D4570A':'white',
+                  color:selectedDay===day?'white':'#888780',
+                  borderColor:selectedDay===day?'#D4570A':'#E0DDD6',
+                }}>{day}</button>
+              ))}
+              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #E0DDD6',background:'transparent',color:'#888780',fontFamily:'inherit'}}>+ Giorno</button>
+            </div>
+          )}
+
+          {/* TOOLBAR GIORNO */}
+          <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'8px 14px',display:'flex',gap:8,alignItems:'center',flexShrink:0,flexWrap:'wrap'}}>
+            <span style={{fontSize:12,fontWeight:700,color:'#111'}}>{selectedDay}</span>
+            <span style={{fontSize:11,color:'#888780'}}>{dayExercises.length} esercizi</span>
+            <div style={{flex:1}}/>
+            {dayExercises.length > 1 && (
+              <>
+                <div style={{position:'relative',flex:isMobile?1:'0 0 180px'}}>
+                  <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#888780'}}/>
+                  <input value={searchEx} onChange={e=>setSearchEx(e.target.value)} placeholder="Cerca esercizio..."
+                    style={{...s.input,paddingLeft:26,fontSize:11,padding:'5px 8px 5px 26px',height:30}}/>
+                  {searchEx && <button onClick={()=>setSearchEx('')} style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:12}}>✕</button>}
+                </div>
+                <button onClick={()=>{if(allExpanded){setExpandedEx(null);setAllExpanded(false)}else{setExpandedEx('all');setAllExpanded(true)}}}
+                  style={{...s.btnGray,padding:'4px 10px',fontSize:11,whiteSpace:'nowrap'}}>
+                  {allExpanded?'⊖ Collassa':'⊕ Espandi'}
+                </button>
+              </>
+            )}
+            {!isMobile && days.length > 1 && (
+              <button onClick={()=>removeDay(selectedDay)} style={{...s.btnDanger,padding:'4px 8px',fontSize:11}}>
+                <i className="ti ti-trash" style={{fontSize:12}}/>Elimina giorno
+              </button>
             )}
           </div>
-        ))}
-        {showAddDay ? (
-          <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
-            <input value={newDayLabel} onChange={e=>setNewDayLabel(e.target.value)}
-              placeholder="Es. Giorno D - Braccia"
-              style={{...s.input,width:200,padding:'5px 8px',fontSize:12}}
-              onKeyDown={e=>e.key==='Enter'&&addDay()}
-            />
-            <button onClick={addDay} style={s.btnSm}>✓</button>
-            <button onClick={()=>setShowAddDay(false)} style={s.btnGray}>✕</button>
-          </div>
-        ) : (
-          <button onClick={()=>setShowAddDay(true)} style={{...s.btnGray,flexShrink:0,display:'flex',alignItems:'center',gap:4}}>
-            <i className="ti ti-plus" style={{fontSize:12}}/>Giorno
-          </button>
-        )}
-      </div>
 
-      {/* ESERCIZI */}
-      <div style={s.page}>
-        {selectedDay && dayExercises.length === 0 && (
-          <div style={{textAlign:'center',padding:'30px 0',color:'#888780',fontSize:13}}>
-            Nessun esercizio per {selectedDay}. Aggiungine uno.
-          </div>
-        )}
+          {/* ESERCIZI */}
+          <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'10px 12px'}}>
+            {filteredDayExercises.map((ex, ei) => {
+              const isExpanded = expandedEx === ex.id || expandedEx === 'all'
+              return (
+                <div key={ex.id}
+                  draggable onDragStart={()=>handleDragStart(ex.id)}
+                  onDragOver={e=>handleDragOver(e,ex.id)} onDrop={()=>handleDrop(ex.id)}
+                  onDragEnd={handleDragEnd}
+                  style={{...s.card,
+                    opacity:dragId===ex.id?0.4:1,
+                    border:dragOverId===ex.id?'1.5px solid #D4570A':'0.5px solid #E0DDD6',
+                    transition:'border 0.1s',
+                  }}>
+                  {/* HEADER ESERCIZIO */}
+                  <div style={{display:'flex',alignItems:'center',gap:7,padding:'9px 11px',cursor:'pointer'}}
+                    onClick={()=>{if(expandedEx==='all'){setAllExpanded(false);setExpandedEx(ex.id)}else setExpandedEx(isExpanded?null:ex.id)}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#C0BDB8',flexShrink:0}}>
+                      <i className="ti ti-grip-vertical" style={{fontSize:15}}/>
+                      <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
+                    </div>
+                    <div style={{width:30,height:30,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <i className="ti ti-barbell" style={{fontSize:14,color:'#D4570A'}}/>
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name||<span style={{color:'#888780',fontStyle:'italic'}}>Nuovo esercizio</span>}</div>
+                      <div style={{fontSize:10,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut?` · TUT ${ex.tut}`:''}{ex.weekly_targets?.length?` · 📅 ${ex.weekly_targets.length}sett`:''}</div>
+                    </div>
+                    <div style={{display:'flex',gap:3,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                      <button onClick={()=>moveEx(ex.id,'up')} style={{...s.btnGray,padding:'3px 5px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:11}}/></button>
+                      <button onClick={()=>moveEx(ex.id,'down')} style={{...s.btnGray,padding:'3px 5px'}} title="Giù"><i className="ti ti-arrow-down" style={{fontSize:11}}/></button>
+                      <button onClick={()=>duplicateEx(ex.id)} style={{...s.btnGray,padding:'3px 5px'}} title="Duplica"><i className="ti ti-copy" style={{fontSize:11}}/></button>
+                      {days.length > 1 && (
+                        <button onClick={()=>setShowCopyModal(showCopyModal===ex.id?null:ex.id)} style={{...s.btnGray,padding:'3px 5px'}} title="Copia su altro giorno"><i className="ti ti-transfer" style={{fontSize:11}}/></button>
+                      )}
+                      <button onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 5px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+                    </div>
+                    <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:12,color:'#888780',flexShrink:0}}/>
+                  </div>
 
-        {/* BARRA RICERCA + COMPATTA TUTTI */}
-        {dayExercises.length > 2 && (
-          <div style={{display:'flex',gap:8,marginBottom:8,alignItems:'center'}}>
-            <div style={{flex:1,position:'relative'}}>
-              <i className="ti ti-search" style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>
-              <input
-                value={searchEx}
-                onChange={e=>setSearchEx(e.target.value)}
-                placeholder="Cerca esercizio..."
-                style={{...s.input,paddingLeft:30,fontSize:12,height:34}}
-              />
-              {searchEx && <button onClick={()=>setSearchEx('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:14}}>✕</button>}
-            </div>
-            <button onClick={()=>{
-              if (allExpanded) { setExpandedEx(null); setAllExpanded(false) }
-              else { setExpandedEx('all'); setAllExpanded(true) }
-            }} style={{...s.btnGray,padding:'6px 10px',fontSize:11,whiteSpace:'nowrap'}}>
-              {allExpanded ? '⊖ Collassa' : '⊕ Espandi tutti'}
-            </button>
-          </div>
-        )}
-
-        {filteredDayExercises.map((ex, ei) => {
-          const isExpanded = expandedEx === ex.id || expandedEx === 'all'
-          return (
-            <div key={ex.id}
-              draggable
-              onDragStart={()=>handleDragStart(ex.id)}
-              onDragOver={e=>handleDragOver(e,ex.id)}
-              onDrop={()=>handleDrop(ex.id)}
-              onDragEnd={handleDragEnd}
-              style={{...s.card,
-                opacity: dragId===ex.id ? 0.4 : 1,
-                border: dragOverId===ex.id ? '1.5px solid #D4570A' : '0.5px solid #E0DDD6',
-                transition:'border 0.15s',
-              }}>
-              {/* HEADER ESERCIZIO */}
-              <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',cursor:'pointer'}} onClick={()=>{
-                if (expandedEx==='all') { setAllExpanded(false); setExpandedEx(ex.id) }
-                else setExpandedEx(isExpanded?null:ex.id)
-              }}>
-                {/* Drag handle + numero */}
-                <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 4px',color:'#C0BDB8',flexShrink:0}} title="Trascina per riordinare">
-                  <i className="ti ti-grip-vertical" style={{fontSize:16}}/>
-                  <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
-                </div>
-                <div style={{width:32,height:32,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <i className="ti ti-barbell" style={{fontSize:15,color:'#D4570A'}}/>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:10,color:'#888780',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut?` · TUT ${ex.tut}`:''}{ex.weekly_targets?.length?` · 📅 ${ex.weekly_targets.length}sett`:''}</div>
-                </div>
-                <div style={{display:'flex',gap:3,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                  <button onClick={()=>moveEx(ex.id,'up')} style={{...s.btnGray,padding:'3px 6px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:11}}/></button>
-                  <button onClick={()=>moveEx(ex.id,'down')} style={{...s.btnGray,padding:'3px 6px'}} title="Giù"><i className="ti ti-arrow-down" style={{fontSize:11}}/></button>
-                  <button onClick={()=>duplicateEx(ex.id)} style={{...s.btnGray,padding:'3px 6px'}} title="Duplica"><i className="ti ti-copy" style={{fontSize:11}}/></button>
-                  {days.length > 1 && (
-                    <button onClick={()=>setShowCopyModal(showCopyModal===ex.id?null:ex.id)} style={{...s.btnGray,padding:'3px 6px'}} title="Copia su altro giorno"><i className="ti ti-transfer" style={{fontSize:11}}/></button>
+                  {/* COPIA SU ALTRO GIORNO */}
+                  {showCopyModal===ex.id && (
+                    <div style={{padding:'7px 12px 9px',borderTop:'0.5px solid #F5F3EF',background:'#FEF0E7'}}>
+                      <div style={{fontSize:11,fontWeight:600,color:'#D4570A',marginBottom:5}}>Copia su giorno:</div>
+                      <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                        {days.filter(d=>d!==selectedDay).map(d=>(
+                          <button key={d} onClick={()=>copyExToDay(ex.id,d)} style={{...s.btnGray,padding:'4px 10px',fontSize:11,fontWeight:600,background:'white',color:'#D4570A',borderColor:'#D4570A'}}>{d}</button>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  <button onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 6px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
-                </div>
-                <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:13,color:'#888780',flexShrink:0}}/>
-              </div>
 
-              {/* MODAL COPIA SU ALTRO GIORNO */}
-              {showCopyModal===ex.id && (
-                <div style={{padding:'8px 12px 10px',borderTop:'0.5px solid #F5F3EF',background:'#FEF0E7'}}>
-                  <div style={{fontSize:11,fontWeight:600,color:'#D4570A',marginBottom:6}}>Copia su giorno:</div>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                    {days.filter(d=>d!==selectedDay).map(d=>(
-                      <button key={d} onClick={()=>copyExToDay(ex.id,d)}
-                        style={{...s.btnGray,padding:'5px 10px',fontSize:11,fontWeight:600,background:'white',color:'#D4570A',borderColor:'#D4570A'}}>
-                        {d}
-                      </button>
-                    ))}
+                  {/* DETTAGLIO ESERCIZIO */}
+                  {isExpanded && (
+                    <div style={{borderTop:'0.5px solid #F5F3EF',padding:'12px'}}>
+                      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr 1fr':'repeat(4,1fr)',gap:8,marginBottom:8}}>
+                        <div><label style={s.label}>Nome esercizio</label>
+                          <input style={s.input} value={ex.exercise_name} onChange={e=>updateEx(ex.id,'exercise_name',e.target.value)} placeholder="Es. Panca piana"/>
+                        </div>
+                        <div><label style={s.label}>Gruppo muscolare</label>
+                          <select style={s.input} value={ex.muscle_group} onChange={e=>updateEx(ex.id,'muscle_group',e.target.value)}>
+                            {MUSCLE_GROUPS.map(g=><option key={g}>{g}</option>)}
+                          </select>
+                        </div>
+                        <div><label style={s.label}>Serie</label>
+                          <input style={s.input} type="number" value={ex.sets} onChange={e=>updateEx(ex.id,'sets',parseInt(e.target.value)||0)}/>
+                        </div>
+                        <div><label style={s.label}>Reps</label>
+                          <input style={s.input} value={ex.reps} onChange={e=>updateEx(ex.id,'reps',e.target.value)} placeholder="Es. 8-10"/>
+                        </div>
+                        <div><label style={s.label}>Recupero (sec)</label>
+                          <input style={s.input} type="number" value={ex.rest_seconds} onChange={e=>updateEx(ex.id,'rest_seconds',parseInt(e.target.value)||0)}/>
+                        </div>
+                        <div><label style={s.label}>TUT</label>
+                          <input style={s.input} value={ex.tut||''} onChange={e=>updateEx(ex.id,'tut',e.target.value)} placeholder="Es. 3-1-2"/>
+                        </div>
+                        <div style={{gridColumn:isMobile?'span 2':'span 2'}}><label style={s.label}>Video URL</label>
+                          <input style={s.input} value={ex.video_url||''} onChange={e=>updateEx(ex.id,'video_url',e.target.value)} placeholder="https://youtube.com/..."/>
+                        </div>
+                      </div>
+                      <div style={{marginBottom:8}}><label style={s.label}>Note / descrizione</label>
+                        <input style={s.input} value={ex.description||''} onChange={e=>updateEx(ex.id,'description',e.target.value)} placeholder="Indicazioni tecniche..."/>
+                      </div>
+                      <WeeklyTargetsTable ex={ex} onChange={(field,val)=>updateEx(ex.id,field,val)}/>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* AGGIUNGI ESERCIZIO */}
+            {showAddExercise ? (
+              <div style={{background:'white',borderRadius:12,border:'0.5px solid #D4570A',padding:'12px',marginBottom:10}}>
+                <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:8,marginBottom:8}}>
+                  <div><label style={s.label}>Nome esercizio *</label>
+                    <input style={s.input} value={newEx.exercise_name} onChange={e=>setNewEx(p=>({...p,exercise_name:e.target.value}))} placeholder="Es. Squat" autoFocus/>
                   </div>
-                </div>
-              )}
-
-              {/* FORM MODIFICA */}
-              {isExpanded && (
-                <div style={{padding:'14px',borderTop:'0.5px solid #F5F3EF',background:'#FAFAF9'}}>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-                    <div style={{gridColumn:'1/-1'}}>
-                      <label style={s.label}>Nome esercizio</label>
-                      <input style={s.input} value={ex.exercise_name} onChange={e=>updateEx(ex.id,'exercise_name',e.target.value)}/>
-                    </div>
-                    <div>
-                      <label style={s.label}>Gruppo muscolare</label>
-                      <select style={s.input} value={ex.muscle_group||''} onChange={e=>updateEx(ex.id,'muscle_group',e.target.value)}>
-                        {MUSCLE_GROUPS.map(g=><option key={g} value={g}>{g}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={s.label}>Link YouTube</label>
-                      <input style={s.input} value={ex.video_url||''} onChange={e=>updateEx(ex.id,'video_url',e.target.value)} placeholder="https://youtube.com/..."/>
-                    </div>
-                    <div>
-                      <label style={s.label}>Serie</label>
-                      <input style={s.input} type="number" value={ex.sets||''} onChange={e=>updateEx(ex.id,'sets',e.target.value)}/>
-                    </div>
-                    <div>
-                      <label style={s.label}>Ripetizioni</label>
-                      <input style={s.input} value={ex.reps||''} onChange={e=>updateEx(ex.id,'reps',e.target.value)} placeholder="8-10"/>
-                    </div>
-                    <div>
-                      <label style={s.label}>Recupero (secondi)</label>
-                      <input style={s.input} type="number" value={ex.rest_seconds||''} onChange={e=>updateEx(ex.id,'rest_seconds',e.target.value)}/>
-                    </div>
-                    <div>
-                      <label style={s.label}>TUT (es. 3-1-2-0)</label>
-                      <input style={s.input} value={ex.tut||''} onChange={e=>updateEx(ex.id,'tut',e.target.value)} placeholder="eccentrica-pausa-concentrica-pausa"/>
-                    </div>
-
-                    {/* PROGRESSIONE */}
-                    <WeeklyTargetsTable ex={ex} onChange={(field,val)=>updateEx(ex.id,field,val)}/>
-                    <div style={{gridColumn:'1/-1'}}>
-                      <label style={s.label}>Note / Istruzioni esecuzione</label>
-                      <textarea style={{...s.input,resize:'none',height:60}} value={ex.description||''} onChange={e=>updateEx(ex.id,'description',e.target.value)} placeholder="Istruzioni di esecuzione..."/>
-                    </div>
+                  <div><label style={s.label}>Gruppo muscolare</label>
+                    <select style={s.input} value={newEx.muscle_group} onChange={e=>setNewEx(p=>({...p,muscle_group:e.target.value}))}>
+                      {MUSCLE_GROUPS.map(g=><option key={g}>{g}</option>)}
+                    </select>
                   </div>
+                  <div><label style={s.label}>Serie</label><input style={s.input} type="number" value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:parseInt(e.target.value)||3}))}/></div>
+                  <div><label style={s.label}>Reps</label><input style={s.input} value={newEx.reps} onChange={e=>setNewEx(p=>({...p,reps:e.target.value}))} placeholder="8-10"/></div>
+                  <div><label style={s.label}>Recupero (sec)</label><input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:parseInt(e.target.value)||60}))}/></div>
                 </div>
-              )}
-            </div>
-          )
-        })}
-
-        {/* AGGIUNGI ESERCIZIO */}
-        {selectedDay && (
-          addingExToDay === selectedDay ? (
-            <div style={{...s.card,padding:'14px'}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#111',marginBottom:10}}>Nuovo esercizio — {selectedDay}</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
-                <div style={{gridColumn:'1/-1'}}>
-                  <label style={s.label}>Nome esercizio *</label>
-                  <input style={s.input} placeholder="Es. Panca piana" value={newEx.exercise_name} onChange={e=>setNewEx(p=>({...p,exercise_name:e.target.value}))}/>
-                </div>
-                <div>
-                  <label style={s.label}>Gruppo muscolare</label>
-                  <select style={s.input} value={newEx.muscle_group} onChange={e=>setNewEx(p=>({...p,muscle_group:e.target.value}))}>
-                    {MUSCLE_GROUPS.map(g=><option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={s.label}>Link YouTube</label>
-                  <input style={s.input} value={newEx.video_url} onChange={e=>setNewEx(p=>({...p,video_url:e.target.value}))} placeholder="https://youtube.com/..."/>
-                </div>
-                <div>
-                  <label style={s.label}>Serie</label>
-                  <input style={s.input} type="number" value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:e.target.value}))}/>
-                </div>
-                <div>
-                  <label style={s.label}>Ripetizioni</label>
-                  <input style={s.input} value={newEx.reps} onChange={e=>setNewEx(p=>({...p,reps:e.target.value}))} placeholder="8-10"/>
-                </div>
-                <div>
-                  <label style={s.label}>Recupero (sec)</label>
-                  <input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:e.target.value}))}/>
-                </div>
-                <div>
-                  <label style={s.label}>TUT (es. 3-1-2-0)</label>
-                  <input style={s.input} value={newEx.tut||''} onChange={e=>setNewEx(p=>({...p,tut:e.target.value}))} placeholder="eccentrica-pausa-concentrica-pausa"/>
-                </div>
-                <WeeklyTargetsTable ex={newEx} onChange={(field,val)=>setNewEx(p=>({...p,[field]:val}))}/>
-                <div style={{gridColumn:'1/-1'}}>
-                  <label style={s.label}>Note esecuzione</label>
-                  <textarea style={{...s.input,resize:'none',height:50}} value={newEx.description} onChange={e=>setNewEx(p=>({...p,description:e.target.value}))}/>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={addExercise} disabled={!newEx.exercise_name.trim()} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12,opacity:!newEx.exercise_name.trim()?0.5:1}}>
+                    <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi esercizio
+                  </button>
+                  <button onClick={()=>{setShowAddExercise(false);setNewEx(EMPTY_EX)}} style={s.btnGray}>Annulla</button>
                 </div>
               </div>
-              <div style={{display:'flex',gap:8}}>
-                <button onClick={addExercise} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12}}>
-                  <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi esercizio
-                </button>
-                <button onClick={()=>{setAddingExToDay(null);setNewEx({...EMPTY_EX})}} style={s.btnGray}>Annulla</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={()=>setAddingExToDay(selectedDay)} style={{
-              width:'100%',padding:'12px',background:'white',border:'0.5px dashed #D4570A',borderRadius:10,
-              color:'#D4570A',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
-              display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:20
-            }}>
-              <i className="ti ti-plus" style={{fontSize:15}}/>Aggiungi esercizio a {selectedDay}
-            </button>
-          )
-        )}
+            ) : (
+              <button onClick={()=>setShowAddExercise(true)} style={{...s.btnGray,width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px',marginBottom:10,fontSize:12}}>
+                <i className="ti ti-plus" style={{fontSize:14}}/>Aggiungi esercizio
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
-
