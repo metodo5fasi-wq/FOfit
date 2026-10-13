@@ -138,6 +138,57 @@ function NotifBell({ clients }) {
 
 
 
+
+function DayPicker({ field, color='#D4570A' }) {
+  return (
+    <div style={{display:'flex',gap:4,marginTop:6}}>
+      {DAY_NAMES.map((dn,i) => {
+        const day = i+1
+        const active = (dietConfig[field]||[]).includes(day)
+        return (
+          <button key={day} onClick={()=>toggleDietDay(field, day)} style={{
+            width:32,height:28,borderRadius:7,border:'0.5px solid',fontFamily:'inherit',fontSize:11,fontWeight:600,cursor:'pointer',
+            background:active?color:'#F5F3EF', color:active?'white':'#888780', borderColor:active?color:'#E0DDD6'
+          }}>{dn}</button>
+        )
+      })}
+    </div>
+  )
+}
+
+
+function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
+  const total = dcMacroKcal(prefix)
+  return (
+    <div style={{background:bg,borderRadius:10,padding:'12px',border:`0.5px solid ${color}33`,marginBottom:10}}>
+      <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>{label}</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+        <div>
+          <label style={{...s.label,color:'#888780'}}>Kcal</label>
+          <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
+            value={dietConfig[`${prefix}_kcal`]||''}
+            onChange={e=>handleDcKcalChange(prefix, e.target.value)}/>
+        </div>
+        {[{k:'protein',l:'Pro (g)'},{k:'carbs',l:'Carbo (g)'},{k:'fat',l:'Grassi (g)'}].map(f=>(
+          <div key={f.k}>
+            <label style={{...s.label,color:'#888780'}}>{f.l}</label>
+            <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
+              value={dietConfig[`${prefix}_${f.k}`]||''}
+              onChange={e=>handleDcMacroChange(prefix, f.k, e.target.value)}/>
+          </div>
+        ))}
+      </div>
+      <div style={{marginTop:8,fontSize:11,color,fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
+        <i className="ti ti-check" style={{fontSize:12}}/> Totale da macro: {total} kcal
+        {Math.abs(total - (dietConfig[`${prefix}_kcal`]||0)) > 5 && (
+          <span style={{color:'#E24B4A',fontWeight:400,fontSize:10,marginLeft:4}}>⚠️ differenza di {Math.abs(total-(dietConfig[`${prefix}_kcal`]||0))} kcal</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 export default function AdminPanel() {
   const toast = useToast()
   const { profile } = useAuth()
@@ -191,54 +242,6 @@ export default function AdminPanel() {
       const arr = p[field] || []
       return { ...p, [field]: arr.includes(day) ? arr.filter(d=>d!==day) : [...arr, day] }
     })
-  }
-
-  function DayPicker({ field, color='#D4570A' }) {
-    return (
-      <div style={{display:'flex',gap:4,marginTop:6}}>
-        {DAY_NAMES.map((dn,i) => {
-          const day = i+1
-          const active = (dietConfig[field]||[]).includes(day)
-          return (
-            <button key={day} onClick={()=>toggleDietDay(field, day)} style={{
-              width:32,height:28,borderRadius:7,border:'0.5px solid',fontFamily:'inherit',fontSize:11,fontWeight:600,cursor:'pointer',
-              background:active?color:'#F5F3EF', color:active?'white':'#888780', borderColor:active?color:'#E0DDD6'
-            }}>{dn}</button>
-          )
-        })}
-      </div>
-    )
-  }
-
-  function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
-    const total = dcMacroKcal(prefix)
-    return (
-      <div style={{background:bg,borderRadius:10,padding:'12px',border:`0.5px solid ${color}33`,marginBottom:10}}>
-        <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>{label}</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
-          <div>
-            <label style={{...s.label,color:'#888780'}}>Kcal</label>
-            <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
-              value={dietConfig[`${prefix}_kcal`]||''}
-              onChange={e=>handleDcKcalChange(prefix, e.target.value)}/>
-          </div>
-          {[{k:'protein',l:'Pro (g)'},{k:'carbs',l:'Carbo (g)'},{k:'fat',l:'Grassi (g)'}].map(f=>(
-            <div key={f.k}>
-              <label style={{...s.label,color:'#888780'}}>{f.l}</label>
-              <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
-                value={dietConfig[`${prefix}_${f.k}`]||''}
-                onChange={e=>handleDcMacroChange(prefix, f.k, e.target.value)}/>
-            </div>
-          ))}
-        </div>
-        <div style={{marginTop:8,fontSize:11,color,fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
-          <i className="ti ti-check" style={{fontSize:12}}/> Totale da macro: {total} kcal
-          {Math.abs(total - (dietConfig[`${prefix}_kcal`]||0)) > 5 && (
-            <span style={{color:'#E24B4A',fontWeight:400,fontSize:10,marginLeft:4}}>⚠️ differenza di {Math.abs(total-(dietConfig[`${prefix}_kcal`]||0))} kcal</span>
-          )}
-        </div>
-      </div>
-    )
   }
 
   function buildPlanFromDiet() {
