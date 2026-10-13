@@ -507,57 +507,41 @@ export default function ModificaPiano() {
     </div>
   )
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
+
       {/* TOPBAR */}
       <div style={s.topbar}>
         <Link to="/admin" style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',color:'#111',textDecoration:'none',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </Link>
-        <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#111'}}>{plan?.title}</div>
-          <div style={{fontSize:11,color:'#888780'}}>{clientName} · {plan?.kcal_target} kcal</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
+          <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan && ` · ${plan.kcal_target} kcal`}</div>
         </div>
-        <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola macro alimenti esistenti" style={{...s.btnGray,padding:'7px 10px',fontSize:11}}>
-          {fixingMacros ? '...' : '🔄'}
-        </button>
-        {dirty && (
-          <button onClick={saveAll} disabled={saving} style={{...s.btn, minWidth:90}}>
-            {saving
-              ? <><i className="ti ti-loader-2" style={{fontSize:14, animation:'spin 1s linear infinite'}}/> Salvo...</>
-              : <><i className="ti ti-device-floppy" style={{fontSize:14}}/> Salva</>
-            }
+        <div style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
+          <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola macro alimenti esistenti" style={{...s.btnGray,padding:'6px 10px'}}>
+            {fixingMacros ? '...' : '🔄'}
           </button>
-        )}
-        {savedMsg && (
-          <div style={{
-            fontSize:12, fontWeight:700, padding:'7px 12px', borderRadius:8,
-            background: savedMsg.startsWith('❌') ? '#FEE2E2' : '#EAF3DE',
-            color: savedMsg.startsWith('❌') ? '#E24B4A' : '#3B6D11',
-            border: `0.5px solid ${savedMsg.startsWith('❌') ? '#E24B4A' : '#3B6D11'}`,
-          }}>{savedMsg}</div>
-        )}
+          {savedMsg && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ {savedMsg}</span>}
+          {dirty && (
+            <button onClick={saveAll} disabled={saving} style={{...s.btn,minWidth:80}}>
+              {saving ? 'Salvo...' : '💾 Salva'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* TAB GIORNI */}
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'8px 16px',display:'flex',gap:4,overflowX:'auto',flexShrink:0}}>
-        {DAY_NAMES.map((dn,i) => {
-          const day = i+1
-          const hasMeals = meals.some(m=>m.day_of_week===day && m.plan_meal_foods?.length>0)
-          return (
-            <button key={day} onClick={()=>setSelectedDay(day)} style={{
-              padding:'6px 12px',borderRadius:18,fontSize:12,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0,
-              background: selectedDay===day ? '#D4570A' : 'white',
-              color: selectedDay===day ? 'white' : hasMeals ? '#111' : '#888780',
-              borderColor: selectedDay===day ? '#D4570A' : hasMeals ? '#E0DDD6' : '#F5F3EF',
-            }}>{dn.slice(0,3)}</button>
-          )
-        })}
-      </div>
-
-      {/* TOTALI GIORNO — barre live + copia giorno */}
-      <div style={{background:'white',padding:'10px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
-        <div style={{display:'flex',gap:10,marginBottom:6}}>
+      {/* BARRE MACRO LIVE */}
+      <div style={{background:'white',padding:'8px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
+        <div style={{display:'flex',gap:10,marginBottom:5}}>
           {[
             {l:'Kcal',v:Math.round(dayTotals.kcal),t:plan?.kcal_target,u:'',c:'#D4570A'},
             {l:'P',v:Math.round(dayTotals.protein*10)/10,t:plan?.protein_target_g,u:'g',c:'#4A90D4'},
@@ -574,58 +558,40 @@ export default function ModificaPiano() {
                   <span style={{fontWeight:800,color:barColor}}>{item.v}{item.u}</span>
                   <span style={{color:'#C0BDB8',fontSize:9}}>{item.t||'—'}{item.u}</span>
                 </div>
-                <div style={{height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
-                  <div style={{height:5,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.25s'}}/>
+                <div style={{height:4,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:4,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.25s'}}/>
                 </div>
-                <div style={{fontSize:9,color:barColor,marginTop:1,fontWeight:600}}>{item.l}{item.t>0?` ${pct}%`:''}</div>
+                <div style={{fontSize:8,color:barColor,marginTop:1,fontWeight:600}}>{item.l}{item.t>0?` ${pct}%`:''}</div>
               </div>
             )
           })}
         </div>
         {/* AZIONI GIORNO */}
-        <div style={{display:'flex',gap:6,marginTop:4}}>
-          <button onClick={()=>setShowCopyDay(!showCopyDay)} style={{fontSize:10,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontFamily:'inherit',color:'#888780',display:'flex',alignItems:'center',gap:4}}>
-            <i className="ti ti-copy" style={{fontSize:11}}/> Copia giorno su...
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={()=>setShowCopyDay(!showCopyDay)} style={{fontSize:10,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#888780'}}>
+            📋 Copia giorno su...
           </button>
-          <button onClick={()=>setShowMacroTarget(!showMacroTarget)} style={{fontSize:10,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontFamily:'inherit',color:'#888780',display:'flex',alignItems:'center',gap:4}}>
-            <i className="ti ti-target" style={{fontSize:11}}/> Target per pasto
+          <button onClick={()=>setShowMacroTarget(!showMacroTarget)} style={{fontSize:10,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#888780'}}>
+            🎯 Target per pasto
           </button>
         </div>
-        {/* COPIA GIORNO */}
         {showCopyDay && (
-          <div style={{marginTop:8,padding:'8px',background:'#FEF0E7',borderRadius:8}}>
-            <div style={{fontSize:11,fontWeight:700,color:'#D4570A',marginBottom:6}}>Copia {DAY_NAMES[selectedDay-1]} su:</div>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              {DAY_NAMES.filter((_,i)=>i+1!==selectedDay).map((dn,i)=>(
-                <button key={dn} onClick={()=>copyDayTo(i+1<selectedDay?i+1:i+2)}
-                  style={{fontSize:11,fontWeight:600,background:'white',border:'0.5px solid #D4570A',borderRadius:6,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit',color:'#D4570A'}}>
-                  {dn}
-                </button>
-              ))}
-            </div>
+          <div style={{marginTop:6,display:'flex',gap:6,flexWrap:'wrap'}}>
+            {DAY_NAMES.filter((_,i)=>i+1!==selectedDay).map((dn,i)=>(
+              <button key={dn} onClick={()=>copyDayTo(i+1<selectedDay?i+1:i+2)} style={{fontSize:11,fontWeight:600,background:'white',border:'0.5px solid #D4570A',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontFamily:'inherit',color:'#D4570A'}}>{dn}</button>
+            ))}
           </div>
         )}
-        {/* TARGET PER PASTO */}
         {showMacroTarget && (
-          <div style={{marginTop:8,padding:'8px',background:'#EBF3FD',borderRadius:8}}>
-            <div style={{fontSize:11,fontWeight:700,color:'#4A90D4',marginBottom:6}}>Target kcal per pasto (% del totale)</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+          <div style={{marginTop:6,background:'#EBF3FD',borderRadius:8,padding:'8px'}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#4A90D4',marginBottom:6,textTransform:'uppercase'}}>Target kcal per pasto (%)</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {dayMeals.map(m=>(
-                <div key={m.id}>
-                  <div style={{fontSize:9,color:'#4A90D4',textTransform:'uppercase',fontWeight:600,marginBottom:2}}>{m.meal_type}</div>
-                  <div style={{display:'flex',alignItems:'center',gap:4}}>
-                    <input type="number" min="0" max="100"
-                      value={mealTargets[m.id]||''}
-                      onChange={e=>setMealTargets(p=>({...p,[m.id]:e.target.value}))}
-                      style={{width:'100%',padding:'4px 6px',border:'0.5px solid #BCD8F5',borderRadius:6,fontSize:12,fontFamily:'inherit',textAlign:'center'}}
-                      placeholder="30"/>
-                    <span style={{fontSize:10,color:'#4A90D4'}}>%</span>
-                  </div>
-                  {mealTargets[m.id] && plan?.kcal_target && (
-                    <div style={{fontSize:9,color:'#888780',marginTop:1}}>
-                      = {Math.round(plan.kcal_target * parseInt(mealTargets[m.id]||0) / 100)} kcal
-                    </div>
-                  )}
+                <div key={m.id} style={{display:'flex',alignItems:'center',gap:4}}>
+                  <span style={{fontSize:10,color:'#4A90D4',textTransform:'capitalize'}}>{m.meal_type}</span>
+                  <input type="number" min="0" max="100" value={mealTargets[m.id]||''} onChange={e=>setMealTargets(p=>({...p,[m.id]:e.target.value}))}
+                    style={{width:44,padding:'3px 5px',border:'0.5px solid #BCD8F5',borderRadius:5,fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
+                  <span style={{fontSize:9,color:'#4A90D4'}}>%</span>
                 </div>
               ))}
             </div>
@@ -633,236 +599,239 @@ export default function ModificaPiano() {
         )}
       </div>
 
-      {/* PASTI */}
-      <div style={s.page}>
-        {dayMeals.length === 0 && (
-          <div style={{textAlign:'center',padding:'30px 0',color:'#888780',fontSize:13}}>
-            Nessun pasto per {DAY_NAMES[selectedDay-1]}.<br/>Aggiungine uno qui sotto.
+      {/* LAYOUT PRINCIPALE */}
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+
+        {/* SIDEBAR GIORNI (PC) o TABS (Mobile) */}
+        {isMobile ? (
+          <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',display:'flex',overflowX:'auto',flexShrink:0,padding:'8px 12px',gap:6}}>
+            {DAY_NAMES.map((dn,i) => {
+              const dayN = i+1
+              const dayM = meals.filter(m=>m.day_of_week===dayN)
+              const hasFood = dayM.some(m=>m.plan_meal_foods?.length>0)
+              return (
+                <button key={dayN} onClick={()=>setSelectedDay(dayN)} style={{
+                  flexShrink:0,padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:600,
+                  cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
+                  background:selectedDay===dayN?'#D4570A':'white',
+                  color:selectedDay===dayN?'white':hasFood?'#111':'#888780',
+                  borderColor:selectedDay===dayN?'#D4570A':hasFood?'#E0DDD6':'#F0EDE8',
+                }}>{dn.slice(0,3)}</button>
+              )
+            })}
+          </div>
+        ) : (
+          <div style={{width:160,flexShrink:0,background:'white',borderRight:'0.5px solid #E0DDD6',overflowY:'auto'}}>
+            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
+            {DAY_NAMES.map((dn,i) => {
+              const dayN = i+1
+              const dayM = meals.filter(m=>m.day_of_week===dayN)
+              const dayKcal = dayM.reduce((s,m)=>(m.plan_meal_foods||[]).reduce((ss,f)=>ss+(parseFloat(f.kcal)||0),s),0)
+              const hasFood = dayM.some(m=>m.plan_meal_foods?.length>0)
+              const pct = plan?.kcal_target ? Math.min(100,Math.round(dayKcal/plan.kcal_target*100)) : 0
+              return (
+                <div key={dayN} onClick={()=>setSelectedDay(dayN)} style={{
+                  padding:'10px 12px',cursor:'pointer',
+                  background:selectedDay===dayN?'#FEF0E7':'transparent',
+                  borderLeft:selectedDay===dayN?'3px solid #D4570A':'3px solid transparent',
+                  transition:'all 0.1s',
+                }}>
+                  <div style={{fontSize:12,fontWeight:selectedDay===dayN?700:500,color:selectedDay===dayN?'#D4570A':'#111'}}>{dn}</div>
+                  {hasFood && (
+                    <>
+                      <div style={{fontSize:10,color:'#888780',marginTop:1}}>{Math.round(dayKcal)} kcal</div>
+                      <div style={{height:3,background:'#F0EDE8',borderRadius:2,marginTop:3,overflow:'hidden'}}>
+                        <div style={{height:3,background:selectedDay===dayN?'#D4570A':'#E0DDD6',width:`${pct}%`,borderRadius:2}}/>
+                      </div>
+                    </>
+                  )}
+                  {!hasFood && <div style={{fontSize:10,color:'#D0CFC9',marginTop:1}}>Vuoto</div>}
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {dayMeals.map(meal => {
-          const mealKcal = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(f.kcal||0),0))
-          const mealProt = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(f.protein_g||0),0)*10)/10
-          const mealCarbs = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(f.carbs_g||0),0)*10)/10
-          const mealFat = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(f.fat_g||0),0)*10)/10
-
-          return (
-            <div key={meal.id} style={s.card}>
-              {/* HEADER PASTO */}
-              <div style={{background:'#FEF0E7',borderBottom:'0.5px solid #F4C9A8'}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px'}}>
-                  <i className={`ti ${MEAL_ICONS[meal.meal_type]||'ti-circle'}`} style={{fontSize:15,color:'#D4570A'}}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#D4570A',textTransform:'capitalize'}}>{meal.meal_type}</div>
-                    <div style={{fontSize:10,color:'#7a3508'}}>{mealKcal} kcal · P{mealProt}g C{mealCarbs}g G{mealFat}g
-                      {mealTargets[meal.id] && plan?.kcal_target && (
-                        <span style={{color:Math.abs(mealKcal - Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)) < 50 ? '#3B6D11':'#E24B4A',fontWeight:700}}>
-                          {' '}· target {Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)} kcal
-                        </span>
-                      )}
+        {/* CONTENUTO GIORNO */}
+        <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px'}}>
+          {/* PASTI */}
+          {dayMeals.map((meal) => {
+            const mealKcal = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(parseFloat(f.kcal)||0),0))
+            const mealProt = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0)*10)/10
+            const mealCarbs = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0)*10)/10
+            const mealFat = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(parseFloat(f.fat_g)||0),0)*10)/10
+            return (
+              <div key={meal.id} style={s.card}>
+                {/* HEADER PASTO */}
+                <div style={{background:'#FEF0E7',borderBottom:'0.5px solid #F4C9A8'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px'}}>
+                    <i className={`ti ${MEAL_ICONS[meal.meal_type]||'ti-circle'}`} style={{fontSize:14,color:'#D4570A'}}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'capitalize'}}>{meal.meal_type}</div>
+                      <div style={{fontSize:10,color:'#7a3508'}}>{mealKcal} kcal · P{mealProt}g C{mealCarbs}g G{mealFat}g
+                        {mealTargets[meal.id] && plan?.kcal_target && (
+                          <span style={{color:Math.abs(mealKcal - Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)) < 50 ? '#3B6D11':'#E24B4A',fontWeight:700}}>
+                            {' '}· target {Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)} kcal
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:4}}>
+                      <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
+                      <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark-filled" style={{fontSize:11}}/></button>
+                      <button onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:4}}>
-                    <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva come template"
-                      style={{...s.btnGray,padding:'4px 7px',fontSize:11}}><i className="ti ti-bookmark" style={{fontSize:12}}/></button>
-                    <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template"
-                      style={{...s.btnGray,padding:'4px 7px',fontSize:11}}><i className="ti ti-bookmark-filled" style={{fontSize:12}}/></button>
-                    <button onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'4px 7px',fontSize:11}}>
-                      <i className="ti ti-trash" style={{fontSize:12}}/>
-                    </button>
-                  </div>
-                </div>
-                {/* SALVA TEMPLATE */}
-                {showSaveTemplate===meal.id && (
-                  <div style={{padding:'8px 12px',borderTop:'0.5px solid #F4C9A8',display:'flex',gap:6}}>
-                    <input value={templateName} onChange={e=>setTemplateName(e.target.value)}
-                      placeholder="Nome template (es. Pranzo proteico)..."
-                      style={{flex:1,padding:'5px 8px',border:'0.5px solid #F4C9A8',borderRadius:6,fontSize:11,fontFamily:'inherit'}}/>
-                    <button onClick={()=>saveTemplate(meal.id)} style={{...s.btn,padding:'5px 10px',fontSize:11}}>Salva</button>
-                  </div>
-                )}
-                {/* CARICA TEMPLATE */}
-                {showTemplates===meal.id && (
-                  <div style={{padding:'8px 12px',borderTop:'0.5px solid #F4C9A8'}}>
-                    {savedTemplates.length===0
-                      ? <div style={{fontSize:11,color:'#888780'}}>Nessun template salvato</div>
-                      : savedTemplates.map(t=>(
-                        <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F5F3EF'}}>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:12,fontWeight:600,color:'#111'}}>{t.name}</div>
-                            <div style={{fontSize:10,color:'#888780'}}>{t.foods?.length} alimenti · {t.foods?.reduce((s,f)=>s+(f.kcal||0),0)} kcal</div>
+                  {showSaveTemplate===meal.id && (
+                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid #F4C9A8',display:'flex',gap:6}}>
+                      <input value={templateName} onChange={e=>setTemplateName(e.target.value)} placeholder="Nome template..." style={{flex:1,padding:'4px 8px',border:'0.5px solid #F4C9A8',borderRadius:6,fontSize:11,fontFamily:'inherit'}}/>
+                      <button onClick={()=>saveTemplate(meal.id)} style={{...s.btn,padding:'4px 10px',fontSize:11}}>Salva</button>
+                    </div>
+                  )}
+                  {showTemplates===meal.id && (
+                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid #F4C9A8'}}>
+                      {savedTemplates.length===0 ? <div style={{fontSize:11,color:'#888780'}}>Nessun template salvato</div> :
+                        savedTemplates.map(t=>(
+                          <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0'}}>
+                            <div style={{flex:1,fontSize:11,fontWeight:600,color:'#111'}}>{t.name} <span style={{color:'#888780',fontWeight:400}}>· {t.foods?.reduce((s,f)=>s+(f.kcal||0),0)} kcal</span></div>
+                            <button onClick={()=>applyTemplate(meal.id,t)} style={{...s.btn,padding:'3px 8px',fontSize:10}}>Usa</button>
+                            <button onClick={()=>deleteTemplate(t.id)} style={{...s.btnDanger,padding:'3px 5px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:10}}/></button>
                           </div>
-                          <button onClick={()=>applyTemplate(meal.id,t)} style={{...s.btn,padding:'3px 8px',fontSize:10}}>Usa</button>
-                          <button onClick={()=>deleteTemplate(t.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:10}}/></button>
-                        </div>
-                      ))
-                    }
-                  </div>
-                )}
-              </div>
-
-              {/* ALIMENTI con drag */}
-              {(meal.plan_meal_foods||[]).map((food, fi) => (
-                <div key={food.id}
-                  draggable
-                  onDragStart={()=>handleFoodDragStart(meal.id,food.id)}
-                  onDragOver={e=>handleFoodDragOver(e,food.id)}
-                  onDrop={()=>handleFoodDrop(meal.id,food.id)}
-                  onDragEnd={handleFoodDragEnd}
-                  style={{padding:'9px 12px',borderBottom:'0.5px solid #F5F3EF',
-                    opacity:dragFoodId===food.id?0.4:1,
-                    background:dragOverFoodId===food.id?'#FEF0E7':'transparent',
-                    transition:'background 0.1s'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-                    <i className="ti ti-grip-vertical" style={{fontSize:14,color:'#C0BDB8',cursor:'grab',flexShrink:0}}/>
-                    <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{food.food_name}</div>
-                    <button onClick={()=>removeFood(meal.id, food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#C0BDB8',padding:'0 2px'}}>
-                      <i className="ti ti-x" style={{fontSize:13}}/>
-                    </button>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:4}}>
-                      <label style={s.label}>Grammi</label>
-                      <input
-                        type="number" inputMode="decimal"
-                        value={food.quantity_g}
-                        onChange={e=>updateFoodQty(meal.id, food.id, e.target.value)}
-                        style={{...s.input,width:70,textAlign:'center',padding:'5px 8px'}}
-                      />
-                      <span style={{fontSize:11,color:'#888780'}}>g</span>
+                        ))
+                      }
                     </div>
-                    <div style={{display:'flex',gap:6,flex:1,flexWrap:'wrap'}}>
-                      {[
-                        {l:'Kcal',v:Math.round(food.kcal||0),c:'#D4570A'},
-                        {l:'P',v:Math.round((food.protein_g||0)*10)/10,c:'#3B8C5A'},
-                        {l:'C',v:Math.round((food.carbs_g||0)*10)/10,c:'#F4894A'},
-                        {l:'G',v:Math.round((food.fat_g||0)*10)/10,c:'#888780'},
-                      ].map(n=>(
-                        <div key={n.l} style={{background:'#F5F3EF',borderRadius:7,padding:'4px 8px',fontSize:11,textAlign:'center'}}>
-                          <span style={{fontWeight:700,color:n.c}}>{n.v}</span>
-                          <span style={{color:'#888780',fontSize:9,marginLeft:1}}>{n.l}</span>
+                  )}
+                </div>
+
+                {/* ALIMENTI */}
+                {(meal.plan_meal_foods||[]).map((food) => (
+                  <div key={food.id}
+                    draggable onDragStart={()=>handleFoodDragStart(meal.id,food.id)}
+                    onDragOver={e=>handleFoodDragOver(e,food.id)} onDrop={()=>handleFoodDrop(meal.id,food.id)}
+                    onDragEnd={handleFoodDragEnd}
+                    style={{padding:'7px 12px',borderBottom:'0.5px solid #F5F3EF',
+                      opacity:dragFoodId===food.id?0.4:1,
+                      background:dragOverFoodId===food.id?'#FEF0E7':'transparent'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+                      <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#C0BDB8',cursor:'grab',flexShrink:0}}/>
+                      <span style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{food.food_name}</span>
+                      <button onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#C0BDB8',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginLeft:19}}>
+                      {[{k:'quantity_g',l:'g',bold:true},{k:'kcal',l:'kcal'},{k:'protein_g',l:'P'},{k:'carbs_g',l:'C'},{k:'fat_g',l:'G'}].map(f=>(
+                        <div key={f.k}>
+                          <div style={{fontSize:8,color:'#888780',textAlign:'center',marginBottom:1}}>{f.l}</div>
+                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'#FEF0E7':'#F5F3EF',borderColor:f.bold?'#F4C9A8':'#E0DDD6'}}
+                            type="number" value={food[f.k]||0}
+                            onChange={e=>{
+                              const val = e.target.value
+                              if (f.k==='quantity_g') {
+                                const newVals = recalc(food, val)
+                                setMeals(prev=>prev.map(m=>m.id===meal.id?{...m,plan_meal_foods:m.plan_meal_foods.map(fd=>fd.id===food.id?{...fd,...newVals}:fd)}:m))
+                              } else {
+                                setMeals(prev=>prev.map(m=>m.id===meal.id?{...m,plan_meal_foods:m.plan_meal_foods.map(fd=>fd.id===food.id?{...fd,[f.k]:val}:fd)}:m))
+                              }
+                              setDirty(true)
+                            }}/>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              {/* AGGIUNGI ALIMENTO */}
-              {addingFoodToMeal === meal.id ? (
-                <div style={{padding:'12px 14px',background:'#F5F3EF',borderTop:'0.5px solid #E0DDD6'}}>
-                  <div style={{fontSize:11,fontWeight:700,color:'#111',marginBottom:8}}>Aggiungi alimento</div>
-
-                  {/* RICERCA AUTOCOMPLETE */}
-                  <div style={{position:'relative',marginBottom:8}}>
-                    <div style={{position:'relative'}}>
+                {/* AGGIUNGI ALIMENTO */}
+                {addingFoodToMeal===meal.id ? (
+                  <div style={{padding:'10px 12px',background:'#F5F3EF',borderTop:'0.5px solid #E0DDD6'}}>
+                    <div style={{position:'relative',marginBottom:7}}>
                       <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#888780',pointerEvents:'none'}}/>
-                      <input
-                        style={{...s.input,paddingLeft:28,fontSize:12}}
-                        placeholder="Cerca alimento nel database..."
-                        value={foodSearch !== '' ? foodSearch : newFood.food_name}
-                        onChange={e=>{
-                          setNewFood(p=>({...p,food_name:e.target.value,_k100:null}))
-                          searchFood(e.target.value)
-                        }}
-                      />
-                      {searchingFood && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780',animation:'spin 1s linear infinite'}}/>}
+                      <input style={{...s.input,paddingLeft:26,fontSize:12}} placeholder="Cerca o scrivi nome alimento..."
+                        value={foodSearch!==''?foodSearch:newFood.food_name}
+                        onChange={e=>{setNewFood(p=>({...p,food_name:e.target.value,_k100:null}));searchFood(e.target.value)}}/>
+                      {searchingFood && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>}
+                      {foodResults.length>0 && (
+                        <div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',border:'0.5px solid #E0DDD6',borderRadius:9,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',zIndex:100,maxHeight:200,overflowY:'auto'}}>
+                          {foodResults.map((food,i)=>(
+                            <div key={i} onClick={()=>selectFoodFromSearch(food)}
+                              style={{padding:'8px 12px',borderBottom:'0.5px solid #F5F3EF',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
+                              onMouseEnter={e=>e.currentTarget.style.background='#FEF0E7'}
+                              onMouseLeave={e=>e.currentTarget.style.background='white'}>
+                              <div>
+                                <div style={{fontSize:12,fontWeight:600,color:'#111'}}>{food.name||food.food_name}</div>
+                                {food.brand&&<div style={{fontSize:10,color:'#888780'}}>{food.brand}</div>}
+                              </div>
+                              <div style={{fontSize:10,color:'#D4570A',fontWeight:600,textAlign:'right',flexShrink:0}}>
+                                <div>{Math.round(food.kcal_100??food.kcal??0)} kcal/100g</div>
+                                <div style={{color:'#888780'}}>P{food.protein_100??food.protein_g??0}g</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {foodResults.length > 0 && (
-                      <div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',border:'0.5px solid #E0DDD6',borderRadius:9,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',zIndex:100,maxHeight:220,overflowY:'auto'}}>
-                        {foodResults.map((food,i)=>(
-                          <div key={i} onClick={()=>selectFoodFromSearch(food)}
-                            style={{padding:'9px 12px',borderBottom:'0.5px solid #F5F3EF',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
-                            onMouseEnter={e=>e.currentTarget.style.background='#FEF0E7'}
-                            onMouseLeave={e=>e.currentTarget.style.background='white'}>
-                            <div>
-                              <div style={{fontSize:12,fontWeight:600,color:'#111'}}>{food.name||food.food_name}</div>
-                              {food.brand&&<div style={{fontSize:10,color:'#888780'}}>{food.brand}</div>}
-                            </div>
-                            <div style={{fontSize:10,color:'#D4570A',fontWeight:600,textAlign:'right',flexShrink:0}}>
-                              <div>{Math.round(food.kcal_100??food.kcal??0)} kcal/100g</div>
-                              <div style={{color:'#888780'}}>P{food.protein_100??food.protein_g??0}g C{food.carbs_100??food.carbs_g??0}g G{food.fat_100??food.fat_g??0}g</div>
-                            </div>
-                          </div>
-                        ))}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginBottom:7}}>
+                      <div>
+                        <div style={{fontSize:8,color:'#888780',textAlign:'center',marginBottom:1}}>Grammi</div>
+                        <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:700,color:'#D4570A',background:'#FEF0E7',borderColor:'#F4C9A8'}} type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
+                      </div>
+                      {[{k:'kcal',l:'Kcal'},{k:'protein_g',l:'Prot'},{k:'carbs_g',l:'Carbo'},{k:'fat_g',l:'Grassi'}].map(f=>(
+                        <div key={f.k}>
+                          <div style={{fontSize:8,color:'#888780',textAlign:'center',marginBottom:1}}>{f.l}</div>
+                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',background:newFood._k100!=null?'#EAF3DE':'#F5F3EF'}} type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
+                        </div>
+                      ))}
+                    </div>
+                    {newFood.kcal>0 && (
+                      <div style={{background:'white',borderRadius:6,padding:'5px 8px',marginBottom:6,display:'flex',gap:8,fontSize:10}}>
+                        <span style={{fontWeight:700,color:'#D4570A'}}>{Math.round(newFood.kcal)} kcal</span>
+                        <span style={{color:'#4A90D4'}}>P {newFood.protein_g}g</span>
+                        <span style={{color:'#E8A020'}}>C {newFood.carbs_g}g</span>
+                        <span style={{color:'#3B8C5A'}}>G {newFood.fat_g}g</span>
                       </div>
                     )}
-                  </div>
-
-                  {/* GRAMMI + MACRO */}
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:5,marginBottom:8}}>
-                    <div>
-                      <label style={s.label}>Grammi</label>
-                      <input style={{...s.input,textAlign:'center',padding:'5px 4px',fontWeight:700,color:'#D4570A'}}
-                        type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
+                    <div style={{display:'flex',gap:6}}>
+                      <button onClick={()=>addFood(meal.id)} disabled={!newFood.food_name.trim()} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12,opacity:!newFood.food_name.trim()?0.5:1}}>
+                        <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi
+                      </button>
+                      <button onClick={()=>{setAddingFoodToMeal(null);setNewFood({food_name:'',quantity_g:100,kcal:0,protein_g:0,carbs_g:0,fat_g:0});setFoodSearch('');setFoodResults([])}} style={s.btnGray}>Annulla</button>
                     </div>
-                    {[{k:'kcal',l:'Kcal'},{k:'protein_g',l:'Prot'},{k:'carbs_g',l:'Carbo'},{k:'fat_g',l:'Grassi'}].map(f=>(
-                      <div key={f.k}>
-                        <label style={s.label}>{f.l}</label>
-                        <input style={{...s.input,textAlign:'center',padding:'5px 4px',background:newFood._k100!=null?'#EAF3DE':'#F5F3EF'}}
-                          type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
-                      </div>
-                    ))}
                   </div>
-
-                  {/* ANTEPRIMA */}
-                  {newFood.kcal > 0 && (
-                    <div style={{background:'white',borderRadius:7,padding:'6px 10px',marginBottom:8,display:'flex',gap:10,fontSize:11,border:'0.5px solid #E0DDD6'}}>
-                      <span style={{fontWeight:700,color:'#D4570A'}}>{Math.round(newFood.kcal)} kcal</span>
-                      <span style={{color:'#4A90D4'}}>P {newFood.protein_g}g</span>
-                      <span style={{color:'#E8A020'}}>C {newFood.carbs_g}g</span>
-                      <span style={{color:'#3B8C5A'}}>G {newFood.fat_g}g</span>
-                      <span style={{color:'#888780',marginLeft:'auto'}}>{newFood.quantity_g}g</span>
-                    </div>
-                  )}
-
-                  <div style={{display:'flex',gap:8}}>
-                    <button onClick={()=>addFood(meal.id)} disabled={!newFood.food_name.trim()}
-                      style={{...s.btn,flex:1,justifyContent:'center',fontSize:12,opacity:!newFood.food_name.trim()?0.5:1}}>
-                      <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi
+                ) : (
+                  <div style={{padding:'8px 12px',display:'flex',gap:6}}>
+                    <button onClick={()=>setAddingFoodToMeal(meal.id)} style={{...s.btnGray,flex:1,justifyContent:'center',display:'flex',alignItems:'center',gap:5,fontSize:11}}>
+                      <i className="ti ti-plus" style={{fontSize:12}}/>Aggiungi alimento
                     </button>
-                    <button onClick={()=>{setAddingFoodToMeal(null);setNewFood({food_name:'',quantity_g:100,kcal:0,protein_g:0,carbs_g:0,fat_g:0});setFoodSearch('');setFoodResults([])}} style={s.btnGray}>Annulla</button>
                   </div>
-                </div>
-              ) : (
-                <div style={{padding:'8px 14px'}}>
-                  <button onClick={()=>setAddingFoodToMeal(meal.id)} style={{...s.btnSm,width:'100%',justifyContent:'center',display:'flex',alignItems:'center',gap:4}}>
-                    <i className="ti ti-plus" style={{fontSize:12}}/>Aggiungi alimento
-                  </button>
-                </div>
-              )}
-            </div>
-          )
-        })}
+                )}
+              </div>
+            )
+          })}
 
-        {/* AGGIUNGI PASTO */}
-        {showAddMeal ? (
-          <div style={{...s.card,padding:'14px'}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#111',marginBottom:10}}>Nuovo pasto per {DAY_NAMES[selectedDay-1]}</div>
-            <div style={{marginBottom:12}}>
-              <label style={s.label}>Tipo pasto</label>
-              <select value={newMealType} onChange={e=>setNewMealType(e.target.value)}
-                style={{...s.input,cursor:'pointer'}}>
-                {MEAL_TYPES.map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-              </select>
+          {/* AGGIUNGI PASTO */}
+          {showAddMeal ? (
+            <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'12px',marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#111',marginBottom:8}}>Aggiungi pasto</div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                {MEAL_TYPES.map(t=>(
+                  <button key={t} onClick={()=>setNewMealType(t)} style={{
+                    padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:600,cursor:'pointer',
+                    border:'0.5px solid',fontFamily:'inherit',textTransform:'capitalize',
+                    background:newMealType===t?'#D4570A':'white',
+                    color:newMealType===t?'white':'#888780',
+                    borderColor:newMealType===t?'#D4570A':'#E0DDD6',
+                  }}>{t}</button>
+                ))}
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button onClick={addMeal} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12}}>Aggiungi</button>
+                <button onClick={()=>setShowAddMeal(false)} style={s.btnGray}>Annulla</button>
+              </div>
             </div>
-            <div style={{display:'flex',gap:8}}>
-              <button onClick={addMeal} style={{...s.btn,flex:1,justifyContent:'center'}}>
-                <i className="ti ti-plus" style={{fontSize:14}}/>Aggiungi pasto
-              </button>
-              <button onClick={()=>setShowAddMeal(false)} style={s.btnGray}>Annulla</button>
-            </div>
-          </div>
-        ) : (
-          <button onClick={()=>setShowAddMeal(true)} style={{
-            width:'100%',padding:'12px',background:'white',border:'0.5px dashed #D4570A',borderRadius:10,
-            color:'#D4570A',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
-            display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:20
-          }}>
-            <i className="ti ti-plus" style={{fontSize:15}}/>Aggiungi pasto a {DAY_NAMES[selectedDay-1]}
-          </button>
-        )}
+          ) : (
+            <button onClick={()=>setShowAddMeal(true)} style={{...s.btnGray,width:'100%',justifyContent:'center',display:'flex',alignItems:'center',gap:6,padding:'10px',marginBottom:10,fontSize:12}}>
+              <i className="ti ti-plus" style={{fontSize:14}}/>Aggiungi pasto
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
