@@ -353,6 +353,61 @@ function ClientDetail({ client, navigate }) {
             TAB: NUTRIZIONE
         ══════════════════════════════════════════ */}
         {tab==='nutrizione' && <>
+          {/* TDEE CALCOLATO */}
+          {(() => {
+            const a = data.anamnesi
+            const age = a?.data_nascita ? Math.floor((Date.now() - new Date(a.data_nascita)) / (365.25 * 86400000)) : null
+            const weight = latest?.weight_kg || parseFloat(a?.peso_attuale) || null
+            const height = client.height_cm || null
+            if (!weight || !height) return null
+            // Mifflin-St Jeor
+            const bmr = Math.round(10 * weight + 6.25 * height - 5 * (age || 30) + 5) // M
+            const activityMap = {
+              'Sedentario': 1.2, '1-2 volte/sett': 1.375, '3-4 volte/sett': 1.55,
+              '5+ volte/sett': 1.725, 'Atleta': 1.9
+            }
+            const sessWeekN = data.sessions?.filter(s => new Date(s.session_date) > new Date(Date.now()-7*86400000)).length || 0
+            const actFactor = sessWeekN >= 5 ? 1.725 : sessWeekN >= 3 ? 1.55 : sessWeekN >= 1 ? 1.375 : 1.2
+            const tdee = Math.round(bmr * actFactor)
+            const deficit = Math.round(tdee * 0.80)
+            const surplus = Math.round(tdee * 1.10)
+            return (
+              <div style={{...s.card, borderColor:'#4A90D4', marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#4A90D4',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>
+                  🧮 TDEE stimato
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
+                  {[
+                    {l:'BMR',v:bmr,sub:'A riposo',c:'#888780'},
+                    {l:'TDEE',v:tdee,sub:`${sessWeekN} sess/sett`,c:'#4A90D4'},
+                    {l:'Mantenimento',v:tdee,sub:'±0 kg',c:'#3B6D11'},
+                  ].map(st=>(
+                    <div key={st.l} style={{background:'#F5F3EF',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                      <div style={{fontSize:16,fontWeight:800,color:st.c}}>{st.v}</div>
+                      <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',marginTop:1}}>{st.l}</div>
+                      <div style={{fontSize:8,color:'#B0ADA8'}}>{st.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  <div style={{background:'#FEE2E2',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                    <div style={{fontSize:15,fontWeight:800,color:'#E24B4A'}}>{deficit}</div>
+                    <div style={{fontSize:9,color:'#E24B4A',marginTop:1}}>Deficit -20%</div>
+                    <div style={{fontSize:8,color:'#B0ADA8'}}>Dimagrimento</div>
+                  </div>
+                  <div style={{background:'#EAF3DE',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                    <div style={{fontSize:15,fontWeight:800,color:'#3B6D11'}}>{surplus}</div>
+                    <div style={{fontSize:9,color:'#3B6D11',marginTop:1}}>Surplus +10%</div>
+                    <div style={{fontSize:8,color:'#B0ADA8'}}>Massa muscolare</div>
+                  </div>
+                </div>
+                <div style={{fontSize:10,color:'#888780',marginTop:8,textAlign:'center'}}>
+                  Formula Mifflin-St Jeor · {weight}kg · {height}cm{age?` · ${age}anni`:''}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* PIANO ALIMENTARE */}
           <div style={s.card}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
