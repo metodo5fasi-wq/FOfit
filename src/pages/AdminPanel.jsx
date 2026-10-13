@@ -41,6 +41,101 @@ const goalTextColor = { dimagrimento:'#9B1C1C', massa:'#3B6D11', mantenimento:'#
 const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'U'
 const today = new Date().toISOString().split('T')[0]
 
+function NotifBell({ clients }) {
+  const [open, setOpen] = React.useState(false)
+  const [selectedClient, setSelectedClient] = React.useState('all')
+  const [title, setTitle] = React.useState('')
+  const [body, setBody] = React.useState('')
+  const [sending, setSending] = React.useState(false)
+  const [sent, setSent] = React.useState(false)
+  const ref = React.useRef(null)
+
+  React.useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  const PRESETS = [
+    { title:'📔 Diario di oggi', body:'Hai registrato i pasti di oggi? Apri FOfit e traccia il tuo diario!' },
+    { title:'💪 Continua così!', body:'Stai facendo un ottimo lavoro. Controlla il tuo piano di oggi!' },
+    { title:'📊 Piano aggiornato', body:"Il tuo coach ha aggiornato il tuo piano. Dai un'occhiata!" },
+    { title:'🎯 Obiettivo vicino!', body:'Sei quasi al tuo target settimanale. Ancora un piccolo sforzo!' },
+  ]
+
+  async function send() {
+    if (!title || !body) return
+    setSending(true)
+    try {
+      let clientIds = []
+      if (selectedClient === 'all') {
+        const { data } = await supabase.from('push_subscriptions').select('client_id')
+        clientIds = (data || []).map(r => r.client_id)
+      } else {
+        clientIds = [selectedClient]
+      }
+      await Promise.all(clientIds.map(clientId =>
+        fetch('/api/push-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, title, body, url: '/' })
+        })
+      ))
+      setSent(true)
+      setTimeout(() => { setSent(false); setTitle(''); setBody(''); setOpen(false) }, 2000)
+    } catch(e) { console.error(e) }
+    setSending(false)
+  }
+
+  return (
+    <div ref={ref} style={{ position:'relative' }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width:36, height:36, borderRadius:9, border:'0.5px solid #E0DDD6',
+        background: open ? '#FEF0E7' : '#F5F3EF',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        cursor:'pointer',
+      }}>
+        <i className="ti ti-bell" style={{ fontSize:16, color: open ? '#D4570A' : '#888780' }}/>
+      </button>
+      {open && (
+        <div style={{
+          position:'absolute', top:'calc(100% + 6px)', right:0, width:300,
+          background:'white', borderRadius:12, border:'0.5px solid #E0DDD6',
+          boxShadow:'0 8px 32px rgba(0,0,0,0.12)', zIndex:500, padding:14,
+        }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#111', marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+            <i className="ti ti-bell-ringing" style={{ fontSize:14, color:'#D4570A' }}/>
+            Invia notifica
+            <button onClick={() => setOpen(false)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#888780', fontSize:16, lineHeight:1 }}>✕</button>
+          </div>
+          <select value={selectedClient} onChange={e => setSelectedClient(e.target.value)}
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', marginBottom:8, boxSizing:'border-box' }}>
+            <option value="all">Tutti i clienti</option>
+            {(clients||[]).map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+          </select>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:8 }}>
+            {PRESETS.map((p, i) => (
+              <button key={i} onClick={() => { setTitle(p.title); setBody(p.body) }}
+                style={{ padding:'4px 8px', borderRadius:14, border:'0.5px solid #E0DDD6', background:'#F5F3EF', color:'#555', fontSize:10, cursor:'pointer', fontFamily:'inherit' }}>
+                {p.title}
+              </button>
+            ))}
+          </div>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Titolo..."
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', marginBottom:6, boxSizing:'border-box' }}/>
+          <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Testo della notifica..."
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'none', height:60, marginBottom:10, boxSizing:'border-box' }}/>
+          <button onClick={send} disabled={!title || !body || sending}
+            style={{ width:'100%', padding:'9px', background: sent ? '#3B6D11' : '#D4570A', color:'white', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', opacity:(!title||!body)?0.5:1 }}>
+            {sending ? 'Invio...' : sent ? '✓ Inviata!' : '🔔 Invia notifica'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 export default function AdminPanel() {
   const toast = useToast()
   const { profile } = useAuth()
@@ -509,7 +604,7 @@ export default function AdminPanel() {
             </div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <NotifPanel/>
+            <NotifBell clients={clients}/>
             {tab==='clienti' && (
               <>
                 <button style={s.btnSm} onClick={()=>setShowNewClient(true)}>
@@ -596,77 +691,75 @@ export default function AdminPanel() {
                       const adherencePct = st.adherence ? Math.round(st.adherence.followed/st.adherence.total*100) : null
 
                       return (
-                        <div key={c.id} onClick={()=>setSelectedClient(isSelected?null:c)}
+                        <div key={c.id}
                           style={{
-                            background: isSelected ? '#FEF8F5' : 'white',
-                            padding:'14px 16px',cursor:'pointer',
+                            background: isSelected ? '#FFFAF8' : 'white',
+                            padding:'12px 14px',
                             borderLeft: isSelected ? '3px solid #D4570A' : '3px solid transparent',
-                            transition:'all 0.15s',
+                            transition:'background 0.12s',
                           }}>
-                          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                            {/* AVATAR */}
+
+                          {/* RIGA 1: Avatar + Nome + Info + Badges */}
+                          <div onClick={()=>setSelectedClient(isSelected?null:c)} style={{display:'flex',alignItems:'center',gap:9,marginBottom:9,cursor:'pointer'}}>
                             <div style={{
-                              width:42,height:42,borderRadius:12,flexShrink:0,
-                              background:`linear-gradient(135deg,${goalColor[c.goal]||'#FEF0E7'},${goalColor[c.goal]||'#FEF0E7'})`,
+                              width:38,height:38,borderRadius:10,flexShrink:0,
+                              background: isSelected ? '#D4570A' : `${goalColor[c.goal]||'#FEF0E7'}`,
                               display:'flex',alignItems:'center',justifyContent:'center',
-                              fontSize:14,fontWeight:800,color:goalTextColor[c.goal]||'#D4570A',
-                              border:`1.5px solid ${isSelected?'#D4570A':'transparent'}`,
+                              fontSize:12,fontWeight:800,
+                              color: isSelected ? 'white' : (goalTextColor[c.goal]||'#D4570A'),
                             }}>{initials(c.full_name)}</div>
+
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
-                              <div style={{fontSize:11,color:'#888780',marginTop:1}}>{goalLabel[c.goal]||'—'}{c.height_cm?` · ${c.height_cm}cm`:''}</div>
+                              <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+                              <div style={{fontSize:10,color:'#888780',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
+                                <span>{goalLabel[c.goal]||'—'}</span>
+                                {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#D4570A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
+                                {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'#FEE2E2':days<=7?'#FEF0E7':'#EAF3DE',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B6D11'}}>{days<0?'Scaduto':`${days}gg`}</span>}
+                              </div>
                             </div>
-                            {/* BADGES */}
-                            <div style={{display:'flex',gap:4,flexShrink:0}}>
-                              {st.newReport && <span title="Nuovo report" style={{width:20,height:20,borderRadius:'50%',background:'#7C3AED',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>R</span>}
-                              {st.newAnamnesi && <span title="Nuova anamnesi" style={{width:20,height:20,borderRadius:'50%',background:'#4A90D4',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>A</span>}
-                              {st.unreadMessages>0 && <span title="Messaggi non letti" style={{width:20,height:20,borderRadius:'50%',background:'#D4570A',color:'white',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>{st.unreadMessages}</span>}
+
+                            <div style={{display:'flex',gap:3,flexShrink:0}}>
+                              {st.newReport && <span title="Nuovo report" style={{width:18,height:18,borderRadius:'50%',background:'#7C3AED',color:'white',fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>R</span>}
+                              {st.newAnamnesi && <span title="Nuova anamnesi" style={{width:18,height:18,borderRadius:'50%',background:'#4A90D4',color:'white',fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>A</span>}
+                              {st.unreadMessages>0 && <span style={{width:18,height:18,borderRadius:'50%',background:'#D4570A',color:'white',fontSize:8,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>{st.unreadMessages}</span>}
                             </div>
                           </div>
 
-                          {/* STATS RAPIDE */}
-                          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+                          {/* RIGA 2: Stats */}
+                          <div onClick={()=>setSelectedClient(isSelected?null:c)} style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:5,marginBottom:9,cursor:'pointer'}}>
                             {[
-                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:'#111'},
+                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:st.latestMeasure?.weight_kg?'#111':'#C0BDB8'},
                               {l:'Diario',v:st.diaryToday?'✓':'✗',c:st.diaryToday?'#3B6D11':'#E24B4A'},
                               {l:'Sessioni',v:sessWeek,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
-                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct>=70?'#3B6D11':adherencePct>=50?'#E8A020':'#E24B4A'},
+                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct!==null?(adherencePct>=70?'#3B6D11':adherencePct>=50?'#E8A020':'#E24B4A'):'#C0BDB8'},
                             ].map(stat=>(
-                              <div key={stat.l} style={{background:'#F5F3EF',borderRadius:7,padding:'5px 4px',textAlign:'center'}}>
+                              <div key={stat.l} style={{background:'#F7F5F2',borderRadius:7,padding:'5px 3px',textAlign:'center'}}>
                                 <div style={{fontSize:13,fontWeight:700,color:stat.c,lineHeight:1.1}}>{stat.v}</div>
-                                <div style={{fontSize:8,color:'#B0ADA8',textTransform:'uppercase',marginTop:1}}>{stat.l}</div>
+                                <div style={{fontSize:7.5,color:'#B8B5B0',textTransform:'uppercase',letterSpacing:'0.04em',marginTop:1}}>{stat.l}</div>
                               </div>
                             ))}
                           </div>
 
-                          {/* PIANO + ABBONAMENTO */}
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
-                            <div style={{fontSize:11,color:st.activePlan?'#D4570A':'#B0ADA8',fontWeight:st.activePlan?600:400}}>
-                              {st.activePlan?`📋 ${st.activePlan.title}·${st.activePlan.kcal_target}kcal`:'Nessun piano attivo'}
-                            </div>
-                            {days!==null && (
-                              <span style={{fontSize:9,padding:'2px 7px',borderRadius:8,fontWeight:600,
-                                background:days<0?'#FEE2E2':days<=7?'#FEF0E7':'#EAF3DE',
-                                color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B6D11',
-                              }}>
-                                {days<0?'Scaduto':days<=7?`${days}gg`:`${days}gg`}
-                              </span>
+                          {/* RIGA 3: Azioni */}
+                          <div style={{display:'flex',gap:5}} onClick={e=>e.stopPropagation()}>
+                            {st.activePlan ? (
+                              <a href={`/modifica-piano/${st.activePlan.id}`}
+                                style={{flex:1,padding:'6px 4px',background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
+                                🥗 Piano
+                              </a>
+                            ) : (
+                              <a href="/importa-piano"
+                                style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
+                                + Piano
+                              </a>
                             )}
-                          </div>
-
-                          {/* AZIONI RAPIDE */}
-                          <div style={{display:'flex',gap:6,marginTop:10}} onClick={e=>e.stopPropagation()}>
-                            <a href={`/modifica-piano/${st.activePlan?.id||''}`} onClick={e=>!st.activePlan&&e.preventDefault()}
-                              style={{flex:1,padding:'6px',background:st.activePlan?'#FEF0E7':'#F5F3EF',color:st.activePlan?'#D4570A':'#B0ADA8',border:`0.5px solid ${st.activePlan?'#D4570A':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center',cursor:st.activePlan?'pointer':'not-allowed'}}>
-                              🥗 Piano
-                            </a>
                             <button onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}
-                              style={{flex:1,padding:'6px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-                              + Nuovo piano
+                              style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#666',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
+                              + Nuovo
                             </button>
                             <button onClick={()=>setSelectedClient(isSelected?null:c)}
-                              style={{flex:1,padding:'6px',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#888780',border:`0.5px solid ${isSelected?'#D4570A':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-                              {isSelected?'✕ Chiudi':'Dettagli'}
+                              style={{flex:1,padding:'6px 4px',background:isSelected?'#111':'#F5F3EF',color:isSelected?'white':'#555',border:`0.5px solid ${isSelected?'#111':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:isSelected?700:500,cursor:'pointer',fontFamily:'inherit'}}>
+                              {isSelected?'✕ Chiudi':'Apri →'}
                             </button>
                           </div>
                         </div>
