@@ -136,6 +136,7 @@ function NotifBell({ clients }) {
 }
 
 
+
 export default function AdminPanel() {
   const toast = useToast()
   const { profile } = useAuth()
@@ -547,7 +548,7 @@ export default function AdminPanel() {
               <i className="ti ti-user-plus" style={{fontSize:15}}/>Nuovo cliente
             </button>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-              <a href="/importa-piano" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+              <a href="/importa" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                 <i className="ti ti-salad" style={{fontSize:16}}/>Piano
               </a>
               <a href="/importa-allenamento" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
@@ -748,7 +749,7 @@ export default function AdminPanel() {
                                 🥗 Piano
                               </a>
                             ) : (
-                              <a href="/importa-piano"
+                              <a href="/importa"
                                 style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
                                 + Piano
                               </a>
