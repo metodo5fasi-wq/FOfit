@@ -331,6 +331,35 @@ function ClientDetail({ client, navigate }) {
             </div>
           )}
 
+          {/* FOTO RECENTI — overview */}
+          {photos.length > 0 && (
+            <div style={s.card}>
+              <div style={{...s.sectionTitle,marginBottom:8}}>
+                <i className="ti ti-camera" style={{fontSize:12}}/>
+                Ultime foto ({photos.length}) — tocca per ingrandire
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                {photos.slice(0,6).map(p => (
+                  <div key={p.id} onClick={()=>setLightbox({url:p.photo_url,label:p.label,date:p.photo_date})}
+                    style={{position:'relative',cursor:'pointer',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#F0EDE8'}}>
+                    <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+                    <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.65))',padding:'14px 5px 4px'}}>
+                      <div style={{fontSize:8,color:'white',fontWeight:600,textTransform:'uppercase'}}>{p.label}</div>
+                    </div>
+                    <div style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.4)',borderRadius:5,padding:'2px 4px'}}>
+                      <i className="ti ti-zoom-in" style={{fontSize:9,color:'white'}}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {photos.length > 6 && (
+                <button onClick={()=>setTab('progressi')} style={{width:'100%',marginTop:8,padding:'6px',background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:11,color:'#888780',cursor:'pointer',fontFamily:'inherit'}}>
+                  Vedi tutte le {photos.length} foto →
+                </button>
+              )}
+            </div>
+          )}
+
           {/* MESSAGGIO RAPIDO */}
           <div style={s.card}>
             <div style={s.sectionTitle}><i className="ti ti-message-2" style={{fontSize:12}}/>Messaggio rapido{unreadMsgs>0&&<span style={{...s.badge('#FEE2E2','#E24B4A'),marginLeft:4}}>{unreadMsgs} non letti</span>}</div>
@@ -414,7 +443,7 @@ function ClientDetail({ client, navigate }) {
               <div style={s.sectionTitle}><i className="ti ti-salad" style={{fontSize:12}}/>Piano alimentare</div>
               <div style={{display:'flex',gap:6}}>
                 {mealPlan && <a href={`/modifica-piano/${mealPlan.id}`} style={{...s.btnSm,textDecoration:'none'}}><i className="ti ti-pencil" style={{fontSize:11}}/>Modifica</a>}
-                {!mealPlan && <a href="/importa-piano" style={{...s.btnSm,textDecoration:'none'}}>+ Importa</a>}
+                {!mealPlan && <a href="/importa" style={{...s.btnSm,textDecoration:'none'}}>+ Importa</a>}
               </div>
             </div>
             {mealPlan ? (
@@ -538,8 +567,8 @@ function ClientDetail({ client, navigate }) {
                         <span style={{...s.badge(pct>=80?'#EAF3DE':pct>=50?'#FEF0E7':'#FEE2E2', pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A')}}>{pct}%</span>
                       </div>
                     </div>
-                    {Object.entries(byEx).slice(0,4).map(([name,ls])=>(
-                      <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'2px 0',borderBottom:'0.5px solid #E0DDD6'}}>
+                    {Object.entries(byEx).map(([name,ls],idx)=>(
+                      <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #E0DDD6'}}>
                         <span style={{color:'#555'}}>{name}</span>
                         <span style={{color:'#D4570A',fontWeight:600}}>{ls.length}×{Math.max(...ls.map(l=>l.weight_kg||0))||'—'}kg</span>
                       </div>
