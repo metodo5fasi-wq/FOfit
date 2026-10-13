@@ -31,6 +31,7 @@ export default function Allenamento() {
   const [progressionStatus, setProgressionStatus] = useState({}) // { exerciseId: true/false/null }
   const [progressionTracking, setProgressionTracking] = useState({}) // { exerciseId: { week, targetKg } }
   const [sessionNotes, setSessionNotes] = useState('')
+  const [sessionFeeling, setSessionFeeling] = useState(0)
   const noteDebounceRef = React.useRef({})
   const [savingSession, setSavingSession] = useState(false)
   const [confettiActive, setConfettiActive] = useState(false)
@@ -172,7 +173,7 @@ export default function Allenamento() {
 
     if (todaySession) {
       await supabase.from('workout_sessions').update({
-        notes: sessionNotes, sets_completed: completedSets, sets_total: totalSets,
+        notes: sessionNotes, feeling: sessionFeeling||null, sets_completed: completedSets, sets_total: totalSets,
       }).eq('id', todaySession.id)
     } else {
       await supabase.from('workout_sessions').insert({
@@ -596,7 +597,33 @@ export default function Allenamento() {
               </div>
             </div>
 
-            <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',margin:'16px 0 6px'}}>
+            {/* FEEDBACK RAPIDO */}
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+                Come ti senti?
+              </div>
+              <div style={{display:'flex',gap:8,justifyContent:'space-between'}}>
+                {[
+                  {emoji:'😓',label:'Distrutto',val:1},
+                  {emoji:'😐',label:'Stanco',val:2},
+                  {emoji:'🙂',label:'Bene',val:3},
+                  {emoji:'😊',label:'Ottimo',val:4},
+                  {emoji:'🔥',label:'Esplosivo',val:5},
+                ].map(f=>(
+                  <button key={f.val} onClick={()=>setSessionFeeling(f.val)}
+                    style={{flex:1,padding:'8px 4px',borderRadius:10,border:'0.5px solid',cursor:'pointer',fontFamily:'inherit',textAlign:'center',
+                      background:sessionFeeling===f.val?'#FEF0E7':'var(--bg-input)',
+                      borderColor:sessionFeeling===f.val?'#D4570A':'var(--border)',
+                      transition:'all 0.15s',
+                    }}>
+                    <div style={{fontSize:22}}>{f.emoji}</div>
+                    <div style={{fontSize:9,color:sessionFeeling===f.val?'#D4570A':'var(--text-muted)',marginTop:2,fontWeight:600}}>{f.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',margin:'0 0 6px'}}>
               Note per il tuo coach (opzionale)
             </div>
 
