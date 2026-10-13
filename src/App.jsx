@@ -17,7 +17,6 @@ import ShareView from './pages/ShareView'
 import ImportaAllenamento from './pages/ImportaAllenamento'
 import ReportMensile from './pages/ReportMensile'
 import CheckinSettimanale from './pages/CheckinSettimanale'
-import MessaggiCoach from './pages/MessaggiCoach'
 import ModificaPiano from './pages/ModificaPiano'
 import ModificaAllenamento from './pages/ModificaAllenamento'
 import SelezionaPianoCliente from './pages/SelezionaPianoCliente'
@@ -33,6 +32,7 @@ import ImportaPiano from './pages/ImportaPiano'
 import Onboarding from './pages/Onboarding'
 import DettaglioCliente from './pages/DettaglioCliente'
 import Notifiche from './pages/Notifiche'
+import GraficiProgressi from './components/GraficiProgressi'
 import Layout from './components/Layout'
 
 // ─────────────────────────────────────────────────────────
@@ -308,12 +308,12 @@ export default function App() {
             <Route path="ai" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <AssistenteAI />} />
             <Route path="calendario" element={<Calendario />} />
             <Route path="notifiche" element={<Notifiche />} />
+            <Route path="grafici" element={<GraficiProgressi />} />
             <Route path="allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <Allenamento />} />
             <Route path="storico-allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <StoricoAllenamento />} />
             <Route path="importa-allenamento" element={!profile ? null : profile.role === 'admin' ? <ImportaAllenamento /> : <Navigate to="/" />} />
             <Route path="report" element={<ReportMensile />} />
             <Route path="checkin" element={<CheckinSettimanale />} />
-            <Route path="messaggi" element={<MessaggiCoach />} />
             <Route path="modifica-piano/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaPiano /> : <Navigate to="/" />} />
             <Route path="modifica-piano-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaPianoCliente /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento/:planId" element={!profile ? null : profile.role === 'admin' ? <ModificaAllenamento /> : <Navigate to="/" />} />
