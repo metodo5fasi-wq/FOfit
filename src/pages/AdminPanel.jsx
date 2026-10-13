@@ -2032,6 +2032,19 @@ function MessaggiAdmin() {
 }
 
 // ── COMPONENTE CHECK-IN ADMIN ──────────────────────────────
+function ScoreBar({v, max=5, inv=false}) {
+  const pct = Math.min(100, Math.round((v/max)*100))
+  const col = inv ? (v<=2?'#3B6D11':v<=3?'#E8A020':'#E24B4A') : (v>=4?'#3B6D11':v>=3?'#E8A020':'#E24B4A')
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:6}}>
+      <div style={{flex:1,height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
+        <div style={{height:5,width:`${pct}%`,background:col,borderRadius:3}}/>
+      </div>
+      <span style={{fontSize:11,fontWeight:700,color:col,minWidth:16,textAlign:'right'}}>{v}</span>
+    </div>
+  )
+}
+
 function CheckinAdmin() {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState('')
@@ -2078,19 +2091,6 @@ function CheckinAdmin() {
     if (!v) return '#888780'
     if (inv) return v<=2?'#3B6D11':v<=3?'#E8A020':'#E24B4A'
     return v>=4?'#3B6D11':v>=3?'#E8A020':'#E24B4A'
-  }
-
-  function ScoreBar({v, max=5, inv=false}) {
-    const pct = Math.min(100, Math.round((v/max)*100))
-    const col = scoreColor(v, inv)
-    return (
-      <div style={{display:'flex',alignItems:'center',gap:6}}>
-        <div style={{flex:1,height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
-          <div style={{height:5,width:`${pct}%`,background:col,borderRadius:3}}/>
-        </div>
-        <span style={{fontSize:11,fontWeight:700,color:col,minWidth:16,textAlign:'right'}}>{v}</span>
-      </div>
-    )
   }
 
   const latest = measurements[0]
