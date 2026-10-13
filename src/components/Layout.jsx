@@ -12,6 +12,7 @@ const NAV_CLIENT = [
   { to:'/messaggi', icon:'ti-message-2', label:'Messaggi', color:'#D4570A' },
   { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
   { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#4A90D4' },
+  { to:'/obiettivi', icon:'ti-trophy', label:'Obiettivi', color:'#E8A020' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', color:'#3B8C5A' },
   { to:'/notifiche', icon:'ti-bell', label:'Notifiche', color:'#E8A020' },
   { to:'/documenti', icon:'ti-folder', label:'Documenti', color:'#3B8C5A' },
