@@ -442,24 +442,8 @@ export default function ModificaPiano() {
       }
       await Promise.all(deleteFoodPromises)
 
-      // 4. Aggiorna macro target piano — dividi per i giorni reali del piano
-      const allFoods = meals.flatMap(m => m.plan_meal_foods)
-      const numDays = new Set(meals.map(m => m.day_of_week)).size || 7
-      const totalKcal = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.kcal)||0),0) / numDays)
-      const totalProt = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0) / numDays)
-      const totalCarbs = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0) / numDays)
-      const totalFat = Math.round(allFoods.reduce((s,f)=>s+(parseFloat(f.fat_g)||0),0) / numDays)
-
-      if (totalKcal > 0) {
-        const { error: planUpdateErr } = await supabase.from('meal_plans').update({
-          kcal_target: totalKcal,
-          protein_target_g: totalProt,
-          carbs_target_g: totalCarbs,
-          fat_target_g: totalFat,
-        }).eq('id', planId)
-        if (planUpdateErr) throw new Error('Errore aggiornamento macro: ' + planUpdateErr.message)
-        setPlan(prev => prev ? {...prev, kcal_target: totalKcal, protein_target_g: totalProt, carbs_target_g: totalCarbs, fat_target_g: totalFat} : prev)
-      }
+      // 4. Il target kcal/macro resta quello impostato dal coach — NON viene sovrascritto dagli alimenti
+      // Le barre live mostrano il confronto tra alimenti inseriti e target
 
       // 5. Aggiorna day_kcal_target per ogni giorno — così PianoAlimentare mostra il valore giusto
       const dayTotals = {}
@@ -536,8 +520,72 @@ export default function ModificaPiano() {
         </div>
       </div>
 
+      {/* TARGET MODIFICABILE */}
+      {plan && (
+        <div style={{background:'#F5F3EF',padding:'8px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>Target giornaliero</span>
+            <span style={{fontSize:9,color:'#B0ADA8'}}>— modifica e salva per aggiornare</span>
+          </div>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            {[
+              {k:'kcal_target',l:'Kcal',c:'#D4570A',u:''},
+              {k:'protein_target_g',l:'P',c:'#4A90D4',u:'g'},
+              {k:'carbs_target_g',l:'C',c:'#E8A020',u:'g'},
+              {k:'fat_target_g',l:'G',c:'#3B8C5A',u:'g'},
+            ].map(field => (
+              <div key={field.k} style={{flex:1,textAlign:'center'}}>
+                <div style={{fontSize:9,color:field.c,fontWeight:700,marginBottom:2}}>{field.l}</div>
+                <input
+                  type="number"
+                  value={plan[field.k]||''}
+                  onChange={e => {
+                    const val = parseInt(e.target.value)||0
+                    if (field.k === 'kcal_target') {
+                      // kcal cambia → riproporziona macro
+                      const curKcal = (plan.protein_target_g||0)*4 + (plan.carbs_target_g||0)*4 + (plan.fat_target_g||0)*9
+                      if (curKcal > 0 && val > 0) {
+                        const r = val / curKcal
+                        setPlan(p => ({...p,
+                          kcal_target: val,
+                          protein_target_g: Math.round((p.protein_target_g||0)*r),
+                          carbs_target_g: Math.round((p.carbs_target_g||0)*r),
+                          fat_target_g: Math.round((p.fat_target_g||0)*r),
+                        }))
+                      } else {
+                        setPlan(p => ({...p, kcal_target: val}))
+                      }
+                    } else {
+                      // macro cambia → ricalcola kcal
+                      const newPlan = {...plan, [field.k]: val}
+                      const newKcal = Math.round((newPlan.protein_target_g||0)*4 + (newPlan.carbs_target_g||0)*4 + (newPlan.fat_target_g||0)*9)
+                      setPlan(p => ({...p, [field.k]: val, kcal_target: newKcal}))
+                    }
+                    setDirty(true)
+                  }}
+                  style={{width:'100%',padding:'4px 3px',border:`0.5px solid ${field.c}33`,borderRadius:6,fontSize:12,fontWeight:700,color:field.c,background:'white',textAlign:'center',fontFamily:'inherit',outline:'none'}}
+                />
+              </div>
+            ))}
+            <button onClick={async ()=>{
+              await supabase.from('meal_plans').update({
+                kcal_target: plan.kcal_target,
+                protein_target_g: plan.protein_target_g,
+                carbs_target_g: plan.carbs_target_g,
+                fat_target_g: plan.fat_target_g,
+              }).eq('id', planId)
+              setSavedMsg('Target salvato!')
+              setTimeout(()=>setSavedMsg(''),2000)
+            }} style={{padding:'5px 10px',background:'#D4570A',color:'white',border:'none',borderRadius:7,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+              Salva target
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* BARRE MACRO LIVE */}
       <div style={{background:'white',padding:'8px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
+        <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:4}}>Inserito oggi vs target</div>
         <div style={{display:'flex',gap:10,marginBottom:5}}>
           {[
             {l:'Kcal',v:Math.round(dayTotals.kcal),t:plan?.kcal_target,u:'',c:'#D4570A'},
