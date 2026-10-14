@@ -89,6 +89,12 @@ export default function ModificaPiano() {
   }
   const [savedMsg, setSavedMsg] = useState('')
   const [dirty, setDirty] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
 
   // Stato per nuovo pasto
   const [showAddMeal, setShowAddMeal] = useState(false)
