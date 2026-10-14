@@ -48,7 +48,7 @@ export default function DettaglioCliente() {
   if (loading) return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
       <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',height:56,display:'flex',alignItems:'center',padding:'0 16px',gap:12,flexShrink:0}}>
-        <button onClick={()=>navigate('/admin')} style={{...s.btnGray,padding:'5px 10px'}}><i className="ti ti-arrow-left" style={{fontSize:14}}/></button>
+        <button onClick={()=>navigate(-1)} style={{...s.btnGray,padding:'5px 10px'}}><i className="ti ti-arrow-left" style={{fontSize:14}}/></button>
         <div style={{fontSize:15,fontWeight:600}}>Caricamento...</div>
       </div>
     </div>
@@ -169,7 +169,7 @@ function ClientDetail({ client, navigate }) {
 
       {/* TOPBAR */}
       <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-        <button onClick={()=>navigate('/admin')} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:15,color:'#111'}}/>
         </button>
         <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
@@ -442,8 +442,8 @@ function ClientDetail({ client, navigate }) {
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
               <div style={s.sectionTitle}><i className="ti ti-salad" style={{fontSize:12}}/>Piano alimentare</div>
               <div style={{display:'flex',gap:6}}>
-                {mealPlan && <a href={`/modifica-piano/${mealPlan.id}`} style={{...s.btnSm,textDecoration:'none'}}><i className="ti ti-pencil" style={{fontSize:11}}/>Modifica</a>}
-                {!mealPlan && <a href="/importa" style={{...s.btnSm,textDecoration:'none'}}>+ Importa</a>}
+                {mealPlan && <a href={`/modifica-piano/${mealPlan.id}`} onClick={e=>{e.preventDefault();navigate(`/modifica-piano/${mealPlan.id}`)}} style={{...s.btnSm,textDecoration:'none'}}><i className="ti ti-pencil" style={{fontSize:11}}/>Modifica</a>}
+                {!mealPlan && <a href="/importa" onClick={e=>{e.preventDefault();navigate('/importa')}} style={{...s.btnSm,textDecoration:'none'}}>+ Importa</a>}
               </div>
             </div>
             {mealPlan ? (
