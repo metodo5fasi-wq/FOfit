@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'
 
@@ -88,6 +88,7 @@ function WeeklyTargetsTable({ ex, onChange }) {
 
 export default function ModificaAllenamento() {
   const { planId } = useParams()
+  const navigate = useNavigate()
   const [plan, setPlan] = useState(null)
   const [clientName, setClientName] = useState('')
   const [exercises, setExercises] = useState([])
@@ -310,9 +311,9 @@ export default function ModificaAllenamento() {
 
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <a href="/admin" style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',color:'#111',textDecoration:'none',flexShrink:0}}>
+        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
-        </a>
+        </button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.name || 'Modifica scheda'}</div>
           <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan ? ` · ${plan.days_per_week} giorni/sett · ${plan.weeks_duration} settimane` : ''}</div>
