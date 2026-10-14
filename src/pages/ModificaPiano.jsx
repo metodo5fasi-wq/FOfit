@@ -507,13 +507,6 @@ export default function ModificaPiano() {
     </div>
   )
 
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
-  React.useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth < 900)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
-
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
 
