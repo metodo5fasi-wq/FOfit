@@ -104,7 +104,15 @@ export default function ModificaAllenamento() {
   const [searchEx, setSearchEx] = useState('')
   const [dragId, setDragId] = useState(null)
   const [dragOverId, setDragOverId] = useState(null)
-  const [showCopyModal, setShowCopyModal] = useState(null) // exercise id to copy
+  const [showAddExercise, setShowAddExercise] = useState(false)
+  const [showCopyModal, setShowCopyModal] = useState(null)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
+
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
 
   useEffect(() => { if (planId) fetchPlan() }, [planId])
 
@@ -295,13 +303,6 @@ export default function ModificaAllenamento() {
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#888780',fontSize:13}}>Caricamento...</div>
     </div>
   )
-
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
-  React.useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth < 900)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
