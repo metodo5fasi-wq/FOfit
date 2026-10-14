@@ -70,9 +70,9 @@ export default function Onboarding() {
   const firstName = profile?.full_name?.split(' ')[0] || 'atleta'
 
   async function finish() {
-    // Salva in localStorage che l'onboarding è stato completato
     localStorage.setItem(`fofit_onboarded_${profile.id}`, 'true')
-    navigate('/')
+    // Forza navigazione immediata senza aspettare re-render
+    window.location.replace('/')
   }
 
   function next() {
@@ -166,7 +166,7 @@ export default function Onboarding() {
             {current.cta}
           </button>
 
-          {!isFirst && !isLast && (
+          {!isLast && (
             <button onClick={finish} style={{
               width:'100%', marginTop:12, padding:'12px',
               background:'none', border:'none', color:'#888780',
