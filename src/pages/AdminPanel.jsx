@@ -2649,115 +2649,181 @@ function generateReportPDF(r, clientName) {
 }
 
 function generateAnamnesiPDF(a, clientName) {
-  const section = (title, rows) => {
-    const visible = rows.filter(r=>r.v)
-    if (!visible.length) return ''
-    return `<div class="section">
-      <div class="section-title">${title}</div>
-      ${visible.map(r=>Array.isArray(r.v)
-        ?`<div class="field"><div class="field-label">${r.l}</div><div class="field-value">${r.v.join(', ')}</div></div>`
-        :`<div class="field"><div class="field-label">${r.l}</div><div class="field-value">${r.v}</div></div>`
-      ).join('')}
-    </div>`
+  function field(label, value) {
+    if (!value) return ''
+    var v = Array.isArray(value) ? value.join(', ') : String(value)
+    return '<div class="field"><div class="fl">'+label+'</div><div class="fv">'+v+'</div></div>'
+  }
+  function section(title, fields) {
+    var content = fields.join('')
+    if (!content) return ''
+    return '<div class="sec"><div class="st">'+title+'</div>'+content+'</div>'
   }
 
-  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;background:white}
-  .header{background:linear-gradient(135deg,#3B6D11,#3B8C5A);color:white;padding:28px 32px}
-  .header h1{font-size:22px;font-weight:800;margin-bottom:4px}
-  .header p{font-size:13px;opacity:0.85}
-  .content{padding:24px 32px}
-  .section{margin-bottom:20px}
-  .section-title{font-size:12px;font-weight:700;color:#3B6D11;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid #EAF3DE;padding-bottom:6px;margin-bottom:10px}
-  .field{margin-bottom:8px}
-  .field-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}
-  .field-value{font-size:13px;color:#111;line-height:1.5;background:#F5F3EF;border-radius:6px;padding:8px 10px}
-  .footer{margin-top:24px;padding:14px 32px;background:#F5F3EF;font-size:11px;color:#888780;display:flex;justify-content:space-between}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body>
-<div class="header">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start">
-    <div><h1>Anamnesi Completa</h1><p>${clientName} · Compilata il ${a.completed_at?new Date(a.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'-'}</p></div>
-    <div style="text-align:right;font-size:12px;opacity:0.85"><div style="font-weight:700;font-size:16px">FOfit</div><div>Federico Obinu · Coach</div></div>
-  </div>
-</div>
-<div class="content">
-  ${section('1. Dati anagrafici',[
-    {l:'Data di nascita',v:a.data_nascita},{l:'Città',v:a.citta},
-    {l:'Telefono',v:a.telefono},{l:'Lavoro',v:a.lavoro},
-    {l:'Orari di lavoro',v:a.orari_lavoro}
-  ])}
-  ${section('2. Obiettivo e aspettative',[
-    {l:'Obiettivo',v:a.obiettivo},{l:'Peso attuale',v:a.peso_attuale?`${a.peso_attuale}kg`:null},
-    {l:'Peso desiderato',v:a.peso_desiderato?`${a.peso_desiderato}kg`:null},{l:'Altezza',v:a.altezza?`${a.altezza}cm`:null},
-    {l:'Tempistiche',v:a.tempo_cambiamento},{l:'Importanza (0-10)',v:a.importanza_obiettivo},
-    {l:'Motivazione',v:a.motivazione}
-  ])}
-  ${section('3. Salute generale',[
-    {l:'Diagnosi attive',v:a.diagnosi_attive},{l:'Interventi chirurgici',v:a.interventi_chirurgici},
-    {l:'Condizioni',v:a.condizioni_salute},{l:'Familiarità',v:a.familiarita}
-  ])}
-  ${section('4. Farmaci e stimolanti',[
-    {l:'Farmaci',v:a.farmaci},{l:'Integratori',v:a.integratori},
-    {l:'Caffeina',v:a.caffeina},{l:'Fumo',v:a.fumo===true?'Sì':a.fumo===false?'No':null},
-    {l:'Alcol',v:a.alcol}
-  ])}
-  ${section('5. Sonno e recupero',[
-    {l:'Ore di sonno',v:a.ore_sonno},{l:'Orario letto',v:a.orario_letto},{l:'Orario sveglia',v:a.orario_sveglia},
-    {l:'Qualità sonno',v:a.qualita_sonno?`${a.qualita_sonno}/10`:null},{l:'Risvegli',v:a.risvegli_notte},
-    {l:'Cosa rovina il sonno',v:a.cosa_rovina_sonno}
-  ])}
-  ${section('6. Stress ed energia',[
-    {l:'Stress medio',v:a.stress_medio?`${a.stress_medio}/10`:null},{l:'Crollo energia',v:a.crollo_energia},
-    {l:'Sintomi frequenti',v:a.sintomi_frequenti},{l:'Fonte stress 1',v:a.fonte_stress_1},{l:'Fonte stress 2',v:a.fonte_stress_2}
-  ])}
-  ${section('7. Digestione',[
-    {l:'Gonfiore',v:a.gonfiore},{l:'Reflusso',v:a.reflusso},{l:'Evacuazione',v:a.evacuazione},
-    {l:'Cibi che gonfiano',v:a.cibi_gonfiano}
-  ])}
-  ${section('8. Storia peso',[
-    {l:'Peso minimo (5 anni)',v:a.peso_minimo?`${a.peso_minimo}kg`:null},{l:'Peso massimo (5 anni)',v:a.peso_massimo?`${a.peso_massimo}kg`:null},
-    {l:'Accumulo grasso',v:a.accumulo_grasso},{l:'Tentativi passati',v:a.tentativi_dieta},
-    {l:'Perché non ha funzionato',v:a.perche_non_funzionato}
-  ])}
-  ${section('9. Alimentazione e preferenze',[
-    {l:'Pasti preferiti',v:a.pasti_preferiti},{l:'Quando ha più fame',v:a.quando_fame},
-    {l:'Giorno tipo',v:a.giorno_tipo},{l:'Acqua',v:a.acqua},
-    {l:'Proteine gradite',v:a.proteine_gradite},{l:'Proteine non vuole',v:a.proteine_non_vuole},
-    {l:'Carboidrati preferiti',v:a.carboidrati_preferiti},{l:'Rapporto carbo',v:a.rapporto_carbo},
-    {l:'Piatti preferiti',v:a.piatti_preferiti},{l:'Cibi critici',v:a.cibi_critici},
-    {l:'Tracking',v:a.livello_tracking}
-  ])}
-  ${section('10. Allenamento',[
-    {l:'Si allena',v:a.si_allena===true?'Sì':a.si_allena===false?'No':null},
-    {l:'Frequenza',v:a.frequenza_allenamento?`${a.frequenza_allenamento}x/settimana`:null},
-    {l:'Tipologia',v:a.tipo_allenamento},{l:'Orario',v:a.orario_allenamento},
-    {l:'Durata sessione',v:a.durata_seduta},{l:'Energia allenamento',v:a.energia_allenamento?`${a.energia_allenamento}/10`:null},
-    {l:'Recupero',v:a.recupero},{l:'DOMS',v:a.doms},
-    {l:'Esercizi che odia',v:a.esercizi_odia},{l:'Esercizi che ama',v:a.esercizi_ama},
-    {l:'Dolori/limitazioni',v:a.dolori_limitazioni},{l:'Movimenti fastidiosi',v:a.movimenti_fastidio}
-  ])}
-  ${section('11. Vincoli e sostenibilità',[
-    {l:'Tempo disponibile',v:a.tempo_settimana},{l:'Giorni migliori',v:a.giorni_migliori},
-    {l:'Cibi da non togliere',v:a.cibi_non_togliere},{l:'Cosa non fare',v:a.cosa_non_fare},
-    {l:'Disponibilità pratiche',v:a.abitudini_pratiche}
-  ])}
-  ${section('12. Note finali',[{l:'Note aggiuntive',v:a.note_finali}])}
-</div>
-<div class="footer">
-  <span>Generato il ${new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</span>
-  <span>FOfit · Federico Obinu Coach · fofit.fit</span>
-</div>
-</body></html>`
+  var dateLabel = a.completed_at
+    ? 'Compilata il '+new Date(a.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})
+    : (a.submitted_at ? 'Inviata il '+new Date(a.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}) : '')
 
-  const win = window.open('','_blank')
+  var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Anamnesi — '+clientName+'</title>'
+  html += '<style>'
+  html += '*{margin:0;padding:0;box-sizing:border-box}'
+  html += 'body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#fff;color:#111;font-size:13px}'
+  html += '.header{background:linear-gradient(135deg,#1A1A1A,#2D2D2D);color:white;padding:28px 36px 24px}'
+  html += '.brand{font-size:22px;font-weight:900;margin-bottom:20px;display:flex;justify-content:space-between}'
+  html += '.brand span{color:#3B6D11}'
+  html += '.brand-meta{font-size:11px;opacity:0.6;text-align:right}'
+  html += '.av{width:44px;height:44px;border-radius:50%;background:#3B6D11;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;margin-right:10px;vertical-align:middle}'
+  html += '.cn{font-size:19px;font-weight:800;vertical-align:middle}'
+  html += '.cs{font-size:12px;opacity:0.6;margin-top:6px}'
+  html += '.bp{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-left:10px;vertical-align:middle}'
+  html += '.body{padding:28px 36px}'
+  html += '.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}'
+  html += '.sec{margin-bottom:20px}'
+  html += '.st{font-size:11px;font-weight:700;color:#3B6D11;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #EAF3DE;padding-bottom:6px;margin-bottom:12px}'
+  html += '.field{margin-bottom:8px}'
+  html += '.fl{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}'
+  html += '.fv{font-size:13px;color:#111;line-height:1.5;background:#F8F7F5;border-radius:8px;padding:8px 10px;border:0.5px solid #EEECE8}'
+  html += '.highlight{background:#EAF3DE;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}'
+  html += '.hval{font-size:20px;font-weight:900;color:#3B6D11;text-align:center}'
+  html += '.hlbl{font-size:9px;color:#888780;text-transform:uppercase;letter-spacing:0.07em;text-align:center;margin-top:2px}'
+  html += '.footer{margin-top:24px;padding:14px 36px;background:#F8F7F5;border-top:0.5px solid #EEECE8;display:flex;justify-content:space-between;font-size:10px;color:#888780}'
+  html += '.footer strong{color:#3B6D11}'
+  html += '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+  html += '</style></head><body>'
+
+  // HEADER
+  html += '<div class="header">'
+  html += '<div class="brand"><div>FO<span>fit</span></div><div class="brand-meta">Federico Obinu · Coach<br>fofit.fit</div></div>'
+  html += '<div><div class="av">'+_initials(clientName)+'</div><span class="cn">'+clientName+'</span><span class="bp">Anamnesi completa</span></div>'
+  html += '<div class="cs">'+dateLabel+'</div>'
+  html += '</div>'
+
+  html += '<div class="body">'
+
+  // KPI IN EVIDENZA
+  var hasKpi = a.peso_attuale||a.peso_desiderato||a.altezza||a.frequenza_allenamento
+  if (hasKpi) {
+    html += '<div class="highlight">'
+    if (a.peso_attuale) html += '<div><div class="hval">'+a.peso_attuale+'kg</div><div class="hlbl">Peso attuale</div></div>'
+    if (a.peso_desiderato) html += '<div><div class="hval">'+a.peso_desiderato+'kg</div><div class="hlbl">Target</div></div>'
+    if (a.altezza) html += '<div><div class="hval">'+a.altezza+'cm</div><div class="hlbl">Altezza</div></div>'
+    if (a.frequenza_allenamento) html += '<div><div class="hval">'+a.frequenza_allenamento+'x</div><div class="hlbl">Sessioni/sett</div></div>'
+    html += '</div>'
+  }
+
+  // LAYOUT 2 COLONNE
+  html += '<div class="g2"><div>'
+
+  html += section('1. Dati anagrafici', [
+    field('Data di nascita', a.data_nascita),
+    field('Città', a.citta),
+    field('Lavoro', a.lavoro),
+    field('Orari di lavoro', a.orari_lavoro),
+  ])
+
+  html += section('2. Obiettivo', [
+    field('Obiettivo principale', a.obiettivo),
+    field('Motivazione', a.motivazione),
+    field('Tempistiche', a.tempo_cambiamento),
+    field('Importanza (0-10)', a.importanza_obiettivo),
+  ])
+
+  html += section('3. Salute generale', [
+    field('Diagnosi attive', a.diagnosi_attive),
+    field('Interventi chirurgici', a.interventi_chirurgici),
+    field('Condizioni particolari', a.condizioni_salute),
+    field('Familiarità', a.familiarita),
+  ])
+
+  html += section('4. Farmaci e stimolanti', [
+    field('Farmaci', a.farmaci),
+    field('Integratori', a.integratori),
+    field('Caffeina', a.caffeina),
+    field('Fumo', a.fumo===true?'Sì':a.fumo===false?'No':null),
+    field('Alcol', a.alcol),
+  ])
+
+  html += section('5. Sonno e recupero', [
+    field('Ore di sonno', a.ore_sonno),
+    field('Orario letto / sveglia', a.orario_letto&&a.orario_sveglia ? a.orario_letto+' → '+a.orario_sveglia : a.orario_letto||a.orario_sveglia),
+    field('Qualità sonno', a.qualita_sonno ? a.qualita_sonno+'/10' : null),
+    field('Risvegli notturni', a.risvegli_notte),
+    field('Cosa rovina il sonno', a.cosa_rovina_sonno),
+  ])
+
+  html += section('6. Stress ed energia', [
+    field('Stress medio', a.stress_medio ? a.stress_medio+'/10' : null),
+    field('Crollo energia', a.crollo_energia),
+    field('Sintomi frequenti', a.sintomi_frequenti),
+    field('Fonti di stress', [a.fonte_stress_1, a.fonte_stress_2].filter(Boolean).join(', ')||null),
+  ])
+
+  html += '</div><div>'
+
+  html += section('7. Digestione', [
+    field('Gonfiore', a.gonfiore),
+    field('Reflusso', a.reflusso),
+    field('Evacuazione', a.evacuazione),
+    field('Cibi che gonfiano', a.cibi_gonfiano),
+  ])
+
+  html += section('8. Storia peso', [
+    field('Peso minimo (5 anni)', a.peso_minimo ? a.peso_minimo+'kg' : null),
+    field('Peso massimo (5 anni)', a.peso_massimo ? a.peso_massimo+'kg' : null),
+    field('Accumulo grasso', a.accumulo_grasso),
+    field('Tentativi passati', a.tentativi_dieta),
+    field('Perché non ha funzionato', a.perche_non_funzionato),
+  ])
+
+  html += section('9. Alimentazione', [
+    field('Pasti preferiti', a.pasti_preferiti),
+    field('Quando ha più fame', a.quando_fame),
+    field('Giorno tipo', a.giorno_tipo),
+    field('Acqua', a.acqua),
+    field('Proteine gradite', a.proteine_gradite),
+    field('Proteine non vuole', a.proteine_non_vuole),
+    field('Carboidrati preferiti', a.carboidrati_preferiti),
+    field('Piatti preferiti', a.piatti_preferiti),
+    field('Cibi critici', a.cibi_critici),
+    field('Livello tracking', a.livello_tracking),
+  ])
+
+  html += section('10. Allenamento', [
+    field('Si allena', a.si_allena===true?'Sì':a.si_allena===false?'No':null),
+    field('Tipologia', a.tipo_allenamento),
+    field('Orario preferito', a.orario_allenamento),
+    field('Durata sessione', a.durata_seduta),
+    field('Energia in allenamento', a.energia_allenamento ? a.energia_allenamento+'/10' : null),
+    field('DOMS', a.doms),
+    field('Esercizi che ama', a.esercizi_ama),
+    field('Esercizi che odia', a.esercizi_odia),
+    field('Dolori/limitazioni', a.dolori_limitazioni),
+  ])
+
+  html += section('11. Vincoli e sostenibilità', [
+    field('Tempo disponibile', a.tempo_settimana),
+    field('Giorni migliori', a.giorni_migliori),
+    field('Cibi da non togliere', a.cibi_non_togliere),
+    field('Cosa non fare', a.cosa_non_fare),
+  ])
+
+  if (a.note_finali) {
+    html += section('12. Note finali', [field('Note aggiuntive', a.note_finali)])
+  }
+
+  html += '</div></div>'
+  html += '</div>'
+
+  html += '<div class="footer"><span>Generato il <strong>'+new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})+'</strong></span><span>FOfit · Federico Obinu Coach · <strong>fofit.fit</strong></span></div>'
+  html += '</body></html>'
+
+  var win = window.open('','_blank')
   win.document.write(html)
   win.document.close()
   win.focus()
-  setTimeout(()=>win.print(),500)
+  setTimeout(function(){win.print()},600)
 }
+
 
 // ─────────────────────────────────────────────────────────
 // TAB ANAMNESI
