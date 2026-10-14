@@ -550,10 +550,10 @@ export default function AdminPanel() {
               <i className="ti ti-user-plus" style={{fontSize:15}}/>Nuovo cliente
             </button>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-              <a href="/importa" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+              <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                 <i className="ti ti-salad" style={{fontSize:16}}/>Piano
               </a>
-              <a href="/importa-allenamento" style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+              <a href="/importa-allenamento" onClick={e=>{e.preventDefault();window.history.pushState({},"","/importa-allenamento");window.dispatchEvent(new PopStateEvent("popstate"))}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                 <i className="ti ti-barbell" style={{fontSize:16}}/>Allenamento
               </a>
             </div>
@@ -746,12 +746,12 @@ export default function AdminPanel() {
                           {/* RIGA 3: Azioni */}
                           <div style={{display:'flex',gap:5}} onClick={e=>e.stopPropagation()}>
                             {st.activePlan ? (
-                              <a href={`/modifica-piano/${st.activePlan.id}`}
+                              <a href={`/modifica-piano/${st.activePlan.id}`} onClick={e=>{e.preventDefault();window.location.href=`/modifica-piano/${st.activePlan.id}`}}
                                 style={{flex:1,padding:'6px 4px',background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
                                 🥗 Piano
                               </a>
                             ) : (
-                              <a href="/importa"
+                              <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}}
                                 style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
                                 + Piano
                               </a>
@@ -1224,7 +1224,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             </a>
           )}
           {!activeWorkoutPlan && (
-            <a href="/importa-allenamento" style={{...s.btnSm,textDecoration:'none',fontSize:11}}>+ Importa scheda</a>
+            <a href="/importa-allenamento" onClick={e=>{e.preventDefault();window.history.pushState({},"","/importa-allenamento");window.dispatchEvent(new PopStateEvent("popstate"))}} style={{...s.btnSm,textDecoration:'none',fontSize:11}}>+ Importa scheda</a>
           )}
         </div>
 
