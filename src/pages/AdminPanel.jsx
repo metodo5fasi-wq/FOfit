@@ -201,6 +201,12 @@ export default function AdminPanel() {
   const [selectedClient, setSelectedClient] = useState(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
   const [newClient, setNewClient] = useState({ email:'', password:'', full_name:'', goal:'dimagrimento', phone:'', height_cm:'', notes:'' })
   const [newPlan, setNewPlan] = useState({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
   const [dietType, setDietType] = useState('lineare')
@@ -510,13 +516,6 @@ export default function AdminPanel() {
 
   const countNoPiano = clients.filter(c => clientStats[c.id] && !clientStats[c.id].activePlan).length
   const countNoDiario = clients.filter(c => clientStats[c.id] && !clientStats[c.id].diaryToday).length
-
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 900)
-  React.useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth < 900)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
 
   const SIDEBAR_TABS = [
     { id:'clienti', icon:'ti-users', label:'Clienti' },
