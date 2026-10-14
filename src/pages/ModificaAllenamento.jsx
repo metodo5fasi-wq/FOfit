@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { EXERCISE_DB } from '../data/exerciseDatabase'
 
 const MUSCLE_GROUPS = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Quadricipiti','Femorali','Polpacci','Glutei','Addominali','Cardio','Corpo libero','Altro']
 
@@ -104,8 +105,8 @@ export default function ModificaAllenamento() {
   const [searchEx, setSearchEx] = useState('')
   const [dragId, setDragId] = useState(null)
   const [dragOverId, setDragOverId] = useState(null)
-  const [showAddExercise, setShowAddExercise] = useState(false)
   const [showCopyModal, setShowCopyModal] = useState(null)
+  const [showAddExercise, setShowAddExercise] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
 
   React.useEffect(() => {
@@ -379,18 +380,10 @@ export default function ModificaAllenamento() {
             <span style={{fontSize:11,color:'#888780'}}>{dayExercises.length} esercizi</span>
             <div style={{flex:1}}/>
             {dayExercises.length > 1 && (
-              <>
-                <div style={{position:'relative',flex:isMobile?1:'0 0 180px'}}>
-                  <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#888780'}}/>
-                  <input value={searchEx} onChange={e=>setSearchEx(e.target.value)} placeholder="Cerca esercizio..."
-                    style={{...s.input,paddingLeft:26,fontSize:11,padding:'5px 8px 5px 26px',height:30}}/>
-                  {searchEx && <button onClick={()=>setSearchEx('')} style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:12}}>✕</button>}
-                </div>
-                <button onClick={()=>{if(allExpanded){setExpandedEx(null);setAllExpanded(false)}else{setExpandedEx('all');setAllExpanded(true)}}}
-                  style={{...s.btnGray,padding:'4px 10px',fontSize:11,whiteSpace:'nowrap'}}>
-                  {allExpanded?'⊖ Collassa':'⊕ Espandi'}
-                </button>
-              </>
+              <button onClick={()=>{if(allExpanded){setExpandedEx(null);setAllExpanded(false)}else{setExpandedEx('all');setAllExpanded(true)}}}
+                style={{...s.btnGray,padding:'5px 12px',fontSize:11,whiteSpace:'nowrap'}}>
+                {allExpanded?'⊖ Collassa tutto':'⊕ Espandi tutto'}
+              </button>
             )}
             {!isMobile && days.length > 1 && (
               <button onClick={()=>removeDay(selectedDay)} style={{...s.btnDanger,padding:'4px 8px',fontSize:11}}>
@@ -491,30 +484,103 @@ export default function ModificaAllenamento() {
 
             {/* AGGIUNGI ESERCIZIO */}
             {showAddExercise ? (
-              <div style={{background:'white',borderRadius:12,border:'0.5px solid #D4570A',padding:'12px',marginBottom:10}}>
-                <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:8,marginBottom:8}}>
-                  <div><label style={s.label}>Nome esercizio *</label>
-                    <input style={s.input} value={newEx.exercise_name} onChange={e=>setNewEx(p=>({...p,exercise_name:e.target.value}))} placeholder="Es. Squat" autoFocus/>
-                  </div>
-                  <div><label style={s.label}>Gruppo muscolare</label>
-                    <select style={s.input} value={newEx.muscle_group} onChange={e=>setNewEx(p=>({...p,muscle_group:e.target.value}))}>
-                      {MUSCLE_GROUPS.map(g=><option key={g}>{g}</option>)}
-                    </select>
-                  </div>
-                  <div><label style={s.label}>Serie</label><input style={s.input} type="number" value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:parseInt(e.target.value)||3}))}/></div>
-                  <div><label style={s.label}>Reps</label><input style={s.input} value={newEx.reps} onChange={e=>setNewEx(p=>({...p,reps:e.target.value}))} placeholder="8-10"/></div>
-                  <div><label style={s.label}>Recupero (sec)</label><input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:parseInt(e.target.value)||60}))}/></div>
+              <div style={{background:'white',borderRadius:12,border:'0.5px solid #D4570A',padding:'14px',marginBottom:10}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:12}}>
+                  <i className="ti ti-plus" style={{fontSize:13}}/> Aggiungi esercizio
                 </div>
-                <div style={{display:'flex',gap:6}}>
-                  <button onClick={addExercise} disabled={!newEx.exercise_name.trim()} style={{...s.btn,flex:1,justifyContent:'center',fontSize:12,opacity:!newEx.exercise_name.trim()?0.5:1}}>
-                    <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi esercizio
+
+                {/* STEP 1: Seleziona gruppo muscolare */}
+                <div style={{marginBottom:10}}>
+                  <label style={s.label}>1. Gruppo muscolare</label>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                    {['Tutti',...MUSCLE_GROUPS].map(g => (
+                      <button key={g} onClick={()=>setNewEx(p=>({...p,muscle_group:g==='Tutti'?'Petto':g,exercise_name:'',video_url:'',_filterGroup:g}))}
+                        style={{padding:'5px 10px',borderRadius:14,fontSize:11,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
+                          background:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#F5F3EF',
+                          color:(newEx._filterGroup||'Tutti')===g?'white':'#888780',
+                          borderColor:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#E0DDD6',
+                        }}>{g}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* STEP 2: Seleziona esercizio dalla libreria */}
+                <div style={{marginBottom:10}}>
+                  <label style={s.label}>2. Seleziona dalla libreria (o scrivi sotto)</label>
+                  <select style={{...s.input,fontWeight:newEx.exercise_name?600:400,color:newEx.exercise_name?'#111':'#888780'}}
+                    value={newEx.exercise_name}
+                    onChange={e=>{
+                      const sel = EXERCISE_DB.find(x=>x.name===e.target.value)
+                      if (sel) {
+                        setNewEx(p=>({...p, exercise_name:sel.name, muscle_group:sel.muscle, video_url:sel.yt||''}))
+                      } else {
+                        setNewEx(p=>({...p, exercise_name:e.target.value}))
+                      }
+                    }}>
+                    <option value="">— Seleziona dalla libreria —</option>
+                    {EXERCISE_DB
+                      .filter(ex => !newEx._filterGroup || newEx._filterGroup==='Tutti' || ex.muscle===newEx._filterGroup)
+                      .map(ex => (
+                        <option key={ex.name} value={ex.name}>{ex.name} {ex.yt?'🎬':''}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                {/* STEP 3: Nome libero (se non in libreria) */}
+                <div style={{marginBottom:10}}>
+                  <label style={s.label}>3. Oppure scrivi nome personalizzato</label>
+                  <input style={s.input} value={newEx.exercise_name}
+                    onChange={e=>setNewEx(p=>({...p,exercise_name:e.target.value,video_url:''}))}
+                    placeholder="Es. Mio esercizio personalizzato..."/>
+                </div>
+
+                {/* VIDEO YOUTUBE (auto o manuale) */}
+                {newEx.video_url ? (
+                  <div style={{background:'#EAF3DE',borderRadius:8,padding:'8px 12px',marginBottom:10,display:'flex',alignItems:'center',gap:8}}>
+                    <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#E24B4A',flexShrink:0}}/>
+                    <span style={{fontSize:11,color:'#3B6D11',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Video YouTube trovato ✓</span>
+                    <a href={newEx.video_url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#3B6D11',fontWeight:700}}>Apri →</a>
+                    <button onClick={()=>setNewEx(p=>({...p,video_url:''}))} style={{background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:13}}>✕</button>
+                  </div>
+                ) : (
+                  <div style={{marginBottom:10}}>
+                    <label style={s.label}>Link YouTube (opzionale)</label>
+                    <input style={s.input} value={newEx.video_url||''} onChange={e=>setNewEx(p=>({...p,video_url:e.target.value}))} placeholder="https://youtube.com/..."/>
+                  </div>
+                )}
+
+                {/* PARAMETRI */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
+                  <div><label style={s.label}>Serie</label>
+                    <input style={s.input} type="number" min={1} max={20} value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:parseInt(e.target.value)||3}))}/>
+                  </div>
+                  <div><label style={s.label}>Reps</label>
+                    <input style={s.input} value={newEx.reps} onChange={e=>setNewEx(p=>({...p,reps:e.target.value}))} placeholder="8-10"/>
+                  </div>
+                  <div><label style={s.label}>Recupero (sec)</label>
+                    <input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:parseInt(e.target.value)||60}))}/>
+                  </div>
+                </div>
+
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={addExercise} disabled={!newEx.exercise_name.trim()}
+                    style={{...s.btn,flex:1,justifyContent:'center',opacity:!newEx.exercise_name.trim()?0.5:1}}>
+                    <i className="ti ti-plus" style={{fontSize:14}}/>Aggiungi
                   </button>
-                  <button onClick={()=>{setShowAddExercise(false);setNewEx(EMPTY_EX)}} style={s.btnGray}>Annulla</button>
+                  <button onClick={()=>{setShowAddExercise(false);setNewEx({...EMPTY_EX,_filterGroup:'Tutti'})}} style={s.btnGray}>
+                    Annulla
+                  </button>
                 </div>
               </div>
             ) : (
-              <button onClick={()=>setShowAddExercise(true)} style={{...s.btnGray,width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px',marginBottom:10,fontSize:12}}>
-                <i className="ti ti-plus" style={{fontSize:14}}/>Aggiungi esercizio
+              <button onClick={()=>setShowAddExercise(true)} style={{
+                width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+                padding:'12px',marginBottom:10,borderRadius:10,
+                border:'1.5px dashed #D4570A',background:'#FEF8F5',
+                color:'#D4570A',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',
+              }}>
+                <i className="ti ti-plus" style={{fontSize:16}}/>Aggiungi esercizio
               </button>
             )}
           </div>
