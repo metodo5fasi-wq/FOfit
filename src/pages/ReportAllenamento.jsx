@@ -169,19 +169,32 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           if (!rep?.progressi_esercizi) {
             const from = new Date(Date.now()-56*24*60*60*1000).toISOString().split('T')[0]
             const { data: logs } = await supabase.from('workout_logs')
-              .select('exercise_name,weight_kg,log_date')
+              .select('exercise_name,weight_kg,reps_done,sets_done,log_date,notes')
               .eq('client_id', clientId).gte('log_date', from).order('log_date')
+
+            // Per ogni esercizio raccoglie tutte le sessioni con dettaglio
             const byEx = {}
             ;(logs||[]).forEach(l => {
-              if (!l.weight_kg) return
-              if (!byEx[l.exercise_name]) byEx[l.exercise_name] = { first:l.weight_kg, last:l.weight_kg }
-              else byEx[l.exercise_name].last = l.weight_kg
+              if (!byEx[l.exercise_name]) byEx[l.exercise_name] = { sessions: [], first_kg: null, last_kg: null }
+              if (l.weight_kg) {
+                if (!byEx[l.exercise_name].first_kg) byEx[l.exercise_name].first_kg = l.weight_kg
+                byEx[l.exercise_name].last_kg = l.weight_kg
+              }
+              byEx[l.exercise_name].sessions.push({
+                date: l.log_date,
+                weight_kg: l.weight_kg,
+                reps_done: l.reps_done,
+                sets_done: l.sets_done,
+                notes: l.notes,
+              })
             })
+
             const prog = uniqueEx.map(ex => ({
               exercise_name: ex.exercise_name,
               day_label: ex.day_label,
-              carico_inizio: byEx[ex.exercise_name]?.first || null,
-              carico_fine: byEx[ex.exercise_name]?.last || null,
+              carico_inizio: byEx[ex.exercise_name]?.first_kg || null,
+              carico_fine: byEx[ex.exercise_name]?.last_kg || null,
+              sessions: byEx[ex.exercise_name]?.sessions || [],
               note: '',
             }))
             if (prog.length) setProgressi(prog)
@@ -338,24 +351,102 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           {/* S2 — PROGRESSI ESERCIZI */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'var(--text)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}><span>🏋️</span> Progressi di carico</div>
-            <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:12,lineHeight:1.5}}>Carichi caricati automaticamente. Correggili se necessario e aggiungi note.</div>
-            {progressi.length===0 && <div style={{fontSize:12,color:'var(--text-muted)',textAlign:'center',padding:'12px 0'}}>Nessun esercizio trovato. Completa almeno un allenamento prima di inviare.</div>}
+            <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:12,lineHeight:1.5}}>
+              {progressi.some(e=>e.sessions?.length>0)
+                ? 'Dati caricati automaticamente dai tuoi allenamenti. Aggiungi note o correggili.'
+                : 'Inserisci i carichi manualmente per ogni esercizio.'}
+            </div>
+
+            {progressi.length===0 && (
+              <div style={{fontSize:12,color:'var(--text-muted)',textAlign:'center',padding:'12px 0'}}>
+                Nessun esercizio trovato nella scheda. Puoi aggiungere feedback libero nelle note finali.
+              </div>
+            )}
+
             {progressi.map((ex,idx)=>{
               const diff = ex.carico_fine&&ex.carico_inizio?(parseFloat(ex.carico_fine)-parseFloat(ex.carico_inizio)).toFixed(1):null
+              const hasSessions = ex.sessions?.length > 0
               return (
                 <div key={idx} style={{background:'var(--bg-input)',borderRadius:10,padding:'12px',marginBottom:10}}>
+                  {/* HEADER ESERCIZIO */}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                    <div><div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{ex.exercise_name}</div><div style={{fontSize:10,color:'var(--text-muted)',marginTop:1}}>{ex.day_label}</div></div>
-                    {diff!==null&&<span style={{fontSize:12,fontWeight:700,color:parseFloat(diff)>0?'#3B6D11':parseFloat(diff)<0?'#E24B4A':'#888780',background:parseFloat(diff)>0?'#EAF3DE':parseFloat(diff)<0?'#FEE2E2':'#F5F3EF',padding:'3px 8px',borderRadius:8}}>{parseFloat(diff)>0?'+':''}{diff}kg</span>}
+                    <div style={{flex:1,minWidth:0,marginRight:8}}>
+                      {ex.exercise_name && !ex._manual ? (
+                        <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{ex.exercise_name}</div>
+                      ) : (
+                        <input style={{...s.input,fontSize:13,fontWeight:600,marginBottom:2}} value={ex.exercise_name||''} disabled={isReadOnly}
+                          onChange={e=>setEx(idx,'exercise_name',e.target.value)} placeholder="Nome esercizio..."/>
+                      )}
+                      {ex.day_label && <div style={{fontSize:10,color:'var(--text-muted)',marginTop:1}}>{ex.day_label}</div>}
+                    </div>
+                    {diff!==null && (
+                      <span style={{fontSize:12,fontWeight:700,
+                        color:parseFloat(diff)>0?'#3B6D11':parseFloat(diff)<0?'#E24B4A':'#888780',
+                        background:parseFloat(diff)>0?'#EAF3DE':parseFloat(diff)<0?'#FEE2E2':'#F5F3EF',
+                        padding:'3px 8px',borderRadius:8}}>
+                        {parseFloat(diff)>0?'+':''}{diff}kg
+                      </span>
+                    )}
                   </div>
+
+                  {/* SESSIONI DAI LOG — se disponibili */}
+                  {hasSessions && (
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>
+                        📊 Sessioni registrate ({ex.sessions.length})
+                      </div>
+                      <div style={{background:'var(--bg)',borderRadius:8,overflow:'hidden'}}>
+                        {/* Header tabella */}
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 60px 60px 60px',gap:4,padding:'5px 8px',background:'var(--border)',fontSize:9,fontWeight:700,color:'var(--text-muted)',textTransform:'uppercase'}}>
+                          <span>Data</span><span style={{textAlign:'center'}}>Kg</span><span style={{textAlign:'center'}}>Reps</span><span style={{textAlign:'center'}}>Serie</span>
+                        </div>
+                        {ex.sessions.map((s,si)=>(
+                          <div key={si} style={{display:'grid',gridTemplateColumns:'1fr 60px 60px 60px',gap:4,padding:'5px 8px',borderBottom:'0.5px solid var(--border)',fontSize:12}}>
+                            <span style={{color:'var(--text-muted)'}}>{new Date(s.date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+                            <span style={{textAlign:'center',fontWeight:700,color:s.weight_kg?'var(--text)':'var(--text-muted)'}}>{s.weight_kg||'—'}</span>
+                            <span style={{textAlign:'center',color:'var(--text-muted)'}}>{s.reps_done||'—'}</span>
+                            <span style={{textAlign:'center',color:'var(--text-muted)'}}>{s.sets_done||'—'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CARICO INIZIO / FINE — sempre visibili */}
                   <div style={{...s.grid2,marginBottom:8}}>
-                    <div><label style={s.label}>Carico inizio (kg)</label><input style={s.input} type="text" inputMode="decimal" value={ex.carico_inizio||''} disabled={isReadOnly} onChange={e=>setEx(idx,'carico_inizio',e.target.value.replace(',','.'))} placeholder="es. 60"/></div>
-                    <div><label style={s.label}>Carico fine (kg)</label><input style={s.input} type="text" inputMode="decimal" value={ex.carico_fine||''} disabled={isReadOnly} onChange={e=>setEx(idx,'carico_fine',e.target.value.replace(',','.'))} placeholder="es. 70"/></div>
+                    <div>
+                      <label style={s.label}>Carico inizio (kg)</label>
+                      <input style={s.input} type="text" inputMode="decimal"
+                        value={ex.carico_inizio||''} disabled={isReadOnly}
+                        onChange={e=>setEx(idx,'carico_inizio',e.target.value.replace(',','.'))}
+                        placeholder={hasSessions?'auto':'es. 60'}/>
+                    </div>
+                    <div>
+                      <label style={s.label}>Carico fine (kg)</label>
+                      <input style={s.input} type="text" inputMode="decimal"
+                        value={ex.carico_fine||''} disabled={isReadOnly}
+                        onChange={e=>setEx(idx,'carico_fine',e.target.value.replace(',','.'))}
+                        placeholder={hasSessions?'auto':'es. 70'}/>
+                    </div>
                   </div>
-                  <textarea style={{...s.textarea,minHeight:60}} value={ex.note||''} disabled={isReadOnly} onChange={e=>setEx(idx,'note',e.target.value)} placeholder="Note su tecnica, sensazioni, difficoltà..."/>
+
+                  {/* NOTE LIBERE */}
+                  <textarea
+                    style={{...s.textarea,minHeight:60}}
+                    value={ex.note||''} disabled={isReadOnly}
+                    onChange={e=>setEx(idx,'note',e.target.value)}
+                    placeholder="Note su tecnica, sensazioni, difficoltà, obiettivi..."/>
                 </div>
               )
             })}
+
+            {/* AGGIUNGI ESERCIZIO MANUALE */}
+            {!isReadOnly && (
+              <button onClick={()=>setProgressi(p=>[...p,{exercise_name:'',day_label:'',carico_inizio:'',carico_fine:'',sessions:[],note:'',_manual:true}])}
+                style={{...s.btnGray,width:'100%',justifyContent:'center',display:'flex',alignItems:'center',gap:6,marginTop:4}}>
+                <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi esercizio manualmente
+              </button>
+            )}
           </div>
 
           {/* S3 — ALIMENTAZIONE */}
