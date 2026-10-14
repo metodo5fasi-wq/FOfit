@@ -184,6 +184,32 @@ const globalStyles = `
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .safe-top { padding-top: env(safe-area-inset-top, 0px); }
 
+  /* Previeni overflow orizzontale globale */
+  html, body, #root { max-width: 100vw; overflow-x: hidden; }
+
+  /* Touch action — previeni pinch zoom ma permetti scroll */
+  * { -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y; }
+  
+  /* Bottoni — min tap target 44px iOS */
+  button, a { min-height: 0; }
+
+  /* Immagini responsive */
+  img { max-width: 100%; height: auto; }
+
+  /* Input — previeni zoom iOS su focus */
+  @media (max-width: 768px) {
+    input, textarea, select { font-size: 16px !important; }
+    /* Padding bottom per barra navigazione mobile */
+    .page-content { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+  }
+
+  /* Fix altezza viewport mobile (esclude barra browser) */
+  .full-height { height: 100dvh; min-height: 100dvh; }
+  
+  /* Scroll fluido su iOS */
+  .scroll-area { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+
   /* Input mobile fix (no zoom su iOS) */
   @media (max-width: 768px) {
     input, textarea, select { font-size: 16px !important; }
