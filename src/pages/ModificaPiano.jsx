@@ -740,15 +740,29 @@ export default function ModificaPiano() {
                 {addingFoodToMeal===meal.id ? (
                   <div style={{padding:'10px 12px',background:'#F5F3EF',borderTop:'0.5px solid #E0DDD6'}}>
                     <div style={{position:'relative',marginBottom:7}}>
-                      <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#888780',pointerEvents:'none'}}/>
-                      <input style={{...s.input,paddingLeft:26,fontSize:12}} placeholder="Cerca o scrivi nome alimento..."
-                        value={foodSearch!==''?foodSearch:newFood.food_name}
-                        onChange={e=>{setNewFood(p=>({...p,food_name:e.target.value,_k100:null}));searchFood(e.target.value)}}/>
-                      {searchingFood && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>}
+                      <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#888780',pointerEvents:'none',zIndex:1}}/>
+                      <input
+                        style={{...s.input,paddingLeft:26,paddingRight:28,fontSize:12}}
+                        placeholder="Cerca o scrivi nome alimento..."
+                        value={newFood.food_name}
+                        onChange={e=>{
+                          const val = e.target.value
+                          setNewFood(p=>({...p,food_name:val,_k100:null}))
+                          if (!val || val.length < 2) { setFoodResults([]); return }
+                          searchFood(val)
+                        }}
+                        onBlur={()=>setTimeout(()=>setFoodResults([]),150)}
+                      />
+                      {newFood.food_name && (
+                        <button onClick={()=>{setNewFood(p=>({...p,food_name:'',kcal:0,protein_g:0,carbs_g:0,fat_g:0,_k100:null}));setFoodResults([])}}
+                          style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#888780',fontSize:14,padding:'0 2px',zIndex:1}}>✕</button>
+                      )}
+                      {searchingFood && !newFood.food_name && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>}
                       {foodResults.length>0 && (
-                        <div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',border:'0.5px solid #E0DDD6',borderRadius:9,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',zIndex:100,maxHeight:200,overflowY:'auto'}}>
+                        <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,right:0,background:'white',border:'0.5px solid #E0DDD6',borderRadius:9,boxShadow:'0 4px 20px rgba(0,0,0,0.14)',zIndex:200,maxHeight:220,overflowY:'auto'}}>
                           {foodResults.map((food,i)=>(
-                            <div key={i} onClick={()=>selectFoodFromSearch(food)}
+                            <div key={i}
+                              onMouseDown={e=>{e.preventDefault();selectFoodFromSearch(food)}}
                               style={{padding:'8px 12px',borderBottom:'0.5px solid #F5F3EF',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
                               onMouseEnter={e=>e.currentTarget.style.background='#FEF0E7'}
                               onMouseLeave={e=>e.currentTarget.style.background='white'}>
