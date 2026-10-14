@@ -512,9 +512,7 @@ export default function ModificaPiano() {
 
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <Link to="/admin" style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',color:'#111',textDecoration:'none',flexShrink:0}}>
-          <i className="ti ti-arrow-left" style={{fontSize:16}}/>
-        </Link>
+        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}><i className="ti ti-arrow-left" style={{fontSize:16}}/></button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
           <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan && ` · ${plan.kcal_target} kcal`}</div>
