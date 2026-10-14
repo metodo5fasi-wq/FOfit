@@ -467,11 +467,61 @@ function ClientDetail({ client, navigate }) {
                 </button>
                 {editingPlan && (
                   <div style={{marginTop:10}}>
+                    {/* Calcolo automatico macro↔kcal */}
+                    {(() => {
+                      const macroKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
+                      const diff = Math.abs(macroKcal - (parseFloat(planEdit.kcal_target)||0))
+                      return diff > 10 && macroKcal > 0 ? (
+                        <div style={{background:'#FEF8E7',borderRadius:8,padding:'7px 10px',marginBottom:8,fontSize:11,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <span>⚠️ Macro = {macroKcal} kcal (differenza {diff} kcal)</span>
+                          <button onClick={()=>setPlanEdit(p=>({...p,kcal_target:macroKcal}))} style={{fontSize:10,background:'#E8A020',color:'white',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',fontFamily:'inherit'}}>Sincronizza</button>
+                        </div>
+                      ) : null
+                    })()}
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-                      <div><label style={s.label}>Kcal</label><input style={s.input} type="number" value={planEdit.kcal_target} onChange={e=>setPlanEdit(p=>({...p,kcal_target:e.target.value}))}/></div>
-                      <div><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={planEdit.protein_target_g} onChange={e=>setPlanEdit(p=>({...p,protein_target_g:e.target.value}))}/></div>
-                      <div><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={planEdit.carbs_target_g} onChange={e=>setPlanEdit(p=>({...p,carbs_target_g:e.target.value}))}/></div>
-                      <div><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={planEdit.fat_target_g} onChange={e=>setPlanEdit(p=>({...p,fat_target_g:e.target.value}))}/></div>
+                      <div><label style={s.label}>Kcal target</label>
+                        <input style={s.input} type="number" value={planEdit.kcal_target}
+                          onChange={e=>{
+                            const kcal = parseInt(e.target.value)||0
+                            // Mantieni ratio macro proporzionali
+                            const totMacroKcal = (parseFloat(planEdit.protein_target_g)||0)*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + (parseFloat(planEdit.fat_target_g)||0)*9
+                            if (totMacroKcal > 0 && kcal > 0) {
+                              const ratio = kcal / totMacroKcal
+                              setPlanEdit(p=>({...p,
+                                kcal_target: kcal,
+                                protein_target_g: Math.round(parseFloat(p.protein_target_g)*ratio),
+                                carbs_target_g: Math.round(parseFloat(p.carbs_target_g)*ratio),
+                                fat_target_g: Math.round(parseFloat(p.fat_target_g)*ratio),
+                              }))
+                            } else {
+                              setPlanEdit(p=>({...p,kcal_target:kcal}))
+                            }
+                          }}/>
+                      </div>
+                      <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#888780'}}>×4 kcal</span></label>
+                        <input style={s.input} type="number" value={planEdit.protein_target_g}
+                          onChange={e=>{
+                            const v = parseInt(e.target.value)||0
+                            const newKcal = Math.round(v*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
+                            setPlanEdit(p=>({...p,protein_target_g:v,kcal_target:newKcal}))
+                          }}/>
+                      </div>
+                      <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#888780'}}>×4 kcal</span></label>
+                        <input style={s.input} type="number" value={planEdit.carbs_target_g}
+                          onChange={e=>{
+                            const v = parseInt(e.target.value)||0
+                            const newKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + v*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
+                            setPlanEdit(p=>({...p,carbs_target_g:v,kcal_target:newKcal}))
+                          }}/>
+                      </div>
+                      <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#888780'}}>×9 kcal</span></label>
+                        <input style={s.input} type="number" value={planEdit.fat_target_g}
+                          onChange={e=>{
+                            const v = parseInt(e.target.value)||0
+                            const newKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + v*9)
+                            setPlanEdit(p=>({...p,fat_target_g:v,kcal_target:newKcal}))
+                          }}/>
+                      </div>
                     </div>
                     <div style={{marginBottom:8}}><label style={s.label}>Titolo</label><input style={s.input} value={planEdit.title} onChange={e=>setPlanEdit(p=>({...p,title:e.target.value}))}/></div>
                     <button onClick={savePlanEdit} style={{...s.btn,width:'100%',justifyContent:'center'}}>Salva</button>
