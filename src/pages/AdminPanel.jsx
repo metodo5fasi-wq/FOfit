@@ -270,7 +270,13 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('tutti') // tutti | no-piano | no-diario | piano-attivo
 
-  useEffect(() => { fetchAll() }, [])
+  useEffect(() => {
+    fetchAll()
+    // Aggiorna dati quando torni da un'altra pagina (es. ModificaPiano)
+    const onFocus = () => fetchAll()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   async function fetchAll() {
     setLoading(true)
