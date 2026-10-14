@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 
 const ORANGE = '#D4570A'
 const DARK = '#111'
@@ -8,6 +8,7 @@ const BG = '#F5F3EF'
 const CARD = '#FFFFFF'
 
 export default function ShareView() {
+  const navigate = useNavigate()
   const { token } = useParams()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
