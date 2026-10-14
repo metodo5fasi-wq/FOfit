@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const DAY_LETTERS = ['L','M','M','G','V','S','D']
 
@@ -25,6 +25,7 @@ function getWeekLabel(weekStart) {
 }
 
 export default function StoricoAllenamento() {
+  const navigate = useNavigate()
   const { profile } = useAuth()
   const [sessions, setSessions] = useState([])
   const [allLogs, setAllLogs] = useState([])
