@@ -2564,109 +2564,180 @@ function ReportTab({ clients, clientStats, onRefresh }) {
 // PDF GENERATORS
 // ─────────────────────────────────────────────────────────
 function generateReportPDF(r, clientName) {
-  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+  function bar(val, max=10, color='#D4570A') {
+    const pct = Math.min(Math.round((val/max)*100),100)
+    return `<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:5px;background:#F0EDE8;border-radius:3px"><div style="height:5px;width:${pct}%;background:${color};border-radius:3px"></div></div><span style="font-size:11px;font-weight:700;color:${color};min-width:20px;text-align:right">${val}</span></div>`
+  }
+  function sc(v, inv=false) {
+    if (v==null) return '#888780'
+    if (inv) return v<=3?'#3B6D11':v<=6?'#E8A020':'#E24B4A'
+    return v>=8?'#3B6D11':v>=5?'#E8A020':'#E24B4A'
+  }
+  const dateLabel = r.period_start&&r.period_end
+    ? `${new Date(r.period_start+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(r.period_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`
+    : new Date(r.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})
+
+  const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Report Allenamento — ${clientName}</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;background:white;padding:0}
-  .header{background:linear-gradient(135deg,#7C3AED,#A855F7);color:white;padding:28px 32px}
-  .header h1{font-size:22px;font-weight:800;margin-bottom:4px}
-  .header p{font-size:13px;opacity:0.85}
-  .content{padding:24px 32px}
-  .section{margin-bottom:22px}
-  .section-title{font-size:12px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid #EDE9FE;padding-bottom:6px;margin-bottom:12px}
-  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-  .stat{background:#F5F3EF;border-radius:8px;padding:10px;text-align:center}
-  .stat .value{font-size:22px;font-weight:800;color:#7C3AED}
-  .stat .label{font-size:9px;color:#888780;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
-  .field{margin-bottom:10px}
-  .field-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}
-  .field-value{font-size:13px;color:#111;line-height:1.5;background:#F5F3EF;border-radius:6px;padding:8px 10px}
-  .ex-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid #F0F0F0;font-size:12px}
-  .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
-  .green{background:#EAF3DE;color:#3B6D11}
-  .red{background:#FEE2E2;color:#E24B4A}
-  .gray{background:#F5F3EF;color:#888780}
-  .footer{margin-top:24px;padding:14px 32px;background:#F5F3EF;font-size:11px;color:#888780;display:flex;justify-content:space-between}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#fff; color:#111; font-size:13px; }
+  .header { background:linear-gradient(135deg,#1A1A1A 0%,#2D2D2D 100%); color:white; padding:28px 36px 24px; }
+  .brand { font-size:22px; font-weight:900; letter-spacing:-0.5px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+  .brand span { color:#D4570A; }
+  .brand-meta { font-size:11px; opacity:0.6; text-align:right; }
+  .avatar { width:46px; height:46px; border-radius:50%; background:#D4570A; display:inline-flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:white; margin-right:12px; vertical-align:middle; }
+  .client-name { font-size:20px; font-weight:800; display:inline; vertical-align:middle; }
+  .client-sub { font-size:12px; opacity:0.6; margin-top:6px; }
+  .badge-period { display:inline-block; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:600; margin-left:12px; vertical-align:middle; }
+  .body { padding:28px 36px; }
+  .section { margin-bottom:24px; }
+  .section-title { font-size:11px; font-weight:700; color:#D4570A; text-transform:uppercase; letter-spacing:0.1em; border-bottom:2px solid #FEF0E7; padding-bottom:6px; margin-bottom:14px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .stat { background:#F8F7F5; border-radius:10px; padding:14px 10px; text-align:center; border:0.5px solid #EEECE8; }
+  .stat-val { font-size:24px; font-weight:900; line-height:1; margin-bottom:3px; }
+  .stat-lbl { font-size:9px; color:#888780; text-transform:uppercase; letter-spacing:0.07em; }
+  .box { background:#F8F7F5; border-radius:10px; padding:14px; margin-bottom:10px; border:0.5px solid #EEECE8; }
+  .box h4 { font-size:10px; font-weight:700; color:#D4570A; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:0.5px solid #EEECE8; font-size:12px; }
+  .row:last-child { border-bottom:none; }
+  .row .k { color:#888780; }
+  .row .v { font-weight:600; }
+  .note { background:#FFF8F5; border:1px solid #FDDCC4; border-radius:10px; padding:14px; font-size:12px; line-height:1.7; color:#444; font-style:italic; margin-top:8px; }
+  .footer { margin-top:24px; padding:14px 36px; background:#F8F7F5; border-top:0.5px solid #EEECE8; display:flex; justify-content:space-between; font-size:10px; color:#888780; }
+  .footer strong { color:#D4570A; }
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+
 <div class="header">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div class="brand">
+    <div>FO<span>fit</span></div>
+    <div class="brand-meta">Federico Obinu · Coach<br>fofit.fit</div>
+  </div>
+  <div>
+    <div class="avatar">${_initials(clientName)}</div>
+    <span class="client-name">${clientName}</span>
+    <span class="badge-period">Report allenamento</span>
+  </div>
+  <div class="client-sub">${dateLabel}</div>
+</div>
+
+<div class="body">
+
+  <div class="grid2">
     <div>
-      <h1>Report Allenamento</h1>
-      <p>${clientName} · ${r.period_start&&r.period_end?`${new Date(r.period_start+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})} – ${new Date(r.period_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}`:new Date(r.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</p>
-    </div>
-    <div style="text-align:right;font-size:12px;opacity:0.85">
-      <div style="font-weight:700;font-size:16px">FOfit</div>
-      <div>Federico Obinu · Coach</div>
-    </div>
-  </div>
-</div>
-<div class="content">
-  <div class="section">
-    <div class="section-title">Benessere generale</div>
-    <div class="grid4">
-      ${r.benessere_generale?`<div class="stat"><div class="value">${r.benessere_generale}/10</div><div class="label">😊 Benessere</div></div>`:''}
-      ${r.energia_allenamento?`<div class="stat"><div class="value">${r.energia_allenamento}/10</div><div class="label">⚡ Energia</div></div>`:''}
-      ${r.qualita_sonno?`<div class="stat"><div class="value">${r.qualita_sonno}/10</div><div class="label">😴 Sonno</div></div>`:''}
-      ${r.stress_periodo?`<div class="stat"><div class="value">${r.stress_periodo}/10</div><div class="label">🧠 Stress</div></div>`:''}
-    </div>
-    ${r.peso_inizio||r.peso_fine?`<div style="display:flex;gap:16px;margin-top:8px">
-      ${r.peso_inizio?`<div><strong>${r.peso_inizio}kg</strong> <span style="font-size:11px;color:#888780">inizio</span></div>`:''}
-      ${r.peso_fine?`<div><strong>${r.peso_fine}kg</strong> <span style="font-size:11px;color:#888780">fine</span></div>`:''}
-      ${r.peso_inizio&&r.peso_fine?`<div class="badge ${parseFloat(r.peso_fine)-parseFloat(r.peso_inizio)<0?'green':'red'}">${(parseFloat(r.peso_fine)-parseFloat(r.peso_inizio)).toFixed(1)}kg</div>`:''}
-    </div>`:''}
-  </div>
 
-  ${r.progressi_esercizi?.length?`
-  <div class="section">
-    <div class="section-title">Progressi di carico</div>
-    ${r.progressi_esercizi.map(ex=>{
-      const diff = ex.carico_fine&&ex.carico_inizio?(parseFloat(ex.carico_fine)-parseFloat(ex.carico_inizio)).toFixed(1):null
-      return `<div class="ex-row">
-        <div><strong>${ex.exercise_name}</strong>${ex.note?`<br><span style="font-size:11px;color:#888780;font-style:italic">${ex.note}</span>`:''}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="color:#888780">${ex.carico_inizio||'—'}kg → ${ex.carico_fine||'—'}kg</span>
-          ${diff!==null?`<span class="badge ${parseFloat(diff)>0?'green':parseFloat(diff)<0?'red':'gray'}">${parseFloat(diff)>0?'+':''}${diff}kg</span>`:''}
+      <!-- BENESSERE -->
+      ${r.benessere_generale!=null||r.energia_allenamento!=null||r.stress_periodo!=null||r.qualita_recupero!=null ? `
+      <div class="section">
+        <div class="section-title">😊 Benessere e performance</div>
+        <div class="box">
+          ${r.benessere_generale!=null?`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888780">😊 Benessere generale</span><span style="font-weight:700;color:${sc(r.benessere_generale)}">${r.benessere_generale}/10</span></div>${bar(r.benessere_generale,10,sc(r.benessere_generale))}</div>`:''}
+          ${r.energia_allenamento!=null?`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888780">⚡ Energia allenamento</span><span style="font-weight:700;color:${sc(r.energia_allenamento)}">${r.energia_allenamento}/10</span></div>${bar(r.energia_allenamento,10,sc(r.energia_allenamento))}</div>`:''}
+          ${r.stress_periodo!=null?`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888780">🧠 Stress periodo</span><span style="font-weight:700;color:${sc(r.stress_periodo,true)}">${r.stress_periodo}/10</span></div>${bar(r.stress_periodo,10,sc(r.stress_periodo,true))}</div>`:''}
+          ${r.qualita_recupero!=null?`<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888780">😴 Qualità recupero</span><span style="font-weight:700;color:${sc(r.qualita_recupero)}">${r.qualita_recupero}/10</span></div>${bar(r.qualita_recupero,10,sc(r.qualita_recupero))}</div>`:''}
         </div>
-      </div>`
-    }).join('')}
-  </div>`:''}
+      </div>` : ''}
 
-  ${[
-    {title:'🥗 Alimentazione', fields:[
-      {l:'Fame/sazietà',v:r.fame_saziet},{l:'Difficoltà',v:r.difficolta_alimentazione},
-      {l:'Pasti saltati',v:r.pasti_saltati},{l:'Note',v:r.note_alimentazione}
-    ]},
-    {title:'💤 Recupero', fields:[
-      {l:'DOMS',v:r.doms},{l:'Qualità recupero',v:r.qualita_recupero},
-      {l:'Zona affaticata',v:r.zona_affaticata},{l:'Dolori nuovi',v:r.dolori_nuovi}
-    ]},
-    {title:'📋 Feedback scheda', fields:[
-      {l:'Esercizi amati',v:r.esercizi_amati},{l:'Esercizi difficili',v:r.esercizi_difficili},
-      {l:'Cosa cambierebbe',v:r.cosa_cambieresti},{l:'Obiettivo prossimo periodo',v:r.obiettivo_prossimo}
-    ]},
-    {title:'💬 Note al coach', fields:[{l:'Note',v:r.note_coach}]},
-  ].map(sec=>{
-    const visibleFields = sec.fields.filter(f=>f.v)
-    if (!visibleFields.length) return ''
-    return `<div class="section">
-      <div class="section-title">${sec.title}</div>
-      ${visibleFields.map(f=>`<div class="field"><div class="field-label">${f.l}</div><div class="field-value">${f.v}</div></div>`).join('')}
-    </div>`
-  }).join('')}
+      <!-- SESSIONI -->
+      ${r.sessioni_completate||r.sessioni_pianificate||r.peso_inizio||r.peso_fine||r.ore_sonno_medie ? `
+      <div class="section">
+        <div class="section-title">📋 Dati periodo</div>
+        <div class="box">
+          ${r.sessioni_completate!=null?`<div class="row"><span class="k">Sessioni completate</span><span class="v">${r.sessioni_completate}${r.sessioni_pianificate?'/'+r.sessioni_pianificate:''}</span></div>`:''} 
+          ${r.peso_inizio||r.peso_fine?`<div class="row"><span class="k">Peso</span><span class="v">${r.peso_inizio||'—'}kg → ${r.peso_fine||'—'}kg</span></div>`:''}
+          ${r.ore_sonno_medie?`<div class="row"><span class="k">Sonno medio</span><span class="v">${r.ore_sonno_medie}h/notte</span></div>`:''}
+        </div>
+      </div>` : ''}
+
+      <!-- PROGRESSI ESERCIZI -->
+      ${r.progressi_esercizi?.length ? `
+      <div class="section">
+        <div class="section-title">📈 Progressi di carico</div>
+        <div class="box">
+          ${r.progressi_esercizi.map(ex => {
+            const diff = ex.carico_fine&&ex.carico_inizio ? (parseFloat(ex.carico_fine)-parseFloat(ex.carico_inizio)).toFixed(1) : null
+            return `<div class="row">
+              <div><strong>${ex.exercise_name}</strong>${ex.note?`<br><span style="font-size:10px;color:#888780;font-style:italic">${ex.note}</span>`:''}</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#888780">${ex.carico_inizio||'—'}→${ex.carico_fine||'—'}kg</span>
+                ${diff!=null?`<span style="padding:2px 7px;border-radius:7px;font-size:10px;font-weight:700;background:${parseFloat(diff)>0?'#EAF3DE':parseFloat(diff)<0?'#FEE2E2':'#F5F3EF'};color:${parseFloat(diff)>0?'#3B6D11':parseFloat(diff)<0?'#E24B4A':'#888780'}">${parseFloat(diff)>0?'+':''}${diff}kg</span>`:''}
+              </div>
+            </div>`
+          }).join('')}
+        </div>
+      </div>` : ''}
+
+    </div>
+    <div>
+
+      <!-- ALIMENTAZIONE -->
+      ${r.difficolta_alimentazione||r.fame_saziet||r.pasti_saltati||r.note_alimentazione ? `
+      <div class="section">
+        <div class="section-title">🥗 Alimentazione</div>
+        <div class="box">
+          ${r.fame_saziet?`<div class="row"><span class="k">Fame/sazietà</span><span class="v">${r.fame_saziet}</span></div>`:''}
+          ${r.pasti_saltati?`<div class="row"><span class="k">Pasti saltati</span><span class="v">${r.pasti_saltati}</span></div>`:''}
+        </div>
+        ${r.difficolta_alimentazione?`<div class="note"><strong style="font-style:normal;color:#D4570A;font-size:10px;text-transform:uppercase">Difficoltà</strong><br>${r.difficolta_alimentazione}</div>`:''}
+        ${r.note_alimentazione?`<div class="note">${r.note_alimentazione}</div>`:''}
+      </div>` : ''}
+
+      <!-- RECUPERO -->
+      ${r.doms||r.zona_affaticata||r.dolori_nuovi ? `
+      <div class="section">
+        <div class="section-title">💤 Recupero fisico</div>
+        <div class="box">
+          ${r.doms?`<div class="row"><span class="k">DOMS</span><span class="v">${r.doms}</span></div>`:''}
+          ${r.zona_affaticata?`<div class="row"><span class="k">Zona affaticata</span><span class="v">${r.zona_affaticata}</span></div>`:''}
+          ${r.dolori_nuovi?`<div class="row"><span class="k">Dolori nuovi</span><span class="v">${r.dolori_nuovi}</span></div>`:''}
+        </div>
+      </div>` : ''}
+
+      <!-- FEEDBACK SCHEDA -->
+      ${r.esercizi_amati||r.esercizi_difficili||r.cosa_cambieresti ? `
+      <div class="section">
+        <div class="section-title">📋 Feedback scheda</div>
+        <div class="box">
+          ${r.esercizi_amati?`<div class="row"><span class="k">✅ Amati</span><span class="v">${r.esercizi_amati}</span></div>`:''}
+          ${r.esercizi_difficili?`<div class="row"><span class="k">😓 Difficili</span><span class="v">${r.esercizi_difficili}</span></div>`:''}
+          ${r.cosa_cambieresti?`<div class="row"><span class="k">💡 Cosa cambiare</span><span class="v">${r.cosa_cambieresti}</span></div>`:''}
+          ${r.obiettivo_prossimo?`<div class="row"><span class="k">🎯 Prossimo obiettivo</span><span class="v">${r.obiettivo_prossimo}</span></div>`:''}
+        </div>
+      </div>` : ''}
+
+      <!-- NOTE AL COACH -->
+      ${r.note_coach ? `
+      <div class="section">
+        <div class="section-title">💬 Note al coach</div>
+        <div class="note">"${r.note_coach}"</div>
+      </div>` : ''}
+
+    </div>
+  </div>
+
 </div>
+
 <div class="footer">
-  <span>Generato il ${new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</span>
-  <span>FOfit · Federico Obinu Coach · fofit.fit</span>
+  <span>Generato il <strong>${new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</strong></span>
+  <span>FOfit · Federico Obinu Coach · <strong>fofit.fit</strong></span>
 </div>
+
 </body></html>`
 
   const win = window.open('','_blank')
   win.document.write(html)
   win.document.close()
   win.focus()
-  setTimeout(()=>win.print(),500)
+  setTimeout(()=>win.print(),600)
 }
+
 
 function generateAnamnesiPDF(a, clientName) {
   const section = (title, rows) => {
