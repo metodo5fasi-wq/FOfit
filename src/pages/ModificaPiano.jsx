@@ -171,10 +171,13 @@ export default function ModificaPiano() {
       ...m,
       plan_meal_foods: (m.plan_meal_foods || []).map(f => {
         const qty  = parseFloat(f.quantity_g)  || 0
-        const kcal = parseFloat(f.kcal)        || 0
         const prot = parseFloat(f.protein_g)   || 0
         const carbs= parseFloat(f.carbs_g)     || 0
         const fat  = parseFloat(f.fat_g)       || 0
+        const kcalFromDB = parseFloat(f.kcal)  || 0
+        // Se i macro sono presenti, ricalcola le kcal per coerenza
+        const macroKcal = Math.round(prot*4 + carbs*4 + fat*9)
+        const kcal = (prot>0||carbs>0||fat>0) ? macroKcal : kcalFromDB
         return {
           ...f,
           quantity_g: qty, kcal, protein_g: prot, carbs_g: carbs, fat_g: fat,
@@ -577,7 +580,7 @@ export default function ModificaPiano() {
 }} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}><i className="ti ti-arrow-left" style={{fontSize:16}}/></button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
-          <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan && ` · ${plan.kcal_target} kcal`}</div>
+          <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan && ` · target: ${plan.kcal_target} kcal`}</div>
         </div>
         <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
           <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola tutti i macro dal database"
@@ -634,7 +637,7 @@ export default function ModificaPiano() {
                 {/* Label */}
                 <div style={{fontSize:9,fontWeight:700,color:item.c}}>{item.l}</div>
                 {/* Valore inserito */}
-                <div style={{fontSize:14,fontWeight:800,color:barColor,lineHeight:1}}>{item.v}<span style={{fontSize:9,fontWeight:400}}>{item.u}</span></div>
+                <div title="Inserito nel piano" style={{fontSize:14,fontWeight:800,color:barColor,lineHeight:1}}>{item.v}<span style={{fontSize:9,fontWeight:400}}>{item.u}</span></div>
                 {/* Barra */}
                 <div style={{width:'100%',height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
                   <div style={{height:5,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.3s'}}/>
@@ -642,7 +645,7 @@ export default function ModificaPiano() {
                 {/* Target editabile */}
                 <input type="number"
                   value={plan?.[item.k]||''}
-                  placeholder="target"
+                  placeholder="target kcal"
                   onChange={e=>{
                     if (!plan) return
                     const val = parseInt(e.target.value)||0
