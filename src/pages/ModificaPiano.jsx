@@ -448,6 +448,8 @@ export default function ModificaPiano() {
       // Raccogli tutti gli update/insert
       const toUpdate = []
       const toInsert = []
+      // IDs degli alimenti esistenti che vogliamo tenere (non _isNew)
+      const keepFoodIds = new Set()
 
       for (const meal of meals) {
         for (const food of meal.plan_meal_foods) {
@@ -462,43 +464,40 @@ export default function ModificaPiano() {
             toInsert.push({ ...payload, plan_meal_id: meal.id, food_name: food.food_name, sort_order: food.sort_order || 0 })
           } else {
             toUpdate.push({ id: food.id, ...payload })
+            keepFoodIds.add(food.id)
           }
         }
       }
 
-      // INSERT tutti i nuovi in una sola chiamata — recupera gli ID reali
-      if (toInsert.length > 0) {
-        const { data: inserted, error } = await supabase
-          .from('plan_meal_foods')
-          .insert(toInsert)
-          .select()
-        if (error) throw new Error('Insert: ' + error.message)
-        // Mappa gli ID reali agli alimenti _isNew nello state
-        if (inserted?.length) {
-          // La loadPlan() finale aggiornerà tutto, ma aggiorniamo subito gli ID
-          const insertedByMeal = {}
-          inserted.forEach(ins => {
-            if (!insertedByMeal[ins.plan_meal_id]) insertedByMeal[ins.plan_meal_id] = []
-            insertedByMeal[ins.plan_meal_id].push(ins)
-          })
-          setMeals(prev => prev.map(m => {
-            const newInserted = insertedByMeal[m.id] || []
-            if (!newInserted.length) return m
-            let insertIdx = 0
-            return {
-              ...m,
-              plan_meal_foods: m.plan_meal_foods.map(f => {
-                if (!f._isNew) return f
-                const realFood = newInserted[insertIdx]
-                if (realFood) { insertIdx++; return { ...f, id: realFood.id, _isNew: false } }
-                return f
-              })
-            }
-          }))
+      // 1. Elimina pasti rimossi PRIMA di qualsiasi altra operazione
+      const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
+      const currentMealIds = new Set(meals.map(m => m.id))
+      const deleteMealPromises = (dbMeals || [])
+        .filter(dbMeal => !currentMealIds.has(dbMeal.id))
+        .map(async dbMeal => {
+          await supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id)
+          await supabase.from('plan_meals').delete().eq('id', dbMeal.id)
+        })
+      await Promise.all(deleteMealPromises)
+
+      // 2. Elimina SOLO gli alimenti che l'utente ha rimosso (non i nuovi)
+      // Usa keepFoodIds calcolato PRIMA dell'insert per non cancellare i nuovi
+      const deleteFoodPromises = []
+      for (const meal of meals) {
+        if (meal.id?.toString().startsWith('new')) continue
+        const { data: dbFoods } = await supabase
+          .from('plan_meal_foods').select('id').eq('plan_meal_id', meal.id)
+        for (const dbFood of dbFoods || []) {
+          if (!keepFoodIds.has(dbFood.id)) {
+            deleteFoodPromises.push(
+              supabase.from('plan_meal_foods').delete().eq('id', dbFood.id)
+            )
+          }
         }
       }
+      await Promise.all(deleteFoodPromises)
 
-      // UPDATE in batch da 20 alla volta
+      // 3. UPDATE alimenti esistenti
       const batchSize = 20
       for (let i = 0; i < toUpdate.length; i += batchSize) {
         const batch = toUpdate.slice(i, i + batchSize)
@@ -508,29 +507,11 @@ export default function ModificaPiano() {
         }))
       }
 
-      // 2. Elimina pasti rimossi
-      const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
-      const currentIds = new Set(meals.map(m => m.id))
-      const deleteMealPromises = (dbMeals || [])
-        .filter(dbMeal => !currentIds.has(dbMeal.id))
-        .map(async dbMeal => {
-          await supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id)
-          await supabase.from('plan_meals').delete().eq('id', dbMeal.id)
-        })
-      await Promise.all(deleteMealPromises)
-
-      // 3. Elimina alimenti rimossi IN PARALLELO
-      const deleteFoodPromises = []
-      for (const meal of meals) {
-        const { data: dbFoods } = await supabase.from('plan_meal_foods').select('id').eq('plan_meal_id', meal.id)
-        const currentFoodIds = new Set(meal.plan_meal_foods.filter(f=>!f._isNew).map(f=>f.id))
-        for (const dbFood of dbFoods || []) {
-          if (!currentFoodIds.has(dbFood.id)) {
-            deleteFoodPromises.push(supabase.from('plan_meal_foods').delete().eq('id', dbFood.id))
-          }
-        }
+      // 4. INSERT nuovi alimenti — DOPO le eliminazioni, così non li cancella
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from('plan_meal_foods').insert(toInsert)
+        if (error) throw new Error('Insert fallito: ' + error.message)
       }
-      await Promise.all(deleteFoodPromises)
 
       // 4. Il target kcal/macro resta quello impostato dal coach — NON viene sovrascritto dagli alimenti
       // Le barre live mostrano il confronto tra alimenti inseriti e target
