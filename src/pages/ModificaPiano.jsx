@@ -55,36 +55,55 @@ export default function ModificaPiano() {
   const [fixingMacros, setFixingMacros] = useState(false)
 
   async function fixMacros() {
-    if (!confirm('Ricalcola i macro degli alimenti con kcal = 0 usando il database integrato?')) return
     setFixingMacros(true)
     try {
-      // Cerca alimenti con kcal = 0 nel piano corrente
-      const { data: foods, error } = await supabase
-        .from('plan_meal_foods')
-        .select('id, food_name, quantity_g')
-        .or('kcal.is.null,kcal.eq.0')
-
-      if (error) throw error
-      if (!foods?.length) { toast('Nessun alimento da sistemare!', 'success'); setFixingMacros(false); return }
-
+      // Ricalcola tutti gli alimenti del piano dal database locale
+      const allFoods = meals.flatMap(m => m.plan_meal_foods)
       let fixed = 0
-      for (const food of foods) {
+      const updates = []
+
+      for (const food of allFoods) {
         const results = searchFoods(food.food_name)
         if (!results?.length) continue
         const match = results[0]
         const qty = parseFloat(food.quantity_g) || 100
-        await supabase.from('plan_meal_foods').update({
-          kcal: Math.round(match.kcal100 * qty / 100),
-          protein_g: Math.round(match.p * qty / 100 * 10) / 10,
-          carbs_g: Math.round(match.c * qty / 100 * 10) / 10,
-          fat_g: Math.round(match.g * qty / 100 * 10) / 10,
-        }).eq('id', food.id)
+        const newKcal = Math.round(match.kcal100 * qty / 100)
+        const newProt = Math.round(match.p * qty / 100 * 10) / 10
+        const newCarbs = Math.round(match.c * qty / 100 * 10) / 10
+        const newFat = Math.round(match.g * qty / 100 * 10) / 10
+
+        updates.push({ id: food.id, kcal: newKcal, protein_g: newProt, carbs_g: newCarbs, fat_g: newFat })
         fixed++
       }
 
-      toast('Operazione completata', 'success')
-      loadPlan()
-    } catch(e) { toast('Errore imprevisto', 'error') }
+      if (!updates.length) {
+        toast('Nessun alimento trovato nel database', 'info')
+        setFixingMacros(false)
+        return
+      }
+
+      // Salva su Supabase
+      await Promise.all(updates.map(u => {
+        const { id, ...data } = u
+        return supabase.from('plan_meal_foods').update(data).eq('id', id)
+      }))
+
+      // Aggiorna stato locale immediatamente
+      setMeals(prev => prev.map(m => ({
+        ...m,
+        plan_meal_foods: m.plan_meal_foods.map(f => {
+          const u = updates.find(x => x.id === f.id)
+          return u ? { ...f, ...u,
+            _origKcal: u.kcal, _origProt: u.protein_g, _origCarbs: u.carbs_g, _origFat: u.fat_g
+          } : f
+        })
+      })))
+
+      toast(`✓ Ricalcolati ${fixed} alimenti`, 'success')
+    } catch(e) {
+      console.error(e)
+      toast('Errore nel ricalcolo: ' + e.message, 'error')
+    }
     setFixingMacros(false)
   }
   const [savedMsg, setSavedMsg] = useState('')
@@ -505,9 +524,10 @@ export default function ModificaPiano() {
       await Promise.all(dayUpdatePromises)
 
       setDirty(false)
-      setSavedMsg('✓ Piano salvato!')
-      setTimeout(() => setSavedMsg(''), 4000)
-      // Non ricaricare da rete — aggiorna solo i flag _isNew localmente
+      setSavedMsg('✓ Salvato!')
+      setTimeout(() => setSavedMsg(''), 3000)
+      toast('Piano salvato con successo!', 'success')
+      // Aggiorna flag _isNew localmente senza ricaricare
       setMeals(prev => prev.map(m => ({
         ...m,
         plan_meal_foods: m.plan_meal_foods.map(f => ({
@@ -516,8 +536,9 @@ export default function ModificaPiano() {
         }))
       })))
     } catch(e) {
-      setSavedMsg('❌ Errore: ' + e.message)
-      setTimeout(() => setSavedMsg(''), 5000)
+      console.error('saveAll:', e)
+      toast('Errore nel salvataggio: ' + (e.message || 'Riprova'), 'error')
+      setSavedMsg('')
     }
     setSaving(false)
   }
@@ -539,16 +560,23 @@ export default function ModificaPiano() {
           <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
           <div style={{fontSize:11,color:'#888780'}}>{clientName}{plan && ` · ${plan.kcal_target} kcal`}</div>
         </div>
-        <div style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
-          <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola macro alimenti esistenti" style={{...s.btnGray,padding:'6px 10px'}}>
-            {fixingMacros ? '...' : '🔄'}
+        <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
+          <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola tutti i macro dal database"
+            style={{...s.btnGray,padding:'5px 9px',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
+            {fixingMacros
+              ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>Ricalcolo...</>
+              : <><i className="ti ti-refresh" style={{fontSize:12}}/>Ricalcola</>}
           </button>
-          {savedMsg && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ {savedMsg}</span>}
-          {dirty && (
-            <button onClick={saveAll} disabled={saving} style={{...s.btn,minWidth:80}}>
-              {saving ? 'Salvo...' : '💾 Salva'}
-            </button>
-          )}
+          <button onClick={saveAll} disabled={saving}
+            style={{...s.btn,minWidth:80,display:'flex',alignItems:'center',gap:4,
+              background:savedMsg?'#3B6D11':saving?'#888':dirty?'#D4570A':'#888780',
+            }}>
+            {saving
+              ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>Salvo...</>
+              : savedMsg
+              ? <><i className="ti ti-check" style={{fontSize:12}}/>{savedMsg}</>
+              : <><i className="ti ti-device-floppy" style={{fontSize:12}}/>{dirty?'Salva':'Salvato'}</>}
+          </button>
         </div>
       </div>
 
@@ -792,13 +820,29 @@ export default function ModificaPiano() {
                           <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'#FEF0E7':'#F5F3EF',borderColor:f.bold?'#F4C9A8':'#E0DDD6'}}
                             type="number" value={food[f.k]||0}
                             onChange={e=>{
-                              const val = e.target.value
-                              if (f.k==='quantity_g') {
-                                const newVals = recalc(food, val)
-                                setMeals(prev=>prev.map(m=>m.id===meal.id?{...m,plan_meal_foods:m.plan_meal_foods.map(fd=>fd.id===food.id?{...fd,...newVals}:fd)}:m))
-                              } else {
-                                setMeals(prev=>prev.map(m=>m.id===meal.id?{...m,plan_meal_foods:m.plan_meal_foods.map(fd=>fd.id===food.id?{...fd,[f.k]:val}:fd)}:m))
-                              }
+                              const val = parseFloat(e.target.value)||0
+                              setMeals(prev=>prev.map(m=>{
+                                if (m.id!==meal.id) return m
+                                return {...m, plan_meal_foods: m.plan_meal_foods.map(fd=>{
+                                  if (fd.id!==food.id) return fd
+                                  if (f.k==='quantity_g') return {...fd, ...recalc(fd, val)}
+                                  const updated = {...fd, [f.k]: val}
+                                  // Se cambio un macro → ricalcola kcal automaticamente
+                                  if (f.k==='protein_g'||f.k==='carbs_g'||f.k==='fat_g') {
+                                    updated.kcal = Math.round(
+                                      (parseFloat(updated.protein_g)||0)*4 +
+                                      (parseFloat(updated.carbs_g)||0)*4 +
+                                      (parseFloat(updated.fat_g)||0)*9
+                                    )
+                                  }
+                                  // Se cambio kcal → riproporziona macro se abbiamo valori per 100g
+                                  if (f.k==='kcal' && fd._origKcal>0 && fd._origQty>0) {
+                                    const newQty = (val / fd._origKcal) * fd._origQty
+                                    return {...fd, ...recalc(fd, newQty), kcal: val}
+                                  }
+                                  return updated
+                                })}
+                              }))
                               setDirty(true)
                             }}/>
                         </div>
