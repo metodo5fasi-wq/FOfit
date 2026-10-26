@@ -466,10 +466,36 @@ export default function ModificaPiano() {
         }
       }
 
-      // INSERT tutti i nuovi in una sola chiamata
+      // INSERT tutti i nuovi in una sola chiamata — recupera gli ID reali
       if (toInsert.length > 0) {
-        const { error } = await supabase.from('plan_meal_foods').insert(toInsert)
+        const { data: inserted, error } = await supabase
+          .from('plan_meal_foods')
+          .insert(toInsert)
+          .select()
         if (error) throw new Error('Insert: ' + error.message)
+        // Mappa gli ID reali agli alimenti _isNew nello state
+        if (inserted?.length) {
+          // La loadPlan() finale aggiornerà tutto, ma aggiorniamo subito gli ID
+          const insertedByMeal = {}
+          inserted.forEach(ins => {
+            if (!insertedByMeal[ins.plan_meal_id]) insertedByMeal[ins.plan_meal_id] = []
+            insertedByMeal[ins.plan_meal_id].push(ins)
+          })
+          setMeals(prev => prev.map(m => {
+            const newInserted = insertedByMeal[m.id] || []
+            if (!newInserted.length) return m
+            let insertIdx = 0
+            return {
+              ...m,
+              plan_meal_foods: m.plan_meal_foods.map(f => {
+                if (!f._isNew) return f
+                const realFood = newInserted[insertIdx]
+                if (realFood) { insertIdx++; return { ...f, id: realFood.id, _isNew: false } }
+                return f
+              })
+            }
+          }))
+        }
       }
 
       // UPDATE in batch da 20 alla volta
@@ -540,14 +566,8 @@ export default function ModificaPiano() {
       setSavedMsg('✓ Salvato!')
       setTimeout(() => setSavedMsg(''), 3000)
       toast('Piano salvato con successo!', 'success')
-      // Aggiorna flag _isNew localmente senza ricaricare
-      setMeals(prev => prev.map(m => ({
-        ...m,
-        plan_meal_foods: m.plan_meal_foods.map(f => ({
-          ...f,
-          _isNew: false,
-        }))
-      })))
+      // Ricarica da Supabase per avere gli ID reali degli alimenti inseriti
+      await loadPlan()
     } catch(e) {
       console.error('saveAll:', e)
       toast('Errore nel salvataggio: ' + (e.message || 'Riprova'), 'error')
