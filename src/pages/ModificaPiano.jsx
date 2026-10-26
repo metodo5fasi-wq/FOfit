@@ -137,14 +137,18 @@ export default function ModificaPiano() {
     // Arricchisce ogni alimento con i valori originali per il ricalcolo
     const enriched = (mealsData || []).map(m => ({
       ...m,
-      plan_meal_foods: (m.plan_meal_foods || []).map(f => ({
-        ...f,
-        _origQty: f.quantity_g,
-        _origKcal: f.kcal,
-        _origProt: f.protein_g,
-        _origCarbs: f.carbs_g,
-        _origFat: f.fat_g,
-      }))
+      plan_meal_foods: (m.plan_meal_foods || []).map(f => {
+        const qty  = parseFloat(f.quantity_g)  || 0
+        const kcal = parseFloat(f.kcal)        || 0
+        const prot = parseFloat(f.protein_g)   || 0
+        const carbs= parseFloat(f.carbs_g)     || 0
+        const fat  = parseFloat(f.fat_g)       || 0
+        return {
+          ...f,
+          quantity_g: qty, kcal, protein_g: prot, carbs_g: carbs, fat_g: fat,
+          _origQty: qty, _origKcal: kcal, _origProt: prot, _origCarbs: carbs, _origFat: fat,
+        }
+      })
     }))
     setMeals(enriched)
     setLoading(false)
@@ -155,10 +159,10 @@ export default function ModificaPiano() {
   // Totali giornalieri
   const dayTotals = dayMeals.reduce((acc, m) => {
     ;(m.plan_meal_foods || []).forEach(f => {
-      acc.kcal += f.kcal || 0
-      acc.protein += f.protein_g || 0
-      acc.carbs += f.carbs_g || 0
-      acc.fat += f.fat_g || 0
+      acc.kcal    += parseFloat(f.kcal)       || 0
+      acc.protein += parseFloat(f.protein_g)  || 0
+      acc.carbs   += parseFloat(f.carbs_g)    || 0
+      acc.fat     += parseFloat(f.fat_g)      || 0
     })
     return acc
   }, { kcal:0, protein:0, carbs:0, fat:0 })
@@ -203,12 +207,40 @@ export default function ModificaPiano() {
     searchTimeoutRef.current = setTimeout(async () => {
       setSearchingFood(true)
       try {
-        const r = await fetch(`/api/search-food?q=${encodeURIComponent(query)}&limit=10`)
-        const data = await r.json()
-        setFoodResults(data.foods || [])
+        // Prima cerca nel database locale (778+ alimenti italiani verificati)
+        const localResults = searchFoods(query).map(f => ({
+          name: f.name,
+          brand: f.brand || '',
+          category: f.cat || '',
+          kcal_100: f.kcal100,
+          protein_100: f.p,
+          carbs_100: f.c,
+          fat_100: f.g,
+        }))
+
+        if (localResults.length >= 3) {
+          setFoodResults(localResults)
+          setSearchingFood(false)
+          return
+        }
+
+        // Poi prova API come fallback
+        try {
+          const r = await fetch(`/api/search-food?q=${encodeURIComponent(query)}&limit=10`)
+          const data = await r.json()
+          const apiResults = data.foods || []
+          const combined = [...localResults]
+          apiResults.forEach(a => {
+            if (!combined.find(l => l.name?.toLowerCase() === (a.name||'').toLowerCase()))
+              combined.push(a)
+          })
+          setFoodResults(combined.slice(0, 12))
+        } catch {
+          setFoodResults(localResults)
+        }
       } catch(e) { setFoodResults([]) }
       setSearchingFood(false)
-    }, 300)
+    }, 250)
   }
 
   function selectFoodFromSearch(food) {
