@@ -552,53 +552,11 @@ export default function ModificaPiano() {
         </div>
       </div>
 
-      {/* TARGET MODIFICABILE */}
-      {plan && (
-        <div style={{background:'#F5F3EF',padding:'8px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>Target giornaliero</span>
-            <span style={{fontSize:9,color:'#B0ADA8'}}>— modifica e salva per aggiornare</span>
-          </div>
-          <div style={{display:'flex',gap:6,alignItems:'center'}}>
-            {[
-              {k:'kcal_target',l:'Kcal',c:'#D4570A',u:''},
-              {k:'protein_target_g',l:'P',c:'#4A90D4',u:'g'},
-              {k:'carbs_target_g',l:'C',c:'#E8A020',u:'g'},
-              {k:'fat_target_g',l:'G',c:'#3B8C5A',u:'g'},
-            ].map(field => (
-              <div key={field.k} style={{flex:1,textAlign:'center'}}>
-                <div style={{fontSize:9,color:field.c,fontWeight:700,marginBottom:2}}>{field.l}</div>
-                <input
-                  type="number"
-                  value={plan[field.k]||''}
-                  onChange={e => {
-                    const val = parseInt(e.target.value)||0
-                    if (field.k === 'kcal_target') {
-                      // kcal cambia → riproporziona macro
-                      const curKcal = (plan.protein_target_g||0)*4 + (plan.carbs_target_g||0)*4 + (plan.fat_target_g||0)*9
-                      if (curKcal > 0 && val > 0) {
-                        const r = val / curKcal
-                        setPlan(p => ({...p,
-                          kcal_target: val,
-                          protein_target_g: Math.round((p.protein_target_g||0)*r),
-                          carbs_target_g: Math.round((p.carbs_target_g||0)*r),
-                          fat_target_g: Math.round((p.fat_target_g||0)*r),
-                        }))
-                      } else {
-                        setPlan(p => ({...p, kcal_target: val}))
-                      }
-                    } else {
-                      // macro cambia → ricalcola kcal
-                      const newPlan = {...plan, [field.k]: val}
-                      const newKcal = Math.round((newPlan.protein_target_g||0)*4 + (newPlan.carbs_target_g||0)*4 + (newPlan.fat_target_g||0)*9)
-                      setPlan(p => ({...p, [field.k]: val, kcal_target: newKcal}))
-                    }
-                    setDirty(true)
-                  }}
-                  style={{width:'100%',padding:'4px 3px',border:`0.5px solid ${field.c}33`,borderRadius:6,fontSize:12,fontWeight:700,color:field.c,background:'white',textAlign:'center',fontFamily:'inherit',outline:'none'}}
-                />
-              </div>
-            ))}
+      {/* MACRO UNIFICATO: target + live nella stessa sezione */}
+      <div style={{background:'white',padding:'10px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
+          <span style={{fontSize:9,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>Inserito / Target</span>
+          {plan && (
             <button onClick={async ()=>{
               await supabase.from('meal_plans').update({
                 kcal_target: plan.kcal_target,
@@ -606,43 +564,76 @@ export default function ModificaPiano() {
                 carbs_target_g: plan.carbs_target_g,
                 fat_target_g: plan.fat_target_g,
               }).eq('id', planId)
-              setSavedMsg('Target salvato!')
+              setSavedMsg('✓ Salvato')
               setTimeout(()=>setSavedMsg(''),2000)
-            }} style={{padding:'5px 10px',background:'#D4570A',color:'white',border:'none',borderRadius:7,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
-              Salva target
+            }} style={{padding:'3px 9px',background:savedMsg?'#3B6D11':'#D4570A',color:'white',border:'none',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit',transition:'background 0.2s'}}>
+              {savedMsg||'Salva target'}
             </button>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* BARRE MACRO LIVE */}
-      <div style={{background:'white',padding:'8px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
-        <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:4}}>Inserito oggi vs target</div>
-        <div style={{display:'flex',gap:10,marginBottom:5}}>
+        <div style={{display:'flex',gap:8}}>
           {[
-            {l:'Kcal',v:Math.round(dayTotals.kcal),t:plan?.kcal_target,u:'',c:'#D4570A'},
-            {l:'P',v:Math.round(dayTotals.protein*10)/10,t:plan?.protein_target_g,u:'g',c:'#4A90D4'},
-            {l:'C',v:Math.round(dayTotals.carbs*10)/10,t:plan?.carbs_target_g,u:'g',c:'#E8A020'},
-            {l:'G',v:Math.round(dayTotals.fat*10)/10,t:plan?.fat_target_g,u:'g',c:'#3B8C5A'},
+            {l:'Kcal',k:'kcal_target',   v:Math.round(dayTotals.kcal),           t:plan?.kcal_target,      u:'', c:'#D4570A'},
+            {l:'P',  k:'protein_target_g',v:Math.round(dayTotals.protein*10)/10,  t:plan?.protein_target_g, u:'g',c:'#4A90D4'},
+            {l:'C',  k:'carbs_target_g', v:Math.round(dayTotals.carbs*10)/10,     t:plan?.carbs_target_g,   u:'g',c:'#E8A020'},
+            {l:'G',  k:'fat_target_g',   v:Math.round(dayTotals.fat*10)/10,       t:plan?.fat_target_g,     u:'g',c:'#3B8C5A'},
           ].map(item => {
             const pct = item.t > 0 ? Math.min(Math.round(item.v/item.t*100),120) : 0
-            const ok = pct >= 90 && pct <= 110
+            const ok   = pct >= 90 && pct <= 110
             const over = pct > 110
-            const barColor = over ? '#E24B4A' : ok ? '#3B6D11' : item.c
+            const barColor = over?'#E24B4A':ok?'#3B6D11':item.c
             return (
-              <div key={item.l} style={{flex:1}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
-                  <span style={{fontWeight:800,color:barColor}}>{item.v}{item.u}</span>
-                  <span style={{color:'#C0BDB8',fontSize:9}}>{item.t||'—'}{item.u}</span>
+              <div key={item.l} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                {/* Label */}
+                <div style={{fontSize:9,fontWeight:700,color:item.c}}>{item.l}</div>
+                {/* Valore inserito */}
+                <div style={{fontSize:14,fontWeight:800,color:barColor,lineHeight:1}}>{item.v}<span style={{fontSize:9,fontWeight:400}}>{item.u}</span></div>
+                {/* Barra */}
+                <div style={{width:'100%',height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:5,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.3s'}}/>
                 </div>
-                <div style={{height:4,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
-                  <div style={{height:4,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.25s'}}/>
-                </div>
-                <div style={{fontSize:8,color:barColor,marginTop:1,fontWeight:600}}>{item.l}{item.t>0?` ${pct}%`:''}</div>
+                {/* Target editabile */}
+                <input type="number"
+                  value={plan?.[item.k]||''}
+                  placeholder="target"
+                  onChange={e=>{
+                    if (!plan) return
+                    const val = parseInt(e.target.value)||0
+                    if (item.k==='kcal_target') {
+                      const cur = (plan.protein_target_g||0)*4+(plan.carbs_target_g||0)*4+(plan.fat_target_g||0)*9
+                      if (cur>0&&val>0) {
+                        const r=val/cur
+                        setPlan(p=>({...p,kcal_target:val,protein_target_g:Math.round((p.protein_target_g||0)*r),carbs_target_g:Math.round((p.carbs_target_g||0)*r),fat_target_g:Math.round((p.fat_target_g||0)*r)}))
+                      } else setPlan(p=>({...p,kcal_target:val}))
+                    } else {
+                      const np={...plan,[item.k]:val}
+                      const nk=Math.round((np.protein_target_g||0)*4+(np.carbs_target_g||0)*4+(np.fat_target_g||0)*9)
+                      setPlan(p=>({...p,[item.k]:val,kcal_target:nk}))
+                    }
+                    setDirty(true)
+                  }}
+                  style={{width:'100%',padding:'3px 2px',border:`1px solid ${item.c}55`,borderRadius:5,fontSize:11,fontWeight:600,color:'#555',background:'#F8F7F5',textAlign:'center',fontFamily:'inherit',outline:'none'}}
+                />
+                {/* % */}
+                <div style={{fontSize:8,color:barColor,fontWeight:700}}>{item.t>0?`${pct}%`:''}</div>
               </div>
             )
           })}
         </div>
+        {/* Avviso discrepanza */}
+        {plan && (() => {
+          const mk = Math.round((plan.protein_target_g||0)*4+(plan.carbs_target_g||0)*4+(plan.fat_target_g||0)*9)
+          const diff = Math.abs(mk-(plan.kcal_target||0))
+          return diff>20&&mk>0?(
+            <div style={{marginTop:6,background:'#FEF8E7',borderRadius:6,padding:'5px 9px',fontSize:10,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span>⚠️ Macro = {mk} kcal (diff {diff})</span>
+              <button onClick={()=>{setPlan(p=>({...p,kcal_target:mk}));setDirty(true)}} style={{fontSize:9,background:'#E8A020',color:'white',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontFamily:'inherit'}}>Allinea</button>
+            </div>
+          ):null
+        })()}
+      </div>
+
+      <div style={{background:'white',padding:'6px 14px',borderBottom:'0.5px solid #E0DDD6',flexShrink:0}}>
         {/* AZIONI GIORNO */}
         <div style={{display:'flex',gap:6}}>
           <button onClick={()=>setShowCopyDay(!showCopyDay)} style={{fontSize:10,background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#888780'}}>
