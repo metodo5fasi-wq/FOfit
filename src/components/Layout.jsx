@@ -265,7 +265,9 @@ export default function Layout() {
   }
 
   return (
-    <div style={{display:'flex',height:'100dvh',overflow:'hidden',paddingTop:'env(safe-area-inset-top)',paddingBottom:'env(safe-area-inset-bottom)',background:'#0F0F0F',boxSizing:'border-box'}}>
+    <div style={{display:'flex',height:'100dvh',overflow:'hidden',background:'#0F0F0F',boxSizing:'border-box',
+      // Safe area gestita dai singoli componenti — niente padding qui
+    }}>
 
       {/* SIDEBAR DESKTOP */}
       {!isMobile && (
@@ -299,7 +301,7 @@ export default function Layout() {
             alignItems:'center',
             justifyContent:'space-between',
             padding:'10px 16px',
-            paddingTop:'calc(10px + env(safe-area-inset-top, 0px))',
+            paddingTop:'env(safe-area-inset-top, 0px)',
             flexShrink:0,
             borderBottom:'0.5px solid rgba(255,255,255,0.06)',
             position:'sticky',
@@ -334,15 +336,19 @@ export default function Layout() {
         {/* BOTTOM NAV MOBILE — solo per clienti */}
         {isMobile && profile?.role !== 'admin' && (
           <div style={{
-            background:'rgba(15,15,15,0.97)',
-            backdropFilter:'blur(20px)',
-            WebkitBackdropFilter:'blur(20px)',
+            background:'#0F0F0F',
             borderTop:'0.5px solid rgba(255,255,255,0.08)',
-            paddingBottom:'env(safe-area-inset-bottom,0px)',
+            paddingBottom:'env(safe-area-inset-bottom, 16px)',
             display:'flex',
             flexShrink:0,
             zIndex:50,
+            // Estendi il colore sotto la home bar iOS/Android
+            position:'relative',
           }}>
+            <div style={{
+              position:'absolute', bottom:'100%', left:0, right:0,
+              height:0, // nessuna altezza extra
+            }}/>
             {[
               { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true },
               { to:'/piano', icon:'ti-clipboard-list', label:'Piano' },
