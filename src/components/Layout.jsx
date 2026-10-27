@@ -338,7 +338,7 @@ export default function Layout() {
           <div style={{
             background:'#0F0F0F',
             borderTop:'0.5px solid rgba(255,255,255,0.08)',
-            paddingBottom:'env(safe-area-inset-bottom, 0px)',
+            paddingBottom:0,
             display:'flex',
             flexShrink:0,
             zIndex:50,
