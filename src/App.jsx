@@ -208,6 +208,24 @@ const globalStyles = `
   
   /* Scroll fluido su iOS */
   .scroll-area { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+  /* Safe area — colora le zone fuori dall'app con il colore della UI */
+  html { background: #0F0F0F; }
+
+  /* Elimina gap bianco/nero su Android Chrome */
+  @media (display-mode: standalone) {
+    body { background: #0F0F0F; }
+  }
+
+  /* iOS status bar area — deve coincidere con la topbar */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .topbar-safe {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .bottom-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  }
   .safe-top { padding-top: env(safe-area-inset-top, 0px); }
 
   /* Input mobile fix (no zoom su iOS) */
@@ -311,7 +329,7 @@ export default function App() {
     <AuthContext.Provider value={{ session, profile, setProfile, markOnboarded }}>
       <BrowserRouter>
         <OfflineBanner/>
-        <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light'}}>
+        <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light', position:'relative', zIndex:0}}>
         <ErrorBoundary>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
