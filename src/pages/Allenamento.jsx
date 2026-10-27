@@ -235,6 +235,12 @@ export default function Allenamento() {
   // Salva stato sessione su localStorage ogni volta che cambia
   const SESSION_KEY = `fofit_session_${profile?.id}`
 
+  function getYtThumb(url) {
+    if (!url) return null
+    const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    return m ? `https://img.youtube.com/vi/${m[1]}/default.jpg` : null
+  }
+
   function getInputVal(exName, setNum, field) {
     const key = `${exName}-${setNum}-${field}`
     if (key in inputValues) return inputValues[key]
@@ -251,26 +257,6 @@ export default function Allenamento() {
   }
 
 
-  // Copia i valori dell'ultima sessione per un esercizio
-  function copyLastSession(ex) {
-    const lastLogs = allLogs
-      .filter(l => l.exercise_name === ex.exercise_name && l.log_date < today)
-      .sort((a,b) => b.log_date.localeCompare(a.log_date) || b.set_number - a.set_number)
-    if (!lastLogs.length) return false
-    const lastDate = lastLogs[0].log_date
-    const lastDayLogs = lastLogs.filter(l => l.log_date === lastDate)
-    const newVals = {}
-    lastDayLogs.forEach(l => {
-      if (l.weight_kg != null) newVals[`${ex.exercise_name}-${l.set_number}-weight_kg`] = String(l.weight_kg)
-      if (l.reps_done != null) newVals[`${ex.exercise_name}-${l.set_number}-reps_done`] = String(l.reps_done)
-    })
-    setInputValues(prev => {
-      const next = { ...prev, ...newVals }
-      try { localStorage.setItem('fofit_input_values', JSON.stringify(next)) } catch {}
-      return next
-    })
-    return true
-  }
 
   async function toggleSet(ex, setNumber) {
     const existing = getLog(ex, setNumber)
@@ -491,181 +477,7 @@ export default function Allenamento() {
                 )}
                 <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:16,color:'var(--text-muted)'}}/>
               </div>
-
-              {/* QUICK LOG — sempre visibile */}
-              <div style={{marginTop:10,paddingTop:10,borderTop:'0.5px solid var(--border)'}}>
-                {allLogs.some(l=>l.exercise_name===ex.exercise_name&&l.log_date<today) && !setsArray.some(n=>getLog(ex,n)) && (
-                  <button onClick={e=>{e.stopPropagation();const ok=copyLastSession(ex);if(ok)showToast('Valori copiati dalla sessione precedente 📋','')}}
-                    style={{width:'100%',padding:'7px',background:'var(--bg-input)',border:'0.5px dashed var(--border)',borderRadius:8,fontSize:12,color:'var(--text-muted)',cursor:'pointer',fontFamily:'inherit',marginBottom:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                    <i className="ti ti-copy" style={{fontSize:13}}/> Uguale all'ultima volta
-                  </button>
-                )}
-                <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                  {setsArray.map(setNum => {
-                    const log = getLog(ex, setNum)
-                    const wVal = getInputVal(ex.exercise_name, setNum, 'weight_kg')
-                    const rVal = getInputVal(ex.exercise_name, setNum, 'reps_done')
-                    const defaultReps = ex.reps?.split('-')[0] || ex.reps || ''
-                    return (
-                      <div key={setNum} style={{display:'flex',alignItems:'center',gap:6,background:log?'rgba(59,109,17,0.07)':'var(--bg-input)',borderRadius:10,padding:'7px 10px',border:log?'0.5px solid rgba(59,109,17,0.25)':'0.5px solid transparent'}}>
-                        <span style={{fontSize:11,fontWeight:700,color:log?'#3B6D11':'var(--text-muted)',width:16,flexShrink:0,textAlign:'center'}}>{setNum}</span>
-                        {/* KG */}
-                        <div style={{flex:1,display:'flex',alignItems:'center',gap:3}}>
-                          <button onClick={()=>{const v=parseFloat(wVal||lastWeight||0);const n=Math.max(0,+(v-2.5).toFixed(1));setInputVal(ex.exercise_name,setNum,'weight_kg',String(n));if(log)updateWeight(ex,setNum,n)}}
-                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>−</button>
-                          <div style={{flex:1,textAlign:'center'}}>
-                            <input type="number" inputMode="decimal" value={wVal} placeholder={lastWeight?String(lastWeight):'kg'}
-                              onChange={e=>{setInputVal(ex.exercise_name,setNum,'weight_kg',e.target.value);if(log)updateWeight(ex,setNum,e.target.value)}}
-                              style={{width:'100%',textAlign:'center',background:'transparent',border:'none',outline:'none',fontSize:17,fontWeight:700,color:log?'#3B6D11':'var(--text)',fontFamily:'inherit',padding:0}}/>
-                            <div style={{fontSize:9,color:'var(--text-muted)',marginTop:-2}}>kg</div>
-                          </div>
-                          <button onClick={()=>{const v=parseFloat(wVal||lastWeight||0);const n=+(v+2.5).toFixed(1);setInputVal(ex.exercise_name,setNum,'weight_kg',String(n));if(log)updateWeight(ex,setNum,n)}}
-                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>+</button>
-                        </div>
-                        <div style={{width:1,height:24,background:'var(--border)',flexShrink:0,margin:'0 2px'}}/>
-                        {/* REPS */}
-                        <div style={{flex:1,display:'flex',alignItems:'center',gap:3}}>
-                          <button onClick={()=>{const v=parseInt(rVal||defaultReps||0);const n=Math.max(0,v-1);setInputVal(ex.exercise_name,setNum,'reps_done',String(n));if(log)updateReps(ex,setNum,n)}}
-                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>−</button>
-                          <div style={{flex:1,textAlign:'center'}}>
-                            <input type="number" inputMode="numeric" value={rVal} placeholder={defaultReps||'rep'}
-                              onChange={e=>{setInputVal(ex.exercise_name,setNum,'reps_done',e.target.value);if(log)updateReps(ex,setNum,e.target.value)}}
-                              style={{width:'100%',textAlign:'center',background:'transparent',border:'none',outline:'none',fontSize:17,fontWeight:700,color:log?'#3B6D11':'var(--text)',fontFamily:'inherit',padding:0}}/>
-                            <div style={{fontSize:9,color:'var(--text-muted)',marginTop:-2}}>reps</div>
-                          </div>
-                          <button onClick={()=>{const v=parseInt(rVal||defaultReps||0);const n=v+1;setInputVal(ex.exercise_name,setNum,'reps_done',String(n));if(log)updateReps(ex,setNum,n)}}
-                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>+</button>
-                        </div>
-                        {/* CHECK */}
-                        <button onClick={()=>{toggleSet(ex,setNum);showToast(log?'Serie annullata':'Serie completata! 💪','')}}
-                          style={{width:38,height:38,borderRadius:10,cursor:'pointer',flexShrink:0,background:log?'#3B6D11':'var(--bg-card)',border:log?'none':'1.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                          <i className={log?'ti ti-check':'ti ti-circle'} style={{fontSize:18,color:log?'white':'var(--text-muted)'}}/>
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)'}}>
-                  {ex.description && (
-                    <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6,marginBottom:12,background:'var(--bg-input)',padding:'10px 12px',borderRadius:8}}>
-                      <i className="ti ti-info-circle" style={{fontSize:13,marginRight:6,color:'#D4570A'}}/>
-                      {ex.description}
-                    </div>
-                  )}
-                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'var(--text-muted)',flexWrap:'wrap'}}>
-                    {(() => {
-                      const prog = progressionTracking[ex.id]
-                      if (prog) {
-                        return <>
-                          <span style={{background:'#FEF0E7',color:'#D4570A',padding:'3px 10px',borderRadius:16,fontWeight:700,fontSize:12}}>
-                            📅 Settimana {prog.week}/{prog.maxWeeks}{prog.weekNote ? ` — ${prog.weekNote}` : ''}
-                          </span>
-                          <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/><strong>{prog.targetSets||ex.sets}</strong> serie x <strong>{prog.targetReps||ex.reps}</strong> reps</span>
-                          <span><i className="ti ti-barbell" style={{fontSize:12,marginRight:3}}/>Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong></span>
-                          <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
-                        </>
-                      }
-                      return <>
-                        <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/>{ex.sets} serie x {ex.reps} ripetizioni</span>
-                        <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
-                      </>
-                    })()}
-                    {ex.tut && (
-                      <span style={{color:'#4A90D4',fontWeight:600}}>
-                        <i className="ti ti-timer" style={{fontSize:12,marginRight:3}}/>TUT {ex.tut}
-                      </span>
-                    )}
-                  </div>
-                  {ex.tut && (
-                    <div style={{background:'#EBF3FD',borderRadius:8,padding:'10px 12px',marginBottom:12,fontSize:11,color:'#4A90D4',lineHeight:1.7}}>
-                      <div style={{fontWeight:700,marginBottom:4}}>⏱ Come applicare il TUT {ex.tut}:</div>
-                      {(() => {
-                        const parts = ex.tut.split('-')
-                        if (parts.length !== 4) return <div>Segui i tempi indicati: {ex.tut}</div>
-                        const [ecc, pausaGiu, conc, pausaSu] = parts
-                        return (
-                          <div>
-                            {parseInt(ecc)>0 && <div>🔽 <strong>{ecc}s</strong> — Fase eccentrica (abbassamento/allungamento lento)</div>}
-                            {parseInt(pausaGiu)>0 && <div>⏸ <strong>{pausaGiu}s</strong> — Pausa in basso (sotto tensione)</div>}
-                            {parseInt(conc)>0 && <div>🔼 <strong>{conc}s</strong> — Fase concentrica (sollevamento/accorciamento)</div>}
-                            {parseInt(pausaSu)>0 && <div>⏸ <strong>{pausaSu}s</strong> — Pausa in alto (contrazione)</div>}
-                            {parseInt(ecc)===0 && <div>🔽 <strong>Esplosivo</strong> — Fase eccentrica senza controllo</div>}
-                            {parseInt(conc)===0 && <div>🔼 <strong>Esplosivo</strong> — Fase concentrica senza controllo</div>}
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  )}
-
-                  {/* SERIE CON CHECKBOX E PESO */}
-                  <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
-                    {setsArray.map(setNum => {
-                      const log = getLog(ex, setNum)
-                      return (
-                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
-                          <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
-                            width:26,height:26,borderRadius:7,cursor:'pointer',flexShrink:0,
-                            background: log ? '#3B6D11' : 'var(--bg-card)',
-                            border: log ? 'none' : '0.5px solid var(--border)',
-                            display:'flex',alignItems:'center',justifyContent:'center'
-                          }}>
-                            {log && <i className="ti ti-check" style={{fontSize:14,color:'white'}}/>}
-                          </button>
-                          <span style={{fontSize:12,color:'var(--text-muted)',width:46,flexShrink:0}}>Serie {setNum}</span>
-                          <input
-                            type="text" inputMode="decimal" placeholder="kg"
-                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
-                            onChange={e => {
-                              // Accetta sia virgola che punto come separatore decimale
-                              const val = e.target.value.replace(',', '.')
-                              setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
-                              updateWeight(ex, setNum, val)
-                            }}
-                            style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
-                          />
-                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>kg</span>
-                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>×</span>
-                          <input
-                            type="number" placeholder="reps" inputMode="numeric"
-                            value={getInputVal(ex.exercise_name, setNum, 'reps_done')}
-                            onChange={e => {
-                              setInputVal(ex.exercise_name, setNum, 'reps_done', e.target.value)
-                              updateReps(ex, setNum, e.target.value)
-                            }}
-                            style={{...s.input, width:60, padding:'6px 8px', textAlign:'center'}}
-                          />
-                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>reps</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* NOTE ESERCIZIO */}
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>
-                      <i className="ti ti-notes" style={{fontSize:12,marginRight:4,color:'#D4570A'}}/>Note esercizio
-                    </div>
-                    <textarea
-                      placeholder="Es. aumentare peso la prossima volta, dolore al gomito, tecnica da correggere..."
-                      value={getExerciseNote(ex.exercise_name)}
-                      onChange={e => updateNote(ex, e.target.value)}
-                      rows={2}
-                      style={{width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:9,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'none',lineHeight:1.5,boxSizing:'border-box'}}
-                    />
-                  </div>
-
-                  {/* GRAFICO PROGRESSIONE */}
-                  {progression.length > 1 && (
-                    <div>
-                      <div style={{fontSize:11,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Progressione peso</div>
-                      <ProgressionChart data={progression}/>
-                    </div>
-                  )}
-                </div>
-              )}
+}
             </div>
           )
         })}
