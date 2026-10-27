@@ -33,7 +33,35 @@
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
   </head>
-  <body style="background:#1a0800;margin:0">
+  <body style="background:#0F0F0F;margin:0;padding:0">
+  <style>
+    /* Copre tutta la safe area con il colore dell'app — elimina linee bianche/nere */
+    :root {
+      --color-bg-dark: #0F0F0F;
+      color-scheme: dark;
+    }
+    html, body {
+      background: #0F0F0F;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #root {
+      width: 100%;
+      height: 100%;
+      /* Assicura che il root copra anche le safe area su iOS/Android */
+      background: #0F0F0F;
+    }
+    /* iOS Safari — colora le safe area con il colore della topbar/bottom */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      body {
+        /* La topbar è nera, la bottom è nera — tutto coincide */
+        background: #0F0F0F;
+      }
+    }
+  </style>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
