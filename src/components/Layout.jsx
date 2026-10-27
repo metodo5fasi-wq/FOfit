@@ -68,7 +68,9 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
       {/* LOGO */}
       <div style={{padding:'22px 20px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
         <div style={{display:'flex',alignItems:'center'}}>
-          <img src="/logo.png" alt="FOfit" style={{height:36,objectFit:'contain'}}/>
+          <div style={{background:'white',borderRadius:10,padding:'5px 12px',display:'flex',alignItems:'center'}}>
+            <img src="/logo.png" alt="FOfit" style={{height:28,objectFit:'contain'}}/>
+          </div>
         </div>
       </div>
 
@@ -310,7 +312,9 @@ export default function Layout() {
               <i className="ti ti-menu-2" style={{fontSize:18,pointerEvents:'none'}}/>
             </button>
             <div style={{display:'flex',alignItems:'center'}}>
-              <img src="/logo.png" alt="FOfit" style={{height:28,objectFit:'contain'}}/>
+              <div style={{background:'white',borderRadius:8,padding:'3px 8px',display:'flex',alignItems:'center'}}>
+                <img src="/logo.png" alt="FOfit" style={{height:22,objectFit:'contain'}}/>
+              </div>
             </div>
             <div style={{width:36}}/>
           </div>
