@@ -119,13 +119,13 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSaveError('')
     try {
       const payload = { ...data, client_id: clientId, current_section: goTo || current, updated_at: new Date().toISOString() }
-      if (goTo === 13) payload.completed_at = new Date().toISOString()
+      if (goTo === 14) payload.completed_at = new Date().toISOString()
       Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
       const { error } = await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
       if (error) throw error
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-      if (goTo) setCurrent(Math.min(goTo, 12))
+      if (goTo) setCurrent(Math.min(goTo, 14))
     } catch(e) {
       setSaveError('Errore salvataggio: ' + e.message)
       console.error('Anamnesi save error:', e)
@@ -133,7 +133,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSaving(false)
   }
 
-  function next() { saveSection(Math.min(current+1, 12)) }
+  function next() { saveSection(Math.min(current+1, 14)) }
   function prev() { saveSection(Math.max(current-1, 1)) }
 
   async function submitToCoach() {
@@ -153,7 +153,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   }
 
   const sec = SECTIONS[Math.min(current, 14) - 1] || SECTIONS[13]
-  const pct = Math.round(((current-1)/12)*100)
+  const pct = Math.round(((current-1)/13)*100)
 
   return (
     <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'var(--bg)'}}>
@@ -338,10 +338,11 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <label style={s.label}>Hai o hai avuto mal di schiena?</label>
               <Chips options={['No','Sì, saltuario','Sì, frequente','Sì, cronico',"L'ho avuto ma ora è passato"]} value={data.mal_schiena} onChange={v=>set('mal_schiena',v)}/>
             </div>
+
             {data.mal_schiena && data.mal_schiena !== 'No' && <>
               <div style={s.card}>
                 <label style={s.label}>Dove senti il dolore principalmente?</label>
-                <Chips multi options={['Zona lombare (bassa)','Zona dorsale (media)','Zona cervicale (collo)','Sacro/coccige','Irradia alla gamba (sciatica)','Spalle','Tutto']} value={data.zona_dolore_schiena} onChange={v=>setArr('zona_dolore_schiena',v)}/>
+                <Chips multi options={['Zona lombare (bassa)','Zona dorsale (media)','Zona cervicale (collo/nuca)','Sacro/coccige','Irradia alla gamba (sciatica)','Spalle/trapezi','Tutto quanto']} value={data.zona_dolore_schiena} onChange={v=>setArr('zona_dolore_schiena',v)}/>
               </div>
               <div style={s.card}>
                 <div style={s.grid2}>
@@ -350,38 +351,86 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                 </div>
               </div>
               <div style={s.card}>
+                <label style={s.label}>Tipo di dolore</label>
+                <Chips options={['Rigidità/pesantezza','Dolore sordo e costante','Fitte acute','Bruciore','Formicolio/intorpidimento','Combinazione di più tipi']} value={data.tipo_dolore_schiena} onChange={v=>set('tipo_dolore_schiena',v)}/>
+              </div>
+              <div style={s.card}>
                 <label style={s.label}>Quando è peggio?</label>
-                <Chips multi options={['Dopo ore seduto','Al mattino appena sveglio','Dopo sforzi','Stando in piedi a lungo','Durante/dopo allenamento','Sotto stress','Non ha un momento preciso']} value={data.quando_peggio_schiena} onChange={v=>setArr('quando_peggio_schiena',v)}/>
+                <Chips multi options={['Dopo ore seduto','Al mattino appena sveglio','Dopo sforzi fisici','Stando in piedi a lungo','Camminando a lungo','Durante/dopo allenamento','Sotto stress','Dopo pasti abbondanti','Non ha un momento preciso']} value={data.quando_peggio_schiena} onChange={v=>setArr('quando_peggio_schiena',v)}/>
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Quando migliora?</label>
+                <Chips multi options={['Muovendomi/camminando','Dopo riscaldamento','Sdraito/a','Applicando calore','Facendo stretching','La sera','Non migliora mai']} value={data.quando_meglio_schiena} onChange={v=>setArr('quando_meglio_schiena',v)}/>
               </div>
               <div style={s.card}>
                 <label style={s.label}>Cosa ti dà sollievo?</label>
-                <Chips multi options={['Alzarmi e camminare','Sdraiarmi','Calore/borsa acqua calda','Stretching','Farmaci','Massaggio','Niente']} value={data.sollievo_schiena} onChange={v=>setArr('sollievo_schiena',v)}/>
+                <Chips multi options={['Alzarmi e camminare','Sdraiarmi','Calore/borsa acqua calda','Ghiaccio','Stretching','Farmaci/antinfiammatori','Massaggio','Osteopata/fisioterapista','Niente di efficace']} value={data.sollievo_schiena} onChange={v=>setArr('sollievo_schiena',v)}/>
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Il dolore irradia o si sposta?</label>
+                <Chips options={['No, è localizzato','Sì, va alla gamba/piede','Sì, va al gluteo','Sì, va alla testa/tempia','Sì, va al braccio/mano','Dipende dal momento']} value={data.irradiazione_dolore} onChange={v=>set('irradiazione_dolore',v)}/>
               </div>
               <div style={s.card}>
                 <label style={s.label}>Hai già fatto esami/visite per la schiena?</label>
-                <Chips options={['No','Sì, visita medico base','Sì, RX/TAC/Risonanza','Sì, fisioterapia','Sì, osteopatia','Molteplici']} value={data.visite_schiena} onChange={v=>set('visite_schiena',v)}/>
-                {data.visite_schiena && data.visite_schiena !== 'No' && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Cosa è emerso? es. ernia L4-L5, protrusione..." value={data.diagnosi_schiena||''} onChange={e=>set('diagnosi_schiena',e.target.value)}/></div>}
+                <Chips options={['No','Sì, visita medico di base','Sì, RX/TAC/Risonanza','Sì, fisioterapia','Sì, osteopatia','Sì, specialista ortopedico/fisiatra','Molteplici']} value={data.visite_schiena} onChange={v=>set('visite_schiena',v)}/>
+                {data.visite_schiena && data.visite_schiena !== 'No' && (
+                  <div style={{marginTop:8}}>
+                    <textarea style={s.textarea} placeholder="Cosa è emerso? es. ernia L4-L5, protrusione discale, iperlordosi..." value={data.diagnosi_schiena||''} onChange={e=>set('diagnosi_schiena',e.target.value)}/>
+                  </div>
+                )}
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Il mal di schiena influenza la tua vita quotidiana?</label>
+                <Chips options={['No, ci convivo senza problemi','Sì, mi limita in alcune attività','Sì, mi limita abbastanza','Sì, mi limita molto','Mi impedisce cose che amavo fare']} value={data.impatto_schiena_vita} onChange={v=>set('impatto_schiena_vita',v)}/>
               </div>
             </>}
+
             <div style={s.card}>
               <label style={s.label}>Come definiresti la tua postura abituale?</label>
-              <Chips options={['Abbastanza eretta','Testa in avanti','Spalle curve','Schiena incurvata','Bacino antiverso (pancia in fuori)','Non ci ho mai pensato']} value={data.postura_abituale} onChange={v=>set('postura_abituale',v)}/>
+              <Chips multi options={['Abbastanza eretta','Testa in avanti (forward head)','Spalle curve/arrotondate','Schiena incurvata (cifosi)','Pancia in fuori (iperlordosi)','Tendenza a stare storto/a','Non ci ho mai pensato']} value={data.postura_abituale} onChange={v=>setArr('postura_abituale',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Come stai seduto/a di solito alla scrivania?</label>
+              <Chips options={['Abbastanza eretto/a','Schiena incurvata in avanti','Scivolato/a sul sedile','Gambe accavallate','Storto/a su un lato','Vario molto durante il giorno']} value={data.postura_scrivania} onChange={v=>set('postura_scrivania',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Schermo e monitor — come lo usi?</label>
+              <Chips options={["Monitor all'altezza degli occhi",'Monitor troppo basso (guardo in giù)','Monitor di lato (ruoto la testa)','Lavoro su laptop senza monitor esterno','Non uso molto lo schermo']} value={data.posizione_monitor} onChange={v=>set('posizione_monitor',v)}/>
             </div>
             <div style={s.card}>
               <label style={s.label}>Hai tensioni o rigidità in queste zone?</label>
-              <Chips multi options={['Collo','Spalle/trapezi','Torace','Addome (core debole)',"Flessori dell'anca",'Glutei','Polpacci','Nessuna']} value={data.zone_tensione} onChange={v=>setArr('zone_tensione',v)}/>
+              <Chips multi options={['Collo/nuca','Spalle/trapezi','Zona dorsale (tra le scapole)','Zona lombare','Addome (sento il core debole)',"Flessori dell'anca",'Glutei','Gambe/polpacci','Nessuna in particolare']} value={data.zone_tensione} onChange={v=>setArr('zone_tensione',v)}/>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Hai mai fatto stretching o mobilità regolare?</label>
-              <Chips options={['Mai','Qualche volta','Sì, in passato','Sì, attualmente']} value={data.stretching_mobilita} onChange={v=>set('stretching_mobilita',v)}/>
+              <label style={s.label}>Con quale frequenza senti tensione a collo e spalle?</label>
+              <Chips options={['Raramente','1–2 volte a settimana','Quasi ogni giorno','Sempre, è costante']} value={data.frequenza_tensione_collo} onChange={v=>set('frequenza_tensione_collo',v)}/>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Ci sono movimenti che eviti per paura del dolore?</label>
-              <textarea style={s.textarea} value={data.movimenti_evitati_dolore||''} onChange={e=>set('movimenti_evitati_dolore',e.target.value)} placeholder="es. piegarmi, rotazioni, carichi pesanti..."/>
+              <label style={s.label}>Senti mai formicolii o intorpidimento a braccia/mani?</label>
+              <Chips options={['No mai','Raramente','Sì, di notte','Sì, durante il lavoro','Sì, spesso']} value={data.formicolio_mani} onChange={v=>set('formicolio_mani',v)}/>
             </div>
             <div style={s.card}>
-              <label style={s.label}>Il mal di schiena influenza la tua vita quotidiana?</label>
-              <Chips options={['No, ci convivo senza problemi','Sì, mi limita in alcune attività','Sì, mi limita molto','Mi impedisce cose che amavo fare']} value={data.impatto_schiena_vita} onChange={v=>set('impatto_schiena_vita',v)}/>
+              <label style={s.label}>Hai mai fatto stretching o mobilità in modo regolare?</label>
+              <Chips options={['Mai','Qualche volta saltuariamente','Sì, in passato per un periodo','Sì, attualmente lo faccio']} value={data.stretching_mobilita} onChange={v=>set('stretching_mobilita',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Ci sono movimenti che eviti per paura del dolore o disagio?</label>
+              <textarea style={s.textarea} value={data.movimenti_evitati_dolore||''} onChange={e=>set('movimenti_evitati_dolore',e.target.value)} placeholder="es. piegarmi in avanti, rotazioni del busto, alzare pesi, squat profondi..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Hai mai subito traumi, cadute o incidenti che hanno interessato schiena/collo?</label>
+              <Chips options={['No','Sì, lieve (non trattato)','Sì, con cure mediche','Sì, con intervento chirurgico']} value={data.traumi_schiena} onChange={v=>set('traumi_schiena',v)}/>
+              {data.traumi_schiena && data.traumi_schiena !== 'No' && (
+                <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Descrivi brevemente cosa è successo e quando..." value={data.traumi_schiena_dettaglio||''} onChange={e=>set('traumi_schiena_dettaglio',e.target.value)}/></div>
+              )}
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>C'è una correlazione tra stress/periodi difficili e il tuo mal di schiena?</label>
+              <Chips options={['No, non lo collego','Forse sì, ma non ne sono sicuro/a','Sì, quando sono stressato/a peggiora chiaramente','Sì, è il principale fattore scatenante']} value={data.stress_schiena} onChange={v=>set('stress_schiena',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>In una frase, come descriveresti il tuo rapporto con la schiena in questo momento?</label>
+              <textarea style={{...s.textarea,minHeight:80}} value={data.rapporto_schiena||''} onChange={e=>set('rapporto_schiena',e.target.value)} placeholder="es. Mi spaventa, ci convivo, voglio risolverlo una volta per tutte..."/>
             </div>
           </>}
 
