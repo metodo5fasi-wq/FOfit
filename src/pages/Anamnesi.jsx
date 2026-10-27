@@ -291,8 +291,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 5 — Lavoro e stile di vita sedentario ─── */}
-          {current===5 && <>
+          {/* ─── SEZIONE 3 — Lavoro e stile di vita sedentario ─── */}
+          {current===3 && <>
             <div style={s.card}>
               <label style={s.label}>Che tipo di lavoro fai?</label>
               <Chips options={['Ufficio/scrivania (full time)','Ufficio (part time)','Smart working','Lavoro misto (ufficio + movimento)','Insegnante/formatore','Altro']} value={data.tipo_lavoro} onChange={v=>set('tipo_lavoro',v)}/>
@@ -301,7 +301,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             <div style={s.card}>
               <div style={s.grid2}>
                 <div><label style={s.label}>Ore seduto/a al giorno (totali)</label><Chips options={['<4h','4–6h','6–8h','8–10h','>10h']} value={data.ore_seduto} onChange={v=>set('ore_seduto',v)}/></div>
-                <div><label style={s.label}>Di cui ore consecutive senza alzarsi</label><Chips options={['<1h','1–2h','2–3h','>3h']} value={data.ore_consecutive_seduto} onChange={v=>set('ore_consecutive_seduto',v)}/></div>
+                <div><label style={s.label}>Ore consecutive senza alzarsi</label><Chips options={['<1h','1–2h','2–3h','>3h']} value={data.ore_consecutive_seduto} onChange={v=>set('ore_consecutive_seduto',v)}/></div>
               </div>
             </div>
             <div style={s.card}>
@@ -332,8 +332,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 6 — Postura e mal di schiena ─── */}
-          {current===6 && <>
+          {/* ─── SEZIONE 4 — Postura e mal di schiena ─── */}
+          {current===4 && <>
             <div style={s.card}>
               <label style={s.label}>Hai o hai avuto mal di schiena?</label>
               <Chips options={['No','Sì, saltuario','Sì, frequente','Sì, cronico',"L'ho avuto ma ora è passato"]} value={data.mal_schiena} onChange={v=>set('mal_schiena',v)}/>
@@ -341,7 +341,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             {data.mal_schiena && data.mal_schiena !== 'No' && <>
               <div style={s.card}>
                 <label style={s.label}>Dove senti il dolore principalmente?</label>
-                <Chips multi options={['Zona lombare (bassa)','Zona dorsale (media)','Zona cervicale (collo)','Sacro/coccige','Irradia alla gamba (sciatica)','Spalle','Tutto quanto']} value={data.zona_dolore_schiena} onChange={v=>setArr('zona_dolore_schiena',v)}/>
+                <Chips multi options={['Zona lombare (bassa)','Zona dorsale (media)','Zona cervicale (collo)','Sacro/coccige','Irradia alla gamba (sciatica)','Spalle','Tutto']} value={data.zona_dolore_schiena} onChange={v=>setArr('zona_dolore_schiena',v)}/>
               </div>
               <div style={s.card}>
                 <div style={s.grid2}>
@@ -360,7 +360,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               <div style={s.card}>
                 <label style={s.label}>Hai già fatto esami/visite per la schiena?</label>
                 <Chips options={['No','Sì, visita medico base','Sì, RX/TAC/Risonanza','Sì, fisioterapia','Sì, osteopatia','Molteplici']} value={data.visite_schiena} onChange={v=>set('visite_schiena',v)}/>
-                {data.visite_schiena && data.visite_schiena !== 'No' && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Cosa è emerso? Es. ernia L4-L5, protrusione..." value={data.diagnosi_schiena||''} onChange={e=>set('diagnosi_schiena',e.target.value)}/></div>}
+                {data.visite_schiena && data.visite_schiena !== 'No' && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Cosa è emerso? es. ernia L4-L5, protrusione..." value={data.diagnosi_schiena||''} onChange={e=>set('diagnosi_schiena',e.target.value)}/></div>}
               </div>
             </>}
             <div style={s.card}>
@@ -381,12 +381,12 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
             <div style={s.card}>
               <label style={s.label}>Il mal di schiena influenza la tua vita quotidiana?</label>
-              <Chips options={['No, ci convivo senza problemi','Sì, mi limita in alcune attività','Sì, mi limita molto','Mi impedisce alcune cose che amavo fare']} value={data.impatto_schiena_vita} onChange={v=>set('impatto_schiena_vita',v)}/>
+              <Chips options={['No, ci convivo senza problemi','Sì, mi limita in alcune attività','Sì, mi limita molto','Mi impedisce cose che amavo fare']} value={data.impatto_schiena_vita} onChange={v=>set('impatto_schiena_vita',v)}/>
             </div>
           </>}
 
-          {/* ─── SEZIONE 7 — Salute, allergie, intolleranze ─── */}
-          {current===7 && <>
+          {/* ─── SEZIONE 5 — Salute, allergie, intolleranze ─── */}
+          {current===5 && <>
             <div style={s.card}>
               <label style={s.label}>Diagnosi attive</label>
               <textarea style={s.textarea} placeholder="Elenca eventuali diagnosi mediche attive..." value={data.diagnosi_attive||''} onChange={e=>set('diagnosi_attive',e.target.value)}/>
@@ -709,8 +709,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 11 — Vincoli, sostenibilità e autonomia ─── */}
-          {current===11 && <>
+          {/* ─── SEZIONE 13 — Vincoli, sostenibilità e autonomia ─── */}
+          {current===13 && <>
             <div style={s.card}>
               <div style={s.grid2}>
                 <div><label style={s.label}>Tempo disponibile a settimana</label><Chips options={['1h','2h','3h','4h','5h+']} value={data.tempo_settimana} onChange={v=>set('tempo_settimana',v)}/></div>
