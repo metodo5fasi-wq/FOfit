@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 document.title = 'FOfit — Allenamento'
+document.title = 'FOfit — Allenamento'
 // Titolo pagina per iOS back button
 document.title = 'FOfit — Allenamento'
 import { supabase } from '../lib/supabase'
@@ -234,6 +235,12 @@ export default function Allenamento() {
 
   // Salva stato sessione su localStorage ogni volta che cambia
   const SESSION_KEY = `fofit_session_${profile?.id}`
+
+  function getYtThumb(url) {
+    if (!url) return null
+    const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    return m ? `https://img.youtube.com/vi/${m[1]}/default.jpg` : null
+  }
 
   function getYtThumb(url) {
     if (!url) return null
@@ -477,7 +484,84 @@ export default function Allenamento() {
                 )}
                 <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:16,color:'var(--text-muted)'}}/>
               </div>
-}
+
+              {isExpanded && (
+                <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)'}}>
+                  {ex.description && (
+                    <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6,marginBottom:12,background:'var(--bg-input)',padding:'10px 12px',borderRadius:8}}>
+                      <i className="ti ti-info-circle" style={{fontSize:13,marginRight:6,color:'#D4570A'}}/>
+                      {ex.description}
+                    </div>
+                  )}
+                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'var(--text-muted)',flexWrap:'wrap'}}>
+                    {(() => {
+                      const prog = progressionTracking[ex.id]
+                      if (prog) return <>
+                        <span style={{background:'#FEF0E7',color:'#D4570A',padding:'3px 10px',borderRadius:16,fontWeight:700,fontSize:12}}>
+                          📅 Settimana {prog.week}/{prog.maxWeeks}{prog.weekNote ? ` — ${prog.weekNote}` : ''}
+                        </span>
+                        <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/><strong>{prog.targetSets||ex.sets}</strong> serie x <strong>{prog.targetReps||ex.reps}</strong> reps</span>
+                        <span><i className="ti ti-barbell" style={{fontSize:12,marginRight:3}}/>Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong></span>
+                        <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                      </>
+                      return <>
+                        <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/>{ex.sets} serie x {ex.reps} ripetizioni</span>
+                        <span><i className="ti ti-clock" style={{fontSize:12,marginRight:3}}/>{ex.rest_seconds}s recupero</span>
+                      </>
+                    })()}
+                  </div>
+
+                  {/* SERIE */}
+                  <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
+                    {setsArray.map(setNum => {
+                      const log = getLog(ex, setNum)
+                      return (
+                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'var(--bg-input)',borderRadius:8,padding:'8px 12px'}}>
+                          <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
+                            width:26,height:26,borderRadius:7,cursor:'pointer',flexShrink:0,
+                            background: log ? '#3B6D11' : 'var(--bg-card)',
+                            border: log ? 'none' : '0.5px solid var(--border)',
+                            display:'flex',alignItems:'center',justifyContent:'center'
+                          }}>
+                            {log && <i className="ti ti-check" style={{fontSize:14,color:'white'}}/>}
+                          </button>
+                          <span style={{fontSize:12,color:'var(--text-muted)',width:46,flexShrink:0}}>Serie {setNum}</span>
+                          <input
+                            type="number" inputMode="decimal"
+                            placeholder={lastWeight ? String(lastWeight) : 'kg'}
+                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
+                            onChange={e=>{
+                              setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
+                              if (log) updateWeight(ex, setNum, e.target.value)
+                            }}
+                            style={{flex:1,padding:'5px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:13,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',minWidth:0,textAlign:'center'}}
+                          />
+                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>kg</span>
+                          <input
+                            type="number" inputMode="numeric"
+                            placeholder={ex.reps?.split('-')[0] || 'rep'}
+                            value={getInputVal(ex.exercise_name, setNum, 'reps_done')}
+                            onChange={e=>{
+                              setInputVal(ex.exercise_name, setNum, 'reps_done', e.target.value)
+                              if (log) updateReps(ex, setNum, e.target.value)
+                            }}
+                            style={{flex:1,padding:'5px 8px',border:'0.5px solid var(--border)',borderRadius:7,fontSize:13,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit',minWidth:0,textAlign:'center'}}
+                          />
+                          <span style={{fontSize:11,color:'var(--text-muted)',flexShrink:0}}>reps</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:6}}>Note esercizio (opzionale)</div>
+                  <textarea
+                    value={getExerciseNote(ex.exercise_name)}
+                    onChange={e=>updateNote(ex, e.target.value)}
+                    placeholder="Sensazioni, tecnica, note per la prossima volta..."
+                    style={{width:'100%',minHeight:60,padding:'8px 10px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',lineHeight:1.5}}
+                  />
+                </div>
+              )}
             </div>
           )
         })}
