@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+document.title = 'FOfit — Allenamento'
 // Titolo pagina per iOS back button
 document.title = 'FOfit — Allenamento'
 import { supabase } from '../lib/supabase'
