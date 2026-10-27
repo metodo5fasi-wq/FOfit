@@ -67,16 +67,8 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
 
       {/* LOGO */}
       <div style={{padding:'22px 20px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:11}}>
-          <div style={{width:38,height:38,borderRadius:11,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(212,87,10,0.4)',flexShrink:0}}>
-            <i className="ti ti-bolt" style={{color:'white',fontSize:19}}/>
-          </div>
-          <div>
-            <div style={{fontSize:20,fontWeight:700,color:'white',letterSpacing:-0.5,lineHeight:1}}>
-              FO<span style={{color:'#F4894A'}}>fit</span>
-            </div>
-            <div style={{fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:'0.1em',marginTop:2}}>FOFIT.FIT</div>
-          </div>
+        <div style={{display:'flex',alignItems:'center'}}>
+          <img src="/logo.png" alt="FOfit" style={{height:36,objectFit:'contain'}}/>
         </div>
       </div>
 
@@ -317,13 +309,8 @@ export default function Layout() {
             }}>
               <i className="ti ti-menu-2" style={{fontSize:18,pointerEvents:'none'}}/>
             </button>
-            <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <div style={{width:26,height:26,borderRadius:8,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <i className="ti ti-bolt" style={{color:'white',fontSize:14}}/>
-              </div>
-              <div style={{fontSize:16,fontWeight:800,color:'white',letterSpacing:-0.5}}>
-                FO<span style={{color:'#F4894A'}}>fit</span>
-              </div>
+            <div style={{display:'flex',alignItems:'center'}}>
+              <img src="/logo.png" alt="FOfit" style={{height:28,objectFit:'contain'}}/>
             </div>
             <div style={{width:36}}/>
           </div>
