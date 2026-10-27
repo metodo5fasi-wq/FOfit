@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+// Titolo pagina per iOS back button
+document.title = 'FOfit — Allenamento'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
@@ -213,7 +215,24 @@ export default function Allenamento() {
     )
   }
 
-  const [inputValues, setInputValues] = useState({}) // { 'exerciseName-setNum-kg': '80', ... }
+  const SESSION_STORAGE_KEY = `fofit_session_${typeof profile !== 'undefined' ? profile?.id : 'anon'}`
+  const [inputValues, setInputValues] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fofit_input_values')
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+
+
+  // Estrai video ID da URL YouTube
+  function getYtThumb(url) {
+    if (!url) return null
+    const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    return m ? `https://img.youtube.com/vi/${m[1]}/default.jpg` : null
+  }
+
+  // Salva stato sessione su localStorage ogni volta che cambia
+  const SESSION_KEY = `fofit_session_${profile?.id}`
 
   function getInputVal(exName, setNum, field) {
     const key = `${exName}-${setNum}-${field}`
@@ -223,7 +242,33 @@ export default function Allenamento() {
   }
 
   function setInputVal(exName, setNum, field, val) {
-    setInputValues(prev => ({ ...prev, [`${exName}-${setNum}-${field}`]: val }))
+    setInputValues(prev => {
+      const next = { ...prev, [`${exName}-${setNum}-${field}`]: val }
+      try { localStorage.setItem('fofit_input_values', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+
+  // Copia i valori dell'ultima sessione per un esercizio
+  function copyLastSession(ex) {
+    const lastLogs = allLogs
+      .filter(l => l.exercise_name === ex.exercise_name && l.log_date < today)
+      .sort((a,b) => b.log_date.localeCompare(a.log_date) || b.set_number - a.set_number)
+    if (!lastLogs.length) return false
+    const lastDate = lastLogs[0].log_date
+    const lastDayLogs = lastLogs.filter(l => l.log_date === lastDate)
+    const newVals = {}
+    lastDayLogs.forEach(l => {
+      if (l.weight_kg != null) newVals[`${ex.exercise_name}-${l.set_number}-weight_kg`] = String(l.weight_kg)
+      if (l.reps_done != null) newVals[`${ex.exercise_name}-${l.set_number}-reps_done`] = String(l.reps_done)
+    })
+    setInputValues(prev => {
+      const next = { ...prev, ...newVals }
+      try { localStorage.setItem('fofit_input_values', JSON.stringify(next)) } catch {}
+      return next
+    })
+    return true
   }
 
   async function toggleSet(ex, setNumber) {
@@ -398,36 +443,107 @@ export default function Allenamento() {
 
           return (
             <div key={ex.id} style={s.card}>
+              {/* HEADER */}
               <div onClick={()=>{
                 const next = isExpanded ? null : ex.id
                 setExpandedExercise(next)
                 if (next) localStorage.setItem('fofit_expanded_exercise', next)
                 else localStorage.removeItem('fofit_expanded_exercise')
               }} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}>
-                <div style={{
-                  width:36,height:36,borderRadius:10,flexShrink:0,
-                  background: completedSets===activeSets && activeSets>0 ? '#EAF3DE' : 'var(--bg-input)',
-                  display:'flex',alignItems:'center',justifyContent:'center'
-                }}>
-                  <i className={completedSets===activeSets && activeSets>0 ? 'ti ti-check' : 'ti ti-barbell'} style={{fontSize:17,color: completedSets===activeSets && activeSets>0 ? '#3B6D11' : '#D4570A'}}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{ex.exercise_name}</div>
+
+                {/* THUMBNAIL */}
+                {(() => {
+                  const thumb = getYtThumb(ex.video_url)
+                  const done = completedSets===activeSets && activeSets>0
+                  if (thumb) return (
+                    <div style={{width:52,height:38,borderRadius:8,overflow:'hidden',flexShrink:0,position:'relative'}}>
+                      <img src={thumb} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}
+                        onError={e=>{e.target.style.display='none'}}/>
+                      {done && <div style={{position:'absolute',inset:0,background:'rgba(59,109,17,0.75)',display:'flex',alignItems:'center',justifyContent:'center'}}><i className="ti ti-check" style={{fontSize:18,color:'white'}}/></div>}
+                    </div>
+                  )
+                  return (
+                    <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:done?'#EAF3DE':'var(--bg-input)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <i className={done?'ti ti-check':'ti ti-barbell'} style={{fontSize:17,color:done?'#3B6D11':'#D4570A'}}/>
+                    </div>
+                  )
+                })()}
+
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:600,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
                   <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
                     {ex.muscle_group} · {(() => {
                       const prog = progressionTracking[ex.id]
-                      if (prog) return `S${prog.week}/${prog.maxWeeks} · ${prog.targetSets||ex.sets}x${prog.targetReps||ex.reps} · ${prog.targetKg}kg`
-                      return `${ex.sets}x${ex.reps}`
+                      if (prog) return `S${prog.week}/${prog.maxWeeks} · ${prog.targetSets||ex.sets}×${prog.targetReps||ex.reps} · ${prog.targetKg}kg`
+                      return `${ex.sets}×${ex.reps}`
                     })()} · {completedSets}/{progressionTracking[ex.id]?.targetSets||ex.sets} serie
-                    {lastWeight && <span> · ultimo: {lastWeight}kg</span>}
+                    {lastWeight && <span style={{color:'#D4570A',fontWeight:600}}> · ult: {lastWeight}kg</span>}
                   </div>
                 </div>
+
                 {ex.video_url && (
-                  <a href={ex.video_url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{display:'flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,background:'#FEF0E7',flexShrink:0}}>
+                  <a href={ex.video_url} target="_blank" rel="noopener noreferrer"
+                    onClick={e=>{e.stopPropagation(); document.title='FOfit — Allenamento'}}
+                    style={{display:'flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,background:'rgba(212,87,10,0.12)',flexShrink:0}}>
                     <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#D4570A'}}/>
                   </a>
                 )}
                 <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:16,color:'var(--text-muted)'}}/>
+              </div>
+
+              {/* QUICK LOG — sempre visibile */}
+              <div style={{marginTop:10,paddingTop:10,borderTop:'0.5px solid var(--border)'}}>
+                {allLogs.some(l=>l.exercise_name===ex.exercise_name&&l.log_date<today) && !setsArray.some(n=>getLog(ex,n)) && (
+                  <button onClick={e=>{e.stopPropagation();const ok=copyLastSession(ex);if(ok)showToast('Valori copiati dalla sessione precedente 📋','')}}
+                    style={{width:'100%',padding:'7px',background:'var(--bg-input)',border:'0.5px dashed var(--border)',borderRadius:8,fontSize:12,color:'var(--text-muted)',cursor:'pointer',fontFamily:'inherit',marginBottom:8,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                    <i className="ti ti-copy" style={{fontSize:13}}/> Uguale all'ultima volta
+                  </button>
+                )}
+                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                  {setsArray.map(setNum => {
+                    const log = getLog(ex, setNum)
+                    const wVal = getInputVal(ex.exercise_name, setNum, 'weight_kg')
+                    const rVal = getInputVal(ex.exercise_name, setNum, 'reps_done')
+                    const defaultReps = ex.reps?.split('-')[0] || ex.reps || ''
+                    return (
+                      <div key={setNum} style={{display:'flex',alignItems:'center',gap:6,background:log?'rgba(59,109,17,0.07)':'var(--bg-input)',borderRadius:10,padding:'7px 10px',border:log?'0.5px solid rgba(59,109,17,0.25)':'0.5px solid transparent'}}>
+                        <span style={{fontSize:11,fontWeight:700,color:log?'#3B6D11':'var(--text-muted)',width:16,flexShrink:0,textAlign:'center'}}>{setNum}</span>
+                        {/* KG */}
+                        <div style={{flex:1,display:'flex',alignItems:'center',gap:3}}>
+                          <button onClick={()=>{const v=parseFloat(wVal||lastWeight||0);const n=Math.max(0,+(v-2.5).toFixed(1));setInputVal(ex.exercise_name,setNum,'weight_kg',String(n));if(log)updateWeight(ex,setNum,n)}}
+                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>−</button>
+                          <div style={{flex:1,textAlign:'center'}}>
+                            <input type="number" inputMode="decimal" value={wVal} placeholder={lastWeight?String(lastWeight):'kg'}
+                              onChange={e=>{setInputVal(ex.exercise_name,setNum,'weight_kg',e.target.value);if(log)updateWeight(ex,setNum,e.target.value)}}
+                              style={{width:'100%',textAlign:'center',background:'transparent',border:'none',outline:'none',fontSize:17,fontWeight:700,color:log?'#3B6D11':'var(--text)',fontFamily:'inherit',padding:0}}/>
+                            <div style={{fontSize:9,color:'var(--text-muted)',marginTop:-2}}>kg</div>
+                          </div>
+                          <button onClick={()=>{const v=parseFloat(wVal||lastWeight||0);const n=+(v+2.5).toFixed(1);setInputVal(ex.exercise_name,setNum,'weight_kg',String(n));if(log)updateWeight(ex,setNum,n)}}
+                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>+</button>
+                        </div>
+                        <div style={{width:1,height:24,background:'var(--border)',flexShrink:0,margin:'0 2px'}}/>
+                        {/* REPS */}
+                        <div style={{flex:1,display:'flex',alignItems:'center',gap:3}}>
+                          <button onClick={()=>{const v=parseInt(rVal||defaultReps||0);const n=Math.max(0,v-1);setInputVal(ex.exercise_name,setNum,'reps_done',String(n));if(log)updateReps(ex,setNum,n)}}
+                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>−</button>
+                          <div style={{flex:1,textAlign:'center'}}>
+                            <input type="number" inputMode="numeric" value={rVal} placeholder={defaultReps||'rep'}
+                              onChange={e=>{setInputVal(ex.exercise_name,setNum,'reps_done',e.target.value);if(log)updateReps(ex,setNum,e.target.value)}}
+                              style={{width:'100%',textAlign:'center',background:'transparent',border:'none',outline:'none',fontSize:17,fontWeight:700,color:log?'#3B6D11':'var(--text)',fontFamily:'inherit',padding:0}}/>
+                            <div style={{fontSize:9,color:'var(--text-muted)',marginTop:-2}}>reps</div>
+                          </div>
+                          <button onClick={()=>{const v=parseInt(rVal||defaultReps||0);const n=v+1;setInputVal(ex.exercise_name,setNum,'reps_done',String(n));if(log)updateReps(ex,setNum,n)}}
+                            style={{width:30,height:30,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-card)',color:'var(--text)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,lineHeight:1}}>+</button>
+                        </div>
+                        {/* CHECK */}
+                        <button onClick={()=>{toggleSet(ex,setNum);showToast(log?'Serie annullata':'Serie completata! 💪','')}}
+                          style={{width:38,height:38,borderRadius:10,cursor:'pointer',flexShrink:0,background:log?'#3B6D11':'var(--bg-card)',border:log?'none':'1.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <i className={log?'ti ti-check':'ti ti-circle'} style={{fontSize:18,color:log?'white':'var(--text-muted)'}}/>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
 
               {isExpanded && (
