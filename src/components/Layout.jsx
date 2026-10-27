@@ -66,12 +66,8 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
     <div style={{display:'flex',flexDirection:'column',height:'100%',background: darkMode ? '#000000' : '#0F0F0F'}}>
 
       {/* LOGO */}
-      <div style={{padding:'22px 20px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
-        <div style={{display:'flex',alignItems:'center'}}>
-          <div style={{background:'white',borderRadius:10,padding:'5px 12px',display:'flex',alignItems:'center'}}>
-            <img src="/logo.png" alt="FOfit" style={{height:28,objectFit:'contain'}}/>
-          </div>
-        </div>
+      <div style={{padding:'20px 20px 14px',borderBottom:'0.5px solid rgba(255,255,255,0.06)'}}>
+        <img src="/logo-dark.png" alt="FOfit" style={{height:32,objectFit:'contain',display:'block'}}/>
       </div>
 
       {/* PROFILO */}
@@ -294,8 +290,9 @@ export default function Layout() {
             display:'flex',
             alignItems:'center',
             justifyContent:'space-between',
-            padding:'10px 16px',
-            paddingTop:'env(safe-area-inset-top, 0px)',
+            padding:'0 16px',
+            paddingTop:'calc(10px + env(safe-area-inset-top, 0px))',
+            minHeight:'calc(52px + env(safe-area-inset-top, 0px))',
             flexShrink:0,
             borderBottom:'0.5px solid rgba(255,255,255,0.06)',
             position:'sticky',
@@ -311,11 +308,7 @@ export default function Layout() {
             }}>
               <i className="ti ti-menu-2" style={{fontSize:18,pointerEvents:'none'}}/>
             </button>
-            <div style={{display:'flex',alignItems:'center'}}>
-              <div style={{background:'white',borderRadius:8,padding:'3px 8px',display:'flex',alignItems:'center'}}>
-                <img src="/logo.png" alt="FOfit" style={{height:22,objectFit:'contain'}}/>
-              </div>
-            </div>
+            <img src="/logo-dark.png" alt="FOfit" style={{height:26,objectFit:'contain'}}/>
             <div style={{width:36}}/>
           </div>
         )}
