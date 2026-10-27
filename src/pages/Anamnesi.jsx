@@ -23,18 +23,20 @@ const s = {
 }
 
 const SECTIONS = [
-  { n:1,  icon:'👤', title:'Dati anagrafici',           sub:'Informazioni base e vita quotidiana' },
-  { n:2,  icon:'🎯', title:'Obiettivo e aspettative',    sub:'Dove vuoi arrivare e perché adesso' },
-  { n:3,  icon:'🏥', title:'Salute generale',             sub:'Diagnosi, patologie, allergie e familiarità' },
-  { n:4,  icon:'💊', title:'Farmaci e stimolanti',        sub:'Farmaci, integratori, caffeina, fumo, alcol' },
-  { n:5,  icon:'😴', title:'Sonno e recupero',            sub:'Qualità del riposo e ritmo circadiano' },
-  { n:6,  icon:'⚡', title:'Stress ed energia',           sub:'Livelli di stress e concentrazione' },
-  { n:7,  icon:'🫃', title:'Digestione e intestino',      sub:'Gonfiore, transito e abitudini' },
-  { n:8,  icon:'⚖️', title:'Storia peso e tentativi',     sub:'Percorso passato e schema ricorrente' },
-  { n:9,  icon:'🥗', title:'Alimentazione e preferenze', sub:'Cosa mangi, cosa ami, come gestisci la vita reale' },
-  { n:10, icon:'🏋️', title:'Allenamento',                sub:'Abitudini, esercizi preferiti e limitazioni' },
-  { n:11, icon:'📋', title:'Vincoli e sostenibilità',    sub:'Tempo, organizzazione e autonomia alimentare' },
-  { n:12, icon:'✅', title:'Check finale',               sub:'Note aggiuntive e consenso' },
+  { n:1,  icon:'👤', title:'Dati anagrafici',             sub:'Informazioni base e vita quotidiana' },
+  { n:2,  icon:'🎯', title:'Obiettivo e aspettative',      sub:'Dove vuoi arrivare e perché adesso' },
+  { n:3,  icon:'💼', title:'Lavoro e stile di vita',       sub:'Ore sedute, postazione, abitudini quotidiane' },
+  { n:4,  icon:'🦴', title:'Postura e mal di schiena',     sub:'Dolori, limitazioni e storia posturale' },
+  { n:5,  icon:'🏥', title:'Salute generale',               sub:'Diagnosi, patologie, allergie e familiarità' },
+  { n:6,  icon:'💊', title:'Farmaci e stimolanti',          sub:'Farmaci, integratori, caffeina, fumo, alcol' },
+  { n:7,  icon:'😴', title:'Sonno e recupero',              sub:'Qualità del riposo e ritmo circadiano' },
+  { n:8,  icon:'⚡', title:'Stress ed energia',             sub:'Livelli di stress e concentrazione' },
+  { n:9,  icon:'🫃', title:'Digestione e intestino',        sub:'Gonfiore, pancia e abitudini intestinali' },
+  { n:10, icon:'⚖️', title:'Storia peso e tentativi',       sub:'Percorso passato e schema ricorrente' },
+  { n:11, icon:'🥗', title:'Alimentazione e preferenze',   sub:'Cosa mangi, cosa ami, come gestisci la vita reale' },
+  { n:12, icon:'🏋️', title:'Movimento e allenamento',      sub:'Abitudini, esercizi preferiti e limitazioni' },
+  { n:13, icon:'📋', title:'Vincoli e sostenibilità',      sub:'Tempo, organizzazione e autonomia alimentare' },
+  { n:14, icon:'✅', title:'Check finale',                 sub:'Note aggiuntive e consenso' },
 ]
 
 function Chips({ options, value, onChange, multi=false }) {
@@ -150,7 +152,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSubmitting(false)
   }
 
-  const sec = SECTIONS[Math.min(current, 12) - 1] || SECTIONS[11]
+  const sec = SECTIONS[Math.min(current, 14) - 1] || SECTIONS[13]
   const pct = Math.round(((current-1)/12)*100)
 
   return (
@@ -261,7 +263,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           {current===2 && <>
             <div style={s.card}>
               <label style={s.label}>Obiettivo principale</label>
-              <Chips options={['Dimagrire','Ridurre pancia/addome','Ricomposizione corporea','Energia & lucidità','Sonno/recupero','Performance in palestra','Altro']} value={data.obiettivo} onChange={v=>set('obiettivo',v)}/>
+              <Chips options={['Ridurre pancia e girovita','Eliminare il mal di schiena','Dimagrire e ricomposizione','Aumentare energia durante il giorno','Migliorare postura','Sonno e recupero','Tutto quanto','Altro']} value={data.obiettivo} onChange={v=>set('obiettivo',v)}/>
             </div>
             <div style={s.card}>
               <div style={s.grid3}>
@@ -289,8 +291,102 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 3 — Salute, allergie, intolleranze ─── */}
-          {current===3 && <>
+          {/* ─── SEZIONE 5 — Lavoro e stile di vita sedentario ─── */}
+          {current===5 && <>
+            <div style={s.card}>
+              <label style={s.label}>Che tipo di lavoro fai?</label>
+              <Chips options={['Ufficio/scrivania (full time)','Ufficio (part time)','Smart working','Lavoro misto (ufficio + movimento)','Insegnante/formatore','Altro']} value={data.tipo_lavoro} onChange={v=>set('tipo_lavoro',v)}/>
+              {data.tipo_lavoro==='Altro' && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Descrivi..." value={data.tipo_lavoro_altro||''} onChange={e=>set('tipo_lavoro_altro',e.target.value)}/></div>}
+            </div>
+            <div style={s.card}>
+              <div style={s.grid2}>
+                <div><label style={s.label}>Ore seduto/a al giorno (totali)</label><Chips options={['<4h','4–6h','6–8h','8–10h','>10h']} value={data.ore_seduto} onChange={v=>set('ore_seduto',v)}/></div>
+                <div><label style={s.label}>Di cui ore consecutive senza alzarsi</label><Chips options={['<1h','1–2h','2–3h','>3h']} value={data.ore_consecutive_seduto} onChange={v=>set('ore_consecutive_seduto',v)}/></div>
+              </div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Tipo di postazione di lavoro</label>
+              <Chips options={['Scrivania fissa con sedia','Scrivania regolabile in altezza','Divano/letto','Scrivania condivisa','In trasferta/auto']} value={data.postazione_lavoro} onChange={v=>set('postazione_lavoro',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Fai pause attive durante il lavoro?</label>
+              <Chips options={['Mai','Raramente (1 pausa/die)','A volte (2–3 pause/die)','Spesso (>3 pause/die)']} value={data.pause_attive} onChange={v=>set('pause_attive',v)}/>
+              <div style={{marginTop:10}}><label style={s.label}>In cosa consistono le pause?</label>
+              <Chips multi options={['Mi alzo e cammino','Faccio stretching','Passo ad altra scrivania','Faccio una telefonata','Non si riesce mai']} value={data.tipo_pause} onChange={v=>setArr('tipo_pause',v)}/></div>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Come arrivi al lavoro?</label>
+              <Chips options={['Auto','Moto','Mezzi pubblici (cammino)','Bicicletta','A piedi','Smart working (non mi sposto)']} value={data.mezzo_lavoro} onChange={v=>set('mezzo_lavoro',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Passi medi al giorno (indicativi)</label>
+              <Chips options={['<3.000','3.000–5.000','5.000–8.000','8.000–10.000','>10.000','Non so']} value={data.passi_die} onChange={v=>set('passi_die',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>A fine giornata lavorativa, come ti senti fisicamente?</label>
+              <Chips multi options={['Schiena rigida','Collo e spalle tesi','Occhi stanchi','Gambe pesanti','Mal di testa','Stanchezza generale','Abbastanza bene']} value={data.sensazioni_fine_lavoro} onChange={v=>setArr('sensazioni_fine_lavoro',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Cosa fai normalmente dopo il lavoro?</label>
+              <Chips multi options={['Divano/TV','Telefonino','Sport/palestra','Commissioni','Tempo con famiglia','Passeggiate']} value={data.dopo_lavoro} onChange={v=>setArr('dopo_lavoro',v)}/>
+            </div>
+          </>}
+
+          {/* ─── SEZIONE 6 — Postura e mal di schiena ─── */}
+          {current===6 && <>
+            <div style={s.card}>
+              <label style={s.label}>Hai o hai avuto mal di schiena?</label>
+              <Chips options={['No','Sì, saltuario','Sì, frequente','Sì, cronico',"L'ho avuto ma ora è passato"]} value={data.mal_schiena} onChange={v=>set('mal_schiena',v)}/>
+            </div>
+            {data.mal_schiena && data.mal_schiena !== 'No' && <>
+              <div style={s.card}>
+                <label style={s.label}>Dove senti il dolore principalmente?</label>
+                <Chips multi options={['Zona lombare (bassa)','Zona dorsale (media)','Zona cervicale (collo)','Sacro/coccige','Irradia alla gamba (sciatica)','Spalle','Tutto quanto']} value={data.zona_dolore_schiena} onChange={v=>setArr('zona_dolore_schiena',v)}/>
+              </div>
+              <div style={s.card}>
+                <div style={s.grid2}>
+                  <div><label style={s.label}>Da quanto tempo?</label><Chips options={['<6 mesi','6–12 mesi','1–3 anni','>3 anni','Tutta la vita']} value={data.durata_dolore_schiena} onChange={v=>set('durata_dolore_schiena',v)}/></div>
+                  <div><label style={s.label}>Intensità media (0–10)</label><Scale value={data.intensita_dolore_schiena} onChange={v=>set('intensita_dolore_schiena',v)}/></div>
+                </div>
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Quando è peggio?</label>
+                <Chips multi options={['Dopo ore seduto','Al mattino appena sveglio','Dopo sforzi','Stando in piedi a lungo','Durante/dopo allenamento','Sotto stress','Non ha un momento preciso']} value={data.quando_peggio_schiena} onChange={v=>setArr('quando_peggio_schiena',v)}/>
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Cosa ti dà sollievo?</label>
+                <Chips multi options={['Alzarmi e camminare','Sdraiarmi','Calore/borsa acqua calda','Stretching','Farmaci','Massaggio','Niente']} value={data.sollievo_schiena} onChange={v=>setArr('sollievo_schiena',v)}/>
+              </div>
+              <div style={s.card}>
+                <label style={s.label}>Hai già fatto esami/visite per la schiena?</label>
+                <Chips options={['No','Sì, visita medico base','Sì, RX/TAC/Risonanza','Sì, fisioterapia','Sì, osteopatia','Molteplici']} value={data.visite_schiena} onChange={v=>set('visite_schiena',v)}/>
+                {data.visite_schiena && data.visite_schiena !== 'No' && <div style={{marginTop:8}}><textarea style={s.textarea} placeholder="Cosa è emerso? Es. ernia L4-L5, protrusione..." value={data.diagnosi_schiena||''} onChange={e=>set('diagnosi_schiena',e.target.value)}/></div>}
+              </div>
+            </>}
+            <div style={s.card}>
+              <label style={s.label}>Come definiresti la tua postura abituale?</label>
+              <Chips options={['Abbastanza eretta','Testa in avanti','Spalle curve','Schiena incurvata','Bacino antiverso (pancia in fuori)','Non ci ho mai pensato']} value={data.postura_abituale} onChange={v=>set('postura_abituale',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Hai tensioni o rigidità in queste zone?</label>
+              <Chips multi options={['Collo','Spalle/trapezi','Torace','Addome (core debole)',"Flessori dell'anca",'Glutei','Polpacci','Nessuna']} value={data.zone_tensione} onChange={v=>setArr('zone_tensione',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Hai mai fatto stretching o mobilità regolare?</label>
+              <Chips options={['Mai','Qualche volta','Sì, in passato','Sì, attualmente']} value={data.stretching_mobilita} onChange={v=>set('stretching_mobilita',v)}/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Ci sono movimenti che eviti per paura del dolore?</label>
+              <textarea style={s.textarea} value={data.movimenti_evitati_dolore||''} onChange={e=>set('movimenti_evitati_dolore',e.target.value)} placeholder="es. piegarmi, rotazioni, carichi pesanti..."/>
+            </div>
+            <div style={s.card}>
+              <label style={s.label}>Il mal di schiena influenza la tua vita quotidiana?</label>
+              <Chips options={['No, ci convivo senza problemi','Sì, mi limita in alcune attività','Sì, mi limita molto','Mi impedisce alcune cose che amavo fare']} value={data.impatto_schiena_vita} onChange={v=>set('impatto_schiena_vita',v)}/>
+            </div>
+          </>}
+
+          {/* ─── SEZIONE 7 — Salute, allergie, intolleranze ─── */}
+          {current===7 && <>
             <div style={s.card}>
               <label style={s.label}>Diagnosi attive</label>
               <textarea style={s.textarea} placeholder="Elenca eventuali diagnosi mediche attive..." value={data.diagnosi_attive||''} onChange={e=>set('diagnosi_attive',e.target.value)}/>
@@ -331,8 +427,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 4 — Farmaci e stimolanti ─── */}
-          {current===4 && <>
+          {/* ─── SEZIONE 6 — Farmaci e stimolanti ─── */}
+          {current===6 && <>
             <div style={s.card}>
               <label style={s.label}>Farmaci attuali (nome + dose + da quanto)</label>
               <textarea style={s.textarea} placeholder="es. Metformina 500mg da 2 anni..." value={data.farmaci||''} onChange={e=>set('farmaci',e.target.value)}/>
@@ -367,8 +463,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 5 — Sonno e recupero ─── */}
-          {current===5 && <>
+          {/* ─── SEZIONE 7 — Sonno e recupero ─── */}
+          {current===7 && <>
             <div style={s.card}>
               <div style={s.grid3}>
                 <div><label style={s.label}>Ore di sonno medie</label><Chips options={['<6','6–7','7–8','>8']} value={data.ore_sonno} onChange={v=>set('ore_sonno',v)}/></div>
@@ -398,8 +494,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 6 — Stress ed energia ─── */}
-          {current===6 && <>
+          {/* ─── SEZIONE 8 — Stress ed energia ─── */}
+          {current===8 && <>
             <div style={s.card}>
               <label style={s.label}>Stress medio (0–10)</label>
               <Scale value={data.stress_medio} onChange={v=>set('stress_medio',v)}/>
@@ -420,8 +516,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 7 — Digestione e intestino ─── */}
-          {current===7 && <>
+          {/* ─── SEZIONE 9 — Digestione e intestino ─── */}
+          {current===9 && <>
             <div style={s.card}>
               <div style={s.grid3}>
                 <div><label style={s.label}>Gonfiore</label><Chips options={['Mai','A volte','Spesso']} value={data.gonfiore} onChange={v=>set('gonfiore',v)}/></div>
@@ -440,8 +536,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 8 — Storia peso, tentativi e schema ricorrente ─── */}
-          {current===8 && <>
+          {/* ─── SEZIONE 10 — Storia peso, tentativi e schema ricorrente ─── */}
+          {current===10 && <>
             <div style={s.card}>
               <div style={s.grid2}>
                 <div><label style={s.label}>Peso minimo (5 anni)</label><input style={s.input} type="number" step="0.1" value={data.peso_minimo||''} onChange={e=>set('peso_minimo',e.target.value)}/></div>
@@ -475,8 +571,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 9 — Alimentazione, preferenze e vita reale ─── */}
-          {current===9 && <>
+          {/* ─── SEZIONE 11 — Alimentazione, preferenze e vita reale ─── */}
+          {current===11 && <>
             <div style={s.card}>
               <div style={s.grid2}>
                 <div><label style={s.label}>Quanti pasti preferiresti?</label><Chips options={['2','3','4','5+','Indifferente']} value={data.pasti_preferiti?.toString()} onChange={v=>set('pasti_preferiti',v)}/></div>
@@ -559,8 +655,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 10 — Allenamento ─── */}
-          {current===10 && <>
+          {/* ─── SEZIONE 12 — Allenamento ─── */}
+          {current===12 && <>
             <div style={s.card}>
               <label style={s.label}>Ti alleni attualmente?</label>
               <Chips options={['No','Sì']} value={data.si_allena===true?'Sì':data.si_allena===false?'No':null} onChange={v=>set('si_allena',v==='Sì')}/>
@@ -674,8 +770,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
           </>}
 
-          {/* ─── SEZIONE 12 — Check finale ─── */}
-          {current===12 && <>
+          {/* ─── SEZIONE 14 — Check finale ─── */}
+          {current===14 && <>
             <div style={s.card}>
               <label style={s.label}>C'è qualcosa di importante che non ti è stato chiesto?</label>
               <textarea style={{...s.textarea,minHeight:120}} value={data.note_finali||''} onChange={e=>set('note_finali',e.target.value)}/>
@@ -705,7 +801,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       {/* NAV AVANTI/INDIETRO */}
       <div style={{padding:'12px 20px',paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',background:'var(--bg-card)',borderTop:'0.5px solid var(--border)',display:'flex',gap:10,flexShrink:0}}>
         {current > 1 && <button onClick={prev} style={s.btnGray}>← Indietro</button>}
-        {current < 12
+        {current < 14
           ? <button onClick={next} style={{...s.btn,flex:1,justifyContent:'center'}}>
               {saving?'Salvataggio...':'Avanti →'}
             </button>
