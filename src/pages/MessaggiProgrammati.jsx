@@ -38,6 +38,7 @@ export default function MessaggiProgrammati() {
     client_id: '', message: '', scheduled_at: '',
   })
   const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState('')
   const [filter, setFilter] = useState('pending') // pending | sent
 
   useEffect(() => {
@@ -57,21 +58,50 @@ export default function MessaggiProgrammati() {
   async function save() {
     if (!form.client_id || !form.message || !form.scheduled_at) return
     setSaving(true)
-    await supabase.from('scheduled_messages').insert({
-      coach_id: profile.id,
-      client_id: form.client_id,
-      message: form.message,
-      scheduled_at: new Date(form.scheduled_at).toISOString(),
-      sent: false,
-    })
-    setForm({ client_id:'', message:'', scheduled_at:'' })
-    setShowForm(false)
-    fetchScheduled()
+    setSaveMsg('')
+    try {
+      if (form.client_id === 'all') {
+        // Invia a tutti i clienti
+        const rows = clients.map(cl => ({
+          coach_id: profile.id,
+          client_id: cl.id,
+          message: form.message,
+          scheduled_at: new Date(form.scheduled_at).toISOString(),
+          sent: false,
+        }))
+        await supabase.from('scheduled_messages').insert(rows)
+        setSaveMsg(`✓ Programmato per ${clients.length} clienti`)
+      } else {
+        await supabase.from('scheduled_messages').insert({
+          coach_id: profile.id,
+          client_id: form.client_id,
+          message: form.message,
+          scheduled_at: new Date(form.scheduled_at).toISOString(),
+          sent: false,
+        })
+        setSaveMsg('✓ Messaggio programmato')
+      }
+      setForm({ client_id:'', message:'', scheduled_at:'' })
+      setShowForm(false)
+      fetchScheduled()
+      setTimeout(() => setSaveMsg(''), 3000)
+    } catch(e) {
+      setSaveMsg('Errore: ' + e.message)
+    }
     setSaving(false)
   }
 
   async function sendNow(msg) {
     setSending(msg.id)
+    // Invia notifica in-app
+    await supabase.from('notifications').insert({
+      client_id: msg.client_id,
+      type: 'coach_message',
+      title: 'Messaggio dal coach',
+      body: msg.message,
+      read: false,
+    })
+    // Invia anche come messaggio chat
     await fetch('/api/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -94,6 +124,13 @@ export default function MessaggiProgrammati() {
       const { data: toSend } = await supabase.from('scheduled_messages')
         .select('*').eq('sent', false).lte('scheduled_at', now)
       for (const msg of toSend||[]) {
+        await supabase.from('notifications').insert({
+          client_id: msg.client_id,
+          type: 'coach_message',
+          title: 'Messaggio dal coach',
+          body: msg.message,
+          read: false,
+        })
         await fetch('/api/messages', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, coachId: msg.coach_id, message: msg.message, senderRole: 'coach' })
@@ -148,8 +185,10 @@ export default function MessaggiProgrammati() {
             <div style={s.grid2}>
               <div>
                 <label style={s.label}>Cliente *</label>
-                <select style={s.select} value={form.client_id} onChange={e=>setForm(p=>({...p,client_id:e.target.value}))}>
+                <select style={{...s.select, borderColor: form.client_id==='all' ? 'rgba(212,87,10,0.5)' : '#1C1C1C'}} value={form.client_id} onChange={e=>setForm(p=>({...p,client_id:e.target.value}))}>
                   <option value="">Seleziona...</option>
+                  <option value="all">⚡ Tutti i clienti ({clients.length})</option>
+                  <option disabled>──────────────</option>
                   {clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
                 </select>
               </div>
@@ -162,9 +201,25 @@ export default function MessaggiProgrammati() {
               <label style={s.label}>Messaggio *</label>
               <textarea style={s.textarea} placeholder="Scrivi il messaggio..." value={form.message} onChange={e=>setForm(p=>({...p,message:e.target.value}))}/>
             </div>
+            {/* Banner broadcast */}
+            {form.client_id === 'all' && (
+              <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:8,padding:'10px 12px',marginTop:10,display:'flex',alignItems:'center',gap:8}}>
+                <i className="ti ti-broadcast" style={{fontSize:16,color:'#F4894A',flexShrink:0}}/>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:'#F4894A'}}>Messaggio broadcast</div>
+                  <div style={{fontSize:11,color:'#888',marginTop:2}}>Verrà inviato a tutti i {clients.length} clienti come notifica in-app</div>
+                </div>
+              </div>
+            )}
+            {saveMsg && (
+              <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid rgba(59,140,90,0.3)',borderRadius:8,padding:'8px 12px',marginTop:8,fontSize:12,color:'#3B8C5A',fontWeight:600}}>
+                {saveMsg}
+              </div>
+            )}
             <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={save} disabled={saving||!form.client_id||!form.message||!form.scheduled_at} style={{...s.btn,flex:1,justifyContent:'center'}}>
-                <i className="ti ti-calendar-plus" style={{fontSize:14}}/>{saving?'Salvataggio...':'Programma'}
+                <i className="ti ti-calendar-plus" style={{fontSize:14}}/>
+                {saving ? 'Salvataggio...' : form.client_id==='all' ? `Programma per tutti (${clients.length})` : 'Programma'}
               </button>
               <button onClick={()=>setShowForm(false)} style={s.btnGray}>Annulla</button>
             </div>
