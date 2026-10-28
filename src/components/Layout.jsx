@@ -52,6 +52,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
     const interval = setInterval(fetchUnread, 15000)
     return () => clearInterval(interval)
   }, [profile])
+
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
     : 'U'
@@ -63,24 +64,27 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
   }[profile?.goal] || '🎯 Obiettivo'
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',background: darkMode ? '#000000' : '#0F0F0F'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#050505'}}>
 
       {/* LOGO */}
-      <div style={{padding:'32px 20px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center'}}>
-        <img src="/logo-dark.png" alt="FOfit" style={{height:30,objectFit:'contain',display:'block'}}/>
+      <div style={{padding:'24px 20px 18px',borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <img src="/logo-dark.png" alt="FOfit" style={{height:28,objectFit:'contain',display:'block'}}/>
+        <div style={{background:'rgba(212,87,10,0.15)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:20,padding:'3px 9px',fontSize:9,fontWeight:800,color:'#F4894A',letterSpacing:'0.08em'}}>
+          {isAdmin ? 'ADMIN' : 'PRO'}
+        </div>
       </div>
 
       {/* PROFILO */}
-      <div style={{padding:'14px 16px',margin:'12px 12px 4px',background:'rgba(255,255,255,0.05)',borderRadius:12,border:'0.5px solid rgba(255,255,255,0.06)'}}>
+      <div style={{padding:'12px',margin:'10px 10px 4px',background:'rgba(255,255,255,0.03)',borderRadius:12,border:'0.5px solid rgba(255,255,255,0.05)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:40,height:40,borderRadius:'50%',flexShrink:0,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:'white'}}>
+          <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:800,color:'white'}}>
             {initials}
           </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,color:'white',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            <div style={{fontSize:13,color:'#F0F0F0',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               {profile?.full_name || 'Utente'}
             </div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:1}}>
+            <div style={{fontSize:10,color:'#555',marginTop:2}}>
               {isAdmin ? '⚡ Coach · Admin' : goalLabel}
             </div>
           </div>
@@ -93,21 +97,20 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         {/* MENU CLIENTE */}
         {!isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Menu</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#2A2A2A',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Menu</div>
             {NAV_CLIENT.map(item => (
               <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
                 style={({ isActive }) => ({
-                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
-                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
-                  background:isActive?`${item.color}22`:'transparent',
-                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
-                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                  display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
+                  borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
+                  background:isActive?`${item.color}18`:'transparent',
+                  color:isActive?'#F0F0F0':'#444',
                 })}>
-                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}${`22`}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
                 </div>
-                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
-                {item.to==='/ai'&&<span style={{marginLeft:'auto',fontSize:9,background:'linear-gradient(90deg,#9B59B6,#D4570A)',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:700}}>AI</span>}
+                <span style={{fontSize:12,fontWeight:500,flex:1}}>{item.label}</span>
+                {item.to==='/ai'&&<span style={{fontSize:9,background:'rgba(155,89,182,0.25)',color:'#C39BE0',padding:'2px 7px',borderRadius:10,fontWeight:700,border:'0.5px solid rgba(155,89,182,0.3)'}}>AI</span>}
               </NavLink>
             ))}
           </>
@@ -116,54 +119,51 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         {/* MENU ADMIN */}
         {isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'10px 10px 5px',textTransform:'uppercase'}}>Gestione clienti</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#2A2A2A',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Gestione clienti</div>
             {NAV_ADMIN.map(item => (
               <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
                 style={({ isActive }) => ({
-                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
-                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
-                  background:isActive?`${item.color}22`:'transparent',
-                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
-                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                  display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
+                  borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
+                  background:isActive?`${item.color}18`:'transparent',
+                  color:isActive?'#F0F0F0':'#444',
                 })}>
-                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
                 </div>
-                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+                <span style={{fontSize:12,fontWeight:500}}>{item.label}</span>
               </NavLink>
             ))}
 
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Importa</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#2A2A2A',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Importa</div>
             {ADMIN_NAV_IMPORTA.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
-                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
-                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
-                  background:isActive?`${item.color}22`:'transparent',
-                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
-                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                  display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
+                  borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
+                  background:isActive?`${item.color}18`:'transparent',
+                  color:isActive?'#F0F0F0':'#444',
                 })}>
-                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
                 </div>
-                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+                <span style={{fontSize:12,fontWeight:500}}>{item.label}</span>
               </NavLink>
             ))}
 
-            <div style={{fontSize:9,letterSpacing:'0.12em',color:'rgba(255,255,255,0.22)',padding:'12px 10px 5px',textTransform:'uppercase'}}>Modifica</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#2A2A2A',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Modifica</div>
             {ADMIN_NAV_MODIFICA.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
-                  display:'flex',alignItems:'center',gap:10,padding:'9px 10px',
-                  borderRadius:9,marginBottom:2,textDecoration:'none',transition:'all 0.15s',
-                  background:isActive?`${item.color}22`:'transparent',
-                  borderLeft:isActive?`2.5px solid ${item.color}`:'2.5px solid transparent',
-                  color:isActive?'white':'rgba(255,255,255,0.48)',
+                  display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
+                  borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
+                  background:isActive?`${item.color}18`:'transparent',
+                  color:isActive?'#F0F0F0':'#444',
                 })}>
-                <div style={{width:28,height:28,borderRadius:7,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
                 </div>
-                <span style={{fontSize:13,fontWeight:500}}>{item.label}</span>
+                <span style={{fontSize:12,fontWeight:500}}>{item.label}</span>
               </NavLink>
             ))}
           </>
@@ -171,16 +171,16 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
       </div>
 
             {/* FOOTER */}
-      <div style={{padding:'12px 16px',borderTop:'0.5px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:7,fontSize:12,color:'rgba(255,255,255,0.3)',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
-          <i className="ti ti-logout" style={{fontSize:14}}/>Esci
+      <div style={{padding:'10px 12px',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,0.3)'}}>
+        <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#333',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
+          <i className="ti ti-logout" style={{fontSize:13,color:'#2A2A2A'}}/>Esci
         </button>
         <button onClick={onToggleTheme} style={{
-          background:'rgba(255,255,255,0.08)',border:'none',borderRadius:20,
-          padding:'5px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:6,
-          color:'rgba(255,255,255,0.5)',fontSize:11,fontFamily:'inherit'
+          background:'rgba(255,255,255,0.04)',border:'0.5px solid rgba(255,255,255,0.06)',borderRadius:20,
+          padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,
+          color:'#333',fontSize:10,fontFamily:'inherit'
         }}>
-          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:13}}/>
+          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:12,color:'#444'}}/>
           {darkMode?'Light':'Dark'}
         </button>
       </div>
@@ -230,24 +230,24 @@ export default function Layout() {
   // Schermata blocco abbonamento
   if (subBlocked || installBlocked) {
     return (
-      <div style={{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--bg)',padding:24,textAlign:'center'}}>
-        <div style={{width:80,height:80,borderRadius:'50%',background:'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>
+      <div style={{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#080808',padding:24,textAlign:'center'}}>
+        <div style={{width:80,height:80,borderRadius:'50%',background:'#1A0808',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>
           <i className="ti ti-lock" style={{fontSize:36,color:'#E24B4A'}}/>
         </div>
-        <div style={{fontSize:22,fontWeight:800,color:'var(--text)',marginBottom:8}}>
+        <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',marginBottom:8}}>
           {installBlocked ? 'Rata non saldata' : 'Abbonamento scaduto'}
         </div>
-        <div style={{fontSize:14,color:'var(--text-muted)',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
+        <div style={{fontSize:14,color:'#555',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
           {installBlocked
             ? 'Non hai saldato una o più rate del tuo abbonamento. Contatta il coach per sbloccare l\'accesso.'
             : 'Il tuo abbonamento è scaduto. Contatta il coach per rinnovarlo e tornare ad accedere all\'app.'}
         </div>
-        <div style={{background:'var(--bg-card)',borderRadius:12,padding:'16px 20px',border:'0.5px solid var(--border)',marginBottom:16}}>
+        <div style={{background:'#101010',borderRadius:12,padding:'16px 20px',border:'0.5px solid #1C1C1C',marginBottom:16}}>
           <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>Per assistenza contatta</div>
           <div style={{fontSize:14,fontWeight:700,color:'#D4570A'}}>Federico Obinu — FOfit Coach</div>
         </div>
         <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-          style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+          style={{background:'#161616',color:'#555',border:'0.5px solid #222',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
           Esci dall'account
         </button>
       </div>
@@ -261,7 +261,7 @@ export default function Layout() {
 
       {/* SIDEBAR DESKTOP */}
       {!isMobile && (
-        <div style={{width:230,flexShrink:0,borderRight:'0.5px solid rgba(255,255,255,0.04)'}}>
+        <div style={{width:220,flexShrink:0,borderRight:'0.5px solid rgba(255,255,255,0.03)'}}>
           <Sidebar profile={profile} onClose={()=>{}} onLogout={handleLogout} theme={theme} darkMode={darkMode} onToggleTheme={toggleTheme}/>
         </div>
       )}
@@ -278,38 +278,37 @@ export default function Layout() {
       )}
 
       {/* CONTENUTO PRINCIPALE */}
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:theme.bg,minWidth:0,transition:'background 0.3s'}}>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:theme.bg,minWidth:0}}>
 
         {/* TOPBAR MOBILE */}
         {isMobile && (
           <div style={{
-            background:'rgba(15,15,15,0.95)',
-            backdropFilter:'blur(20px)',
-            WebkitBackdropFilter:'blur(20px)',
-            minHeight:52,
+            background:'#080808',
+            minHeight:'calc(52px + env(safe-area-inset-top, 0px))',
             display:'flex',
             alignItems:'center',
             justifyContent:'space-between',
-            padding:'0 16px',
-            paddingTop:'calc(10px + env(safe-area-inset-top, 0px))',
-            minHeight:'calc(52px + env(safe-area-inset-top, 0px))',
+            padding:'0 14px',
+            paddingTop:'calc(8px + env(safe-area-inset-top, 0px))',
+            paddingBottom:'8px',
             flexShrink:0,
-            borderBottom:'0.5px solid rgba(255,255,255,0.06)',
+            borderBottom:'0.5px solid #151515',
             position:'sticky',
             top:0,
             zIndex:50,
           }}>
             <button onClick={()=>setMobileOpen(true)} style={{
-              background:'linear-gradient(135deg,#D4570A,#F4894A)',
+              background:'#D4570A',
               border:'none', color:'white', width:36, height:36, borderRadius:10,
               cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
               flexShrink:0, touchAction:'manipulation', WebkitTapHighlightColor:'transparent',
-              boxShadow:'0 2px 10px rgba(212,87,10,0.5)',
             }}>
-              <i className="ti ti-menu-2" style={{fontSize:18,pointerEvents:'none'}}/>
+              <i className="ti ti-menu-2" style={{fontSize:17,pointerEvents:'none'}}/>
             </button>
-            <img src="/logo-dark.png" alt="FOfit" style={{height:34,objectFit:'contain'}}/>
-            <div style={{width:36}}/>
+            <img src="/logo-dark.png" alt="FOfit" style={{height:30,objectFit:'contain'}}/>
+            <div style={{width:36,display:'flex',justifyContent:'flex-end'}}>
+              <div style={{width:8,height:8,background:'#3B8C5A',borderRadius:'50%'}}/>
+            </div>
           </div>
         )}
 
@@ -320,40 +319,35 @@ export default function Layout() {
         {/* BOTTOM NAV MOBILE — solo per clienti */}
         {isMobile && profile?.role !== 'admin' && (
           <div style={{
-            background:'#0F0F0F',
-            borderTop:'0.5px solid rgba(255,255,255,0.08)',
-            paddingBottom:0,
+            background:'#080808',
+            borderTop:'0.5px solid #111',
+            paddingBottom:'env(safe-area-inset-bottom, 0px)',
             display:'flex',
             flexShrink:0,
             zIndex:50,
-            // Estendi il colore sotto la home bar iOS/Android
             position:'relative',
           }}>
-            <div style={{
-              position:'absolute', bottom:'100%', left:0, right:0,
-              height:0, // nessuna altezza extra
-            }}/>
             {[
-              { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true },
-              { to:'/piano', icon:'ti-clipboard-list', label:'Piano' },
-              { to:'/diario', icon:'ti-pencil', label:'Diario' },
-              { to:'/allenamento', icon:'ti-barbell', label:'Allenamento' },
-              { to:'/progressi', icon:'ti-chart-line', label:'Progressi' },
+              { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true, color:'#D4570A' },
+              { to:'/piano', icon:'ti-clipboard-list', label:'Piano', color:'#D4570A' },
+              { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#4A90D4' },
+              { to:'/allenamento', icon:'ti-barbell', label:'Workout', color:'#3B8C5A' },
+              { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#9B59B6' },
             ].map(item => (
               <NavLink key={item.to} to={item.to} end={item.exact} style={({isActive})=>({
                 flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                padding:'10px 4px 8px', textDecoration:'none', color: isActive ? '#F4894A' : 'rgba(255,255,255,0.35)',
+                padding:'8px 2px 6px', textDecoration:'none',
                 transition:'color 0.15s',
               })}>
                 {({isActive}) => <>
                   <div style={{
-                    width:36, height:36, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center',
-                    background: isActive ? 'rgba(212,87,10,0.2)' : 'transparent',
+                    width:40, height:36, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center',
+                    background: isActive ? `${item.color}20` : 'transparent',
                     transition:'background 0.15s',
                   }}>
-                    <i className={`ti ${item.icon}`} style={{fontSize:20, color: isActive ? '#F4894A' : 'rgba(255,255,255,0.4)'}}/>
+                    <i className={`ti ${item.icon}`} style={{fontSize:19, color: isActive ? item.color : '#333'}}/>
                   </div>
-                  <span style={{fontSize:9, marginTop:2, fontWeight: isActive ? 700 : 400, letterSpacing:'0.02em'}}>{item.label}</span>
+                  <span style={{fontSize:9, marginTop:2, fontWeight: isActive ? 700 : 500, color: isActive ? item.color : '#333', letterSpacing:'0.02em'}}>{item.label}</span>
                 </>}
               </NavLink>
             ))}
