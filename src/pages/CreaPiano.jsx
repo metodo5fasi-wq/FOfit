@@ -236,46 +236,32 @@ export default function CreaPiano() {
     setAiProgress(0)
     setAiStatus('Analisi indicazioni...')
 
-    // Progresso simulato mentre aspettiamo la risposta
-    const steps = [
-      {pct:10, msg:'Calcolo fabbisogno calorico...'},
-      {pct:22, msg:'Struttura pasti settimanali...'},
-      {pct:38, msg:'Selezione alimenti...'},
-      {pct:55, msg:'Bilanciamento macro...'},
-      {pct:70, msg:'Verifica valori nutrizionali...'},
-      {pct:82, msg:'Ottimizzazione varietà...'},
-      {pct:92, msg:'Rifinitura piano...'},
-    ]
-    let stepIdx = 0
+    // Progresso fluido — sale fino a 90% poi aspetta la risposta
+    const msgs = ['Calcolo fabbisogno...','Struttura pasti...','Selezione alimenti...','Bilanciamento macro...','Verifica nutrienti...','Rifinitura piano...']
+    let pct = 5
+    let msgIdx = 0
+    setAiProgress(5)
+    setAiStatus(msgs[0])
     const timer = setInterval(() => {
-      if (stepIdx < steps.length) {
-        setAiProgress(steps[stepIdx].pct)
-        setAiStatus(steps[stepIdx].msg)
-        stepIdx++
-      }
-    }, 600)
+      pct = Math.min(pct + (pct < 60 ? 4 : pct < 80 ? 2 : 0.5), 90)
+      setAiProgress(Math.round(pct))
+      msgIdx = Math.min(Math.floor(pct / 15), msgs.length - 1)
+      setAiStatus(msgs[msgIdx])
+    }, 400)
 
     try {
-      const context = `Sei un nutrizionista esperto italiano. Crea un piano alimentare settimanale COMPLETO.
+      const context = `Nutrizionista italiano. Piano alimentare 7 giorni.
 Indicazioni: ${aiPrompt}
-${kcalTarget ? `Target: ${kcalTarget} kcal/die, P${protTarget}g C${carbsTarget}g G${fatTarget}g` : ''}
-
-REGOLE FONDAMENTALI:
-- Rispondi SOLO con JSON valido, zero testo aggiuntivo, zero backtick
-- Ogni giorno (0=Lun, 6=Dom) deve avere esattamente 4 pasti
-- meal_type SOLO tra: Colazione, Pranzo, Spuntino pomeriggio, Cena
-- Usa alimenti italiani comuni con valori nutrizionali realistici
-- Varia gli alimenti tra i giorni
-
-Formato JSON esatto:
-{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"Fiocchi avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7},{"name":"Latte parzialmente scremato","qty":200,"kcal100":46,"p100":3.4,"c100":4.8,"g100":1.6}]}],"1":[...],"2":[...],"3":[...],"4":[...],"5":[...],"6":[...]}}`
+${kcalTarget ? `Target: ${kcalTarget}kcal P${protTarget}g C${carbsTarget}g G${fatTarget}g` : ''}
+Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pomeriggio,Cena). Alimenti italiani realistici.
+{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"Fiocchi avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7}]}],"1":[...],"2":[...],"3":[...],"4":[...],"5":[...],"6":[...]}}`
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          model:'claude-haiku-5-5',
-          max_tokens:3000,
+          model:'claude-sonnet-4-6',
+          max_tokens:2500,
           messages:[{role:'user',content:context}]
         })
       })
@@ -285,7 +271,9 @@ Formato JSON esatto:
       setAiStatus('Costruzione piano...')
 
       const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Errore API')
       const text = data.content?.[0]?.text || ''
+      if (!text) throw new Error('Risposta vuota dall\'AI')
       const clean = text.replace(/```json|```/g,'').trim()
       const parsed = JSON.parse(clean)
 
