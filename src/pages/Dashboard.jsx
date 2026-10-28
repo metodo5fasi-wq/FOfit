@@ -338,43 +338,7 @@ export default function Dashboard() {
       {/* CONTENUTO SCROLLABILE */}
       <div style={{flex:1,overflowY:'auto',padding:'14px 16px'}}>
 
-        {/* BANNER NOTIFICHE — sempre visibile finché non attivate */}
-        {notifStatus !== 'granted' && (
-          <FadeIn delay={50}>
-          <div style={{
-            background:'#0D0D0D',
-            borderRadius:12, padding:'12px 14px', marginBottom:12,
-            border:'0.5px solid rgba(212,87,10,0.2)',
-            display:'flex', alignItems:'center', gap:10,
-          }}>
-            <div style={{
-              width:34,height:34,borderRadius:9,flexShrink:0,
-              background:'rgba(212,87,10,0.12)',
-              display:'flex',alignItems:'center',justifyContent:'center',
-            }}>
-              <i className="ti ti-bell" style={{fontSize:16,color:'#D4570A'}}/>
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Attiva le notifiche</div>
-              <div style={{fontSize:10,color:'#888',marginTop:1}}>
-                Ricevi i messaggi del coach anche con l'app chiusa
-              </div>
-            </div>
-            <button onClick={async()=>{
-              const r = await requestNotificationPermission(profile.id)
-              if (r.ok) {
-                setNotifStatus('granted')
-                sendTestNotification()
-                showToast('Notifiche attivate! 🔔','')
-              } else {
-                showToast('Tocca "Consenti" quando appare il popup','')
-              }
-            }} style={{background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'7px 14px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0,whiteSpace:'nowrap'}}>
-              Attiva ora
-            </button>
-          </div>
-          </FadeIn>
-        )}
+
 
         {/* PROSSIMO ALLENAMENTO */}
         {nextWorkout && (
