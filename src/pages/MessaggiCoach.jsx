@@ -114,7 +114,7 @@ export default function MessaggiCoach() {
     <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
 
       {/* TOPBAR */}
-      <div style={{ background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 18px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
+      <div style={{ background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 18px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
         <div style={{ width:38, height:38, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 2px 8px rgba(212,87,10,0.3)' }}>
           <span style={{ fontSize:13, fontWeight:700, color:'white' }}>FO</span>
         </div>
@@ -125,7 +125,7 @@ export default function MessaggiCoach() {
             Il tuo coach personale
           </div>
         </div>
-        <div style={{ fontSize:10, color:'#CCC', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
+        <div style={{ fontSize:10, color:'#CCC', background:'#161616', padding:'4px 10px', borderRadius:12, border:'0.5px solid #1C1C1C' }}>
           Risponde entro 24h
         </div>
       </div>
@@ -161,7 +161,7 @@ export default function MessaggiCoach() {
             {/* Etichetta data */}
             <div style={{ display:'flex', alignItems:'center', gap:10, margin:'12px 0 8px' }}>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
-              <span style={{ fontSize:11, color:'#CCC', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
+              <span style={{ fontSize:11, color:'#CCC', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'#161616', borderRadius:10, border:'0.5px solid #1C1C1C' }}>
                 {formatDateLabel(date)}
               </span>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
@@ -228,8 +228,8 @@ export default function MessaggiCoach() {
       </div>
 
       {/* INPUT */}
-      <div style={{ background:'var(--bg-card)', borderTop:'0.5px solid var(--border)', padding:'10px 16px', paddingBottom:'calc(env(safe-area-inset-bottom) + 10px)', flexShrink:0 }}>
-        <div style={{ display:'flex', gap:8, alignItems:'flex-end', background:'var(--bg-input)', borderRadius:24, border:'0.5px solid var(--border)', padding:'4px 4px 4px 14px' }}>
+      <div style={{ background:'#0D0D0D', borderTop:'0.5px solid #1A1A1A', padding:'10px 16px', paddingBottom:'calc(env(safe-area-inset-bottom) + 10px)', flexShrink:0 }}>
+        <div style={{ display:'flex', gap:8, alignItems:'flex-end', background:'#161616', borderRadius:24, border:'0.5px solid #1C1C1C', padding:'4px 4px 4px 14px' }}>
           <textarea
             ref={textareaRef}
             placeholder="Scrivi al tuo coach..."

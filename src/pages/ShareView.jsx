@@ -168,7 +168,7 @@ function SessionView({ session, logs }) {
 
       {/* NOTE SESSIONE */}
       {session.notes && (
-        <div style={{background:'#FEF0E7',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
+        <div style={{background:'rgba(212,87,10,0.12)',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
           <div style={{fontSize:10,color:ORANGE,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Note sessione</div>
           <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{session.notes}</div>
         </div>
@@ -313,7 +313,7 @@ function ProgressView({ entry, photos }) {
 
       {/* NOTE */}
       {entry.notes && (
-        <div style={{background:'#FEF0E7',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
+        <div style={{background:'rgba(212,87,10,0.12)',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
           <div style={{fontSize:10,color:ORANGE,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Note</div>
           <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{entry.notes}</div>
         </div>

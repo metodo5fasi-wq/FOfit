@@ -831,9 +831,9 @@ export default function ModificaPiano() {
                       opacity:dragFoodId===food.id?0.4:1,
                       background:dragOverFoodId===food.id?'#FEF0E7':'transparent'}}>
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
-                      <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#999',cursor:'grab',flexShrink:0}}/>
+                      <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC',cursor:'grab',flexShrink:0}}/>
                       <span style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.food_name}</span>
-                      <button onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#999',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
+                      <button onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
                     </div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginLeft:19}}>
                       {[{k:'quantity_g',l:'g',bold:true},{k:'kcal',l:'kcal'},{k:'protein_g',l:'P'},{k:'carbs_g',l:'C'},{k:'fat_g',l:'G'}].map(f=>(

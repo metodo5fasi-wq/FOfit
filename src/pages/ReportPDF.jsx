@@ -2,18 +2,18 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 const s = {
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px', WebkitOverflowScrolling:'touch' },
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
   btnGreen: { background:'#3B6D11', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   grid3: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 },
   grid4: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8 },
-  statBox: (color='#D4570A') => ({ background:'#F5F3EF', borderRadius:10, padding:'12px', textAlign:'center' }),
+  statBox: (color='#D4570A') => ({ background:'#161616', borderRadius:10, padding:'12px', textAlign:'center' }),
   statVal: (color='#D4570A') => ({ fontSize:22, fontWeight:800, color, marginBottom:2 }),
   statLbl: { fontSize:9, color:'#CCC', textTransform:'uppercase', letterSpacing:'0.07em' },
 }
@@ -24,7 +24,7 @@ function ScoreBar({ value, max=10, color='#D4570A' }) {
   const pct = Math.min(Math.round((value/max)*100), 100)
   return (
     <div style={{display:'flex',alignItems:'center',gap:8}}>
-      <div style={{flex:1,height:6,background:'#F0EDE8',borderRadius:4,overflow:'hidden'}}>
+      <div style={{flex:1,height:6,background:'#141414',borderRadius:4,overflow:'hidden'}}>
         <div style={{height:6,width:`${pct}%`,background:color,borderRadius:4,transition:'width 0.3s'}}/>
       </div>
       <span style={{fontSize:12,fontWeight:700,color,minWidth:24,textAlign:'right'}}>{value}</span>
@@ -151,7 +151,7 @@ export default function ReportPDF() {
   .avatar { width:48px; height:48px; border-radius:50%; background:#D4570A; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:white; flex-shrink:0; }
   .client-name { font-size:20px; font-weight:800; }
   .client-sub { font-size:12px; opacity:0.7; margin-top:3px; }
-  .period-badge { margin-left:auto; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:5px 14px; font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+  .period-badge { margin-left:auto; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.5); border-radius:20px; padding:5px 14px; font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
 
   /* LAYOUT */
   .body { padding:28px 36px; }
@@ -500,7 +500,7 @@ export default function ReportPDF() {
                   ))}
                 </div>
                 {reportData.latestReport.note_coach && (
-                  <div style={{marginTop:10,background:'#F5F3EF',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#CCC',fontStyle:'italic',borderLeft:'3px solid #D4570A'}}>
+                  <div style={{marginTop:10,background:'#161616',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#CCC',fontStyle:'italic',borderLeft:'3px solid #D4570A'}}>
                     "{reportData.latestReport.note_coach}"
                   </div>
                 )}

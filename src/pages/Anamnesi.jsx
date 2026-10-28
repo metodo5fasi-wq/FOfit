@@ -4,17 +4,17 @@ import { useAuth } from '../App'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'0 0 8px', WebkitOverflowScrolling:'touch' },
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   section: { padding:'20px 20px 0' },
-  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   fieldLabel: { fontSize:13, fontWeight:600, color:'#F0F0F0', marginBottom:8, marginTop:14, display:'block' },
-  input: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  textarea: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box', minHeight:80 },
+  input: { width:'100%', padding:'10px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  textarea: { width:'100%', padding:'10px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box', minHeight:80 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   grid3: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'var(--bg-input)', color:'#CCC', border:'0.5px solid var(--border)', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   chip: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)', transition:'all 0.15s' }),
   chipCheck: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#EAF3DE':'var(--bg-card)', color:active?'#3B6D11':'var(--text-muted)', borderColor:active?'#3B6D11':'var(--border)', transition:'all 0.15s' }),
   scale: (active) => ({ width:36, height:36, borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)' }),
@@ -156,7 +156,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   const pct = Math.round(((current-1)/13)*100)
 
   return (
-    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'var(--bg)'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#080808'}}>
       {/* TOPBAR */}
       <div style={s.topbar}>
         <div style={{flex:1}}>
@@ -177,13 +177,13 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
 
       {/* ERRORE */}
       {saveError && (
-        <div style={{background:'#FEE2E2',borderBottom:'0.5px solid #E24B4A',padding:'8px 16px',fontSize:12,color:'#E24B4A',flexShrink:0}}>
+        <div style={{background:'rgba(226,75,74,0.12)',borderBottom:'0.5px solid #E24B4A',padding:'8px 16px',fontSize:12,color:'#E24B4A',flexShrink:0}}>
           ⚠️ {saveError}
         </div>
       )}
 
       {/* NAV SEZIONI */}
-      <div style={{padding:'10px 16px',display:'flex',gap:6,overflowX:'auto',flexShrink:0,borderBottom:'0.5px solid var(--border)'}}>
+      <div style={{padding:'10px 16px',display:'flex',gap:6,overflowX:'auto',flexShrink:0,borderBottom:'0.5px solid #1A1A1A'}}>
         {SECTIONS.map(s2=>(
           <button key={s2.n} onClick={()=>saveSection(s2.n)} style={{
             flexShrink:0,padding:'5px 10px',borderRadius:16,fontSize:11,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
@@ -736,7 +736,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
               {['Squat','Leg press','Affondi','Stacchi','Panca piana','Trazioni/Lat machine','Rematore','Military press','Cardio steady','HIIT'].map(ex=>{
                 const feeling = data.esercizi_feeling?.[ex]
                 return (
-                  <div key={ex} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid var(--border)'}}>
+                  <div key={ex} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                     <span style={{flex:1,fontSize:12,color:'#F0F0F0',fontWeight:500}}>{ex}</span>
                     {['👍','😐','👎'].map(emoji=>(
                       <button key={emoji} onClick={()=>set('esercizi_feeling',{...(data.esercizi_feeling||{}),[ex]:feeling===emoji?null:emoji})} style={{width:34,height:28,borderRadius:7,border:'0.5px solid',cursor:'pointer',fontSize:14,background:feeling===emoji?'#FEF0E7':'var(--bg-card)',borderColor:feeling===emoji?'#D4570A':'var(--border)'}}>{emoji}</button>
@@ -848,7 +848,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       </div>
 
       {/* NAV AVANTI/INDIETRO */}
-      <div style={{padding:'12px 20px',paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',background:'var(--bg-card)',borderTop:'0.5px solid var(--border)',display:'flex',gap:10,flexShrink:0}}>
+      <div style={{padding:'12px 20px',paddingBottom:'calc(env(safe-area-inset-bottom) + 12px)',background:'#0D0D0D',borderTop:'0.5px solid #1A1A1A',display:'flex',gap:10,flexShrink:0}}>
         {current > 1 && <button onClick={prev} style={s.btnGray}>← Indietro</button>}
         {current < 14
           ? <button onClick={next} style={{...s.btn,flex:1,justifyContent:'center'}}>
@@ -856,7 +856,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </button>
           : <>
               {data.submitted_at && (
-                <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#3B6D11',fontWeight:600}}>
+                <div style={{background:'rgba(59,140,90,0.12)',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#3B6D11',fontWeight:600}}>
                   ✓ Inviata il {new Date(data.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})} — puoi modificare e reinviare
                 </div>
               )}

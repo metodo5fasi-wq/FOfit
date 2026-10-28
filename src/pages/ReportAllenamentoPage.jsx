@@ -40,7 +40,7 @@ export default function ReportAllenamentoPage() {
     <>
       <div style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border)', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Report allenamento</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#F0F0F0' }}>Report allenamento</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Aggiorna il tuo coach sui progressi</div>
         </div>
         <button onClick={() => draft ? setSelectedReport(draft) : setShowNew(true)} style={{ background: '#7C3AED', color: 'white', border: 'none', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -55,7 +55,7 @@ export default function ReportAllenamentoPage() {
         {!loading && reports.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: 44, marginBottom: 14 }}>📋</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Nessun report ancora</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F0F0', marginBottom: 8 }}>Nessun report ancora</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>
               Il report ti permette di aggiornare il tuo coach sui progressi di carico, l'alimentazione e come ti sei sentito nel periodo.
             </div>
@@ -67,7 +67,7 @@ export default function ReportAllenamentoPage() {
 
         {/* BOZZA */}
         {draft && (
-          <div style={{ background: '#FEF0E7', border: '0.5px solid #D4570A', borderRadius: 12, padding: '14px', marginBottom: 14, cursor: 'pointer' }} onClick={() => setSelectedReport(draft)}>
+          <div style={{ background: 'rgba(212,87,10,0.12)', border: '0.5px solid #D4570A', borderRadius: 12, padding: '14px', marginBottom: 14, cursor: 'pointer' }} onClick={() => setSelectedReport(draft)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#D4570A' }}>📝 Bozza in corso</div>
@@ -75,7 +75,7 @@ export default function ReportAllenamentoPage() {
                   Ultima modifica: {new Date(draft.updated_at || draft.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#D4570A', background: 'white', padding: '4px 10px', borderRadius: 8 }}>Continua →</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#D4570A', background: '#0D0D0D', padding: '4px 10px', borderRadius: 8 }}>Continua →</span>
             </div>
           </div>
         )}
@@ -93,7 +93,7 @@ export default function ReportAllenamentoPage() {
                   <i className="ti ti-clipboard-check" style={{ fontSize: 18, color: '#7C3AED' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F0F0' }}>
                     {r.period_start && r.period_end
                       ? `${new Date(r.period_start + 'T12:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} – ${new Date(r.period_end + 'T12:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
                       : new Date(r.submitted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}

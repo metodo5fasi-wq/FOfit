@@ -4,11 +4,11 @@ import { useAuth } from '../App'
 import { Toast } from '../components/Animations'
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'var(--bg-input)', color:'#CCC', border:'0.5px solid var(--border)', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
 }
 
 // Configurazione slot: giorno della settimana (0=Dom...6=Sab) -> { start, end }
@@ -184,7 +184,7 @@ export default function Calendario() {
               Le tue chiamate prenotate
             </div>
             {myBookings.map(b => (
-              <div key={b.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'0.5px solid var(--border)'}}>
+              <div key={b.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>
                     {new Date(b.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
@@ -200,7 +200,7 @@ export default function Calendario() {
         )}
 
         {/* INFO */}
-        <div style={{...s.card, background:'var(--bg-input)', border:'none'}}>
+        <div style={{...s.card, background:'#161616', border:'none'}}>
           <div style={{fontSize:12,color:'#CCC',lineHeight:1.6}}>
             <i className="ti ti-info-circle" style={{fontSize:13,color:'#D4570A',marginRight:6}}/>
             Disponibilità: <strong style={{color:'#F0F0F0'}}>Lun, Mer, Ven 9:00-12:00</strong> e <strong style={{color:'#F0F0F0'}}>Mar, Gio 15:00-18:30</strong>.
@@ -230,7 +230,7 @@ export default function Calendario() {
                     onClick={()=>setSelectedDate(isSelected ? null : dateKey)}
                     style={{
                       width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center',
-                      padding:'12px 14px', borderRadius:10, border:'0.5px solid var(--border)',
+                      padding:'12px 14px', borderRadius:10, border:'0.5px solid #1C1C1C',
                       background: isSelected ? '#D4570A' : 'var(--bg-input)',
                       color: isSelected ? 'white' : 'var(--text)',
                       fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer'

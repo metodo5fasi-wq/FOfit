@@ -27,7 +27,7 @@ export default function SelezionaPianoCliente() {
 
   return (
     <>
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 22px',height:56,display:'flex',alignItems:'center',flexShrink:0}}>
+      <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 22px',height:56,display:'flex',alignItems:'center',flexShrink:0}}>
         <div>
           <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Modifica piano alimentare</div>
           <div style={{fontSize:12,color:'#CCC'}}>Seleziona il cliente</div>
@@ -37,7 +37,7 @@ export default function SelezionaPianoCliente() {
         {loading && <div style={{textAlign:'center',padding:'40px 0',color:'#CCC',fontSize:13}}>Caricamento...</div>}
         {!loading && clients.map(c => (
           <div key={c.id} onClick={() => c.plan ? navigate(`/modifica-piano/${c.plan.id}`) : null}
-            style={{background:'white',borderRadius:12,border:`0.5px solid ${c.plan?'#E0DDD6':'#F0EDEA'}`,padding:'14px 16px',marginBottom:10,cursor:c.plan?'pointer':'default',display:'flex',alignItems:'center',gap:12,opacity:c.plan?1:0.6}}>
+            style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${c.plan?'#E0DDD6':'#F0EDEA'}`,padding:'14px 16px',marginBottom:10,cursor:c.plan?'pointer':'default',display:'flex',alignItems:'center',gap:12,opacity:c.plan?1:0.6}}>
             <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
               {initials(c.full_name)}
             </div>
@@ -50,7 +50,7 @@ export default function SelezionaPianoCliente() {
             </div>
             {c.plan
               ? <i className="ti ti-chevron-right" style={{fontSize:18,color:'#D4570A'}}/>
-              : <span style={{fontSize:11,color:'#CCC',background:'#F5F3EF',padding:'3px 8px',borderRadius:8}}>Nessun piano</span>
+              : <span style={{fontSize:11,color:'#CCC',background:'#161616',padding:'3px 8px',borderRadius:8}}>Nessun piano</span>
             }
           </div>
         ))}

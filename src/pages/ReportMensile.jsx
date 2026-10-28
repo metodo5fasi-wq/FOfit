@@ -3,9 +3,9 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
 }
 
 export default function ReportMensile() {
@@ -44,7 +44,7 @@ export default function ReportMensile() {
         {!loading && reports.map(r => (
           <div key={r.id} style={s.card}>
             <div onClick={()=>setExpanded(expanded===r.id?null:r.id)} style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
-              <div style={{width:40,height:40,borderRadius:10,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <div style={{width:40,height:40,borderRadius:10,background:'rgba(212,87,10,0.12)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <i className="ti ti-chart-line" style={{fontSize:18,color:'#D4570A'}}/>
               </div>
               <div style={{flex:1}}>
@@ -58,7 +58,7 @@ export default function ReportMensile() {
               <i className={`ti ti-chevron-${expanded===r.id?'up':'down'}`} style={{fontSize:16,color:'#CCC'}}/>
             </div>
             {expanded===r.id && (
-              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)',fontSize:13,color:'#F0F0F0',lineHeight:1.8,whiteSpace:'pre-line'}}>
+              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #1A1A1A',fontSize:13,color:'#F0F0F0',lineHeight:1.8,whiteSpace:'pre-line'}}>
                 {r.content}
               </div>
             )}

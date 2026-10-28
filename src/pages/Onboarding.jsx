@@ -81,7 +81,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div style={{height:'100dvh',display:'flex',flexDirection:'column',background:'#F5F3EF',overflow:'hidden'}}>
+    <div style={{height:'100dvh',display:'flex',flexDirection:'column',background:'#161616',overflow:'hidden'}}>
 
       {/* HERO */}
       <div style={{

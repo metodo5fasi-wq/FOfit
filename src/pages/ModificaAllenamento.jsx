@@ -410,7 +410,7 @@ export default function ModificaAllenamento() {
                   {/* HEADER ESERCIZIO */}
                   <div style={{display:'flex',alignItems:'center',gap:7,padding:'9px 11px',cursor:'pointer'}}
                     onClick={()=>{if(expandedEx==='all'){setAllExpanded(false);setExpandedEx(ex.id)}else setExpandedEx(isExpanded?null:ex.id)}}>
-                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#999',flexShrink:0}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#CCC',flexShrink:0}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:15}}/>
                       <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
                     </div>

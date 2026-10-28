@@ -3,16 +3,16 @@ import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
 const s = {
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px', WebkitOverflowScrolling:'touch' },
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnSm: { background:'#FEF0E7', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
-  btnGray: { background:'#F5F3EF', color:'#CCC', border:'0.5px solid #E0DDD6', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
-  btnGreen: { background:'#EAF3DE', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.12)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
+  btnGreen: { background:'rgba(59,140,90,0.12)', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   badge: { fontSize:10, padding:'3px 8px', borderRadius:10, fontWeight:600 },
 }
@@ -26,12 +26,12 @@ function daysLeft(d) {
 }
 
 function StatusBadge({ days }) {
-  if (days === null) return <span style={{...s.badge, background:'#F5F3EF', color:'#CCC'}}>Non impostato</span>
-  if (days < 0) return <span style={{...s.badge, background:'#FEE2E2', color:'#E24B4A'}}>Scaduto {Math.abs(days)}gg fa</span>
-  if (days <= 4) return <span style={{...s.badge, background:'#FEE2E2', color:'#E24B4A'}}>⚠ Scade in {days}gg</span>
-  if (days <= 7) return <span style={{...s.badge, background:'#FEF0E7', color:'#D4570A'}}>⚠ Scade in {days}gg</span>
-  if (days <= 30) return <span style={{...s.badge, background:'#FEF8E7', color:'#E8A020'}}>Scade in {days}gg</span>
-  return <span style={{...s.badge, background:'#EAF3DE', color:'#3B6D11'}}>✓ Attivo ({days}gg)</span>
+  if (days === null) return <span style={{...s.badge, background:'#161616', color:'#CCC'}}>Non impostato</span>
+  if (days < 0) return <span style={{...s.badge, background:'rgba(226,75,74,0.12)', color:'#E24B4A'}}>Scaduto {Math.abs(days)}gg fa</span>
+  if (days <= 4) return <span style={{...s.badge, background:'rgba(226,75,74,0.12)', color:'#E24B4A'}}>⚠ Scade in {days}gg</span>
+  if (days <= 7) return <span style={{...s.badge, background:'rgba(212,87,10,0.12)', color:'#D4570A'}}>⚠ Scade in {days}gg</span>
+  if (days <= 30) return <span style={{...s.badge, background:'rgba(232,160,32,0.1)', color:'#E8A020'}}>Scade in {days}gg</span>
+  return <span style={{...s.badge, background:'rgba(59,140,90,0.12)', color:'#3B6D11'}}>✓ Attivo ({days}gg)</span>
 }
 
 export default function Abbonamenti() {
@@ -191,7 +191,7 @@ export default function Abbonamenti() {
       <div style={s.page}>
         {/* ALERT */}
         {(scaduti.length>0||inScadenza.length>0) && (
-          <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px',marginBottom:14}}>
+          <div style={{background:'rgba(212,87,10,0.12)',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px',marginBottom:14}}>
             <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8}}>
               {scaduti.length>0&&`${scaduti.length} scadut${scaduti.length>1?'i':'o'}`}
               {scaduti.length>0&&inScadenza.length>0&&' · '}
@@ -199,7 +199,7 @@ export default function Abbonamenti() {
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
               {[...scaduti,...inScadenza].map(c=>(
-                <div key={c.id} style={{background:'white',borderRadius:8,padding:'5px 10px',display:'flex',alignItems:'center',gap:6}}>
+                <div key={c.id} style={{background:'#0D0D0D',borderRadius:8,padding:'5px 10px',display:'flex',alignItems:'center',gap:6}}>
                   <span style={{fontSize:12,fontWeight:600}}>{c.full_name}</span>
                   <StatusBadge days={daysLeft(c.subscription_end)}/>
                   <button onClick={()=>renew(c)} style={s.btnSm}>↻ Rinnova</button>
@@ -216,7 +216,7 @@ export default function Abbonamenti() {
             {l:'In scadenza',v:inScadenza.length,c:'#E8A020'},
             {l:'Scaduti',v:scaduti.length,c:'#E24B4A'},
           ].map(st=>(
-            <div key={st.l} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'10px',textAlign:'center'}}>
+            <div key={st.l} style={{background:'#0D0D0D',borderRadius:10,border:'0.5px solid #1C1C1C',padding:'10px',textAlign:'center'}}>
               <div style={{fontSize:22,fontWeight:800,color:st.c}}>{st.v}</div>
               <div style={{fontSize:10,color:'#CCC',textTransform:'uppercase'}}>{st.l}</div>
             </div>
@@ -243,8 +243,8 @@ export default function Abbonamenti() {
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
                       {c.full_name}
-                      {isBlocked && <span style={{fontSize:10,background:'#FEE2E2',color:'#E24B4A',padding:'2px 6px',borderRadius:6,fontWeight:700}}>🔒 BLOCCATO</span>}
-                      {hasUnpaidRate && !isBlocked && <span style={{fontSize:10,background:'#FEF8E7',color:'#E8A020',padding:'2px 6px',borderRadius:6,fontWeight:700}}>⚠ RATA SCOPERTA</span>}
+                      {isBlocked && <span style={{fontSize:10,background:'rgba(226,75,74,0.12)',color:'#E24B4A',padding:'2px 6px',borderRadius:6,fontWeight:700}}>🔒 BLOCCATO</span>}
+                      {hasUnpaidRate && !isBlocked && <span style={{fontSize:10,background:'rgba(232,160,32,0.1)',color:'#E8A020',padding:'2px 6px',borderRadius:6,fontWeight:700}}>⚠ RATA SCOPERTA</span>}
                     </div>
                     <div style={{fontSize:11,color:'#CCC',marginTop:2}}>
                       {c.subscription_type||'—'}
@@ -290,7 +290,7 @@ export default function Abbonamenti() {
 
                     {/* SEZIONE RATE */}
                     {form.payment_type==='rate' && (
-                      <div style={{background:'#FEF8E7',borderRadius:10,padding:'14px',marginTop:12}}>
+                      <div style={{background:'rgba(232,160,32,0.1)',borderRadius:10,padding:'14px',marginTop:12}}>
                         <div style={{fontSize:12,fontWeight:700,color:'#E8A020',marginBottom:10}}>💳 Pagamento a rate</div>
 
                         <div style={s.grid2}>
@@ -310,7 +310,7 @@ export default function Abbonamenti() {
 
                         {/* TABELLA RATE */}
                         {installments.length>0 && (
-                          <div style={{borderRadius:9,overflow:'hidden',border:'0.5px solid #E0DDD6'}}>
+                          <div style={{borderRadius:9,overflow:'hidden',border:'0.5px solid #1C1C1C'}}>
                             {/* HEADER */}
                             <div style={{display:'grid',gridTemplateColumns:'40px 1fr 70px 90px',background:'#E8A020',padding:'7px 10px',gap:8}}>
                               {['#','Scadenza','€','Stato'].map(h=>(
@@ -337,7 +337,7 @@ export default function Abbonamenti() {
                               </div>
                             ))}
                             {/* TOTALE */}
-                            <div style={{padding:'7px 10px',fontSize:11,fontWeight:600,color:'#F0F0F0',background:'#F5F3EF',display:'flex',justifyContent:'space-between'}}>
+                            <div style={{padding:'7px 10px',fontSize:11,fontWeight:600,color:'#F0F0F0',background:'#161616',display:'flex',justifyContent:'space-between'}}>
                               <span>Totale: €{(installments[0]?.amount||0)*installments.length}</span>
                               <span style={{color:'#3B6D11'}}>Pagato: €{installments.filter(i=>i.paid_at).length*(installments[0]?.amount||0)}</span>
                             </div>

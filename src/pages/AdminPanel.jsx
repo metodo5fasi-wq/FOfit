@@ -19,7 +19,7 @@ const s = {
   card: { background:'#0D0D0D', borderRadius:14, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   cardTitle: { fontSize:12, fontWeight:700, color:'#F0F0F0', display:'flex', alignItems:'center', gap:7, marginBottom:14 },
   table: { width:'100%', borderCollapse:'collapse', fontSize:13 },
-  th: { textAlign:'left', padding:'8px 12px', fontSize:9, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', borderBottom:'0.5px solid #1A1A1A', background:'#0A0A0A', fontWeight:700 },
+  th: { textAlign:'left', padding:'8px 12px', fontSize:9, color:'#CCC', textTransform:'uppercase', letterSpacing:'0.08em', borderBottom:'0.5px solid #1A1A1A', background:'#0A0A0A', fontWeight:700 },
   td: { padding:'10px 12px', borderBottom:'0.5px solid #111', color:'#C0C0C0', verticalAlign:'middle' },
   avatar: { width:32, height:32, borderRadius:9, background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'white', marginRight:8, flexShrink:0 },
   badge: { fontSize:9, padding:'2px 8px', borderRadius:10, fontWeight:700 },
@@ -802,7 +802,7 @@ export default function AdminPanel() {
           {/* PANNELLO DETTAGLIO CLIENTE — slide-in a destra su PC */}
           {selectedClient && !isMobile && (
             <div style={{
-              width:440,flexShrink:0,borderLeft:'0.5px solid #E0DDD6',
+              width:440,flexShrink:0,borderLeft:'0.5px solid #1A1A1A',
               overflowY:'auto',background:'#0D0D0D',
               WebkitOverflowScrolling:'touch',
               animation:'slideInRight 0.2s ease-out',
@@ -1579,7 +1579,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
       {/* STATS CARD ROW */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:16}}>
         <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'#EBF3FD',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'rgba(74,144,212,0.12)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <i className="ti ti-users" style={{fontSize:20,color:'#4A90D4'}}/>
           </div>
           <div>
@@ -1945,7 +1945,7 @@ function MessaggiAdmin() {
   return (
     <div style={{display:'flex',height:'calc(100dvh - 120px)',gap:0}}>
       {/* LISTA CLIENTI */}
-      <div style={{width:200,borderRight:'0.5px solid #E0DDD6',overflowY:'auto',padding:14,flexShrink:0}}>
+      <div style={{width:200,borderRight:'0.5px solid #1A1A1A',overflowY:'auto',padding:14,flexShrink:0}}>
         <div style={{fontSize:11,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Conversazioni</div>
 
         {/* BOTTONE GENERA REPORT PER TUTTI */}
@@ -2608,7 +2608,7 @@ function generateReportPDF(r, clientName) {
   }
 
   var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report — '+clientName+'</title>'
-  html += '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#fff;color:#111;font-size:13px}.header{background:linear-gradient(135deg,#1A1A1A,#2D2D2D);color:white;padding:28px 36px 24px}.brand{font-size:22px;font-weight:900;margin-bottom:20px;display:flex;justify-content:space-between}.brand span{color:#D4570A}.brand-meta{font-size:11px;opacity:0.6;text-align:right}.av{width:44px;height:44px;border-radius:50%;background:#D4570A;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;margin-right:10px;vertical-align:middle}.cn{font-size:19px;font-weight:800;vertical-align:middle}.cs{font-size:12px;opacity:0.6;margin-top:6px}.bp{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-left:10px;vertical-align:middle}.body{padding:28px 36px}.sec{margin-bottom:22px}.st{font-size:11px;font-weight:700;color:#D4570A;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #FEF0E7;padding-bottom:6px;margin-bottom:12px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.box{background:#F8F7F5;border-radius:10px;padding:14px;margin-bottom:8px;border:0.5px solid #EEECE8}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #EEECE8;font-size:12px}.row:last-child{border-bottom:none}.k{color:#888780}.v{font-weight:600}.note{background:#FFF8F5;border:1px solid #FDDCC4;border-radius:10px;padding:12px;font-size:12px;line-height:1.7;color:#444;font-style:italic;margin-top:6px}.footer{margin-top:24px;padding:14px 36px;background:#F8F7F5;border-top:0.5px solid #EEECE8;display:flex;justify-content:space-between;font-size:10px;color:#888780}.footer strong{color:#D4570A}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'
+  html += '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#fff;color:#111;font-size:13px}.header{background:linear-gradient(135deg,#1A1A1A,#2D2D2D);color:white;padding:28px 36px 24px}.brand{font-size:22px;font-weight:900;margin-bottom:20px;display:flex;justify-content:space-between}.brand span{color:#D4570A}.brand-meta{font-size:11px;opacity:0.6;text-align:right}.av{width:44px;height:44px;border-radius:50%;background:#D4570A;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;margin-right:10px;vertical-align:middle}.cn{font-size:19px;font-weight:800;vertical-align:middle}.cs{font-size:12px;opacity:0.6;margin-top:6px}.bp{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-left:10px;vertical-align:middle}.body{padding:28px 36px}.sec{margin-bottom:22px}.st{font-size:11px;font-weight:700;color:#D4570A;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #FEF0E7;padding-bottom:6px;margin-bottom:12px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.box{background:#F8F7F5;border-radius:10px;padding:14px;margin-bottom:8px;border:0.5px solid #EEECE8}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #EEECE8;font-size:12px}.row:last-child{border-bottom:none}.k{color:#888780}.v{font-weight:600}.note{background:#FFF8F5;border:1px solid #FDDCC4;border-radius:10px;padding:12px;font-size:12px;line-height:1.7;color:#444;font-style:italic;margin-top:6px}.footer{margin-top:24px;padding:14px 36px;background:#F8F7F5;border-top:0.5px solid #EEECE8;display:flex;justify-content:space-between;font-size:10px;color:#888780}.footer strong{color:#D4570A}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'
   html += '<div class="header"><div class="brand"><div>FO<span>fit</span></div><div class="brand-meta">Federico Obinu · Coach<br>fofit.fit</div></div>'
   html += '<div><div class="av">'+_initials(clientName)+'</div><span class="cn">'+clientName+'</span><span class="bp">Report allenamento</span></div>'
   html += '<div class="cs">'+dateLabel+'</div></div>'
@@ -2695,7 +2695,7 @@ function generateAnamnesiPDF(a, clientName) {
   html += '.av{width:44px;height:44px;border-radius:50%;background:#3B6D11;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;margin-right:10px;vertical-align:middle}'
   html += '.cn{font-size:19px;font-weight:800;vertical-align:middle}'
   html += '.cs{font-size:12px;opacity:0.6;margin-top:6px}'
-  html += '.bp{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-left:10px;vertical-align:middle}'
+  html += '.bp{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-left:10px;vertical-align:middle}'
   html += '.body{padding:28px 36px}'
   html += '.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}'
   html += '.sec{margin-bottom:20px}'

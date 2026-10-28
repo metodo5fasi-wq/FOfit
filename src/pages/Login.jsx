@@ -18,7 +18,7 @@ export default function Login() {
 
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#111111' }}>
-      <div style={{ background:'white', borderRadius:16, padding:'38px 34px', width:'100%', maxWidth:380, margin:'0 16px' }}>
+      <div style={{ background:'#0D0D0D', borderRadius:16, padding:'38px 34px', width:'100%', maxWidth:380, margin:'0 16px' }}>
 
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:30 }}>
@@ -44,7 +44,7 @@ export default function Login() {
             <input
               type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="marco@email.com" required
-              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#F5F3EF', outline:'none' }}
+              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
               onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
             />
@@ -54,14 +54,14 @@ export default function Login() {
             <input
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required
-              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#F5F3EF', outline:'none' }}
+              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
               onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
             />
           </div>
 
           {error && (
-            <div style={{ background:'#FEE2E2', border:'0.5px solid #E24B4A', borderRadius:8, padding:'9px 12px', fontSize:12, color:'#9B1C1C', marginBottom:12 }}>
+            <div style={{ background:'rgba(226,75,74,0.12)', border:'0.5px solid #E24B4A', borderRadius:8, padding:'9px 12px', fontSize:12, color:'#9B1C1C', marginBottom:12 }}>
               {error}
             </div>
           )}

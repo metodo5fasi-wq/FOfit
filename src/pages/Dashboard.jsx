@@ -315,7 +315,7 @@ export default function Dashboard() {
         {/* QUICK ACTIONS */}
         <FadeIn delay={80}>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
+          <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
             {QUICK_LINKS.map(link => (
               <Link key={link.to} to={link.to} style={{
@@ -337,7 +337,7 @@ export default function Dashboard() {
           <FadeIn delay={100}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
               <div style={{fontSize:10,color:'#A0A0A0'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
             </div>
             <div style={{display:'flex',gap:12}}>
@@ -361,21 +361,21 @@ export default function Dashboard() {
         {weeklyComp && (weeklyComp.thisSess > 0 || weeklyComp.kcalDiff !== 0) && (
           <FadeIn delay={120}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
+            <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B8C5A':'#E24B4A'}}>
                   {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
                 </div>
                 <div style={{fontSize:9,color:'#CCC',marginTop:3}}>sessioni allenamento</div>
-                <div style={{fontSize:9,color:'#999',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
+                <div style={{fontSize:9,color:'#CCC',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
               </div>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B8C5A':'#E8A020'}}>
                   {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
                 </div>
                 <div style={{fontSize:9,color:'#CCC',marginTop:3}}>kcal medie/giorno</div>
-                <div style={{fontSize:9,color:'#999',marginTop:2}}>rispetto alla sett. scorsa</div>
+                <div style={{fontSize:9,color:'#CCC',marginTop:2}}>rispetto alla sett. scorsa</div>
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function Dashboard() {
           <FadeIn delay={140}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
               <Link to="/progressi" style={{fontSize:10,color:'#D4570A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
             </div>
             <GraficoPeso compact={true}/>

@@ -3,16 +3,16 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
-  textarea: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'vertical', minHeight:80, boxSizing:'border-box', lineHeight:1.6 },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit' },
+  textarea: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'vertical', minHeight:80, boxSizing:'border-box', lineHeight:1.6 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#F5F3EF', color:'#CCC', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
-  btnDanger: { background:'#FEE2E2', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  btnDanger: { background:'rgba(226,75,74,0.12)', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   badge: { fontSize:10, padding:'3px 8px', borderRadius:10, fontWeight:600 },
 }
@@ -138,8 +138,8 @@ export default function MessaggiProgrammati() {
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {TEMPLATES.map(t=>(
                   <button key={t.label} onClick={()=>setForm(p=>({...p,message:t.text}))} style={{
-                    padding:'5px 10px', borderRadius:16, fontSize:11, cursor:'pointer', border:'0.5px solid #E0DDD6',
-                    background:'white', color:'#CCC', fontFamily:'inherit',
+                    padding:'5px 10px', borderRadius:16, fontSize:11, cursor:'pointer', border:'0.5px solid #1C1C1C',
+                    background:'#0D0D0D', color:'#CCC', fontFamily:'inherit',
                   }}>{t.label}</button>
                 ))}
               </div>
@@ -184,7 +184,7 @@ export default function MessaggiProgrammati() {
         {/* LISTA */}
         {loading ? <div style={{textAlign:'center',padding:'40px',color:'#CCC'}}>Caricamento...</div> :
           displayed.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 20px',background:'white',borderRadius:12,border:'0.5px solid #E0DDD6'}}>
+            <div style={{textAlign:'center',padding:'40px 20px',background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C'}}>
               <i className="ti ti-calendar-off" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/>
               <div style={{fontSize:13,color:'#CCC'}}>{filter==='pending'?'Nessun messaggio in attesa.':'Nessun messaggio inviato.'}</div>
             </div>
@@ -205,17 +205,17 @@ export default function MessaggiProgrammati() {
                       <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{client?.full_name||msg.profiles?.full_name||'—'}</div>
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         {msg.sent ? (
-                          <span style={{...s.badge,background:'#EAF3DE',color:'#3B6D11'}}>✓ Inviato {msg.sent_at&&new Date(msg.sent_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                          <span style={{...s.badge,background:'rgba(59,140,90,0.12)',color:'#3B6D11'}}>✓ Inviato {msg.sent_at&&new Date(msg.sent_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
                         ) : isPast ? (
-                          <span style={{...s.badge,background:'#FEF0E7',color:'#D4570A'}}>⏰ In invio...</span>
+                          <span style={{...s.badge,background:'rgba(212,87,10,0.12)',color:'#D4570A'}}>⏰ In invio...</span>
                         ) : (
-                          <span style={{...s.badge,background:'#EBF3FD',color:'#4A90D4'}}>
+                          <span style={{...s.badge,background:'rgba(74,144,212,0.12)',color:'#4A90D4'}}>
                             📅 {scheduledDate.toLocaleDateString('it-IT',{day:'numeric',month:'short'})} alle {scheduledDate.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
                           </span>
                         )}
                       </div>
                     </div>
-                    <div style={{fontSize:12,color:'#CCC',lineHeight:1.5,background:'#F5F3EF',borderRadius:8,padding:'8px 10px',marginBottom:8}}>
+                    <div style={{fontSize:12,color:'#CCC',lineHeight:1.5,background:'#161616',borderRadius:8,padding:'8px 10px',marginBottom:8}}>
                       {msg.message}
                     </div>
                     {!msg.sent && (
