@@ -8,30 +8,30 @@ import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
 
 const s = {
-  page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
-  btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:500, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnSm: { background:'#FEF0E7', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 12px', fontSize:12, fontWeight:500, cursor:'pointer', fontFamily:'inherit' },
-  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:7, padding:'5px 12px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
-  tabs: { display:'flex', gap:6, marginBottom:18, flexWrap:'wrap' },
-  tab: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #E0DDD6', background:'white', color:'#888780' },
-  tabActive: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #D4570A', background:'#D4570A', color:'white' },
-  card: { background:'white', borderRadius:10, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:14 },
-  cardTitle: { fontSize:13, fontWeight:500, color:'#111', display:'flex', alignItems:'center', gap:7, marginBottom:14 },
+  page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
+  topbar: { background:'#080808', borderBottom:'0.5px solid #111', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.12)', color:'#D4570A', border:'0.5px solid rgba(212,87,10,0.25)', borderRadius:7, padding:'5px 12px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#555', border:'0.5px solid #222', borderRadius:7, padding:'5px 12px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  tabs: { display:'flex', gap:5, marginBottom:16, flexWrap:'wrap' },
+  tab: { padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:600, cursor:'pointer', border:'0.5px solid #222', background:'#0D0D0D', color:'#666' },
+  tabActive: { padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:700, cursor:'pointer', border:'0.5px solid rgba(212,87,10,0.4)', background:'rgba(212,87,10,0.15)', color:'#F4894A' },
+  card: { background:'#0D0D0D', borderRadius:14, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
+  cardTitle: { fontSize:12, fontWeight:700, color:'#F0F0F0', display:'flex', alignItems:'center', gap:7, marginBottom:14 },
   table: { width:'100%', borderCollapse:'collapse', fontSize:13 },
-  th: { textAlign:'left', padding:'8px 12px', fontSize:10, color:'#888780', textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:'0.5px solid #E0DDD6', background:'#F5F3EF' },
-  td: { padding:'10px 12px', borderBottom:'0.5px solid #F5F3EF', color:'#111', verticalAlign:'middle' },
-  avatar: { width:30, height:30, borderRadius:'50%', background:'#D4570A', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:500, color:'white', marginRight:8, flexShrink:0 },
-  badge: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500 },
-  modal: { position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:200, padding:0 },
-  modalCard: { background:'white', borderRadius:'16px 16px 0 0', padding:'24px 20px', width:'100%', maxWidth:560, height:'90dvh', overflowY:'auto', WebkitOverflowScrolling:'touch' },
+  th: { textAlign:'left', padding:'8px 12px', fontSize:9, color:'#2A2A2A', textTransform:'uppercase', letterSpacing:'0.08em', borderBottom:'0.5px solid #1A1A1A', background:'#0A0A0A', fontWeight:700 },
+  td: { padding:'10px 12px', borderBottom:'0.5px solid #111', color:'#C0C0C0', verticalAlign:'middle' },
+  avatar: { width:32, height:32, borderRadius:9, background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'white', marginRight:8, flexShrink:0 },
+  badge: { fontSize:9, padding:'2px 8px', borderRadius:10, fontWeight:700 },
+  modal: { position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:200, padding:0 },
+  modalCard: { background:'#0D0D0D', borderRadius:'16px 16px 0 0', padding:'24px 20px', width:'100%', maxWidth:560, height:'90dvh', overflowY:'auto', WebkitOverflowScrolling:'touch', border:'0.5px solid #1C1C1C' },
   formGroup: { marginBottom:14 },
-  label: { fontSize:11, color:'#888780', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
+  label: { fontSize:10, color:'#666', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:700 },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #222', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #222', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
-  saveBtn: { width:'100%', padding:11, background:'#D4570A', color:'white', border:'none', borderRadius:8, fontSize:14, fontWeight:500, cursor:'pointer', fontFamily:'inherit' },
-  cancelBtn: { width:'100%', padding:11, background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, cursor:'pointer', fontFamily:'inherit', marginTop:8 },
+  saveBtn: { width:'100%', padding:11, background:'#D4570A', color:'white', border:'none', borderRadius:9, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
+  cancelBtn: { width:'100%', padding:11, background:'#161616', color:'#555', border:'0.5px solid #222', borderRadius:9, fontSize:13, cursor:'pointer', fontFamily:'inherit', marginTop:8 },
 }
 
 const goalLabel = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza' }
@@ -89,7 +89,7 @@ function NotifBell({ clients }) {
   return (
     <div ref={ref} style={{ position:'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
-        width:36, height:36, borderRadius:9, border:'0.5px solid #E0DDD6',
+        width:36, height:36, borderRadius:9, border:'0.5px solid #1C1C1C',
         background: open ? '#FEF0E7' : '#F5F3EF',
         display:'flex', alignItems:'center', justifyContent:'center',
         cursor:'pointer',
@@ -99,31 +99,31 @@ function NotifBell({ clients }) {
       {open && (
         <div style={{
           position:'absolute', top:'calc(100% + 6px)', right:0, width:300,
-          background:'white', borderRadius:12, border:'0.5px solid #E0DDD6',
+          background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C',
           boxShadow:'0 8px 32px rgba(0,0,0,0.12)', zIndex:500, padding:14,
         }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'#111', marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#F0F0F0', marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
             <i className="ti ti-bell-ringing" style={{ fontSize:14, color:'#D4570A' }}/>
             Invia notifica
-            <button onClick={() => setOpen(false)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#888780', fontSize:16, lineHeight:1 }}>✕</button>
+            <button onClick={() => setOpen(false)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#555', fontSize:16, lineHeight:1 }}>✕</button>
           </div>
           <select value={selectedClient} onChange={e => setSelectedClient(e.target.value)}
-            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', marginBottom:8, boxSizing:'border-box' }}>
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:12, background:'#161616', outline:'none', fontFamily:'inherit', marginBottom:8, boxSizing:'border-box' }}>
             <option value="all">Tutti i clienti</option>
             {(clients||[]).map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
           </select>
           <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:8 }}>
             {PRESETS.map((p, i) => (
               <button key={i} onClick={() => { setTitle(p.title); setBody(p.body) }}
-                style={{ padding:'4px 8px', borderRadius:14, border:'0.5px solid #E0DDD6', background:'#F5F3EF', color:'#555', fontSize:10, cursor:'pointer', fontFamily:'inherit' }}>
+                style={{ padding:'4px 8px', borderRadius:14, border:'0.5px solid #1C1C1C', background:'#161616', color:'#555', fontSize:10, cursor:'pointer', fontFamily:'inherit' }}>
                 {p.title}
               </button>
             ))}
           </div>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Titolo..."
-            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', marginBottom:6, boxSizing:'border-box' }}/>
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:12, background:'#161616', outline:'none', fontFamily:'inherit', marginBottom:6, boxSizing:'border-box' }}/>
           <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Testo della notifica..."
-            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:12, background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'none', height:60, marginBottom:10, boxSizing:'border-box' }}/>
+            style={{ width:'100%', padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:12, background:'#161616', outline:'none', fontFamily:'inherit', resize:'none', height:60, marginBottom:10, boxSizing:'border-box' }}/>
           <button onClick={send} disabled={!title || !body || sending}
             style={{ width:'100%', padding:'9px', background: sent ? '#3B6D11' : '#D4570A', color:'white', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', opacity:(!title||!body)?0.5:1 }}>
             {sending ? 'Invio...' : sent ? '✓ Inviata!' : '🔔 Invia notifica'}
@@ -163,14 +163,14 @@ function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
       <div style={{fontSize:11,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>{label}</div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
         <div>
-          <label style={{...s.label,color:'#888780'}}>Kcal</label>
+          <label style={{...s.label,color:'#555'}}>Kcal</label>
           <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
             value={dietConfig[`${prefix}_kcal`]||''}
             onChange={e=>handleDcKcalChange(prefix, e.target.value)}/>
         </div>
         {[{k:'protein',l:'Pro (g)'},{k:'carbs',l:'Carbo (g)'},{k:'fat',l:'Grassi (g)'}].map(f=>(
           <div key={f.k}>
-            <label style={{...s.label,color:'#888780'}}>{f.l}</label>
+            <label style={{...s.label,color:'#555'}}>{f.l}</label>
             <input style={{...s.input,padding:'7px 8px',fontSize:12,textAlign:'center'}} type="number"
               value={dietConfig[`${prefix}_${f.k}`]||''}
               onChange={e=>handleDcMacroChange(prefix, f.k, e.target.value)}/>
@@ -532,7 +532,7 @@ export default function AdminPanel() {
   ]
 
   return (
-    <div style={{display:'flex',height:'100dvh',overflow:'hidden',background:'#F5F3EF'}}>
+    <div style={{display:'flex',height:'100dvh',overflow:'hidden',background:'#161616'}}>
 
       {/* ── SIDEBAR PC ── */}
       {!isMobile && (
@@ -614,16 +614,16 @@ export default function AdminPanel() {
       <div style={{flex:1,display:'flex',overflow:'hidden',flexDirection:'column'}}>
 
         {/* TOPBAR */}
-        <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 20px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+        <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 20px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             {isMobile && (
-              <div style={{fontSize:16,fontWeight:900,color:'#111'}}>FO<span style={{color:'#D4570A'}}>fit</span></div>
+              <div style={{fontSize:16,fontWeight:900,color:'#F0F0F0'}}>FO<span style={{color:'#D4570A'}}>fit</span></div>
             )}
             <div>
-              <div style={{fontSize:14,fontWeight:700,color:'#111'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>
                 {tab==='clienti'?'👥 Clienti':tab==='report'?'📋 Report':tab==='anamnesi'?'📝 Anamnesi':tab==='check-in'?'✅ Check-in':tab==='calendario'?'📅 Calendario':'Dashboard'}
               </div>
-              {!isMobile && <div style={{fontSize:11,color:'#888780'}}>{filteredClients.length} clienti visualizzati</div>}
+              {!isMobile && <div style={{fontSize:11,color:'#555'}}>{filteredClients.length} clienti visualizzati</div>}
             </div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -647,7 +647,7 @@ export default function AdminPanel() {
 
           {/* CONTENUTO PRINCIPALE */}
           <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'16px'}}>
-            {msg && <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
+            {msg && <div style={{background:'rgba(59,109,17,0.1)',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
 
             {/* TAB MOBILE */}
             {isMobile && (
@@ -666,11 +666,11 @@ export default function AdminPanel() {
 
             {/* TAB CLIENTI */}
             {tab==='clienti' && (
-              <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',overflow:'hidden'}}>
+              <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
                 {/* FILTRI */}
                 <div style={{padding:'12px 16px',borderBottom:'0.5px solid #F0EDE8',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
                   <div style={{position:'relative',flex:1,minWidth:180}}>
-                    <i className="ti ti-search" style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#888780'}}/>
+                    <i className="ti ti-search" style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#555'}}/>
                     <input style={{...s.input,paddingLeft:32,fontSize:13,height:34}} placeholder="Cerca cliente..." value={search} onChange={e=>setSearch(e.target.value)}/>
                   </div>
                   <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
@@ -693,9 +693,9 @@ export default function AdminPanel() {
 
                 {/* GRIGLIA CLIENTI */}
                 {loading ? (
-                  <div style={{textAlign:'center',padding:'40px',color:'#888780'}}>Caricamento...</div>
+                  <div style={{textAlign:'center',padding:'40px',color:'#555'}}>Caricamento...</div>
                 ) : filteredClients.length === 0 ? (
-                  <div style={{textAlign:'center',padding:'40px',color:'#888780'}}>
+                  <div style={{textAlign:'center',padding:'40px',color:'#555'}}>
                     <i className="ti ti-users" style={{fontSize:36,display:'block',marginBottom:8,opacity:0.3}}/>
                     {clients.length===0?'Nessun cliente ancora.':'Nessun risultato per questi filtri.'}
                   </div>
@@ -704,7 +704,7 @@ export default function AdminPanel() {
                     display:'grid',
                     gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
                     gap:1,
-                    background:'#F0EDE8',
+                    background:'#141414',
                   }}>
                     {filteredClients.map(c => {
                       const st = clientStats[c.id] || {}
@@ -733,8 +733,8 @@ export default function AdminPanel() {
                             }}>{initials(c.full_name)}</div>
 
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
-                              <div style={{fontSize:10,color:'#888780',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
+                              <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+                              <div style={{fontSize:10,color:'#555',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
                                 <span>{goalLabel[c.goal]||'—'}</span>
                                 {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#D4570A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
                                 {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'#FEE2E2':days<=7?'#FEF0E7':'#EAF3DE',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B6D11'}}>{days<0?'Scaduto':`${days}gg`}</span>}
@@ -767,17 +767,17 @@ export default function AdminPanel() {
                           <div style={{display:'flex',gap:5}} onClick={e=>e.stopPropagation()}>
                             {st.activePlan ? (
                               <a href={`/modifica-piano/${st.activePlan.id}`} onClick={e=>{e.preventDefault();window.location.href=`/modifica-piano/${st.activePlan.id}`}}
-                                style={{flex:1,padding:'6px 4px',background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
+                                style={{flex:1,padding:'6px 4px',background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
                                 🥗 Piano
                               </a>
                             ) : (
                               <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}}
-                                style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
+                                style={{flex:1,padding:'6px 4px',background:'#161616',color:'#555',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
                                 + Piano
                               </a>
                             )}
                             <button onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}
-                              style={{flex:1,padding:'6px 4px',background:'#F5F3EF',color:'#666',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
+                              style={{flex:1,padding:'6px 4px',background:'#161616',color:'#666',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
                               + Nuovo
                             </button>
                             <button onClick={()=>setSelectedClient(isSelected?null:c)}
@@ -803,7 +803,7 @@ export default function AdminPanel() {
           {selectedClient && !isMobile && (
             <div style={{
               width:440,flexShrink:0,borderLeft:'0.5px solid #E0DDD6',
-              overflowY:'auto',background:'white',
+              overflowY:'auto',background:'#0D0D0D',
               WebkitOverflowScrolling:'touch',
               animation:'slideInRight 0.2s ease-out',
             }}>
@@ -822,7 +822,7 @@ export default function AdminPanel() {
       {/* MODAL DETTAGLIO MOBILE */}
       {selectedClient && isMobile && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}} onClick={e=>e.target===e.currentTarget&&setSelectedClient(null)}>
-          <div style={{background:'white',borderRadius:'16px 16px 0 0',width:'100%',maxHeight:'90dvh',overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
+          <div style={{background:'#0D0D0D',borderRadius:'16px 16px 0 0',width:'100%',maxHeight:'90dvh',overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
             <ClientDetailModal
               client={selectedClient}
               plans={plans.filter(p=>p.client_id===selectedClient.id)}
@@ -838,8 +838,8 @@ export default function AdminPanel() {
       {showNewClient && (
         <div style={s.modal} onClick={e=>e.target===e.currentTarget&&setShowNewClient(false)}>
           <div style={s.modalCard}>
-            <div style={{fontSize:16,fontWeight:700,color:'#111',marginBottom:4}}>Nuovo cliente</div>
-            <div style={{fontSize:12,color:'#888780',marginBottom:20}}>Crea l'account e comunicagli le credenziali.</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#F0F0F0',marginBottom:4}}>Nuovo cliente</div>
+            <div style={{fontSize:12,color:'#555',marginBottom:20}}>Crea l'account e comunicagli le credenziali.</div>
             <div style={s.formGroup}><label style={s.label}>Nome completo *</label><input style={s.input} placeholder="Es. Marco Rossi" value={newClient.full_name} onChange={e=>setNewClient(p=>({...p,full_name:e.target.value}))}/></div>
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Email *</label><input style={s.input} type="email" value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))}/></div>
@@ -865,8 +865,8 @@ export default function AdminPanel() {
       {showNewPlan && (
         <div style={s.modal} onClick={e=>e.target===e.currentTarget&&setShowNewPlan(false)}>
           <div style={{...s.modalCard, maxWidth:620}}>
-            <div style={{fontSize:16,fontWeight:700,color:'#111',marginBottom:4}}>Nuovo piano alimentare</div>
-            <div style={{fontSize:12,color:'#888780',marginBottom:16}}>Assegna un piano a un cliente.</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#F0F0F0',marginBottom:4}}>Nuovo piano alimentare</div>
+            <div style={{fontSize:12,color:'#555',marginBottom:16}}>Assegna un piano a un cliente.</div>
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Cliente *</label>
                 <select style={s.select} value={newPlan.client_id} onChange={e=>setNewPlan(p=>({...p,client_id:e.target.value}))}>
@@ -888,12 +888,12 @@ export default function AdminPanel() {
                   <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
-                  <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'#EAF3DE',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
+                  <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'rgba(59,109,17,0.1)',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
                 </div>
               </>
             )}
             {dietType!=='lineare' && (
-              <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px',marginBottom:12}}>
+              <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px',marginBottom:12}}>
                 <div style={{fontSize:12,color:'#D4570A',fontWeight:600}}>Per i piani avanzati (ON/OFF, Ad onde, ecc.) usa la sezione Importa piano.</div>
               </div>
             )}
@@ -1050,9 +1050,9 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             {editing ? (
               <input style={{...s.input,fontSize:15,fontWeight:600,padding:'6px 10px'}} value={form.full_name} onChange={e=>setForm(f=>({...f,full_name:e.target.value}))}/>
             ) : (
-              <div style={{fontSize:16,fontWeight:600,color:'#111'}}>{client.full_name}</div>
+              <div style={{fontSize:16,fontWeight:600,color:'#F0F0F0'}}>{client.full_name}</div>
             )}
-            <div style={{fontSize:12,color:'#888780',marginTop:2}}>Iscritto il {new Date(client.created_at).toLocaleDateString('it-IT')}</div>
+            <div style={{fontSize:12,color:'#555',marginTop:2}}>Iscritto il {new Date(client.created_at).toLocaleDateString('it-IT')}</div>
           </div>
           <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#F5F3EF':'#FEF0E7', color: editing?'#888780':'#D4570A', borderColor: editing?'#E0DDD6':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:13,marginRight:4}}/>{editing?'Annulla':'Modifica'}
@@ -1065,7 +1065,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
         {/* INFO PROFILO — vista o editing */}
         {editing ? (
-          <div style={{background:'#F5F3EF',borderRadius:10,padding:14,marginBottom:16}}>
+          <div style={{background:'#161616',borderRadius:10,padding:14,marginBottom:16}}>
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Obiettivo</label>
                 <select style={s.select} value={form.goal} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}>
@@ -1093,20 +1093,20 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 {l:'Scadenza',v:client.subscription_end?new Date(client.subscription_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}):'—'},
                 {l:'Stato',v:!client.subscription_end?'—':Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24)) < 0 ? '⚠️ Scaduto' : Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24)) <=7 ? `⚠️ Scade in ${Math.ceil((new Date(client.subscription_end)-new Date())/(1000*60*60*24))}gg` : `✓ Attivo`},
               ].map(r=>(
-                <div key={r.l} style={{background:'#F5F3EF',borderRadius:8,padding:'8px 12px'}}>
-                  <div style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em'}}>{r.l}</div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#111',marginTop:2}}>{r.v}</div>
+                <div key={r.l} style={{background:'#161616',borderRadius:8,padding:'8px 12px'}}>
+                  <div style={{fontSize:10,color:'#555',textTransform:'uppercase',letterSpacing:'0.06em'}}>{r.l}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',marginTop:2}}>{r.v}</div>
                 </div>
               ))}
             </div>
             {client.notes&&(
-              <div style={{marginBottom:10,background:'#F5F3EF',borderLeft:'3px solid #888780',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#555'}}>
-                <div style={{fontSize:10,color:'#888780',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.06em'}}>Note</div>
+              <div style={{marginBottom:10,background:'#161616',borderLeft:'3px solid #888780',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#555'}}>
+                <div style={{fontSize:10,color:'#555',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.06em'}}>Note</div>
                 {client.notes}
               </div>
             )}
             {client.coach_notes&&(
-              <div style={{marginBottom:14,background:'#FEF0E7',borderLeft:'3px solid #D4570A',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#7a3508'}}>
+              <div style={{marginBottom:14,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#7a3508'}}>
                 <div style={{fontSize:10,color:'#D4570A',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.06em',display:'flex',alignItems:'center',gap:4}}><i className="ti ti-lock" style={{fontSize:10}}/>Note private coach</div>
                 {client.coach_notes}
               </div>
@@ -1121,10 +1121,10 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
         {/* PIANO ATTIVO */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Piano alimentare</div>
+          <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Piano alimentare</div>
           {activeMealPlan ? (
             <div>
-              <div style={{background:'#FEF0E7',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activeMealPlan.title}</div>
                   <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activeMealPlan.kcal_target} kcal · P{activeMealPlan.protein_target_g}g C{activeMealPlan.carbs_target_g}g G{activeMealPlan.fat_target_g}g</div>
@@ -1140,7 +1140,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 </div>
               </div>
               {editingPlan && (
-                <div style={{background:'#F5F3EF',borderRadius:10,padding:'14px',border:'0.5px solid #E0DDD6'}}>
+                <div style={{background:'#161616',borderRadius:10,padding:'14px',border:'0.5px solid #1C1C1C'}}>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
                     <div><label style={s.label}>Kcal target</label><input style={s.input} type="number" value={planEdit.kcal_target} onChange={e=>setPlanEdit(p=>({...p,kcal_target:e.target.value}))}/></div>
                     <div><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={planEdit.protein_target_g} onChange={e=>setPlanEdit(p=>({...p,protein_target_g:e.target.value}))}/></div>
@@ -1157,8 +1157,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
               )}
             </div>
           ) : (
-            <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:12,color:'#888780'}}>Nessun piano attivo</span>
+            <div style={{background:'#161616',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12,color:'#555'}}>Nessun piano attivo</span>
               <button style={s.btnSm} onClick={onNewPlan}>+ Crea piano</button>
             </div>
           )}
@@ -1166,9 +1166,9 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
         {/* DIARIO ULTIMI 7 GIORNI */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Diario — ultimi 7 giorni</div>
+          <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Diario — ultimi 7 giorni</div>
           {loadingData ? (
-            <div style={{fontSize:12,color:'#888780'}}>Caricamento...</div>
+            <div style={{fontSize:12,color:'#555'}}>Caricamento...</div>
           ) : (
             <div style={{display:'flex',gap:4}}>
               {diaryWeek.map(d => {
@@ -1177,10 +1177,10 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 const dayLabel = new Date(d.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'}).slice(0,1).toUpperCase()
                 return (
                   <div key={d.date} style={{flex:1,textAlign:'center'}}>
-                    <div style={{height:50,background:'#F5F3EF',borderRadius:6,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
+                    <div style={{height:50,background:'#161616',borderRadius:6,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
                       <div style={{width:'100%',height:`${Math.max(pct,d.kcal>0?8:0)}%`,background:d.kcal===0?'transparent':pct>=90?'#3B6D11':'#D4570A',borderRadius:6,transition:'height 0.3s'}}/>
                     </div>
-                    <div style={{fontSize:9,color:'#888780',marginTop:3}}>{dayLabel}</div>
+                    <div style={{fontSize:9,color:'#555',marginTop:3}}>{dayLabel}</div>
                   </div>
                 )
               })}
@@ -1190,8 +1190,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
         {/* GRAFICO PESO */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Andamento peso</div>
-          <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px'}}>
+          <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Andamento peso</div>
+          <div style={{background:'#161616',borderRadius:10,padding:'12px'}}>
             <GraficoPeso clientId={client.id} targetWeight={anamnesi?.peso_desiderato}/>
           </div>
         </div>
@@ -1204,30 +1204,30 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             <div style={{fontSize:9,color:unreadCount>0?'#D4570A':'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Msg non letti</div>
           </div>
           {/* Aderenza piano */}
-          <div style={{background:'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #E0DDD6'}}>
+          <div style={{background:'#161616',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #1C1C1C'}}>
             <div style={{fontSize:18,fontWeight:800,color: adherenceWeek ? (adherenceWeek.followed/adherenceWeek.total>=0.7?'#3B6D11':'#D4570A') : '#888780'}}>
               {adherenceWeek ? `${Math.round(adherenceWeek.followed/adherenceWeek.total*100)}%` : '—'}
             </div>
-            <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Aderenza pasti</div>
+            <div style={{fontSize:9,color:'#555',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Aderenza pasti</div>
           </div>
           {/* Allenamenti settimana */}
-          <div style={{background:'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #E0DDD6'}}>
+          <div style={{background:'#161616',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #1C1C1C'}}>
             <div style={{fontSize:18,fontWeight:800,color:'#D4570A'}}>{workoutSessions.filter(s=>{const d=new Date(s.session_date);return(new Date()-d)<7*24*60*60*1000}).length}</div>
-            <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Allenamenti/7gg</div>
+            <div style={{fontSize:9,color:'#555',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Allenamenti/7gg</div>
           </div>
         </div>
 
         {/* ULTIMO CHECK-IN */}
         {lastCheckin && (
-          <div style={{background:'#F5F3EF',borderRadius:9,padding:'12px',marginBottom:14}}>
-            <div style={{fontSize:10,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+          <div style={{background:'#161616',borderRadius:9,padding:'12px',marginBottom:14}}>
+            <div style={{fontSize:10,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
               Check-in — settimana del {new Date(lastCheckin.week_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
             </div>
             <div style={{display:'flex',gap:16}}>
               {[{l:'⚡ Energia',v:lastCheckin.energy},{l:'😴 Sonno',v:lastCheckin.sleep},{l:'🧘 Stress',v:lastCheckin.stress}].map(item=>(
                 <div key={item.l} style={{flex:1,textAlign:'center'}}>
-                  <div style={{fontSize:20,fontWeight:800,color:item.v>=4?'#3B6D11':item.v<=2?'#D4570A':'#111'}}>{item.v}<span style={{fontSize:10,color:'#888780'}}>/5</span></div>
-                  <div style={{fontSize:9,color:'#888780',marginTop:2}}>{item.l}</div>
+                  <div style={{fontSize:20,fontWeight:800,color:item.v>=4?'#3B6D11':item.v<=2?'#D4570A':'#111'}}>{item.v}<span style={{fontSize:10,color:'#555'}}>/5</span></div>
+                  <div style={{fontSize:9,color:'#555',marginTop:2}}>{item.l}</div>
                 </div>
               ))}
             </div>
@@ -1250,8 +1250,8 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
 
         {/* PROGRESSIONE PESI */}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Progressione esercizi</div>
-          <div style={{background:'#F5F3EF',borderRadius:10,padding:'12px'}}>
+          <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Progressione esercizi</div>
+          <div style={{background:'#161616',borderRadius:10,padding:'12px'}}>
             <ProgressioneEsercizi clientId={client.id}/>
           </div>
         </div>
@@ -1260,7 +1260,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         {workoutSessions.length > 0 && (
           <div style={{marginBottom:14}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em'}}>
+              <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em'}}>
                 <i className="ti ti-barbell" style={{fontSize:12,marginRight:4}}/>Allenamenti recenti
               </div>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -1284,21 +1284,21 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                 const byEx = {}
                 sessLogs.forEach(l => { if (!byEx[l.exercise_name]) byEx[l.exercise_name] = []; byEx[l.exercise_name].push(l) })
                 return (
-                  <div key={sess.id} style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
-                    <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#888780',marginBottom:6,fontWeight:600}}>
+                  <div key={sess.id} style={{background:'#161616',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#555',lineHeight:1.5}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#555',marginBottom:6,fontWeight:600}}>
                       <span>{sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                       <span style={{color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total} ({pct}%)</span>
                     </div>
                     {Object.entries(byEx).map(([exName, logs]) => {
                       const maxW = Math.max(...logs.map(l=>l.weight_kg||0))
                       return (
-                        <div key={exName} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #E0DDD6'}}>
-                          <span style={{color:'#111',fontWeight:500}}>{exName}</span>
+                        <div key={exName} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #1A1A1A'}}>
+                          <span style={{color:'#F0F0F0',fontWeight:500}}>{exName}</span>
                           <span style={{color:'#D4570A',fontWeight:700}}>{logs.length} serie {maxW>0?`· max ${maxW}kg`:''}</span>
                         </div>
                       )
                     })}
-                    {sess.notes && <div style={{fontSize:11,color:'#888780',marginTop:6,fontStyle:'italic'}}>{sess.notes}</div>}
+                    {sess.notes && <div style={{fontSize:11,color:'#555',marginTop:6,fontStyle:'italic'}}>{sess.notes}</div>}
                   </div>
                 )
               })}
@@ -1309,7 +1309,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         {/* FOTO RECENTI */}
         {photos.length > 0 && (
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Foto recenti ({photos.length})</div>
+            <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Foto recenti ({photos.length})</div>
             <div style={{display:'flex',gap:6,overflowX:'auto'}}>
               {photos.map(p => (
                 <img key={p.id} src={p.photo_url} alt={p.label} style={{width:60,height:80,objectFit:'cover',borderRadius:8,flexShrink:0}}/>
@@ -1356,12 +1356,12 @@ function ClientProgress({ client }) {
   const ini = client.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()||'U'
 
   return (
-    <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px 16px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+    <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px 16px',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
       <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
         <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,color:'white',flexShrink:0}}>{ini}</div>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:500,color:'#111'}}>{client.full_name}</div>
-          <div style={{fontSize:11,color:'#888780'}}>{client.goal || 'Obiettivo non impostato'}</div>
+          <div style={{fontSize:14,fontWeight:500,color:'#F0F0F0'}}>{client.full_name}</div>
+          <div style={{fontSize:11,color:'#555'}}>{client.goal || 'Obiettivo non impostato'}</div>
         </div>
         <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
           <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:diaryToday?'#EAF3DE':'#FEE2E2',color:diaryToday?'#3B6D11':'#E24B4A'}}>
@@ -1380,17 +1380,17 @@ function ClientProgress({ client }) {
             {l:'% Grasso',v:latest.body_fat_pct?`${latest.body_fat_pct}%`:'—'},
           ].map(m=>(
             <div key={m.l} style={{textAlign:'center'}}>
-              <div style={{fontSize:14,fontWeight:600,color:'#111'}}>{m.v}</div>
-              <div style={{fontSize:10,color:'#888780'}}>{m.l}</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0'}}>{m.v}</div>
+              <div style={{fontSize:10,color:'#555'}}>{m.l}</div>
             </div>
           ))}
           <div style={{marginLeft:'auto',textAlign:'right'}}>
-            <div style={{fontSize:10,color:'#888780'}}>Ultima misurazione</div>
-            <div style={{fontSize:11,color:'#111'}}>{new Date(latest.entry_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
+            <div style={{fontSize:10,color:'#555'}}>Ultima misurazione</div>
+            <div style={{fontSize:11,color:'#F0F0F0'}}>{new Date(latest.entry_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
           </div>
         </div>
       ) : (
-        <div style={{fontSize:11,color:'#888780',paddingTop:8,borderTop:'0.5px solid #F5F3EF'}}>
+        <div style={{fontSize:11,color:'#555',paddingTop:8,borderTop:'0.5px solid #F5F3EF'}}>
           Nessuna misurazione ancora registrata
         </div>
       )}
@@ -1475,9 +1475,9 @@ function CalendarioAdmin() {
       <div style={s.card}>
         <div style={s.cardTitle}><i className="ti ti-calendar-event" style={{fontSize:16,color:'#D4570A'}}/> Prenotazioni ({confirmedBookings.length})</div>
         {loading ? (
-          <div style={{textAlign:'center',padding:'20px 0',color:'#888780',fontSize:13}}>Caricamento...</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'#555',fontSize:13}}>Caricamento...</div>
         ) : confirmedBookings.length === 0 ? (
-          <div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#888780'}}>Nessuna chiamata prenotata.</div>
+          <div style={{textAlign:'center',padding:'30px 0',fontSize:13,color:'#555'}}>Nessuna chiamata prenotata.</div>
         ) : (
           <table style={s.table}>
             <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Data</th><th style={s.th}>Ora</th><th style={s.th}>Azioni</th></tr></thead>
@@ -1496,7 +1496,7 @@ function CalendarioAdmin() {
       {/* GESTIONE DISPONIBILITÀ */}
       <div style={s.card}>
         <div style={s.cardTitle}><i className="ti ti-calendar-cog" style={{fontSize:16,color:'#D4570A'}}/> Gestisci disponibilità</div>
-        <div style={{fontSize:12,color:'#888780',marginBottom:14}}>
+        <div style={{fontSize:12,color:'#555',marginBottom:14}}>
           Clicca su uno slot per segnarlo come "occupato" — non sarà visibile ai clienti come disponibile. Utile per simulare un'agenda piena o bloccare orari per impegni personali.
         </div>
 
@@ -1508,7 +1508,7 @@ function CalendarioAdmin() {
             <div key={dateKey} style={{marginBottom:8}}>
               <button
                 onClick={()=>setSelectedDate(isSelected?null:dateKey)}
-                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:8,border:'0.5px solid #E0DDD6',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#111',fontFamily:'inherit',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:8,border:'0.5px solid #1C1C1C',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#111',fontFamily:'inherit',fontSize:13,fontWeight:500,cursor:'pointer'}}>
                 <span>{DAY_NAMES_ADMIN[date.getDay()]} {date.getDate()}/{date.getMonth()+1}</span>
                 <span style={{fontSize:11}}>{isSelected?'▲':'▼'}</span>
               </button>
@@ -1538,10 +1538,10 @@ function CalendarioAdmin() {
             </div>
           )
         })}
-        <div style={{display:'flex',gap:16,marginTop:14,fontSize:11,color:'#888780'}}>
-          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#EAF3DE',marginRight:4,verticalAlign:'middle'}}/>Libero</div>
-          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#F5F3EF',marginRight:4,verticalAlign:'middle'}}/>Bloccato (clicca per liberare)</div>
-          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#FEF0E7',marginRight:4,verticalAlign:'middle'}}/>Prenotato</div>
+        <div style={{display:'flex',gap:16,marginTop:14,fontSize:11,color:'#555'}}>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'rgba(59,109,17,0.1)',marginRight:4,verticalAlign:'middle'}}/>Libero</div>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#161616',marginRight:4,verticalAlign:'middle'}}/>Bloccato (clicca per liberare)</div>
+          <div><span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'rgba(212,87,10,0.1)',marginRight:4,verticalAlign:'middle'}}/>Prenotato</div>
         </div>
       </div>
     </>
@@ -1578,13 +1578,13 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
     <div>
       {/* STATS CARD ROW */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:16}}>
-        <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
+        <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:44,height:44,borderRadius:12,background:'#EBF3FD',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <i className="ti ti-users" style={{fontSize:20,color:'#4A90D4'}}/>
           </div>
           <div>
             <div style={{fontSize:26,fontWeight:800,color:'#4A90D4',lineHeight:1}}>{totalClients}</div>
-            <div style={{fontSize:11,color:'#888780',marginTop:3}}>Clienti totali</div>
+            <div style={{fontSize:11,color:'#555',marginTop:3}}>Clienti totali</div>
           </div>
           <div style={{marginLeft:'auto',textAlign:'right'}}>
             <div style={{fontSize:12,fontWeight:600,color:OK}}>{withPlan} con piano</div>
@@ -1592,24 +1592,24 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
           </div>
         </div>
 
-        <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'16px',display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
             <i className="ti ti-barbell" style={{fontSize:20,color:ALERT}}/>
           </div>
           <div>
             <div style={{fontSize:26,fontWeight:800,color:ALERT,lineHeight:1}}>{trainedToday}</div>
-            <div style={{fontSize:11,color:'#888780',marginTop:3}}>Allenati oggi</div>
+            <div style={{fontSize:11,color:'#555',marginTop:3}}>Allenati oggi</div>
           </div>
           <div style={{marginLeft:'auto',textAlign:'right'}}>
             <div style={{fontSize:12,fontWeight:600,color:OK}}>{diaryToday} diario ok</div>
-            {inactiveToday.length > 0 && <div style={{fontSize:11,color:'#888780'}}>{inactiveToday.length} inattivi</div>}
+            {inactiveToday.length > 0 && <div style={{fontSize:11,color:'#555'}}>{inactiveToday.length} inattivi</div>}
           </div>
         </div>
       </div>
 
       {/* ALERT ABBONAMENTI */}
       {(scaduti.length > 0 || inScadenza.length > 0) && (
-        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+        <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
           <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
             <i className="ti ti-credit-card" style={{fontSize:14}}/>
             {scaduti.length>0&&`${scaduti.length} abbonamento${scaduti.length>1?'i':''} scaduto${scaduti.length>1?'i':''}`}
@@ -1618,7 +1618,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
             {[...scaduti,...inScadenza].map(c=>(
-              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'white',borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:600,color:'#111',cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'#0D0D0D',borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:600,color:'#F0F0F0',cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
                 {c.full_name?.split(' ')[0]}
                 <span style={{fontSize:10,color:'#D4570A'}}>{c.subscription_end&&Math.ceil((new Date(c.subscription_end)-new Date())/(1000*60*60*24))<0?'Scaduto':'⚠'}</span>
               </div>
@@ -1636,11 +1636,11 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
           </div>
           {newReports.map(c=>(
             <div key={c.id} onClick={()=>onOpenReport(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #C4B5FD'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #C4B5FD'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'#7C3AED',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{c.full_name}</div>
               <span style={{fontSize:10,background:'#7C3AED',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
               <i className="ti ti-chevron-right" style={{fontSize:13,color:'#7C3AED'}}/>
             </div>
@@ -1650,18 +1650,18 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
       {/* NUOVE ANAMNESI */}
       {newAnamnesi.length > 0 && (
-        <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+        <div style={{background:'rgba(59,109,17,0.1)',border:'0.5px solid #3B6D11',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
           <div style={{fontSize:12,fontWeight:700,color:'#3B6D11',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:14}}/>
             {newAnamnesi.length} nuova{newAnamnesi.length>1?'e':''} anamnesi compilata{newAnamnesi.length>1?'e':''}
           </div>
           {newAnamnesi.map(c=>(
             <div key={c.id} onClick={()=>onOpenAnamnesi(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #A7D9A0'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #A7D9A0'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'#3B6D11',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <div style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{c.full_name}</div>
               <span style={{fontSize:10,background:'#3B6D11',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
               <i className="ti ti-chevron-right" style={{fontSize:13,color:'#3B6D11'}}/>
             </div>
@@ -1671,18 +1671,18 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
       {/* MESSAGGI NON LETTI */}
       {totalUnread > 0 && (
-        <div style={{background:'#FEF0E7',border:'0.5px solid #D4570A',borderRadius:12,padding:'14px',marginBottom:16}}>
+        <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid #D4570A',borderRadius:12,padding:'14px',marginBottom:16}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
             <i className="ti ti-message-2" style={{fontSize:15,color:ALERT}}/>
             <div style={{fontSize:13,fontWeight:700,color:ALERT}}>Messaggi non letti ({totalUnread})</div>
           </div>
           {clients.filter(c=>clientStats[c.id]?.unreadMessages>0).map(c=>(
             <div key={c.id} onClick={()=>onOpenClient(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'white',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #F4C9A8'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #F4C9A8'}}>
               <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              <div style={{flex:1,fontSize:13,fontWeight:600,color:'#111'}}>{c.full_name}</div>
+              <div style={{flex:1,fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{c.full_name}</div>
               <div style={{background:'#D4570A',color:'white',fontSize:11,fontWeight:700,padding:'2px 10px',borderRadius:10}}>
                 {clientStats[c.id].unreadMessages} nuovi
               </div>
@@ -1694,16 +1694,16 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
       {/* INATTIVI OGGI */}
       {inactiveToday.length > 0 && (
-        <div style={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:12,padding:'14px',marginBottom:16}}>
+        <div style={{background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:12,padding:'14px',marginBottom:16}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-            <i className="ti ti-alert-circle" style={{fontSize:15,color:'#888780'}}/>
-            <div style={{fontSize:13,fontWeight:700,color:'#888780'}}>Inattivi oggi ({inactiveToday.length})</div>
+            <i className="ti ti-alert-circle" style={{fontSize:15,color:'#555'}}/>
+            <div style={{fontSize:13,fontWeight:700,color:'#555'}}>Inattivi oggi ({inactiveToday.length})</div>
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
             {inactiveToday.map(c=>(
               <div key={c.id} onClick={()=>onOpenClient(c)}
-                style={{display:'flex',alignItems:'center',gap:6,background:'#F5F3EF',borderRadius:20,padding:'5px 12px 5px 6px',cursor:'pointer'}}>
-                <div style={{width:22,height:22,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#888780'}}>
+                style={{display:'flex',alignItems:'center',gap:6,background:'#161616',borderRadius:20,padding:'5px 12px 5px 6px',cursor:'pointer'}}>
+                <div style={{width:22,height:22,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#555'}}>
                   {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
                 </div>
                 <span style={{fontSize:12,color:'#555',fontWeight:500}}>{c.full_name?.split(' ')[0]}</span>
@@ -1714,7 +1714,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
       )}
 
       {/* LISTA CLIENTI CON STATO */}
-      <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,fontWeight:600}}>
+      <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,fontWeight:600}}>
         Stato clienti oggi
       </div>
       {clients.map(c => {
@@ -1726,7 +1726,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
         return (
           <div key={c.id} onClick={()=>onOpenClient(c)}
-            style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',alignItems:'center',gap:12,transition:'box-shadow 0.15s'}}
+            style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',alignItems:'center',gap:12,transition:'box-shadow 0.15s'}}
             onMouseEnter={e=>e.currentTarget.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)'}
             onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}
           >
@@ -1737,8 +1737,8 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
             {/* Info */}
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
-              <div style={{fontSize:11,color:'#888780',marginTop:2}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+              <div style={{fontSize:11,color:'#555',marginTop:2}}>
                 {st.latestMeasure?.weight_kg ? `${st.latestMeasure.weight_kg}kg · ` : ''}
                 {st.activePlan ? st.activePlan.title : 'Nessun piano'}
               </div>
@@ -1765,7 +1765,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
               )}
               {/* Messaggi non letti */}
               {st.unreadMessages > 0 && (
-                <div style={{width:28,height:28,borderRadius:8,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div style={{width:28,height:28,borderRadius:8,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <span style={{fontSize:10,fontWeight:700,color:ALERT}}>{st.unreadMessages}</span>
                 </div>
               )}
@@ -1778,7 +1778,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
               {/* Check-in energia */}
               {checkin && (
                 <div title={`Energia: ${checkin.energy}/5 · Sonno: ${checkin.sleep}/5 · Stress: ${checkin.stress}/5`}
-                  style={{width:28,height:28,borderRadius:8,background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  style={{width:28,height:28,borderRadius:8,background:'#161616',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <span style={{fontSize:11,fontWeight:700,color:checkin.energy>=4?OK:checkin.energy<=2?ALERT:'#888780'}}>{checkin.energy}⚡</span>
                 </div>
               )}
@@ -1938,15 +1938,15 @@ function MessaggiAdmin() {
   })
 
   const s2 = {
-    clientBtn: { width:'100%', padding:'10px 14px', background:'white', border:'0.5px solid #E0DDD6', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
-    clientBtnActive: { width:'100%', padding:'10px 14px', background:'#FEF0E7', border:'0.5px solid #D4570A', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
+    clientBtn: { width:'100%', padding:'10px 14px', background:'#0D0D0D', border:'0.5px solid #1C1C1C', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
+    clientBtnActive: { width:'100%', padding:'10px 14px', background:'rgba(212,87,10,0.1)', border:'0.5px solid #D4570A', borderRadius:10, cursor:'pointer', fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:10, marginBottom:6 },
   }
 
   return (
     <div style={{display:'flex',height:'calc(100dvh - 120px)',gap:0}}>
       {/* LISTA CLIENTI */}
       <div style={{width:200,borderRight:'0.5px solid #E0DDD6',overflowY:'auto',padding:14,flexShrink:0}}>
-        <div style={{fontSize:11,color:'#888780',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Conversazioni</div>
+        <div style={{fontSize:11,color:'#555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>Conversazioni</div>
 
         {/* BOTTONE GENERA REPORT PER TUTTI */}
         <button onClick={generateAllReports} disabled={generatingAll || clients.length === 0} style={{
@@ -1965,7 +1965,7 @@ function MessaggiAdmin() {
 
         {/* RISULTATO GENERAZIONE */}
         {allReportResult && (
-          <div style={{background:'#EAF3DE',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#3B6D11',lineHeight:1.6}}>
+          <div style={{background:'rgba(59,109,17,0.1)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#3B6D11',lineHeight:1.6}}>
             ✓ {allReportResult.success} generati
             {allReportResult.skipped > 0 && ` · ${allReportResult.skipped} saltati`}
             {allReportResult.errors > 0 && ` · ${allReportResult.errors} errori`}
@@ -1977,7 +1977,7 @@ function MessaggiAdmin() {
               {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
+              <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
             </div>
             {unreadCounts[c.id] > 0 && (
               <div style={{width:18,height:18,borderRadius:'50%',background:'#D4570A',fontSize:10,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -1991,15 +1991,15 @@ function MessaggiAdmin() {
       {/* CHAT */}
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         {!selectedClient ? (
-          <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#888780',fontSize:13}}>
+          <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontSize:13}}>
             Seleziona un cliente per aprire la chat
           </div>
         ) : (
           <>
             {/* Header chat */}
-            <div style={{padding:'12px 16px',borderBottom:'0.5px solid #E0DDD6',display:'flex',alignItems:'center',justifyContent:'space-between',background:'white'}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#111'}}>{selectedClient.full_name}</div>
-              <button onClick={generateReport} disabled={generatingReport} style={{padding:'6px 12px',background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #D4570A',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
+            <div style={{padding:'12px 16px',borderBottom:'0.5px solid #1A1A1A',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#0D0D0D'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{selectedClient.full_name}</div>
+              <button onClick={generateReport} disabled={generatingReport} style={{padding:'6px 12px',background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #D4570A',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
                 <i className="ti ti-sparkles" style={{fontSize:13}}/>{generatingReport?'Generando...':'+Report AI'}
               </button>
             </div>
@@ -2008,7 +2008,7 @@ function MessaggiAdmin() {
             <div style={{flex:1,overflowY:'auto',padding:'12px 16px'}}>
               {Object.entries(grouped).map(([date, msgs]) => (
                 <div key={date}>
-                  <div style={{textAlign:'center',margin:'10px 0',fontSize:11,color:'#888780'}}>
+                  <div style={{textAlign:'center',margin:'10px 0',fontSize:11,color:'#555'}}>
                     {date === new Date().toISOString().split('T')[0] ? 'Oggi' : new Date(date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
                   </div>
                   {msgs.map(m => {
@@ -2036,11 +2036,11 @@ function MessaggiAdmin() {
             </div>
 
             {/* Input */}
-            <div style={{padding:'10px 16px',borderTop:'0.5px solid #E0DDD6',display:'flex',gap:8,background:'white'}}>
+            <div style={{padding:'10px 16px',borderTop:'0.5px solid #1A1A1A',display:'flex',gap:8,background:'#0D0D0D'}}>
               <textarea value={text} onChange={e=>setText(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
                 placeholder="Scrivi un messaggio..." rows={1}
-                style={{flex:1,padding:'9px 14px',border:'0.5px solid #E0DDD6',borderRadius:20,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit',resize:'none',maxHeight:80,overflowY:'auto'}}/>
+                style={{flex:1,padding:'9px 14px',border:'0.5px solid #1C1C1C',borderRadius:20,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',resize:'none',maxHeight:80,overflowY:'auto'}}/>
               <button onClick={send} disabled={!text.trim()||sending} style={{width:38,height:38,borderRadius:'50%',background:text.trim()?'#D4570A':'#E0DDD6',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <i className="ti ti-send" style={{fontSize:16,color:'white'}}/>
               </button>
@@ -2058,7 +2058,7 @@ function ScoreBar({v, max=5, inv=false}) {
   const col = inv ? (v<=2?'#3B6D11':v<=3?'#E8A020':'#E24B4A') : (v>=4?'#3B6D11':v>=3?'#E8A020':'#E24B4A')
   return (
     <div style={{display:'flex',alignItems:'center',gap:6}}>
-      <div style={{flex:1,height:5,background:'#F0EDE8',borderRadius:3,overflow:'hidden'}}>
+      <div style={{flex:1,height:5,background:'#141414',borderRadius:3,overflow:'hidden'}}>
         <div style={{height:5,width:`${pct}%`,background:col,borderRadius:3}}/>
       </div>
       <span style={{fontSize:11,fontWeight:700,color:col,minWidth:16,textAlign:'right'}}>{v}</span>
@@ -2123,9 +2123,9 @@ function CheckinAdmin() {
     <div style={{height:'100%',display:'flex',flexDirection:'column'}}>
 
       {/* SELEZIONE CLIENTE */}
-      <div style={{padding:'12px 16px',borderBottom:'0.5px solid #E0DDD6',background:'white',flexShrink:0}}>
+      <div style={{padding:'12px 16px',borderBottom:'0.5px solid #1A1A1A',background:'#0D0D0D',flexShrink:0}}>
         <select value={selectedClient} onChange={e=>{setSelectedClient(e.target.value);setExpandedCheckin(null);setExpandedSession(null)}}
-          style={{width:'100%',padding:'10px 12px',border:'0.5px solid #E0DDD6',borderRadius:10,fontSize:13,color:'#111',background:'#F5F3EF',outline:'none',fontFamily:'inherit',fontWeight:selectedClient?600:400}}>
+          style={{width:'100%',padding:'10px 12px',border:'0.5px solid #1C1C1C',borderRadius:10,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',fontWeight:selectedClient?600:400}}>
           <option value="">👤 Seleziona cliente...</option>
           {clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
         </select>
@@ -2133,14 +2133,14 @@ function CheckinAdmin() {
 
       {/* STATO VUOTO */}
       {!selectedClient && (
-        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#888780',gap:10}}>
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#555',gap:10}}>
           <i className="ti ti-activity" style={{fontSize:48,opacity:0.2}}/>
           <div style={{fontSize:13}}>Seleziona un cliente per vedere il suo riepilogo completo</div>
         </div>
       )}
 
       {selectedClient && loading && (
-        <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#888780',fontSize:13}}>
+        <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontSize:13}}>
           Caricamento...
         </div>
       )}
@@ -2175,7 +2175,7 @@ function CheckinAdmin() {
               {l:'Sessioni',v:sessions.length,c:'#D4570A'},
               {l:'Foto',v:photos.length,c:'#9B59B6'},
             ].map(st=>(
-              <div key={st.l} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'10px 6px',textAlign:'center'}}>
+              <div key={st.l} style={{background:'#0D0D0D',borderRadius:10,border:'0.5px solid #1C1C1C',padding:'10px 6px',textAlign:'center'}}>
                 <div style={{fontSize:18,fontWeight:800,color:st.c,lineHeight:1}}>{st.v}</div>
                 <div style={{fontSize:9,color:'#B0ADA8',textTransform:'uppercase',marginTop:2}}>{st.l}</div>
               </div>
@@ -2184,8 +2184,8 @@ function CheckinAdmin() {
 
           {/* GRAFICO PESO */}
           {measurements.length > 1 && (
-            <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px',marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>⚖️ Andamento peso</div>
+            <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>⚖️ Andamento peso</div>
               <div style={{display:'flex',alignItems:'flex-end',gap:3,height:60}}>
                 {measurements.slice(0,12).reverse().map((m,i,arr)=>{
                   const vals = arr.map(x=>x.weight_kg)
@@ -2210,12 +2210,12 @@ function CheckinAdmin() {
 
           {/* FOTO */}
           {photos.length > 0 && (
-            <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px',marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>📷 Foto progressi</div>
+            <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>📷 Foto progressi</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                 {photos.map(p=>(
                   <div key={p.id} onClick={()=>setLightbox(p)}
-                    style={{position:'relative',cursor:'pointer',borderRadius:9,overflow:'hidden',aspectRatio:'3/4',background:'#F0EDE8'}}>
+                    style={{position:'relative',cursor:'pointer',borderRadius:9,overflow:'hidden',aspectRatio:'3/4',background:'#141414'}}>
                     <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                     <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.7))',padding:'10px 5px 4px'}}>
                       <div style={{fontSize:8,color:'white',fontWeight:600,textTransform:'uppercase'}}>{p.label}</div>
@@ -2232,19 +2232,19 @@ function CheckinAdmin() {
 
           {/* CHECK-IN SETTIMANALI */}
           {checkins.length > 0 && (
-            <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px',marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>✅ Check-in settimanali</div>
+            <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>✅ Check-in settimanali</div>
               {checkins.map(ck=>{
                 const isExp = expandedCheckin===ck.id
                 const dateLabel = new Date(ck.week_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})
                 return (
-                  <div key={ck.id} style={{borderRadius:10,border:'0.5px solid #E0DDD6',marginBottom:8,overflow:'hidden'}}>
+                  <div key={ck.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
                     {/* HEADER */}
                     <div onClick={()=>setExpandedCheckin(isExp?null:ck.id)}
                       style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:isExp?'#FEF8F5':'white'}}>
                       <div style={{flex:1}}>
-                        <div style={{fontSize:12,fontWeight:700,color:'#111'}}>Settimana {dateLabel}</div>
-                        <div style={{fontSize:10,color:'#888780',marginTop:2,display:'flex',gap:10}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Settimana {dateLabel}</div>
+                        <div style={{fontSize:10,color:'#555',marginTop:2,display:'flex',gap:10}}>
                           {ck.energy_level!=null&&<span>⚡{ck.energy_level}/5</span>}
                           {ck.sleep_quality!=null&&<span>😴{ck.sleep_quality}/5</span>}
                           {ck.stress_level!=null&&<span>🧠{ck.stress_level}/5</span>}
@@ -2252,7 +2252,7 @@ function CheckinAdmin() {
                           {ck.weight_kg&&<span style={{color:'#D4570A',fontWeight:600}}>⚖️{ck.weight_kg}kg</span>}
                         </div>
                       </div>
-                      <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#888780',flexShrink:0}}/>
+                      <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#555',flexShrink:0}}/>
                     </div>
 
                     {/* DETTAGLIO */}
@@ -2267,7 +2267,7 @@ function CheckinAdmin() {
                           ].filter(x=>x.v!=null).map(item=>(
                             <div key={item.l}>
                               <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                                <span style={{color:'#888780'}}>{item.l}</span>
+                                <span style={{color:'#555'}}>{item.l}</span>
                                 <span style={{fontWeight:700,color:scoreColor(item.v,item.inv)}}>{item.v}/{item.max}</span>
                               </div>
                               <ScoreBar v={item.v} max={item.max} inv={item.inv}/>
@@ -2275,13 +2275,13 @@ function CheckinAdmin() {
                           ))}
                         </div>
                         {ck.weight_kg && (
-                          <div style={{background:'#FEF0E7',borderRadius:8,padding:'8px 12px',fontSize:12,marginBottom:ck.notes?8:0}}>
-                            <span style={{color:'#888780'}}>Peso dichiarato: </span>
+                          <div style={{background:'rgba(212,87,10,0.1)',borderRadius:8,padding:'8px 12px',fontSize:12,marginBottom:ck.notes?8:0}}>
+                            <span style={{color:'#555'}}>Peso dichiarato: </span>
                             <span style={{fontWeight:700,color:'#D4570A'}}>{ck.weight_kg}kg</span>
                           </div>
                         )}
                         {ck.notes && (
-                          <div style={{background:'#F5F3EF',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#555',lineHeight:1.6,fontStyle:'italic'}}>
+                          <div style={{background:'#161616',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#555',lineHeight:1.6,fontStyle:'italic'}}>
                             "{ck.notes}"
                           </div>
                         )}
@@ -2295,8 +2295,8 @@ function CheckinAdmin() {
 
           {/* ALLENAMENTI */}
           {sessions.length > 0 && (
-            <div style={{background:'white',borderRadius:12,border:'0.5px solid #E0DDD6',padding:'14px',marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#888780',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>🏋️ Allenamenti recenti</div>
+            <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>🏋️ Allenamenti recenti</div>
               {sessions.map(sess=>{
                 const isExp = expandedSession===sess.id
                 const pct = sess.sets_total>0?Math.round(sess.sets_completed/sess.sets_total*100):0
@@ -2306,16 +2306,16 @@ function CheckinAdmin() {
                 const dateLabel = new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})
 
                 return (
-                  <div key={sess.id} style={{borderRadius:10,border:'0.5px solid #E0DDD6',marginBottom:8,overflow:'hidden'}}>
+                  <div key={sess.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
                     {/* HEADER */}
                     <div onClick={()=>setExpandedSession(isExp?null:sess.id)}
                       style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:isExp?'#FEF8F5':'white'}}>
-                      <div style={{width:36,height:36,borderRadius:9,background:'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <div style={{width:36,height:36,borderRadius:9,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                         <i className="ti ti-barbell" style={{fontSize:16,color:'#D4570A'}}/>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:12,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sess.day_label||'Allenamento'}</div>
-                        <div style={{fontSize:10,color:'#888780',marginTop:1,display:'flex',gap:8,alignItems:'center'}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sess.day_label||'Allenamento'}</div>
+                        <div style={{fontSize:10,color:'#555',marginTop:1,display:'flex',gap:8,alignItems:'center'}}>
                           <span>{dateLabel}</span>
                           {sess.total_volume_kg&&<span style={{color:'#D4570A',fontWeight:600}}>{Math.round(sess.total_volume_kg)}kg vol.</span>}
                           {sess.feeling && <span>{['','😓','😐','🙂','😊','🔥'][sess.feeling]}</span>}
@@ -2327,7 +2327,7 @@ function CheckinAdmin() {
                           color:pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A'}}>
                           {pct}%
                         </span>
-                        <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#888780'}}/>
+                        <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#555'}}/>
                       </div>
                     </div>
 
@@ -2342,19 +2342,19 @@ function CheckinAdmin() {
                               return (
                                 <div key={name} style={{padding:'7px 0',borderBottom:'0.5px solid #F0EDE8',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                                   <div>
-                                    <div style={{fontSize:12,fontWeight:600,color:'#111'}}>{name}</div>
-                                    <div style={{fontSize:10,color:'#888780',marginTop:1}}>{ls.length} serie{maxReps>0?` · ${maxReps} reps`:''}</div>
+                                    <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{name}</div>
+                                    <div style={{fontSize:10,color:'#555',marginTop:1}}>{ls.length} serie{maxReps>0?` · ${maxReps} reps`:''}</div>
                                   </div>
                                   {maxKg>0 && <span style={{fontSize:13,fontWeight:700,color:'#D4570A'}}>{maxKg}kg</span>}
                                 </div>
                               )
                             })}
                             {sess.notes && (
-                              <div style={{marginTop:8,fontSize:11,color:'#888780',fontStyle:'italic',padding:'6px 8px',background:'#F5F3EF',borderRadius:7}}>"{sess.notes}"</div>
+                              <div style={{marginTop:8,fontSize:11,color:'#555',fontStyle:'italic',padding:'6px 8px',background:'#161616',borderRadius:7}}>"{sess.notes}"</div>
                             )}
                           </div>
                         ) : (
-                          <div style={{padding:'12px',fontSize:11,color:'#888780',textAlign:'center'}}>Nessun dettaglio esercizi registrato</div>
+                          <div style={{padding:'12px',fontSize:11,color:'#555',textAlign:'center'}}>Nessun dettaglio esercizi registrato</div>
                         )}
                       </div>
                     )}
@@ -2366,7 +2366,7 @@ function CheckinAdmin() {
 
           {/* NESSUN DATO */}
           {checkins.length===0 && sessions.length===0 && photos.length===0 && (
-            <div style={{textAlign:'center',padding:'40px 0',color:'#888780',fontSize:13}}>
+            <div style={{textAlign:'center',padding:'40px 0',color:'#555',fontSize:13}}>
               <i className="ti ti-mood-empty" style={{fontSize:36,display:'block',marginBottom:8,opacity:0.3}}/>
               Nessun dato ancora per questo cliente
             </div>
@@ -2434,7 +2434,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
     <div style={{ padding: '0 0 40px' }}>
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, color: '#888780' }}>
+        <div style={{ fontSize: 13, color: '#555' }}>
           {nonLetti.length > 0 && <span style={{ fontWeight: 700, color: '#7C3AED' }}>{nonLetti.length} non letto{nonLetti.length > 1 ? 'i' : ''} · </span>}
           {tutti.length} report totali
         </div>
@@ -2451,12 +2451,12 @@ function ReportTab({ clients, clientStats, onRefresh }) {
         </div>
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#888780' }}>Caricamento...</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#555' }}>Caricamento...</div>}
 
       {!loading && displayed.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: 12, border: '0.5px solid #E0DDD6' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#0D0D0D', borderRadius: 12, border: '0.5px solid #1C1C1C' }}>
           <i className="ti ti-clipboard-list" style={{ fontSize: 40, color: '#E0DDD6', display: 'block', marginBottom: 10 }} />
-          <div style={{ fontSize: 13, color: '#888780' }}>Nessun report ricevuto ancora.</div>
+          <div style={{ fontSize: 13, color: '#555' }}>Nessun report ricevuto ancora.</div>
         </div>
       )}
 
@@ -2466,7 +2466,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
         const isNew = !r.read_by_coach
 
         return (
-          <div key={r.id} style={{ background: 'white', borderRadius: 12, border: `0.5px solid ${isNew ? '#C4B5FD' : '#E0DDD6'}`, marginBottom: 10, overflow: 'hidden' }}>
+          <div key={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? '#C4B5FD' : '#E0DDD6'}`, marginBottom: 10, overflow: 'hidden' }}>
             {/* HEADER REPORT */}
             <div onClick={() => { setExpanded(isExpanded ? null : r.id); if (isNew) markRead(r.id) }}
               style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: isNew ? '#FAF5FF' : 'white' }}>
@@ -2475,10 +2475,10 @@ function ReportTab({ clients, clientStats, onRefresh }) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{clientName}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#F0F0F0' }}>{clientName}</span>
                   {isNew && <span style={{ fontSize: 10, background: '#7C3AED', color: 'white', padding: '2px 8px', borderRadius: 8, fontWeight: 600 }}>NUOVO</span>}
                 </div>
-                <div style={{ fontSize: 11, color: '#888780' }}>
+                <div style={{ fontSize: 11, color: '#555' }}>
                   {r.period_start && r.period_end
                     ? `${new Date(r.period_start + 'T12:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} – ${new Date(r.period_end + 'T12:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`
                     : `Inviato il ${new Date(r.submitted_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`}
@@ -2486,9 +2486,9 @@ function ReportTab({ clients, clientStats, onRefresh }) {
               </div>
               {/* MINI STATS */}
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                {r.benessere_generale && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.benessere_generale >= 7 ? '#3B6D11' : r.benessere_generale >= 5 ? '#E8A020' : '#E24B4A' }}>{r.benessere_generale}</div><div style={{ fontSize: 9, color: '#888780' }}>😊</div></div>}
-                {r.energia_allenamento && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.energia_allenamento >= 7 ? '#3B6D11' : r.energia_allenamento >= 5 ? '#E8A020' : '#E24B4A' }}>{r.energia_allenamento}</div><div style={{ fontSize: 9, color: '#888780' }}>⚡</div></div>}
-                {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#3B6D11' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#888780' }}>🧠</div></div>}
+                {r.benessere_generale && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.benessere_generale >= 7 ? '#3B6D11' : r.benessere_generale >= 5 ? '#E8A020' : '#E24B4A' }}>{r.benessere_generale}</div><div style={{ fontSize: 9, color: '#555' }}>😊</div></div>}
+                {r.energia_allenamento && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.energia_allenamento >= 7 ? '#3B6D11' : r.energia_allenamento >= 5 ? '#E8A020' : '#E24B4A' }}>{r.energia_allenamento}</div><div style={{ fontSize: 9, color: '#555' }}>⚡</div></div>}
+                {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#3B6D11' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#555' }}>🧠</div></div>}
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button onClick={(e)=>{e.stopPropagation();generateReportPDF(r,clientName)}} style={{
@@ -2498,7 +2498,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                 }}>
                   <i className="ti ti-file-type-pdf" style={{fontSize:12}}/>PDF
                 </button>
-                <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#888780' }} />
+                <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#555' }} />
               </div>
             </div>
 
@@ -2515,8 +2515,8 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '0.5px solid #F5F3EF' }}>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: '#111' }}>{ex.exercise_name}</div>
-                            <div style={{ fontSize: 11, color: '#888780' }}>{ex.carico_inizio}kg → {ex.carico_fine}kg</div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F0F0' }}>{ex.exercise_name}</div>
+                            <div style={{ fontSize: 11, color: '#555' }}>{ex.carico_inizio}kg → {ex.carico_fine}kg</div>
                             {ex.note && <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic', marginTop: 2 }}>"{ex.note}"</div>}
                           </div>
                           {diff !== null && (
@@ -2538,10 +2538,10 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                     { l: 'Sonno', v: r.qualita_sonno, emoji: '😴' },
                     { l: 'Stress', v: r.stress_periodo, emoji: '🧠', inverted: true },
                   ].map(item => item.v && (
-                    <div key={item.l} style={{ background: '#F5F3EF', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
+                    <div key={item.l} style={{ background: '#161616', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
                       <div style={{ fontSize: 16, marginBottom: 2 }}>{item.emoji}</div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#111' }}>{item.v}/10</div>
-                      <div style={{ fontSize: 9, color: '#888780', textTransform: 'uppercase' }}>{item.l}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#F0F0F0' }}>{item.v}/10</div>
+                      <div style={{ fontSize: 9, color: '#555', textTransform: 'uppercase' }}>{item.l}</div>
                     </div>
                   ))}
                 </div>
@@ -2562,8 +2562,8 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                   { l: '💬 Note al coach', v: r.note_coach },
                 ].filter(f => f.v).map(f => (
                   <div key={f.l} style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.l}</div>
-                    <div style={{ fontSize: 13, color: '#111', lineHeight: 1.5, background: '#F5F3EF', borderRadius: 8, padding: '8px 10px' }}>{f.v}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.l}</div>
+                    <div style={{ fontSize: 13, color: '#F0F0F0', lineHeight: 1.5, background: '#161616', borderRadius: 8, padding: '8px 10px' }}>{f.v}</div>
                   </div>
                 ))}
               </div>
@@ -2877,7 +2877,7 @@ function AnamnesiTab({ clients, onRefresh }) {
   return (
     <div style={{padding:'0 0 40px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-        <div style={{fontSize:13,color:'#888780'}}>
+        <div style={{fontSize:13,color:'#555'}}>
           {nonLette.length>0&&<span style={{fontWeight:700,color:'#3B6D11'}}>{nonLette.length} non letta{nonLette.length>1?'e':''} · </span>}
           {anamnesi.length} totali
         </div>
@@ -2894,12 +2894,12 @@ function AnamnesiTab({ clients, onRefresh }) {
         </div>
       </div>
 
-      {loading&&<div style={{textAlign:'center',padding:'40px',color:'#888780'}}>Caricamento...</div>}
+      {loading&&<div style={{textAlign:'center',padding:'40px',color:'#555'}}>Caricamento...</div>}
 
       {!loading&&displayed.length===0&&(
-        <div style={{textAlign:'center',padding:'60px 20px',background:'white',borderRadius:12,border:'0.5px solid #E0DDD6'}}>
+        <div style={{textAlign:'center',padding:'60px 20px',background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C'}}>
           <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/>
-          <div style={{fontSize:13,color:'#888780'}}>Nessuna anamnesi {filter==='nuove'?'non letta':'compilata'}.</div>
+          <div style={{fontSize:13,color:'#555'}}>Nessuna anamnesi {filter==='nuove'?'non letta':'compilata'}.</div>
         </div>
       )}
 
@@ -2907,30 +2907,30 @@ function AnamnesiTab({ clients, onRefresh }) {
         const clientName = a.profiles?.full_name || clients.find(c=>c.id===a.client_id)?.full_name || '—'
         const isNew = !a.read_by_coach
         return (
-          <div key={a.id} style={{background:'white',borderRadius:12,border:`0.5px solid ${isNew?'#A7D9A0':'#E0DDD6'}`,marginBottom:10,overflow:'hidden'}}>
+          <div key={a.id} style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${isNew?'#A7D9A0':'#E0DDD6'}`,marginBottom:10,overflow:'hidden'}}>
             <div style={{padding:'14px',display:'flex',alignItems:'center',gap:12,background:isNew?'#F0FAF0':'white'}}>
               <div style={{width:40,height:40,borderRadius:'50%',background:isNew?'#3B6D11':'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
                 {initials(clientName)}
               </div>
               <div style={{flex:1}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
-                  <span style={{fontSize:14,fontWeight:700,color:'#111'}}>{clientName}</span>
+                  <span style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{clientName}</span>
                   {isNew&&<span style={{fontSize:10,background:'#3B6D11',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>NUOVA</span>}
                 </div>
-                <div style={{fontSize:11,color:'#888780'}}>
+                <div style={{fontSize:11,color:'#555'}}>
                   Completata il {new Date(a.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
                   {a.obiettivo&&` · Obiettivo: ${a.obiettivo}`}
                 </div>
               </div>
               <div style={{display:'flex',gap:6,flexShrink:0}}>
                 <button onClick={()=>{generateAnamnesiPDF(a,clientName);if(isNew)markRead(a.id)}} style={{
-                  background:'#EAF3DE',color:'#3B6D11',border:'0.5px solid #3B6D11',
+                  background:'rgba(59,109,17,0.1)',color:'#3B6D11',border:'0.5px solid #3B6D11',
                   borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
                   display:'flex',alignItems:'center',gap:4
                 }}>
                   <i className="ti ti-file-type-pdf" style={{fontSize:12}}/>PDF
                 </button>
-                {isNew&&<button onClick={()=>markRead(a.id)} style={{background:'#F5F3EF',color:'#888780',border:'0.5px solid #E0DDD6',borderRadius:7,padding:'6px 10px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>✓ Letta</button>}
+                {isNew&&<button onClick={()=>markRead(a.id)} style={{background:'#161616',color:'#555',border:'0.5px solid #1C1C1C',borderRadius:7,padding:'6px 10px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>✓ Letta</button>}
               </div>
             </div>
           </div>

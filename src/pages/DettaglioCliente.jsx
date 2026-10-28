@@ -13,16 +13,16 @@ const initials = n => n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperC
 
 const s = {
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'9px 16px', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnSm: { background:'#FEF0E7', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 },
-  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
-  btnGreen: { background:'#EAF3DE', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'14px', marginBottom:12 },
-  sectionTitle: { fontSize:10, fontWeight:700, color:'#888780', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, display:'flex', alignItems:'center', gap:5 },
-  label: { fontSize:11, color:'#888780', display:'block', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 },
+  btnGray: { background:'#161616', color:'#555', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
+  btnGreen: { background:'rgba(59,109,17,0.1)', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'14px', marginBottom:12 },
+  sectionTitle: { fontSize:10, fontWeight:700, color:'#555', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, display:'flex', alignItems:'center', gap:5 },
+  label: { fontSize:11, color:'#555', display:'block', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   badge: (bg, color) => ({ fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:600, background:bg, color }),
-  statBox: (color) => ({ background:'#F5F3EF', borderRadius:10, padding:'11px', textAlign:'center', border:'0.5px solid #E0DDD6' }),
+  statBox: (color) => ({ background:'#161616', borderRadius:10, padding:'11px', textAlign:'center', border:'0.5px solid #1C1C1C' }),
 }
 
 const TABS = [
@@ -46,8 +46,8 @@ export default function DettaglioCliente() {
   }, [clientId])
 
   if (loading) return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF'}}>
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',height:56,display:'flex',alignItems:'center',padding:'0 16px',gap:12,flexShrink:0}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#161616'}}>
+      <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',height:56,display:'flex',alignItems:'center',padding:'0 16px',gap:12,flexShrink:0}}>
         <button onClick={()=>navigate(-1)} style={{...s.btnGray,padding:'5px 10px'}}><i className="ti ti-arrow-left" style={{fontSize:14}}/></button>
         <div style={{fontSize:15,fontWeight:600}}>Caricamento...</div>
       </div>
@@ -165,20 +165,20 @@ function ClientDetail({ client, navigate }) {
   const daysLeft = client.subscription_end ? Math.ceil((new Date(client.subscription_end)-new Date())/86400000) : null
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#F5F3EF',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#161616',overflow:'hidden'}}>
 
       {/* TOPBAR */}
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
-          <i className="ti ti-arrow-left" style={{fontSize:15,color:'#111'}}/>
+      <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+          <i className="ti ti-arrow-left" style={{fontSize:15,color:'#F0F0F0'}}/>
         </button>
         <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
           <div style={{width:32,height:32,borderRadius:'50%',background:`linear-gradient(135deg,${GOAL_COLOR[client.goal]||'#D4570A'},${GOAL_COLOR[client.goal]||'#D4570A'}88)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0}}>
             {initials(client.full_name)}
           </div>
           <div style={{minWidth:0}}>
-            <div style={{fontSize:14,fontWeight:700,color:'#111',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{client.full_name}</div>
-            <div style={{fontSize:10,color:'#888780'}}>{GOAL_LABEL[client.goal]||'—'}</div>
+            <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{client.full_name}</div>
+            <div style={{fontSize:10,color:'#555'}}>{GOAL_LABEL[client.goal]||'—'}</div>
           </div>
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
@@ -193,7 +193,7 @@ function ClientDetail({ client, navigate }) {
       </div>
 
       {/* TABS */}
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',display:'flex',overflowX:'auto',flexShrink:0}}>
+      <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',display:'flex',overflowX:'auto',flexShrink:0}}>
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,minWidth:60,padding:'10px 4px',border:'none',background:'none',cursor:'pointer',fontFamily:'inherit',borderBottom:tab===t.id?'2px solid #D4570A':'2px solid transparent',color:tab===t.id?'#D4570A':'#888780',transition:'all 0.15s',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <i className={`ti ${t.icon}`} style={{fontSize:16}}/>
@@ -240,7 +240,7 @@ function ClientDetail({ client, navigate }) {
             ].map(st=>(
               <div key={st.l} style={s.statBox(st.c)}>
                 <div style={{fontSize:18,fontWeight:800,color:st.c,lineHeight:1.1}}>{st.v}</div>
-                {st.sub&&<div style={{fontSize:9,color:'#888780',marginTop:1}}>{st.sub}</div>}
+                {st.sub&&<div style={{fontSize:9,color:'#555',marginTop:1}}>{st.sub}</div>}
                 <div style={{fontSize:8,color:'#B0ADA8',textTransform:'uppercase',letterSpacing:'0.06em',marginTop:3}}>{st.l}</div>
               </div>
             ))}
@@ -256,20 +256,20 @@ function ClientDetail({ client, navigate }) {
                 {l:'Telefono',v:client.phone||'—'},
                 {l:'Cliente dal',v:new Date(client.created_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})},
               ].map(r=>(
-                <div key={r.l} style={{padding:'7px 10px',background:'#F5F3EF',borderRadius:8}}>
-                  <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:2}}>{r.l}</div>
-                  <div style={{fontWeight:600,color:'#111'}}>{r.v}</div>
+                <div key={r.l} style={{padding:'7px 10px',background:'#161616',borderRadius:8}}>
+                  <div style={{fontSize:9,color:'#555',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:2}}>{r.l}</div>
+                  <div style={{fontWeight:600,color:'#F0F0F0'}}>{r.v}</div>
                 </div>
               ))}
             </div>
             {client.coach_notes && (
-              <div style={{marginTop:8,background:'#FEF0E7',borderLeft:'3px solid #D4570A',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#7a3508'}}>
+              <div style={{marginTop:8,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#7a3508'}}>
                 <div style={{fontSize:9,color:'#D4570A',textTransform:'uppercase',fontWeight:700,marginBottom:3}}>🔒 Note private</div>
                 {client.coach_notes}
               </div>
             )}
             {client.notes && (
-              <div style={{marginTop:6,background:'#F5F3EF',borderLeft:'3px solid #888780',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#555'}}>
+              <div style={{marginTop:6,background:'#161616',borderLeft:'3px solid #888780',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#555'}}>
                 {client.notes}
               </div>
             )}
@@ -288,7 +288,7 @@ function ClientDetail({ client, navigate }) {
                 const pct = Math.min(100,Math.round(d.kcal/target*100))
                 return (
                   <div key={d.date} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-                    <div style={{height:48,width:'100%',background:'#F5F3EF',borderRadius:6,overflow:'hidden',position:'relative',display:'flex',alignItems:'flex-end'}}>
+                    <div style={{height:48,width:'100%',background:'#161616',borderRadius:6,overflow:'hidden',position:'relative',display:'flex',alignItems:'flex-end'}}>
                       <div style={{width:'100%',height:`${Math.max(pct,hasDiary?6:0)}%`,background:hasDiary?(pct>=90?'#3B6D11':'#D4570A'):'transparent',borderRadius:6,transition:'height 0.3s'}}/>
                     </div>
                     <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
@@ -301,7 +301,7 @@ function ClientDetail({ client, navigate }) {
                 )
               })}
             </div>
-            <div style={{display:'flex',gap:12,marginTop:8,fontSize:10,color:'#888780'}}>
+            <div style={{display:'flex',gap:12,marginTop:8,fontSize:10,color:'#555'}}>
               <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:6,height:6,borderRadius:'50%',background:'#3B6D11'}}/> Diario</span>
               <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:6,height:6,borderRadius:'50%',background:'#4A90D4'}}/> Allenamento</span>
             </div>
@@ -320,14 +320,14 @@ function ClientDetail({ client, navigate }) {
                 ].filter(i=>i.v!=null).map(item=>{
                   const c = item.inv ? (item.v<=2?'#3B6D11':item.v<=3?'#E8A020':'#E24B4A') : (item.v>=4?'#3B6D11':item.v>=3?'#E8A020':'#E24B4A')
                   return (
-                    <div key={item.l} style={{textAlign:'center',background:'#F5F3EF',borderRadius:9,padding:'8px 4px'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:c}}>{item.v}<span style={{fontSize:9,color:'#888780'}}>/{item.max}</span></div>
-                      <div style={{fontSize:8,color:'#888780',marginTop:2}}>{item.l}</div>
+                    <div key={item.l} style={{textAlign:'center',background:'#161616',borderRadius:9,padding:'8px 4px'}}>
+                      <div style={{fontSize:18,fontWeight:800,color:c}}>{item.v}<span style={{fontSize:9,color:'#555'}}>/{item.max}</span></div>
+                      <div style={{fontSize:8,color:'#555',marginTop:2}}>{item.l}</div>
                     </div>
                   )
                 })}
               </div>
-              {checkin.notes&&<div style={{fontSize:11,color:'#555',fontStyle:'italic',padding:'7px 10px',background:'#F5F3EF',borderRadius:7}}>"{checkin.notes}"</div>}
+              {checkin.notes&&<div style={{fontSize:11,color:'#555',fontStyle:'italic',padding:'7px 10px',background:'#161616',borderRadius:7}}>"{checkin.notes}"</div>}
             </div>
           )}
 
@@ -341,7 +341,7 @@ function ClientDetail({ client, navigate }) {
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
                 {photos.slice(0,6).map(p => (
                   <div key={p.id} onClick={()=>setLightbox({url:p.photo_url,label:p.label,date:p.photo_date})}
-                    style={{position:'relative',cursor:'pointer',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#F0EDE8'}}>
+                    style={{position:'relative',cursor:'pointer',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#141414'}}>
                     <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                     <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.65))',padding:'14px 5px 4px'}}>
                       <div style={{fontSize:8,color:'white',fontWeight:600,textTransform:'uppercase'}}>{p.label}</div>
@@ -353,7 +353,7 @@ function ClientDetail({ client, navigate }) {
                 ))}
               </div>
               {photos.length > 6 && (
-                <button onClick={()=>setTab('progressi')} style={{width:'100%',marginTop:8,padding:'6px',background:'#F5F3EF',border:'0.5px solid #E0DDD6',borderRadius:7,fontSize:11,color:'#888780',cursor:'pointer',fontFamily:'inherit'}}>
+                <button onClick={()=>setTab('progressi')} style={{width:'100%',marginTop:8,padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,color:'#555',cursor:'pointer',fontFamily:'inherit'}}>
                   Vedi tutte le {photos.length} foto →
                 </button>
               )}
@@ -411,26 +411,26 @@ function ClientDetail({ client, navigate }) {
                     {l:'TDEE',v:tdee,sub:`${sessWeekN} sess/sett`,c:'#4A90D4'},
                     {l:'Mantenimento',v:tdee,sub:'±0 kg',c:'#3B6D11'},
                   ].map(st=>(
-                    <div key={st.l} style={{background:'#F5F3EF',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                    <div key={st.l} style={{background:'#161616',borderRadius:9,padding:'9px',textAlign:'center'}}>
                       <div style={{fontSize:16,fontWeight:800,color:st.c}}>{st.v}</div>
-                      <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',marginTop:1}}>{st.l}</div>
+                      <div style={{fontSize:9,color:'#555',textTransform:'uppercase',marginTop:1}}>{st.l}</div>
                       <div style={{fontSize:8,color:'#B0ADA8'}}>{st.sub}</div>
                     </div>
                   ))}
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                  <div style={{background:'#FEE2E2',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                  <div style={{background:'rgba(226,75,74,0.1)',borderRadius:9,padding:'9px',textAlign:'center'}}>
                     <div style={{fontSize:15,fontWeight:800,color:'#E24B4A'}}>{deficit}</div>
                     <div style={{fontSize:9,color:'#E24B4A',marginTop:1}}>Deficit -20%</div>
                     <div style={{fontSize:8,color:'#B0ADA8'}}>Dimagrimento</div>
                   </div>
-                  <div style={{background:'#EAF3DE',borderRadius:9,padding:'9px',textAlign:'center'}}>
+                  <div style={{background:'rgba(59,109,17,0.1)',borderRadius:9,padding:'9px',textAlign:'center'}}>
                     <div style={{fontSize:15,fontWeight:800,color:'#3B6D11'}}>{surplus}</div>
                     <div style={{fontSize:9,color:'#3B6D11',marginTop:1}}>Surplus +10%</div>
                     <div style={{fontSize:8,color:'#B0ADA8'}}>Massa muscolare</div>
                   </div>
                 </div>
-                <div style={{fontSize:10,color:'#888780',marginTop:8,textAlign:'center'}}>
+                <div style={{fontSize:10,color:'#555',marginTop:8,textAlign:'center'}}>
                   Formula Mifflin-St Jeor · {weight}kg · {height}cm{age?` · ${age}anni`:''}
                 </div>
               </div>
@@ -448,16 +448,16 @@ function ClientDetail({ client, navigate }) {
             </div>
             {mealPlan ? (
               <>
-                <div style={{background:'#FEF0E7',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
+                <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#7a3508'}}>{mealPlan.title}</div>
                     <span style={s.badge(mealPlan.is_active?'#EAF3DE':'#F5F3EF', mealPlan.is_active?'#3B6D11':'#888780')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                     {[{l:'Kcal',v:mealPlan.kcal_target,c:'#D4570A'},{l:'Prot',v:mealPlan.protein_target_g+'g',c:'#4A90D4'},{l:'Carbo',v:mealPlan.carbs_target_g+'g',c:'#E8A020'},{l:'Grassi',v:mealPlan.fat_target_g+'g',c:'#3B8C5A'}].map(m=>(
-                      <div key={m.l} style={{textAlign:'center',background:'white',borderRadius:7,padding:'6px'}}>
+                      <div key={m.l} style={{textAlign:'center',background:'#0D0D0D',borderRadius:7,padding:'6px'}}>
                         <div style={{fontSize:14,fontWeight:800,color:m.c}}>{m.v}</div>
-                        <div style={{fontSize:9,color:'#888780',textTransform:'uppercase'}}>{m.l}</div>
+                        <div style={{fontSize:9,color:'#555',textTransform:'uppercase'}}>{m.l}</div>
                       </div>
                     ))}
                   </div>
@@ -472,7 +472,7 @@ function ClientDetail({ client, navigate }) {
                       const macroKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
                       const diff = Math.abs(macroKcal - (parseFloat(planEdit.kcal_target)||0))
                       return diff > 10 && macroKcal > 0 ? (
-                        <div style={{background:'#FEF8E7',borderRadius:8,padding:'7px 10px',marginBottom:8,fontSize:11,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <div style={{background:'rgba(232,160,32,0.1)',borderRadius:8,padding:'7px 10px',marginBottom:8,fontSize:11,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                           <span>⚠️ Macro = {macroKcal} kcal (differenza {diff} kcal)</span>
                           <button onClick={()=>setPlanEdit(p=>({...p,kcal_target:macroKcal}))} style={{fontSize:10,background:'#E8A020',color:'white',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',fontFamily:'inherit'}}>Sincronizza</button>
                         </div>
@@ -498,7 +498,7 @@ function ClientDetail({ client, navigate }) {
                             }
                           }}/>
                       </div>
-                      <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#888780'}}>×4 kcal</span></label>
+                      <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#555'}}>×4 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.protein_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -506,7 +506,7 @@ function ClientDetail({ client, navigate }) {
                             setPlanEdit(p=>({...p,protein_target_g:v,kcal_target:newKcal}))
                           }}/>
                       </div>
-                      <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#888780'}}>×4 kcal</span></label>
+                      <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#555'}}>×4 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.carbs_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -514,7 +514,7 @@ function ClientDetail({ client, navigate }) {
                             setPlanEdit(p=>({...p,carbs_target_g:v,kcal_target:newKcal}))
                           }}/>
                       </div>
-                      <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#888780'}}>×9 kcal</span></label>
+                      <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#555'}}>×9 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.fat_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -529,7 +529,7 @@ function ClientDetail({ client, navigate }) {
                 )}
               </>
             ) : (
-              <div style={{textAlign:'center',padding:'20px',color:'#888780',fontSize:12}}>Nessun piano alimentare caricato</div>
+              <div style={{textAlign:'center',padding:'20px',color:'#555',fontSize:12}}>Nessun piano alimentare caricato</div>
             )}
           </div>
 
@@ -544,7 +544,7 @@ function ClientDetail({ client, navigate }) {
                 const isToday = d.date===new Date().toISOString().split('T')[0]
                 return (
                   <div key={d.date} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                    <div style={{height:56,width:'100%',background:'#F5F3EF',borderRadius:7,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
+                    <div style={{height:56,width:'100%',background:'#161616',borderRadius:7,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
                       <div style={{width:'100%',height:`${Math.max(pct,d.kcal>0?6:0)}%`,background:d.kcal===0?'transparent':pct>=90?'#3B6D11':pct>=70?'#E8A020':'#D4570A',borderRadius:7}}/>
                     </div>
                     {d.kcal>0&&<div style={{fontSize:8,color:'#D4570A',fontWeight:600}}>{d.kcal}</div>}
@@ -576,12 +576,12 @@ function ClientDetail({ client, navigate }) {
               }
             </div>
             {workoutPlan ? (
-              <div style={{background:'#FEF0E7',borderRadius:10,padding:'10px 14px'}}>
+              <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'10px 14px'}}>
                 <div style={{fontSize:13,fontWeight:700,color:'#7a3508'}}>{workoutPlan.name}</div>
                 <div style={{fontSize:11,color:'#D4570A',marginTop:3}}>{workoutPlan.days_per_week} giorni/settimana · {workoutPlan.weeks_duration} settimane</div>
               </div>
             ) : (
-              <div style={{textAlign:'center',padding:16,color:'#888780',fontSize:12}}>Nessuna scheda caricata</div>
+              <div style={{textAlign:'center',padding:16,color:'#555',fontSize:12}}>Nessuna scheda caricata</div>
             )}
           </div>
 
@@ -594,7 +594,7 @@ function ClientDetail({ client, navigate }) {
             ].map(st=>(
               <div key={st.l} style={s.statBox(st.c)}>
                 <div style={{fontSize:20,fontWeight:800,color:st.c}}>{st.v}</div>
-                <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',marginTop:2}}>{st.l}</div>
+                <div style={{fontSize:9,color:'#555',textTransform:'uppercase',marginTop:2}}>{st.l}</div>
               </div>
             ))}
           </div>
@@ -609,21 +609,21 @@ function ClientDetail({ client, navigate }) {
                 const byEx = {}
                 sessLogs.forEach(l=>{ if (!byEx[l.exercise_name]) byEx[l.exercise_name]=[]; byEx[l.exercise_name].push(l) })
                 return (
-                  <div key={sess.id} style={{background:'#F5F3EF',borderRadius:9,padding:'10px 12px',marginBottom:7}}>
+                  <div key={sess.id} style={{background:'#161616',borderRadius:9,padding:'10px 12px',marginBottom:7}}>
                     <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
-                      <div style={{fontSize:12,fontWeight:700,color:'#111'}}>{sess.day_label}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{sess.day_label}</div>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span style={{fontSize:11,color:'#888780'}}>{new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+                        <span style={{fontSize:11,color:'#555'}}>{new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                         <span style={{...s.badge(pct>=80?'#EAF3DE':pct>=50?'#FEF0E7':'#FEE2E2', pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A')}}>{pct}%</span>
                       </div>
                     </div>
                     {Object.entries(byEx).map(([name,ls],idx)=>(
-                      <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #E0DDD6'}}>
+                      <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                         <span style={{color:'#555'}}>{name}</span>
                         <span style={{color:'#D4570A',fontWeight:600}}>{ls.length}×{Math.max(...ls.map(l=>l.weight_kg||0))||'—'}kg</span>
                       </div>
                     ))}
-                    {sess.notes&&<div style={{fontSize:10,color:'#888780',marginTop:5,fontStyle:'italic'}}>{sess.notes}</div>}
+                    {sess.notes&&<div style={{fontSize:10,color:'#555',marginTop:5,fontStyle:'italic'}}>{sess.notes}</div>}
                   </div>
                 )
               })}
@@ -641,23 +641,23 @@ function ClientDetail({ client, navigate }) {
             <div style={s.card}>
               <div style={s.sectionTitle}><i className="ti ti-clipboard-check" style={{fontSize:12}}/>Report allenamento ({reports.length})</div>
               {reports.map(r=>(
-                <div key={r.id} style={{background:'#F5F3EF',borderRadius:9,marginBottom:8,overflow:'hidden'}}>
+                <div key={r.id} style={{background:'#161616',borderRadius:9,marginBottom:8,overflow:'hidden'}}>
                   <div onClick={()=>setExpandedReport(expandedReport===r.id?null:r.id)}
                     style={{padding:'10px 12px',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div>
-                      <div style={{fontSize:12,fontWeight:700,color:'#111'}}>
+                      <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>
                         {r.period_start&&r.period_end ? `${new Date(r.period_start+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(r.period_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}` : new Date(r.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
                       </div>
-                      <div style={{fontSize:10,color:'#888780',marginTop:2,display:'flex',gap:8}}>
+                      <div style={{fontSize:10,color:'#555',marginTop:2,display:'flex',gap:8}}>
                         {r.benessere_generale!=null&&<span>😊 {r.benessere_generale}/10</span>}
                         {r.energia_allenamento!=null&&<span>⚡ {r.energia_allenamento}/10</span>}
                         {r.stress_periodo!=null&&<span>🧠 stress {r.stress_periodo}/10</span>}
                       </div>
                     </div>
-                    <i className={`ti ti-chevron-${expandedReport===r.id?'up':'down'}`} style={{fontSize:13,color:'#888780'}}/>
+                    <i className={`ti ti-chevron-${expandedReport===r.id?'up':'down'}`} style={{fontSize:13,color:'#555'}}/>
                   </div>
                   {expandedReport===r.id && (
-                    <div style={{borderTop:'0.5px solid #E0DDD6'}}>
+                    <div style={{borderTop:'0.5px solid #1A1A1A'}}>
                       <ReportAllenamento reportId={r.id} readOnly={true} adminView={true}/>
                     </div>
                   )}
@@ -684,8 +684,8 @@ function ClientDetail({ client, navigate }) {
               {measurements.slice(0,5).map((m,i)=>(
                 <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
                   <div>
-                    <div style={{fontSize:12,fontWeight:700,color:'#111'}}>{m.weight_kg}kg</div>
-                    <div style={{fontSize:10,color:'#888780'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>
+                    <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{m.weight_kg}kg</div>
+                    <div style={{fontSize:10,color:'#555'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>
                   </div>
                   {i>0 && measurements[i-1] && (
                     <span style={s.badge(
@@ -695,7 +695,7 @@ function ClientDetail({ client, navigate }) {
                       {(m.weight_kg-measurements[i-1].weight_kg)>0?'+':''}{Math.round((m.weight_kg-measurements[i-1].weight_kg)*10)/10}kg
                     </span>
                   )}
-                  {m.body_fat_pct && <span style={{fontSize:11,color:'#888780'}}>{m.body_fat_pct}% BF</span>}
+                  {m.body_fat_pct && <span style={{fontSize:11,color:'#555'}}>{m.body_fat_pct}% BF</span>}
                 </div>
               ))}
             </div>
@@ -711,7 +711,7 @@ function ClientDetail({ client, navigate }) {
 
               {/* CONFRONTO FOTO */}
               {comparePair.length===2 && (
-                <div style={{marginBottom:12,background:'#F5F3EF',borderRadius:10,padding:10}}>
+                <div style={{marginBottom:12,background:'#161616',borderRadius:10,padding:10}}>
                   <div style={{fontSize:10,color:'#D4570A',fontWeight:700,textTransform:'uppercase',marginBottom:8}}>Confronto</div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     {comparePair.map(p=>(
@@ -727,14 +727,14 @@ function ClientDetail({ client, navigate }) {
                 </div>
               )}
 
-              <div style={{fontSize:10,color:'#888780',marginBottom:6}}>
+              <div style={{fontSize:10,color:'#555',marginBottom:6}}>
                 {comparePair.length===0?'Tocca per ingrandire · Seleziona 2 foto per confrontarle':comparePair.length===1?'Seleziona un\'altra foto per confrontare':''}
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
                 {photos.map(p=>{
                   const isSelected = comparePair.find(x=>x.id===p.id)
                   return (
-                    <div key={p.id} style={{position:'relative',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#F0EDE8',cursor:'pointer',border:isSelected?'2.5px solid #D4570A':'2.5px solid transparent'}}
+                    <div key={p.id} style={{position:'relative',borderRadius:10,overflow:'hidden',aspectRatio:'3/4',background:'#141414',cursor:'pointer',border:isSelected?'2.5px solid #D4570A':'2.5px solid transparent'}}
                       onClick={()=>setLightbox({url:p.photo_url,label:p.label,date:p.photo_date})}>
                       <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                       <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.65))',padding:'14px 5px 4px'}}>
@@ -775,7 +775,7 @@ function ClientDetail({ client, navigate }) {
               <div style={{fontSize:12,color:'#555',lineHeight:1.6}}>
                 {anamnesi.completed_at && <div style={{...s.badge('#EAF3DE','#3B6D11'),display:'inline-flex',marginBottom:8}}>✓ Completata {new Date(anamnesi.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>}
                 {anamnesi.submitted_at && <div style={{...s.badge('#EBF3FD','#4A90D4'),display:'inline-flex',marginBottom:8,marginLeft:4}}>📨 Inviata al coach</div>}
-                {anamnesi.motivazione && <div style={{background:'#F5F3EF',borderRadius:7,padding:'8px 10px',marginBottom:6,fontStyle:'italic'}}>"{anamnesi.motivazione}"</div>}
+                {anamnesi.motivazione && <div style={{background:'#161616',borderRadius:7,padding:'8px 10px',marginBottom:6,fontStyle:'italic'}}>"{anamnesi.motivazione}"</div>}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
                   {[
                     {l:'Obiettivo',v:anamnesi.obiettivo},
@@ -783,15 +783,15 @@ function ClientDetail({ client, navigate }) {
                     {l:'Lavoro',v:anamnesi.lavoro},
                     {l:'Orari',v:anamnesi.orari_lavoro?.join(', ')},
                   ].filter(r=>r.v).map(r=>(
-                    <div key={r.l} style={{background:'#F5F3EF',borderRadius:7,padding:'7px 9px'}}>
-                      <div style={{fontSize:9,color:'#888780',textTransform:'uppercase',marginBottom:1}}>{r.l}</div>
-                      <div style={{fontSize:11,fontWeight:600,color:'#111'}}>{r.v}</div>
+                    <div key={r.l} style={{background:'#161616',borderRadius:7,padding:'7px 9px'}}>
+                      <div style={{fontSize:9,color:'#555',textTransform:'uppercase',marginBottom:1}}>{r.l}</div>
+                      <div style={{fontSize:11,fontWeight:600,color:'#F0F0F0'}}>{r.v}</div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div style={{textAlign:'center',padding:16,color:'#888780',fontSize:12}}>Anamnesi non ancora compilata</div>
+              <div style={{textAlign:'center',padding:16,color:'#555',fontSize:12}}>Anamnesi non ancora compilata</div>
             )}
           </div>
 
