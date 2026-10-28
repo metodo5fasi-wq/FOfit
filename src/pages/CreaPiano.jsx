@@ -250,19 +250,12 @@ export default function CreaPiano() {
     }, 400)
 
     try {
-      const context = `Nutrizionista italiano. Piano alimentare 7 giorni.
-Indicazioni: ${aiPrompt}
-${kcalTarget ? `Target: ${kcalTarget}kcal P${protTarget}g C${carbsTarget}g G${fatTarget}g` : ''}
-Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pomeriggio,Cena). Alimenti italiani realistici.
-{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"Fiocchi avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7}]}],"1":[...],"2":[...],"3":[...],"4":[...],"5":[...],"6":[...]}}`
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/generate-plan', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:2500,
-          messages:[{role:'user',content:context}]
+          prompt: aiPrompt,
+          kcalTarget, protTarget, carbsTarget, fatTarget,
         })
       })
 
@@ -271,11 +264,8 @@ Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pome
       setAiStatus('Costruzione piano...')
 
       const data = await res.json()
-      if (data.error) throw new Error(data.error.message || 'Errore API')
-      const text = data.content?.[0]?.text || ''
-      if (!text) throw new Error('Risposta vuota dall\'AI')
-      const clean = text.replace(/```json|```/g,'').trim()
-      const parsed = JSON.parse(clean)
+      if (!res.ok || data.error) throw new Error(data.error || 'Errore generazione')
+      const parsed = { days: data.days }
 
       if (parsed.days) {
         setAiProgress(100)
