@@ -67,9 +67,9 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#050505'}}>
 
       {/* LOGO */}
-      <div style={{padding:'24px 20px 18px',borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <img src="/logo-dark.png" alt="FOfit" style={{height:28,objectFit:'contain',display:'block'}}/>
-        <div style={{background:'rgba(212,87,10,0.15)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:20,padding:'3px 9px',fontSize:9,fontWeight:800,color:'#F4894A',letterSpacing:'0.08em'}}>
+      <div style={{padding:'28px 20px 20px',borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
+        <img src="/logo-dark.png" alt="FOfit" style={{height:34,objectFit:'contain',display:'block'}}/>
+        <div style={{background:'rgba(212,87,10,0.15)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:20,padding:'3px 9px',fontSize:9,fontWeight:800,color:'#F4894A',letterSpacing:'0.08em',marginBottom:2}}>
           {isAdmin ? 'ADMIN' : 'PRO'}
         </div>
       </div>
