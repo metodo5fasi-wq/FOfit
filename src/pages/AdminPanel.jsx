@@ -90,11 +90,11 @@ function NotifBell({ clients }) {
     <div ref={ref} style={{ position:'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
         width:36, height:36, borderRadius:9, border:'0.5px solid #1C1C1C',
-        background: open ? '#FEF0E7' : '#F5F3EF',
+        background: open ? 'rgba(212,87,10,0.12)' : '#161616',
         display:'flex', alignItems:'center', justifyContent:'center',
         cursor:'pointer',
       }}>
-        <i className="ti ti-bell" style={{ fontSize:16, color: open ? '#D4570A' : '#888780' }}/>
+        <i className="ti ti-bell" style={{ fontSize:16, color: open ? '#D4570A' : '#CCC' }}/>
       </button>
       {open && (
         <div style={{
@@ -147,7 +147,7 @@ function DayPicker({ field, color='#D4570A' }) {
         return (
           <button key={day} onClick={()=>toggleDietDay(field, day)} style={{
             width:32,height:28,borderRadius:7,border:'0.5px solid',fontFamily:'inherit',fontSize:11,fontWeight:600,cursor:'pointer',
-            background:active?color:'#F5F3EF', color:active?'white':'#888780', borderColor:active?color:'#E0DDD6'
+            background:active?color:'#161616', color:active?'white':'#AAA', borderColor:active?color:'#333'
           }}>{dn}</button>
         )
       })}
@@ -656,8 +656,8 @@ export default function AdminPanel() {
                   <button key={t.id} onClick={()=>{setTab(t.id);setSelectedClient(null)}} style={{
                     flexShrink:0,padding:'6px 14px',borderRadius:16,fontSize:11,fontWeight:600,cursor:'pointer',
                     border:'0.5px solid',fontFamily:'inherit',
-                    background:tab===t.id?'#D4570A':'white',
-                    color:tab===t.id?'white':'#888780',
+                    background:tab===t.id?'#D4570A':'#161616',
+                    color:tab===t.id?'white':'#AAA',
                     borderColor:tab===t.id?'#D4570A':'#E0DDD6',
                   }}>{t.label}</button>
                 ))}
@@ -683,8 +683,8 @@ export default function AdminPanel() {
                       <button key={f.id} onClick={()=>setFilter(f.id)} style={{
                         padding:'5px 11px',borderRadius:14,fontSize:11,fontWeight:filter===f.id?700:500,
                         cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-                        background:filter===f.id?'#D4570A':'#F5F3EF',
-                        color:filter===f.id?'white':'#888780',
+                        background:filter===f.id?'#D4570A':'#161616',
+                        color:filter===f.id?'white':'#AAA',
                         borderColor:filter===f.id?'#D4570A':'#E0DDD6',
                       }}>{f.label}</button>
                     ))}
@@ -781,7 +781,7 @@ export default function AdminPanel() {
                               + Nuovo
                             </button>
                             <button onClick={()=>setSelectedClient(isSelected?null:c)}
-                              style={{flex:1,padding:'6px 4px',background:isSelected?'#111':'#F5F3EF',color:isSelected?'white':'#555',border:`0.5px solid ${isSelected?'#111':'#E0DDD6'}`,borderRadius:7,fontSize:10,fontWeight:isSelected?700:500,cursor:'pointer',fontFamily:'inherit'}}>
+                              style={{flex:1,padding:'6px 4px',background:isSelected?'#222':'#161616',color:isSelected?'#F0F0F0':'#AAA',border:`0.5px solid ${isSelected?'#444':'#222'}`,borderRadius:7,fontSize:10,fontWeight:isSelected?700:500,cursor:'pointer',fontFamily:'inherit'}}>
                               {isSelected?'✕ Chiudi':'Apri →'}
                             </button>
                           </div>
@@ -1054,10 +1054,10 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             )}
             <div style={{fontSize:12,color:'#CCC',marginTop:2}}>Iscritto il {new Date(client.created_at).toLocaleDateString('it-IT')}</div>
           </div>
-          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#F5F3EF':'#FEF0E7', color: editing?'#888780':'#D4570A', borderColor: editing?'#E0DDD6':'#D4570A'}}>
+          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#161616':'rgba(212,87,10,0.12)', color: editing?'#AAA':'#D4570A', borderColor: editing?'#333':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:13,marginRight:4}}/>{editing?'Annulla':'Modifica'}
           </button>
-          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'#EAF3DE':'#F5F3EF', color: anamnesi?.completed_at?'#3B6D11':'#888780', borderColor: anamnesi?.completed_at?'#3B6D11':'#E0DDD6', display:'flex', alignItems:'center', gap:4}}>
+          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'rgba(59,140,90,0.12)':'#161616', color: anamnesi?.completed_at?'#3B6D11':'#AAA', borderColor: anamnesi?.completed_at?'#3B6D11':'#333', display:'flex', alignItems:'center', gap:4}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:13}}/>
             {anamnesi?.completed_at ? 'Anamnesi ✓' : anamnesi ? 'Anamnesi (incompleta)' : 'Anamnesi'}
           </button>
@@ -2887,7 +2887,7 @@ function AnamnesiTab({ clients, onRefresh }) {
               padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:500,cursor:'pointer',
               border:'0.5px solid',fontFamily:'inherit',
               background:filter===f.id?'#3B6D11':'white',
-              color:filter===f.id?'white':'#888780',
+              color:filter===f.id?'white':'#AAA',
               borderColor:filter===f.id?'#3B6D11':'#E0DDD6'
             }}>{f.l}</button>
           ))}

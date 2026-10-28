@@ -575,39 +575,7 @@ Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valo
               </div>
 
               {/* Ricerca alimento */}
-              {addingTo?.dayIdx===selectedDay && addingTo?.mealIdx===mealIdx ? (
-                <div style={{borderTop:'0.5px solid #1A1A1A',paddingTop:10}}>
-                  <div style={{display:'flex',gap:8,marginBottom:8}}>
-                    <input style={{...s.input,flex:1}} value={foodSearch} onChange={e=>searchFood(e.target.value)}
-                      placeholder="Cerca alimento (1000+ disponibili)..." autoFocus/>
-                    <input type="number" value={newQty} onChange={e=>setNewQty(e.target.value)}
-                      style={{...s.input,width:70,textAlign:'center'}} placeholder="g"/>
-                  </div>
-                  {foodResults.length > 0 && (
-                    <div style={{background:'#161616',borderRadius:8,border:'0.5px solid #222',maxHeight:220,overflowY:'auto',marginBottom:8}}>
-                      {foodResults.map((f,i)=>(
-                        <div key={i} onClick={()=>addFood(f)}
-                          style={{padding:'9px 12px',cursor:'pointer',borderBottom:'0.5px solid #1A1A1A',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                          <div>
-                            <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{f.name}</div>
-                            <div style={{fontSize:10,color:'#555'}}>{f.brand} · {f.cat}</div>
-                          </div>
-                          <div style={{fontSize:11,color:'#D4570A',fontWeight:700,flexShrink:0,textAlign:'right'}}>
-                            <div>{Math.round(f.kcal100*(parseFloat(newQty)||100)/100)} kcal</div>
-                            <div style={{color:'#555',fontSize:9}}>P{Math.round(f.p*(parseFloat(newQty)||100)/100)} C{Math.round(f.c*(parseFloat(newQty)||100)/100)} G{Math.round(f.g*(parseFloat(newQty)||100)/100)}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{display:'flex',gap:6}}>
-                    <button onClick={()=>setShowTemplates({dayIdx:selectedDay,mealIdx})} style={s.btnGray}>
-                      <i className="ti ti-bookmark" style={{fontSize:11}}/>Usa template
-                    </button>
-                    <button onClick={()=>{setAddingTo(null);setFoodSearch('');setFoodResults([])}} style={s.btnGray}>Annulla</button>
-                  </div>
-                </div>
-              ) : (
+              {(
                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                   <button onClick={()=>{setAddingTo({dayIdx:selectedDay,mealIdx});setFoodSearch('');setFoodResults([])}}
                     style={{...s.btn,fontSize:12,padding:'7px 12px'}}>
@@ -647,6 +615,73 @@ Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valo
           <i className="ti ti-plus" style={{fontSize:16}}/>Aggiungi pasto — {DAY_NAMES[selectedDay]}
         </button>
       </div>
+
+      {/* MODAL RICERCA ALIMENTI — fixed in basso, scrollabile */}
+      {addingTo && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:300,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={e=>{if(e.target===e.currentTarget){setAddingTo(null);setFoodSearch('');setFoodResults([])}}}>
+          <div style={{background:'#0D0D0D',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:600,height:'85dvh',display:'flex',flexDirection:'column',border:'0.5px solid #1C1C1C'}}>
+            {/* Header fisso */}
+            <div style={{padding:'16px 16px 12px',borderBottom:'0.5px solid #1A1A1A',flexShrink:0}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+                <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Aggiungi alimento</div>
+                <button onClick={()=>{setAddingTo(null);setFoodSearch('');setFoodResults([])}} style={{width:30,height:30,borderRadius:8,background:'#161616',border:'0.5px solid #222',cursor:'pointer',color:'#888',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <input
+                  style={{...s.input,flex:1}}
+                  value={foodSearch}
+                  onChange={e=>searchFood(e.target.value)}
+                  placeholder="Cerca tra 1.054 alimenti..."
+                  autoFocus
+                />
+                <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+                  <input
+                    type="number"
+                    value={newQty}
+                    onChange={e=>setNewQty(e.target.value)}
+                    style={{...s.input,width:65,textAlign:'center'}}
+                    placeholder="g"
+                  />
+                  <span style={{fontSize:11,color:'#555'}}>g</span>
+                </div>
+              </div>
+            </div>
+            {/* Lista risultati scrollabile */}
+            <div style={{flex:1,overflowY:'auto',padding:'8px 0'}}>
+              {foodSearch.length < 2 && (
+                <div style={{padding:'30px 16px',textAlign:'center',color:'#444',fontSize:13}}>
+                  <i className="ti ti-search" style={{fontSize:28,display:'block',marginBottom:10,color:'#333'}}/>
+                  Digita almeno 2 lettere per cercare
+                </div>
+              )}
+              {foodSearch.length >= 2 && foodResults.length === 0 && (
+                <div style={{padding:'30px 16px',textAlign:'center',color:'#444',fontSize:13}}>
+                  Nessun risultato per "{foodSearch}"
+                </div>
+              )}
+              {foodResults.map((f,i)=>(
+                <div key={i} onClick={()=>{addFood(f)}}
+                  style={{padding:'12px 16px',cursor:'pointer',borderBottom:'0.5px solid #111',display:'flex',justifyContent:'space-between',alignItems:'center',active:{background:'#161616'}}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',marginBottom:2}}>{f.name}</div>
+                    <div style={{fontSize:10,color:'#555'}}>{f.cat}{f.brand&&f.brand!=='—'?` · ${f.brand}`:''}</div>
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
+                    <div style={{fontSize:14,fontWeight:700,color:'#D4570A'}}>{Math.round(f.kcal100*(parseFloat(newQty)||100)/100)} kcal</div>
+                    <div style={{fontSize:10,color:'#555'}}>P{Math.round(f.p*(parseFloat(newQty)||100)/100)}g C{Math.round(f.c*(parseFloat(newQty)||100)/100)}g G{Math.round(f.g*(parseFloat(newQty)||100)/100)}g</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Footer */}
+            <div style={{padding:'12px 16px',borderTop:'0.5px solid #1A1A1A',flexShrink:0,display:'flex',gap:8}}>
+              <button onClick={()=>{if(addingTo){setShowTemplates({dayIdx:addingTo.dayIdx,mealIdx:addingTo.mealIdx});setAddingTo(null)}}} style={{...s.btnGray,flex:1,justifyContent:'center'}}>
+                <i className="ti ti-bookmark" style={{fontSize:12}}/>Usa template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL TEMPLATE */}
       {showTemplates && (
