@@ -1,4 +1,27 @@
-// Sistema di tema FOfit — Light e Dark
+// Sistema di tema FOfit — Premium Dark
+
+export const DARK = {
+  bg: '#080808',
+  bgCard: '#101010',
+  bgInput: '#161616',
+  bgSubtle: '#0D0D0D',
+  border: '#1C1C1C',
+  borderSubtle: '#141414',
+  text: '#F0F0F0',
+  textMuted: '#555555',
+  textLight: '#2A2A2A',
+  sidebar: '#050505',
+  sidebarBorder: 'rgba(255,255,255,0.04)',
+  topbar: '#080808',
+  topbarBorder: '#151515',
+  orange: '#D4570A',
+  orangeLight: '#1A0A00',
+  orangeMid: '#F4894A',
+  green: '#3B8C5A',
+  greenLight: '#0A1A0E',
+  red: '#E24B4A',
+  redLight: '#1A0808',
+}
 
 export const LIGHT = {
   bg: '#F5F3EF',
@@ -12,8 +35,8 @@ export const LIGHT = {
   textLight: '#BBBBBB',
   sidebar: '#0F0F0F',
   sidebarBorder: 'rgba(255,255,255,0.04)',
-  topbar: '#FFFFFF',
-  topbarBorder: '#E0DDD6',
+  topbar: '#0F0F0F',
+  topbarBorder: '#1A1A1A',
   orange: '#D4570A',
   orangeLight: '#FEF0E7',
   orangeMid: '#F4894A',
@@ -23,41 +46,19 @@ export const LIGHT = {
   redLight: '#FEE2E2',
 }
 
-export const DARK = {
-  bg: '#111111',
-  bgCard: '#1C1C1E',
-  bgInput: '#2C2C2E',
-  bgSubtle: '#2C2C2E',
-  border: '#2C2C2E',
-  borderSubtle: '#222222',
-  text: '#F5F5F5',
-  textMuted: '#8E8E93',
-  textLight: '#444444',
-  sidebar: '#000000',
-  sidebarBorder: 'rgba(255,255,255,0.06)',
-  topbar: '#1C1C1E',
-  topbarBorder: '#2C2C2E',
-  orange: '#FF6B2B',
-  orangeLight: '#2D1A0A',
-  orangeMid: '#FF8C4A',
-  green: '#4CAF72',
-  greenLight: '#0D2B1A',
-  red: '#FF4A4A',
-  redLight: '#2D0A0A',
-}
-
 export function getTheme() {
   const saved = localStorage.getItem('fofit_theme')
-  return saved === 'dark' ? DARK : LIGHT
+  // Default dark — il design è ottimizzato per dark
+  return saved === 'light' ? LIGHT : DARK
 }
 
 export function isDark() {
-  return localStorage.getItem('fofit_theme') === 'dark'
+  return localStorage.getItem('fofit_theme') !== 'light'
 }
 
 export function toggleTheme() {
   const current = localStorage.getItem('fofit_theme')
-  const next = current === 'dark' ? 'light' : 'dark'
+  const next = current === 'light' ? 'dark' : 'light'
   localStorage.setItem('fofit_theme', next)
   return next
 }
