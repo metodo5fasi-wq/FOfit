@@ -345,7 +345,7 @@ export default function App() {
     <AuthContext.Provider value={{ session, profile, setProfile, markOnboarded }}>
       <BrowserRouter>
         <OfflineBanner/>
-        <div style={{background: theme.bg, minHeight:'100dvh', colorScheme: darkMode ? 'dark' : 'light', position:'relative', zIndex:0}}>
+        <div style={{background: '#080808', minHeight:'100dvh', colorScheme: 'dark', position:'relative', zIndex:0}}>
         <ErrorBoundary>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
