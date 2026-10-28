@@ -405,76 +405,46 @@ export default function Dashboard() {
           </FadeIn>
         )}
 
-        {/* RIEPILOGO SETTIMANA */}
-        {weekStats && (
-          <FadeIn delay={100}>
-          <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:12}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Questa settimana</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616'}}>
-                <div style={{fontSize:24,fontWeight:800,color:'#3B8C5A',lineHeight:1}}>{weekStats.sessions}</div>
-                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>sessioni</div>
-              </div>
-              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616'}}>
-                <div style={{fontSize:24,fontWeight:800,color:'#4A90D4',lineHeight:1}}>{weekStats.diaryDays}</div>
-                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>giorni diario</div>
-              </div>
-              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616',borderBottom:`2px solid ${streak>=7?'#D4570A':'#1C1C1C'}`}}>
-                <div style={{fontSize:24,fontWeight:800,color:streak>=7?'#F4894A':'#F0F0F0',lineHeight:1}}>{streak}</div>
-                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>streak 🔥</div>
-              </div>
-            </div>
-          </div>
-          </FadeIn>
-        )}
 
-        {/* PROSSIMO ALLENAMENTO */}
-        <FadeIn delay={80}>
-        <Link to="/allenamento" style={{textDecoration:'none',display:'block',marginBottom:12}}>
-          <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
-            <div style={{padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:nextWorkoutExercises.length?'0.5px solid #161616':'none'}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <div style={{width:36,height:36,borderRadius:10,background:'rgba(59,140,90,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <i className="ti ti-barbell" style={{fontSize:17,color:'#3B8C5A'}}/>
+
+        {/* SCHEDA ALLENAMENTO */}
+        {nextWorkout && (
+          <FadeIn delay={80}>
+          <Link to="/allenamento" style={{textDecoration:'none',display:'block',marginBottom:12}}>
+            <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
+              {/* Header */}
+              <div style={{padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'0.5px solid #161616'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'rgba(59,140,90,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <i className="ti ti-barbell" style={{fontSize:17,color:'#3B8C5A'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:2}}>La tua scheda</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>{nextWorkout.name}</div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:2}}>
-                    Allenamento di oggi
-                  </div>
-                  <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
-                    {nextWorkout ? nextWorkout.name : 'Nessuna scheda attiva'}
-                  </div>
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:6}}>
-                {nextWorkoutExercises.length > 0 && (
-                  <div style={{background:'rgba(59,140,90,0.15)',borderRadius:20,padding:'3px 9px',fontSize:10,fontWeight:700,color:'#3B8C5A'}}>
-                    {nextWorkoutExercises.length} esercizi
-                  </div>
-                )}
                 <i className="ti ti-chevron-right" style={{fontSize:14,color:'#444'}}/>
               </div>
-            </div>
-            {nextWorkoutExercises.length > 0 && (
-              <div style={{padding:'10px 14px',display:'flex',flexDirection:'column',gap:6}}>
-                {nextWorkoutExercises.slice(0,4).map((ex,i) => (
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
-                    <div style={{width:5,height:5,borderRadius:'50%',background:'#3B8C5A',flexShrink:0}}/>
-                    <span style={{fontSize:12,color:'#DDD',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</span>
-                    <span style={{fontSize:10,color:'#555',flexShrink:0}}>{ex.sets}×{ex.reps}</span>
+              {/* Gruppi muscolari */}
+              {nextWorkoutExercises.length > 0 && (
+                <div style={{padding:'10px 14px'}}>
+                  <div style={{fontSize:9,color:'#555',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Muscoli allenati</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                    {[...new Set(nextWorkoutExercises.map(e=>e.muscle_group).filter(Boolean))].map((g,i) => (
+                      <div key={i} style={{background:'rgba(59,140,90,0.12)',borderRadius:20,padding:'3px 10px',fontSize:11,fontWeight:600,color:'#3B8C5A',border:'0.5px solid rgba(59,140,90,0.2)'}}>
+                        {g}
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {nextWorkoutExercises.length > 4 && (
-                  <div style={{fontSize:10,color:'#555',paddingLeft:13}}>+{nextWorkoutExercises.length - 4} altri esercizi</div>
-                )}
-              </div>
-            )}
-            {nextWorkout && nextWorkoutExercises.length === 0 && (
-              <div style={{padding:'10px 14px',fontSize:12,color:'#555'}}>Oggi è giorno di riposo 😌</div>
-            )}
-          </div>
-        </Link>
-        </FadeIn>
+                  <div style={{fontSize:10,color:'#555',marginTop:8}}>
+                    {nextWorkoutExercises.length} esercizi totali nella scheda
+                  </div>
+                </div>
+              )}
+            </div>
+          </Link>
+          </FadeIn>
+        )}
 
         {/* RIEPILOGO SETTIMANA */}
         {weekStats && (
