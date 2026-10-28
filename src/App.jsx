@@ -212,21 +212,29 @@ const globalStyles = `
   .scroll-area { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
   /* Safe area — colora le zone fuori dall'app con il colore della UI */
-  html { background: #0F0F0F; }
+  html { background: #080808; }
 
-  /* Elimina gap bianco/nero su Android Chrome */
-  @media (display-mode: standalone) {
-    body { background: #0F0F0F; }
+  /* Scrollbar dark premium */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1C1C1C; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2A2A2A; }
+
+  /* Selezione testo */
+  ::selection { background: rgba(212,87,10,0.3); color: #F0F0F0; }
+
+  /* Input autofill dark */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #161616 inset !important;
+    -webkit-text-fill-color: #F0F0F0 !important;
+    caret-color: #F0F0F0;
   }
 
-  /* iOS status bar area — deve coincidere con la topbar */
-  @supports (padding-top: env(safe-area-inset-top)) {
-    .topbar-safe {
-      padding-top: env(safe-area-inset-top, 0px);
-    }
-    .bottom-safe {
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
+  /* Elimina gap su Android Chrome */
+  @media (display-mode: standalone) {
+    body { background: #080808; }
   }
   .safe-top { padding-top: env(safe-area-inset-top, 0px); }
 
@@ -331,7 +339,7 @@ export default function App() {
     <AuthContext.Provider value={{ session, profile, setProfile, markOnboarded }}>
       <BrowserRouter>
         <OfflineBanner/>
-        <div style={{background: theme.bg, minHeight:'100dvh', transition:'background 0.3s', colorScheme: darkMode ? 'dark' : 'light', position:'relative', zIndex:0}}>
+        <div style={{background: theme.bg, minHeight:'100dvh', colorScheme: darkMode ? 'dark' : 'light', position:'relative', zIndex:0}}>
         <ErrorBoundary>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
