@@ -8,7 +8,7 @@ function CustomTooltip({ active, payload, label, unit = '' }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: 'white', border: '0.5px solid #E0DDD6', borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', fontSize: 12 }}>
-      <div style={{ color: '#888780', marginBottom: 3 }}>{label}</div>
+      <div style={{ color: '#CCC', marginBottom: 3 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ fontWeight: 700, color: p.color }}>{p.value}{unit}</div>
       ))}
@@ -38,7 +38,7 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
   }, [id, range])
 
   if (!data.length) return (
-    <div style={{ textAlign: 'center', padding: 24, color: '#888780', fontSize: 12 }}>
+    <div style={{ textAlign: 'center', padding: 24, color: '#CCC', fontSize: 12 }}>
       <i className="ti ti-chart-line" style={{ fontSize: 28, display: 'block', marginBottom: 6, opacity: 0.3 }} />
       Nessuna misurazione registrata
     </div>
@@ -54,20 +54,20 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, background: '#F5F3EF', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#111' }}>{last}kg</div>
-          <div style={{ fontSize: 9, color: '#888780', textTransform: 'uppercase' }}>Attuale</div>
+          <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Attuale</div>
         </div>
         {diff !== null && (
           <div style={{ flex: 1, background: diff < 0 ? '#EAF3DE' : diff > 0 ? '#FEE2E2' : '#F5F3EF', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: diff < 0 ? '#3B6D11' : diff > 0 ? '#E24B4A' : '#888780' }}>
               {diff > 0 ? '+' : ''}{diff}kg
             </div>
-            <div style={{ fontSize: 9, color: '#888780', textTransform: 'uppercase' }}>Variazione</div>
+            <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Variazione</div>
           </div>
         )}
         {targetWeight && (
           <div style={{ flex: 1, background: '#EBF3FD', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#4A90D4' }}>{targetWeight}kg</div>
-            <div style={{ fontSize: 9, color: '#888780', textTransform: 'uppercase' }}>Target</div>
+            <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Target</div>
           </div>
         )}
       </div>
@@ -137,7 +137,7 @@ export function GraficoKcal({ clientId, targetKcal, compact = false }) {
   }, [id])
 
   if (!data.length) return (
-    <div style={{ textAlign: 'center', padding: 20, color: '#888780', fontSize: 12 }}>
+    <div style={{ textAlign: 'center', padding: 20, color: '#CCC', fontSize: 12 }}>
       Nessun dato diario registrato
     </div>
   )
@@ -177,7 +177,7 @@ export function GraficoVolume({ clientId, compact = false }) {
   }, [id])
 
   if (!data.length) return (
-    <div style={{ textAlign: 'center', padding: 20, color: '#888780', fontSize: 12 }}>
+    <div style={{ textAlign: 'center', padding: 20, color: '#CCC', fontSize: 12 }}>
       Nessuna sessione registrata
     </div>
   )
@@ -240,7 +240,7 @@ export default function GraficiProgressi() {
         {tab === 'peso' && (
           <>
             <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Andamento peso</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#CCC', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Andamento peso</div>
               <GraficoPeso targetWeight={anamnesi?.peso_desiderato} />
             </div>
           </>
@@ -249,7 +249,7 @@ export default function GraficiProgressi() {
         {/* KCAL */}
         {tab === 'kcal' && (
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#CCC', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               Medie caloriche settimanali
               {plan?.kcal_target && <span style={{ color: '#3B6D11', marginLeft: 8 }}>Target: {plan.kcal_target} kcal</span>}
             </div>
@@ -260,7 +260,7 @@ export default function GraficiProgressi() {
         {/* VOLUME */}
         {tab === 'volume' && (
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#CCC', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               Volume allenamento (kg totali per sessione)
             </div>
             <GraficoVolume />

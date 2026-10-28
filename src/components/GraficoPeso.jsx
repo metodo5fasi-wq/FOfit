@@ -19,7 +19,7 @@ export default function GraficoPeso({ clientId, targetWeight }) {
   }, [clientId, period])
 
   if (data.length === 0) return (
-    <div style={{textAlign:'center',padding:'20px 0',color:'#888780',fontSize:12}}>
+    <div style={{textAlign:'center',padding:'20px 0',color:'#CCC',fontSize:12}}>
       Nessuna misurazione nel periodo selezionato
     </div>
   )
@@ -62,9 +62,9 @@ export default function GraficoPeso({ clientId, targetWeight }) {
 
       {/* Min/Max */}
       <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
-        <span style={{fontSize:10,color:'#888780'}}>Min: <strong>{min}kg</strong></span>
-        <span style={{fontSize:10,color:'#888780'}}>Max: <strong>{max}kg</strong></span>
-        <span style={{fontSize:10,color:'#888780'}}>{data.length} misurazioni</span>
+        <span style={{fontSize:10,color:'#CCC'}}>Min: <strong>{min}kg</strong></span>
+        <span style={{fontSize:10,color:'#CCC'}}>Max: <strong>{max}kg</strong></span>
+        <span style={{fontSize:10,color:'#CCC'}}>{data.length} misurazioni</span>
       </div>
     </div>
   )

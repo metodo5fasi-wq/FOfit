@@ -36,8 +36,8 @@ export default function ProgressioneEsercizi({ clientId }) {
     fetch()
   }, [clientId])
 
-  if (loading) return <div style={{fontSize:12,color:'#888780',padding:'8px 0'}}>Caricamento...</div>
-  if (!exercises.length) return <div style={{fontSize:12,color:'#888780',padding:'8px 0'}}>Nessun log allenamento disponibile</div>
+  if (loading) return <div style={{fontSize:12,color:'#CCC',padding:'8px 0'}}>Caricamento...</div>
+  if (!exercises.length) return <div style={{fontSize:12,color:'#CCC',padding:'8px 0'}}>Nessun log allenamento disponibile</div>
 
   // Dati per il grafico dell'esercizio selezionato
   const exLogs = logs.filter(l => l.exercise_name === selected)
@@ -74,20 +74,20 @@ export default function ProgressioneEsercizi({ clientId }) {
         <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:8}}>
           <div>
             <div style={{fontSize:20,fontWeight:800,color:'#111'}}>{chartData[chartData.length-1].peso}kg</div>
-            <div style={{fontSize:10,color:'#888780'}}>Ultimo max</div>
+            <div style={{fontSize:10,color:'#CCC'}}>Ultimo max</div>
           </div>
           {trend !== 0 && (
             <div style={{background:trend>0?'#EAF3DE':'#FEE2E2',padding:'4px 10px',borderRadius:8}}>
               <span style={{fontSize:12,fontWeight:700,color:trend>0?'#3B6D11':'#E24B4A'}}>
                 {trend>0?'+':''}{trend.toFixed(1)}kg
               </span>
-              <div style={{fontSize:9,color:'#888780'}}>vs inizio</div>
+              <div style={{fontSize:9,color:'#CCC'}}>vs inizio</div>
             </div>
           )}
           {stagnant && (
             <div style={{background:'#FEF0E7',padding:'4px 10px',borderRadius:8}}>
               <span style={{fontSize:11,fontWeight:600,color:'#D4570A'}}>⚠ In stallo</span>
-              <div style={{fontSize:9,color:'#888780'}}>Ultime 3 sessioni</div>
+              <div style={{fontSize:9,color:'#CCC'}}>Ultime 3 sessioni</div>
             </div>
           )}
         </div>
@@ -108,7 +108,7 @@ export default function ProgressioneEsercizi({ clientId }) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <div style={{fontSize:11,color:'#888780'}}>Dati insufficienti per il grafico (min. 2 sessioni)</div>
+        <div style={{fontSize:11,color:'#CCC'}}>Dati insufficienti per il grafico (min. 2 sessioni)</div>
       )}
     </div>
   )
