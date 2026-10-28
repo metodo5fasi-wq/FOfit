@@ -373,6 +373,8 @@ export default function App() {
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="cliente/:clientId" element={!profile ? null : profile.role === 'admin' ? <DettaglioCliente /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
+            <Route path="crea-piano" element={!profile ? null : profile.role === 'admin' ? <CreaPiano /> : <Navigate to="/" />} />
+            <Route path="crea-allenamento" element={!profile ? null : profile.role === 'admin' ? <CreaAllenamento /> : <Navigate to="/" />} />
           </Route>
         </Routes>
         </ErrorBoundary>
