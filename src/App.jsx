@@ -217,11 +217,17 @@ const globalStyles = `
   /* Scrollbar dark premium */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #1C1C1C; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #2A2A2A; }
+  ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
 
   /* Selezione testo */
   ::selection { background: rgba(212,87,10,0.3); color: #F0F0F0; }
+
+  /* Garantisce leggibilità ovunque */
+  p, span, div, label, h1, h2, h3, h4, h5, h6 {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
   /* Input autofill dark */
   input:-webkit-autofill,
@@ -328,7 +334,7 @@ export default function App() {
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#111' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ fontSize:28, fontWeight:500, color:'#D4570A', letterSpacing:-0.5 }}>FO<span style={{color:'white'}}>fit</span></div>
-        <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:6 }}>Caricamento...</div>
+        <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)', marginTop:6 }}>Caricamento...</div>
       </div>
     </div>
   )
