@@ -8,11 +8,24 @@ export default async function handler(req, res) {
   const { prompt, kcalTarget, protTarget, carbsTarget, fatTarget } = req.body
   if (!prompt) return res.status(400).json({ error: 'Prompt mancante' })
 
-  const context = `Nutrizionista italiano. Piano alimentare 7 giorni.
-Indicazioni: ${prompt}
-${kcalTarget ? `Target: ${kcalTarget}kcal P${protTarget}g C${carbsTarget}g G${fatTarget}g` : ''}
-Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pomeriggio,Cena). Alimenti italiani realistici con grammature precise.
-{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"Fiocchi avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7}]}],"1":[...],"2":[...],"3":[...],"4":[...],"5":[...],"6":[...]}}`
+  const target = kcalTarget
+    ? `Target giornaliero: ${kcalTarget} kcal, Proteine ${protTarget}g, Carboidrati ${carbsTarget}g, Grassi ${fatTarget}g.`
+    : ''
+
+  // Prompt molto diretto per ottenere solo JSON
+  const context = `Sei un nutrizionista. Crea un piano alimentare di 7 giorni.
+${target}
+Indicazioni del coach: ${prompt}
+
+Regole:
+- Rispondi ESCLUSIVAMENTE con il JSON, zero parole prima o dopo
+- 4 pasti per giorno: Colazione, Pranzo, Spuntino pomeriggio, Cena
+- Almeno 3 alimenti per pasto
+- Alimenti italiani comuni con valori nutrizionali realistici
+- 0=Lunedì, 1=Martedì, 2=Mercoledì, 3=Giovedì, 4=Venerdì, 5=Sabato, 6=Domenica
+
+JSON (inizia subito con la parentesi graffa):
+{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"nome alimento","qty":100,"kcal100":0,"p100":0,"c100":0,"g100":0}]}],"1":[],"2":[],"3":[],"4":[],"5":[],"6":[]}}`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -24,23 +37,41 @@ Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pome
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 2500,
+        max_tokens: 3000,
         messages: [{ role: 'user', content: context }],
       }),
     })
 
     const data = await response.json()
+
     if (!response.ok || data.error) {
-      return res.status(500).json({ error: data.error?.message || 'Errore API' })
+      console.error('[generate-plan] API error:', data.error)
+      return res.status(500).json({ error: data.error?.message || 'Errore API Anthropic' })
     }
 
     const text = data.content?.[0]?.text || ''
-    const clean = text.replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(clean)
+    console.log('[generate-plan] Raw response length:', text.length)
+
+    // Estrai JSON robusto — trova la prima { e l'ultima }
+    const jsonStart = text.indexOf('{')
+    const jsonEnd = text.lastIndexOf('}')
+
+    if (jsonStart === -1 || jsonEnd === -1) {
+      console.error('[generate-plan] No JSON found in:', text.slice(0, 200))
+      return res.status(500).json({ error: 'Risposta AI non in formato JSON' })
+    }
+
+    const jsonStr = text.slice(jsonStart, jsonEnd + 1)
+    const parsed = JSON.parse(jsonStr)
+
+    if (!parsed.days) {
+      return res.status(500).json({ error: 'Struttura JSON non valida' })
+    }
 
     return res.status(200).json({ ok: true, days: parsed.days })
+
   } catch (e) {
-    console.error('[generate-plan]', e)
+    console.error('[generate-plan] Error:', e.message)
     return res.status(500).json({ error: e.message })
   }
 }
