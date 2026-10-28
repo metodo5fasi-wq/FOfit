@@ -78,5 +78,14 @@
         if (e.touches.length > 1) { e.preventDefault() }
       }, { passive: false })
     </script>
-  </body>
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(r => console.log('[FOfit] SW ok:', r.scope))
+          .catch(e => console.warn('[FOfit] SW err:', e))
+      })
+    }
+  </script>
+</body>
 </html>
