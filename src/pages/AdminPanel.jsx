@@ -555,13 +555,27 @@ export default function AdminPanel() {
             }}>
               <i className="ti ti-user-plus" style={{fontSize:15}}/>Nuovo cliente
             </button>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-              <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                <i className="ti ti-salad" style={{fontSize:16}}/>Piano
-              </a>
-              <a href="/importa-allenamento" onClick={e=>{e.preventDefault();window.history.pushState({},"","/importa-allenamento");window.dispatchEvent(new PopStateEvent("popstate"))}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                <i className="ti ti-barbell" style={{fontSize:16}}/>Allenamento
-              </a>
+            <div style={{marginBottom:6}}>
+              <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Crea da zero</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+                <a href="/crea-piano" onClick={e=>{e.preventDefault();window.location.href='/crea-piano'}} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                  <i className="ti ti-pencil-plus" style={{fontSize:15}}/>Piano
+                </a>
+                <a href="/crea-allenamento" onClick={e=>{e.preventDefault();window.location.href='/crea-allenamento'}} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                  <i className="ti ti-pencil-plus" style={{fontSize:15}}/>Scheda
+                </a>
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Importa</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+                <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                  <i className="ti ti-salad" style={{fontSize:15}}/>Piano
+                </a>
+                <a href="/importa-allenamento" onClick={e=>{e.preventDefault();window.history.pushState({},"","/importa-allenamento");window.dispatchEvent(new PopStateEvent("popstate"))}} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',textDecoration:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                  <i className="ti ti-barbell" style={{fontSize:15}}/>Scheda
+                </a>
+              </div>
             </div>
           </div>
 
