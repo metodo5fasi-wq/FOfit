@@ -175,14 +175,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#A0A0A0',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:13,color:'#CCC'}}/>Esci
         </button>
-        <button onClick={onToggleTheme} style={{
-          background:'rgba(255,255,255,0.04)',border:'0.5px solid rgba(255,255,255,0.06)',borderRadius:20,
-          padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,
-          color:'#A0A0A0',fontSize:10,fontFamily:'inherit'
-        }}>
-          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:12,color:'#CCC'}}/>
-          {darkMode?'Light':'Dark'}
-        </button>
+
       </div>
     </div>
   )
@@ -345,9 +338,9 @@ export default function Layout() {
                     background: isActive ? `${item.color}20` : 'transparent',
                     transition:'background 0.15s',
                   }}>
-                    <i className={`ti ${item.icon}`} style={{fontSize:19, color: isActive ? item.color : '#333'}}/>
+                    <i className={`ti ${item.icon}`} style={{fontSize:19, color: isActive ? item.color : '#888'}}/>
                   </div>
-                  <span style={{fontSize:9, marginTop:2, fontWeight: isActive ? 700 : 500, color: isActive ? item.color : '#333', letterSpacing:'0.02em'}}>{item.label}</span>
+                  <span style={{fontSize:9, marginTop:2, fontWeight: isActive ? 700 : 500, color: isActive ? item.color : '#888', letterSpacing:'0.02em'}}>{item.label}</span>
                 </>}
               </NavLink>
             ))}
