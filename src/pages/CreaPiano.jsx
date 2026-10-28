@@ -359,7 +359,7 @@ Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valo
   }
 
   const s = {
-    page:{minHeight:'100dvh',background:'#080808',color:'#F0F0F0',fontFamily:'inherit'},
+    page:{minHeight:'100dvh',background:'#080808',color:'#F0F0F0',fontFamily:'inherit',overflowY:'auto'},
     topbar:{background:'#080808',borderBottom:'0.5px solid #111',padding:'12px 16px',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:50},
     card:{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',marginBottom:10,border:'0.5px solid #1C1C1C'},
     label:{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',display:'block',marginBottom:6},

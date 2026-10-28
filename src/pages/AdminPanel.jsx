@@ -716,7 +716,7 @@ export default function AdminPanel() {
                       return (
                         <div key={c.id}
                           style={{
-                            background: isSelected ? '#FFFAF8' : 'white',
+                            background: isSelected ? '#1A1A1A' : '#0D0D0D',
                             padding:'12px 14px',
                             borderLeft: isSelected ? '3px solid #D4570A' : '3px solid transparent',
                             transition:'background 0.12s',
@@ -1525,7 +1525,7 @@ function CalendarioAdmin() {
                         style={{
                           padding:'8px',borderRadius:7,border:'0.5px solid',fontSize:12,fontWeight:600,fontFamily:'inherit',
                           cursor:booked?'not-allowed':'pointer',
-                          background: booked?'#FEF0E7':blocked?'#F5F3EF':'#EAF3DE',
+                          background: booked?'rgba(212,87,10,0.15)':blocked?'rgba(226,75,74,0.12)':'rgba(59,140,90,0.12)',
                           color: booked?'#D4570A':blocked?'#888780':'#3B6D11',
                           borderColor: booked?'#D4570A':blocked?'#E0DDD6':'#3B6D11',
                         }}>
@@ -1753,7 +1753,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
               </div>
               {/* Allenamento */}
               <div title={`${sessions7} allenamenti questa settimana`}
-                style={{width:28,height:28,borderRadius:8,background:sessions7>0?'#EAF3DE':'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                style={{width:28,height:28,borderRadius:8,background:sessions7>0?'rgba(59,140,90,0.15)':'#161616',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <i className="ti ti-barbell" style={{fontSize:13,color:sessions7>0?OK:'#E0DDD6'}}/>
               </div>
               {/* Aderenza */}
@@ -1951,7 +1951,7 @@ function MessaggiAdmin() {
         {/* BOTTONE GENERA REPORT PER TUTTI */}
         <button onClick={generateAllReports} disabled={generatingAll || clients.length === 0} style={{
           width:'100%', padding:'9px 10px', marginBottom:12,
-          background: generatingAll ? '#F5F3EF' : '#FEF0E7',
+          background: generatingAll ? '#161616' : 'rgba(212,87,10,0.12)',
           color: generatingAll ? '#888780' : '#D4570A',
           border:'0.5px solid #D4570A', borderRadius:9,
           fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
@@ -2241,7 +2241,7 @@ function CheckinAdmin() {
                   <div key={ck.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
                     {/* HEADER */}
                     <div onClick={()=>setExpandedCheckin(isExp?null:ck.id)}
-                      style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:isExp?'#FEF8F5':'white'}}>
+                      style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:'#0D0D0D'}}>
                       <div style={{flex:1}}>
                         <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Settimana {dateLabel}</div>
                         <div style={{fontSize:10,color:'#CCC',marginTop:2,display:'flex',gap:10}}>
@@ -2309,7 +2309,7 @@ function CheckinAdmin() {
                   <div key={sess.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
                     {/* HEADER */}
                     <div onClick={()=>setExpandedSession(isExp?null:sess.id)}
-                      style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:isExp?'#FEF8F5':'white'}}>
+                      style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:'#0D0D0D'}}>
                       <div style={{width:36,height:36,borderRadius:9,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                         <i className="ti ti-barbell" style={{fontSize:16,color:'#D4570A'}}/>
                       </div>
@@ -2443,8 +2443,8 @@ function ReportTab({ clients, clientStats, onRefresh }) {
             <button key={f.id} onClick={() => setFilter(f.id)} style={{
               padding: '5px 12px', borderRadius: 16, fontSize: 11, fontWeight: 500, cursor: 'pointer',
               border: '0.5px solid', fontFamily: 'inherit',
-              background: filter === f.id ? '#7C3AED' : 'white',
-              color: filter === f.id ? 'white' : '#888780',
+              background: filter === f.id ? '#7C3AED' : '#161616',
+              color: filter === f.id ? 'white' : '#CCC',
               borderColor: filter === f.id ? '#7C3AED' : '#E0DDD6'
             }}>{f.l}</button>
           ))}
@@ -2469,8 +2469,8 @@ function ReportTab({ clients, clientStats, onRefresh }) {
           <div key={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? '#C4B5FD' : '#E0DDD6'}`, marginBottom: 10, overflow: 'hidden' }}>
             {/* HEADER REPORT */}
             <div onClick={() => { setExpanded(isExpanded ? null : r.id); if (isNew) markRead(r.id) }}
-              style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: isNew ? '#FAF5FF' : 'white' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: isNew ? '#7C3AED' : '#E0DDD6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+              style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: isNew ? '#140d1a' : '#0D0D0D' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: isNew ? '#7C3AED' : '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'white', flexShrink: 0 }}>
                 {initials(clientName)}
               </div>
               <div style={{ flex: 1 }}>
