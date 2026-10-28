@@ -203,6 +203,9 @@ export default function Layout() {
   const activeProfile = freshProfile || profile
   const subEnd = activeProfile?.subscription_end
   const subBlocked = isClient && subEnd && new Date(subEnd+'T23:59:59') < new Date()
+  // Conto alla rovescia — giorni rimanenti
+  const daysLeft = subEnd && isClient ? Math.ceil((new Date(subEnd+'T23:59:59') - new Date()) / (1000*60*60*24)) : null
+  const showCountdown = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7
   const installBlocked = isClient &&
     activeProfile?.payment_type === 'rate' &&
     activeProfile?.installments_paid !== null &&
@@ -306,6 +309,50 @@ export default function Layout() {
         )}
 
         <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+
+          {/* BANNER SCADENZA ABBONAMENTO */}
+          {showCountdown && (
+            <div style={{
+              background: daysLeft <= 2 ? 'rgba(226,75,74,0.15)' : daysLeft <= 4 ? 'rgba(232,160,32,0.12)' : 'rgba(212,87,10,0.1)',
+              borderBottom: `0.5px solid ${daysLeft <= 2 ? 'rgba(226,75,74,0.4)' : daysLeft <= 4 ? 'rgba(232,160,32,0.3)' : 'rgba(212,87,10,0.25)'}`,
+              padding:'10px 16px',
+              display:'flex',
+              alignItems:'center',
+              gap:10,
+              flexShrink:0,
+            }}>
+              <div style={{
+                width:32,height:32,borderRadius:9,flexShrink:0,
+                background: daysLeft <= 2 ? 'rgba(226,75,74,0.2)' : daysLeft <= 4 ? 'rgba(232,160,32,0.15)' : 'rgba(212,87,10,0.15)',
+                display:'flex',alignItems:'center',justifyContent:'center',
+              }}>
+                <i className="ti ti-clock-hour-4" style={{fontSize:16, color: daysLeft <= 2 ? '#E24B4A' : daysLeft <= 4 ? '#E8A020' : '#F4894A'}}/>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{
+                  fontSize:12, fontWeight:700,
+                  color: daysLeft <= 2 ? '#F07070' : daysLeft <= 4 ? '#E8C050' : '#F4894A',
+                }}>
+                  {daysLeft === 0
+                    ? 'Il tuo abbonamento scade oggi!'
+                    : daysLeft === 1
+                    ? 'Il tuo abbonamento scade domani!'
+                    : `Abbonamento in scadenza tra ${daysLeft} giorni`}
+                </div>
+                <div style={{fontSize:10,color:'#888',marginTop:1}}>
+                  Contatta il coach per rinnovarlo
+                </div>
+              </div>
+              <div style={{
+                background: daysLeft <= 2 ? '#E24B4A' : daysLeft <= 4 ? '#E8A020' : '#D4570A',
+                color:'white',borderRadius:20,padding:'3px 10px',
+                fontSize:11,fontWeight:800,flexShrink:0,
+              }}>
+                {daysLeft === 0 ? 'OGGI' : `${daysLeft}g`}
+              </div>
+            </div>
+          )}
+
           <Outlet/>
         </div>
 
