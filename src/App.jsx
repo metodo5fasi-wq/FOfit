@@ -331,10 +331,96 @@ export default function App() {
   }
 
   if (loading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100dvh', background:'#111' }}>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:28, fontWeight:500, color:'#D4570A', letterSpacing:-0.5 }}>FO<span style={{color:'white'}}>fit</span></div>
-        <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)', marginTop:6 }}>Caricamento...</div>
+    <div style={{
+      display:'flex', alignItems:'center', justifyContent:'center',
+      height:'100dvh', background:'#080808', overflow:'hidden', position:'relative',
+    }}>
+      <style>{`
+        @keyframes fofit-spin { to { transform: rotate(360deg); } }
+        @keyframes fofit-bar {
+          0%, 100% { opacity: .25; transform: scaleY(.4); }
+          50% { opacity: 1; transform: scaleY(1); }
+        }
+        @keyframes fofit-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      `}</style>
+
+      {/* Cerchi concentrici decorativi */}
+      {[280,200,130].map((size,i) => (
+        <div key={i} style={{
+          position:'absolute', width:size, height:size, borderRadius:'50%',
+          border:`0.5px solid ${i===2?'rgba(212,87,10,0.12)':'rgba(255,255,255,0.03)'}`,
+          top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+          pointerEvents:'none',
+        }}/>
+      ))}
+
+      {/* Contenuto centrale */}
+      <div style={{
+        display:'flex', flexDirection:'column', alignItems:'center',
+        gap:0, position:'relative', zIndex:1,
+        animation:'fofit-fade .5s ease forwards',
+      }}>
+
+        {/* Ring + logo */}
+        <div style={{position:'relative', width:88, height:88, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:22}}>
+          {/* Ring rotante */}
+          <div style={{
+            position:'absolute', inset:0, borderRadius:'50%',
+            border:'1.5px solid #1A1A1A',
+            borderTopColor:'#D4570A',
+            animation:'fofit-spin 1s linear infinite',
+          }}/>
+          {/* Icona */}
+          <div style={{
+            width:64, height:64, background:'#0D0D0D', borderRadius:18,
+            border:'0.5px solid #1C1C1C',
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>
+            <img
+              src="/logo-dark.png"
+              alt="FOfit"
+              style={{height:36, objectFit:'contain'}}
+              onError={e => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'block'
+              }}
+            />
+            <span style={{display:'none', fontSize:18, fontWeight:900, color:'#F0F0F0', letterSpacing:-.5}}>
+              FO<span style={{color:'#D4570A'}}>fit</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Nome */}
+        <div style={{fontSize:36, fontWeight:900, color:'#F0F0F0', letterSpacing:-1.5, lineHeight:1, marginBottom:7}}>
+          FO<span style={{color:'#D4570A'}}>fit</span>
+        </div>
+
+        {/* Tagline */}
+        <div style={{fontSize:11, color:'#333', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:40}}>
+          Il tuo coach in tasca
+        </div>
+
+        {/* Barre animate */}
+        <div style={{display:'flex', gap:5, alignItems:'flex-end', height:28}}>
+          {[14,20,28,20,14].map((h,i) => (
+            <div key={i} style={{
+              width:4, height:h, borderRadius:2, background:'#D4570A',
+              animation:`fofit-bar 1.2s ease-in-out infinite`,
+              animationDelay:`${i*0.15}s`,
+              transformOrigin:'bottom',
+            }}/>
+          ))}
+        </div>
+      </div>
+
+      {/* URL in basso */}
+      <div style={{
+        position:'absolute', bottom:40,
+        fontSize:9, color:'#222', letterSpacing:'0.1em', fontWeight:700,
+        fontFamily:'inherit',
+      }}>
+        FOFIT.FIT
       </div>
     </div>
   )
