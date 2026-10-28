@@ -23,7 +23,7 @@ Rispondi SOLO JSON, niente testo. 4 pasti/giorno (Colazione,Pranzo,Spuntino pome
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-5-5',
+        model: 'claude-sonnet-4-5',
         max_tokens: 2500,
         messages: [{ role: 'user', content: context }],
       }),
