@@ -6,18 +6,18 @@ const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:10, border:'0.5px solid var(--border)', padding:'14px 16px', marginBottom:14 },
-  badge: { background:'#FEF0E7', color:'#D4570A', fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
-  dayTab: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid var(--border)', background:'var(--bg-card)', color:'var(--text-muted)', flexShrink:0 },
+  card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'14px 16px', marginBottom:14 },
+  badge: { background:'rgba(212,87,10,0.1)', color:'#D4570A', fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
+  dayTab: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #1C1C1C', background:'#0D0D0D', color:'#555555', flexShrink:0 },
   dayTabActive: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #D4570A', background:'#D4570A', color:'white', flexShrink:0 },
-  mealBlock: { border:'0.5px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:10 },
-  mealHeader: { display:'flex', alignItems:'center', gap:10, padding:'12px 14px', cursor:'pointer', background:'var(--bg-card)' },
-  mealHeaderOpen: { display:'flex', alignItems:'center', gap:10, padding:'12px 14px', cursor:'pointer', background:'#FEF0E7' },
-  mealIcon: { width:32, height:32, borderRadius:8, background:'#FEF0E7', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
-  mealBody: { borderTop:'0.5px solid var(--border)', padding:'0 14px' },
-  foodRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 0', borderBottom:'0.5px solid var(--border)' },
+  mealBlock: { border:'0.5px solid #1C1C1C', borderRadius:10, overflow:'hidden', marginBottom:10 },
+  mealHeader: { display:'flex', alignItems:'center', gap:10, padding:'12px 14px', cursor:'pointer', background:'#0D0D0D' },
+  mealHeaderOpen: { display:'flex', alignItems:'center', gap:10, padding:'12px 14px', cursor:'pointer', background:'rgba(212,87,10,0.1)' },
+  mealIcon: { width:32, height:32, borderRadius:8, background:'rgba(212,87,10,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
+  mealBody: { borderTop:'0.5px solid #1A1A1A', padding:'0 14px' },
+  foodRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 0', borderBottom:'0.5px solid #1A1A1A' },
   tag: { fontSize:10, padding:'2px 7px', borderRadius:10, fontWeight:500 },
 }
 
@@ -74,9 +74,9 @@ export default function PianoAlimentare() {
 
   if (loading) return (
     <>
-      <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Piano alimentare</div></div>
+      <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div></div>
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
-        <div style={{textAlign:'center',color:'var(--text-muted)'}}>
+        <div style={{textAlign:'center',color:'#555555'}}>
           <i className="ti ti-loader" style={{fontSize:32,display:'block',marginBottom:8,color:'#D4570A'}}/>
           Caricamento piano...
         </div>
@@ -86,12 +86,12 @@ export default function PianoAlimentare() {
 
   if (noplan) return (
     <>
-      <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Piano alimentare</div></div>
+      <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div></div>
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
         <div style={{textAlign:'center',maxWidth:300}}>
           <i className="ti ti-clipboard-x" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
-          <div style={{fontSize:15,fontWeight:500,color:'var(--text)',marginBottom:8}}>Nessun piano attivo</div>
-          <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>Il tuo coach non ha ancora assegnato un piano alimentare. Contattalo per maggiori informazioni.</div>
+          <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0',marginBottom:8}}>Nessun piano attivo</div>
+          <div style={{fontSize:13,color:'#555555',lineHeight:1.6}}>Il tuo coach non ha ancora assegnato un piano alimentare. Contattalo per maggiori informazioni.</div>
         </div>
       </div>
     </>
@@ -101,8 +101,8 @@ export default function PianoAlimentare() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Piano alimentare</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>{plan?.title} — Settimana {plan?.week_number}</div>
+          <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div>
+          <div style={{fontSize:12,color:'#555555'}}>{plan?.title} — Settimana {plan?.week_number}</div>
         </div>
         <span style={s.badge}>{plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno</span>
       </div>
@@ -111,7 +111,7 @@ export default function PianoAlimentare() {
 
         {/* Nota coach */}
         {plan?.notes && (
-          <div style={{background:'#FEF0E7',borderLeft:'3px solid #D4570A',borderRadius:8,padding:'11px 14px',marginBottom:14,fontSize:13,color:'#7a3508',lineHeight:1.5}}>
+          <div style={{background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:8,padding:'11px 14px',marginBottom:14,fontSize:13,color:'#7a3508',lineHeight:1.5}}>
             <div style={{fontSize:11,fontWeight:500,color:'#D4570A',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>
               <i className="ti ti-message-circle" style={{fontSize:12,verticalAlign:-1,marginRight:4}}/>Note del coach
             </div>
@@ -128,8 +128,8 @@ export default function PianoAlimentare() {
             { label:'Grassi', val:plan?.fat_target_g, unit:'g' },
           ].map(m => (
             <div key={m.label} style={s.card}>
-              <div style={{fontSize:10,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}}>{m.label}</div>
-              <div style={{fontSize:20,fontWeight:500,color:'var(--text)'}}>{m.val}<span style={{fontSize:12,color:'var(--text-muted)'}}>{m.unit}</span></div>
+              <div style={{fontSize:10,color:'#555555',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}}>{m.label}</div>
+              <div style={{fontSize:20,fontWeight:500,color:'#F0F0F0'}}>{m.val}<span style={{fontSize:12,color:'#555555'}}>{m.unit}</span></div>
             </div>
           ))}
         </div>
@@ -147,7 +147,7 @@ export default function PianoAlimentare() {
         {dayMeals.length === 0 ? (
           <div style={{...s.card, textAlign:'center', padding:'30px 0'}}>
             <i className="ti ti-calendar-off" style={{fontSize:36,color:'#E0DDD6',display:'block',marginBottom:10}}/>
-            <div style={{fontSize:13,color:'var(--text-muted)'}}>Nessun pasto per questo giorno.</div>
+            <div style={{fontSize:13,color:'#555555'}}>Nessun pasto per questo giorno.</div>
           </div>
         ) : (
           dayMeals.map((meal, mi) => {
@@ -166,11 +166,11 @@ export default function PianoAlimentare() {
                     <i className={`ti ${MEAL_ICONS[meal.meal_type]||'ti-circle'}`} style={{fontSize:16,color:'#D4570A'}}/>
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:500,color:'var(--text)',textTransform:'capitalize'}}>{meal.meal_type}</div>
-                    {meal.coach_note && <div style={{fontSize:11,color:'var(--text-muted)'}}>{meal.coach_note}</div>}
+                    <div style={{fontSize:13,fontWeight:500,color:'#F0F0F0',textTransform:'capitalize'}}>{meal.meal_type}</div>
+                    {meal.coach_note && <div style={{fontSize:11,color:'#555555'}}>{meal.coach_note}</div>}
                   </div>
                   {mealKcal > 0 && <span style={{...s.badge,fontSize:11}}>{mealKcal} kcal</span>}
-                  <i className={`ti ti-chevron-down`} style={{fontSize:15,color:'var(--text-muted)',transform:isOpen?'rotate(180deg)':'none',transition:'transform 0.2s'}}/>
+                  <i className={`ti ti-chevron-down`} style={{fontSize:15,color:'#555555',transform:isOpen?'rotate(180deg)':'none',transition:'transform 0.2s'}}/>
                 </div>
 
                 {isOpen && (
@@ -179,22 +179,22 @@ export default function PianoAlimentare() {
                       <div key={fi} style={s.foodRow}>
                         <div style={{width:6,height:6,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,color:'var(--text)'}}>{food.food_name}</div>
-                          {food.brand && <div style={{fontSize:11,color:'var(--text-muted)'}}>{food.brand}</div>}
+                          <div style={{fontSize:13,color:'#F0F0F0'}}>{food.food_name}</div>
+                          {food.brand && <div style={{fontSize:11,color:'#555555'}}>{food.brand}</div>}
                         </div>
-                        <div style={{fontSize:12,color:'var(--text-muted)',marginRight:8}}>{food.quantity_g}g</div>
+                        <div style={{fontSize:12,color:'#555555',marginRight:8}}>{food.quantity_g}g</div>
                         <div style={{display:'flex',gap:4}}>
-                          <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A'}}>P {food.protein_g}g</span>
-                          <span style={{...s.tag,background:'#FEF0E7',color:'#F4894A'}}>C {food.carbs_g}g</span>
-                          <span style={{...s.tag,background:'var(--bg-input)',color:'var(--text-muted)'}}>G {food.fat_g}g</span>
+                          <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#D4570A'}}>P {food.protein_g}g</span>
+                          <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>C {food.carbs_g}g</span>
+                          <span style={{...s.tag,background:'#161616',color:'#555555'}}>G {food.fat_g}g</span>
                         </div>
                       </div>
                     ))}
                     {foods.length > 0 && (
-                      <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid var(--border)'}}>
-                        <span style={{fontSize:11,color:'var(--text-muted)'}}>Totale pasto:</span>
+                      <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid #1A1A1A'}}>
+                        <span style={{fontSize:11,color:'#555555'}}>Totale pasto:</span>
                         <span style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{mealKcal} kcal</span>
-                        <span style={{fontSize:11,color:'var(--text-muted)'}}>P {mealP}g · C {mealC}g · G {mealG}g</span>
+                        <span style={{fontSize:11,color:'#555555'}}>P {mealP}g · C {mealC}g · G {mealG}g</span>
                       </div>
                     )}
 
@@ -218,7 +218,7 @@ function AlternativeSection({ alternatives }) {
   if (!alternatives || alternatives.length === 0) return null
   return (
     <div style={{marginTop:8,paddingTop:8,borderTop:'0.5px dashed #E0DDD6'}}>
-      <div style={{fontSize:11,color:'var(--text-muted)',fontWeight:500,marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
+      <div style={{fontSize:11,color:'#555555',fontWeight:500,marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
         <i className="ti ti-refresh" style={{fontSize:12,color:'#F4894A'}}/>
         Alternative disponibili
       </div>
@@ -238,14 +238,14 @@ function AlternativeSection({ alternatives }) {
                 <div key={fi} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.08)'}}>
                   <div style={{width:5,height:5,borderRadius:'50%',background:'#F4894A',flexShrink:0}}/>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:12,color:'var(--text)'}}>{a.nome}</div>
-                    {a.marca&&<div style={{fontSize:10,color:'var(--text-muted)'}}>{a.marca}</div>}
+                    <div style={{fontSize:12,color:'#F0F0F0'}}>{a.nome}</div>
+                    {a.marca&&<div style={{fontSize:10,color:'#555555'}}>{a.marca}</div>}
                   </div>
-                  <div style={{fontSize:11,color:'var(--text-muted)'}}>{a.quantita_g}g</div>
+                  <div style={{fontSize:11,color:'#555555'}}>{a.quantita_g}g</div>
                   <div style={{display:'flex',gap:3}}>
-                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#FEF0E7',color:'#D4570A',fontWeight:500}}>P{a.proteine_g}g</span>
-                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#FEF0E7',color:'#F4894A',fontWeight:500}}>C{a.carboidrati_g}g</span>
-                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'var(--bg-input)',color:'var(--text-muted)',fontWeight:500}}>G{a.grassi_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'rgba(212,87,10,0.1)',color:'#D4570A',fontWeight:500}}>P{a.proteine_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'rgba(212,87,10,0.1)',color:'#F4894A',fontWeight:500}}>C{a.carboidrati_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#161616',color:'#555555',fontWeight:500}}>G{a.grassi_g}g</span>
                   </div>
                 </div>
               ))}

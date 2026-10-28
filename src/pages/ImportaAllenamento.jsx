@@ -3,22 +3,22 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'white', borderRadius:10, border:'0.5px solid #E0DDD6', padding:'18px', marginBottom:14 },
+  card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'18px', marginBottom:14 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 20px', fontSize:13, fontWeight:500, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'10px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
-  label: { fontSize:11, color:'#888780', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
-  textarea: { width:'100%', padding:'12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box' },
+  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit' },
+  textarea: { width:'100%', padding:'12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 },
   step: { display:'flex', alignItems:'flex-start', gap:12, marginBottom:16 },
   stepNum: { width:28, height:28, borderRadius:'50%', background:'#D4570A', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:500, color:'white', flexShrink:0 },
-  dayCard: { border:'0.5px solid #E0DDD6', borderRadius:10, overflow:'hidden', marginBottom:10 },
-  dayHeader: { background:'#FEF0E7', padding:'10px 14px', fontWeight:600, fontSize:13, color:'#D4570A' },
+  dayCard: { border:'0.5px solid #1C1C1C', borderRadius:10, overflow:'hidden', marginBottom:10 },
+  dayHeader: { background:'rgba(212,87,10,0.1)', padding:'10px 14px', fontWeight:600, fontSize:13, color:'#D4570A' },
   exRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 14px', borderBottom:'0.5px solid #F5F3EF' },
-  tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500, background:'#F5F3EF', color:'#888780' },
+  tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500, background:'#161616', color:'#555555' },
 }
 
 const EXAMPLE = `Giorno A - Petto e Tricipiti
@@ -129,16 +129,16 @@ export default function ImportaAllenamento() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:500,color:'#111'}}>Importa scheda allenamento</div>
-          <div style={{fontSize:12,color:'#888780'}}>Incolla il testo, l'AI la struttura automaticamente</div>
+          <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Importa scheda allenamento</div>
+          <div style={{fontSize:12,color:'#555555'}}>Incolla il testo, l'AI la struttura automaticamente</div>
         </div>
       </div>
       <div style={s.page}>
 
         {step === 1 && (
           <div style={s.card}>
-            <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:4}}>Incolla la scheda allenamento</div>
-            <div style={{fontSize:12,color:'#888780',lineHeight:1.6,marginBottom:14}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',marginBottom:4}}>Incolla la scheda allenamento</div>
+            <div style={{fontSize:12,color:'#555555',lineHeight:1.6,marginBottom:14}}>
               Scrivi per ogni esercizio: <strong>nome | gruppo muscolare | link video | descrizione | serie x reps | recupero</strong>, raggruppati per giorno.
             </div>
             <textarea style={{...s.textarea, height:260}} placeholder={EXAMPLE} value={rawText} onChange={e=>setRawText(e.target.value)}/>
@@ -152,7 +152,7 @@ export default function ImportaAllenamento() {
 
         {step === 2 && parsedWorkout && (
           <>
-            <div style={{...s.card, background:'#EAF3DE', border:'0.5px solid #3B6D11'}}>
+            <div style={{...s.card, background:'rgba(59,140,90,0.1)', border:'0.5px solid #3B6D11'}}>
               <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:4}}>
                 ✓ Scheda elaborata — {parsedWorkout.days.length} giorni, {totalExercises} esercizi
               </div>
@@ -181,15 +181,15 @@ export default function ImportaAllenamento() {
                 {day.exercises.map((ex, ei) => (
                   <div key={ei} style={s.exRow}>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:600,color:'#111'}}>{ex.exercise_name}</div>
-                      {ex.description && <div style={{fontSize:11,color:'#888780',marginTop:2}}>{ex.description}</div>}
+                      <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{ex.exercise_name}</div>
+                      {ex.description && <div style={{fontSize:11,color:'#555555',marginTop:2}}>{ex.description}</div>}
                     </div>
                     <span style={s.tag}>{ex.muscle_group}</span>
                     <span style={s.tag}>{ex.sets}x{ex.reps}</span>
                     <span style={s.tag}>{ex.rest_seconds}s</span>
-                    {ex.tut && <span style={{...s.tag, background:'#EBF3FD', color:'#4A90D4'}}>TUT {ex.tut}</span>}
+                    {ex.tut && <span style={{...s.tag, background:'rgba(74,144,212,0.1)', color:'#4A90D4'}}>TUT {ex.tut}</span>}
                     {ex.progression_type==='linear' && ex.progression_start_kg && (
-                      <span style={{...s.tag, background:'#FEF0E7', color:'#D4570A'}}>
+                      <span style={{...s.tag, background:'rgba(212,87,10,0.1)', color:'#D4570A'}}>
                         📈 {ex.progression_start_kg}kg +{ex.progression_increment_kg||2.5}kg/sett × {ex.progression_weeks||4}w
                       </span>
                     )}
@@ -213,8 +213,8 @@ export default function ImportaAllenamento() {
         {step === 3 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-circle-check" style={{fontSize:48,color:'#3B6D11',display:'block',marginBottom:16}}/>
-            <div style={{fontSize:16,fontWeight:600,color:'#111',marginBottom:8}}>Scheda salvata!</div>
-            <div style={{fontSize:13,color:'#888780',marginBottom:20}}>Il cliente la troverà nella sezione Allenamento.</div>
+            <div style={{fontSize:16,fontWeight:600,color:'#F0F0F0',marginBottom:8}}>Scheda salvata!</div>
+            <div style={{fontSize:13,color:'#555555',marginBottom:20}}>Il cliente la troverà nella sezione Allenamento.</div>
             <button onClick={reset} style={{...s.btn, margin:'0 auto'}}>
               <i className="ti ti-plus" style={{fontSize:15}}/> Importa un'altra scheda
             </button>

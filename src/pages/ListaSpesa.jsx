@@ -3,14 +3,14 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:10, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'var(--bg-input)', color:'var(--text-muted)', border:'0.5px solid var(--border)', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   badge: { fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
-  catHeader: { fontSize:11, fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', padding:'10px 0 6px', display:'flex', alignItems:'center', gap:6 },
-  item: { display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'0.5px solid var(--border)', cursor:'pointer' },
+  catHeader: { fontSize:11, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', padding:'10px 0 6px', display:'flex', alignItems:'center', gap:6 },
+  item: { display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'0.5px solid #1A1A1A', cursor:'pointer' },
 }
 
 const CAT_META = {
@@ -20,11 +20,11 @@ const CAT_META = {
   'Verdure': { icon:'ti-leaf', color:'var(--green)' },
   'Cereali e pasta': { icon:'ti-bowl', color:'#F4894A' },
   'Legumi': { icon:'ti-circle', color:'#D4570A' },
-  'Condimenti e grassi': { icon:'ti-droplet', color:'var(--text-muted)' },
+  'Condimenti e grassi': { icon:'ti-droplet', color:'#555555' },
   'Integratori': { icon:'ti-pill', color:'#D4570A' },
   'Bevande': { icon:'ti-glass', color:'#4A90D4' },
   'Snack e dolci': { icon:'ti-cookie', color:'#F4894A' },
-  'Altro': { icon:'ti-shopping-cart', color:'var(--text-muted)' },
+  'Altro': { icon:'ti-shopping-cart', color:'#555555' },
 }
 
 function getCategory(foodName) {
@@ -135,8 +135,8 @@ export default function ListaSpesa() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>Lista della spesa</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>{checked}/{total} prodotti</div>
+          <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Lista della spesa</div>
+          <div style={{fontSize:12,color:'#555555'}}>{checked}/{total} prodotti</div>
         </div>
         <div style={{display:'flex',gap:8}}>
           {checked > 0 && (
@@ -156,21 +156,21 @@ export default function ListaSpesa() {
         {total > 0 && (
           <div style={{...s.card, marginBottom:14}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-              <span style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>Completato</span>
+              <span style={{fontSize:13,fontWeight:500,color:'#F0F0F0'}}>Completato</span>
               <span style={{fontSize:13,color:'#D4570A',fontWeight:500}}>{pct}%</span>
             </div>
-            <div style={{height:8,background:'var(--bg-input)',borderRadius:4}}>
+            <div style={{height:8,background:'#161616',borderRadius:4}}>
               <div style={{height:8,borderRadius:4,background:pct===100?'#3B6D11':'#D4570A',width:`${pct}%`,transition:'width 0.3s'}}/>
             </div>
-            <div style={{fontSize:12,color:'var(--text-muted)',marginTop:6}}>{checked} prodotti nel carrello · {total-checked} rimanenti</div>
+            <div style={{fontSize:12,color:'#555555',marginTop:6}}>{checked} prodotti nel carrello · {total-checked} rimanenti</div>
           </div>
         )}
 
         {!loading && total === 0 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-shopping-cart" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
-            <div style={{fontSize:15,fontWeight:500,color:'var(--text)',marginBottom:8}}>Lista vuota</div>
-            <div style={{fontSize:13,color:'var(--text-muted)',marginBottom:20,lineHeight:1.6}}>
+            <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0',marginBottom:8}}>Lista vuota</div>
+            <div style={{fontSize:13,color:'#555555',marginBottom:20,lineHeight:1.6}}>
               {plan ? 'Clicca "Genera dal piano" per creare la lista automaticamente.' : 'Non hai un piano attivo. Contatta il tuo coach!'}
             </div>
             {plan && (
@@ -190,7 +190,7 @@ export default function ListaSpesa() {
               <div style={s.catHeader}>
                 <i className={`ti ${meta.icon}`} style={{fontSize:13,color:meta.color}}/>
                 {cat}
-                <span style={{...s.badge, background:'var(--bg-input)', color:'var(--text-muted)', marginLeft:'auto'}}>
+                <span style={{...s.badge, background:'#161616', color:'#555555', marginLeft:'auto'}}>
                   {catChecked}/{catItems.length}
                 </span>
               </div>
@@ -205,15 +205,15 @@ export default function ListaSpesa() {
                     {item.is_checked && <i className="ti ti-check" style={{fontSize:12,color:'white'}}/>}
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,color:'var(--text)',textDecoration:item.is_checked?'line-through':'none',fontWeight:500}}>
+                    <div style={{fontSize:13,color:'#F0F0F0',textDecoration:item.is_checked?'line-through':'none',fontWeight:500}}>
                       {item.food_name}
                     </div>
                     {item.brand && item.brand !== '—' && (
-                      <div style={{fontSize:11,color:'var(--text-muted)'}}>{item.brand}</div>
+                      <div style={{fontSize:11,color:'#555555'}}>{item.brand}</div>
                     )}
                   </div>
                   {item.quantity_g > 0 && (
-                    <div style={{fontSize:12,color:'var(--text-muted)',flexShrink:0}}>
+                    <div style={{fontSize:12,color:'#555555',flexShrink:0}}>
                       {item.quantity_g >= 1000 ? `${(item.quantity_g/1000).toFixed(1)}kg` : `${item.quantity_g}g`}
                     </div>
                   )}
@@ -224,13 +224,13 @@ export default function ListaSpesa() {
         })}
 
         <div style={s.card}>
-          <div style={{fontSize:13,fontWeight:500,color:'var(--text)',marginBottom:10,display:'flex',alignItems:'center',gap:7}}>
+          <div style={{fontSize:13,fontWeight:500,color:'#F0F0F0',marginBottom:10,display:'flex',alignItems:'center',gap:7}}>
             <i className="ti ti-plus" style={{fontSize:14,color:'#D4570A'}}/>
             Aggiungi prodotto
           </div>
           <div style={{display:'flex',gap:8}}>
             <input
-              style={{flex:1,padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit'}}
+              style={{flex:1,padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit'}}
               placeholder="Es. detersivo, carta igienica, latte..."
               value={newItem}
               onChange={e=>setNewItem(e.target.value)}
@@ -244,7 +244,7 @@ export default function ListaSpesa() {
 
         {total > 0 && (
           <div style={{textAlign:'center',marginTop:8,marginBottom:20}}>
-            <button onClick={clearAll} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--text-muted)',fontFamily:'inherit'}}>
+            <button onClick={clearAll} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:'#555555',fontFamily:'inherit'}}>
               <i className="ti ti-trash" style={{fontSize:12,marginRight:4}}/>Svuota lista
             </button>
           </div>

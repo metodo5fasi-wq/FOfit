@@ -4,9 +4,9 @@ import { useAuth } from '../App'
 import { Toast } from '../components/Animations'
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
-  card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
 }
 
 const LABELS = {
@@ -29,7 +29,7 @@ function ScaleInput({ field, form, setForm }) {
   return (
     <div style={{marginBottom:18}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-        <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{meta.emoji} {meta.label}</div>
+        <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{meta.emoji} {meta.label}</div>
         <div style={{fontSize:12,color:'#D4570A',fontWeight:600}}>{meta.desc[form[field]-1]}</div>
       </div>
       <div style={{display:'flex',gap:8}}>
@@ -91,8 +91,8 @@ export default function CheckinSettimanale() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>Check-in settimanale</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>
+          <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Check-in settimanale</div>
+          <div style={{fontSize:12,color:'#555555'}}>
             Settimana del {new Date(weekDate+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
           </div>
         </div>
@@ -100,20 +100,20 @@ export default function CheckinSettimanale() {
       <div style={s.page}>
 
         <div style={s.card}>
-          <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6,marginBottom:18}}>
+          <div style={{fontSize:13,color:'#555555',lineHeight:1.6,marginBottom:18}}>
             Come è andata questa settimana? Queste informazioni aiutano il tuo coach a capire il tuo stato generale e personalizzare meglio il percorso.
           </div>
           <ScaleInput field="energy" form={form} setForm={setForm}/>
           <ScaleInput field="sleep" form={form} setForm={setForm}/>
           <ScaleInput field="stress" form={form} setForm={setForm}/>
           <div style={{marginBottom:18}}>
-            <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:8}}>📝 Note libere (opzionale)</div>
+            <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',marginBottom:8}}>📝 Note libere (opzionale)</div>
             <textarea
               value={form.notes}
               onChange={e=>setForm(p=>({...p,notes:e.target.value}))}
               placeholder="Come ti sei sentito? Qualcosa da segnalare al coach?"
               rows={3}
-              style={{width:'100%',padding:'10px 12px',border:'0.5px solid var(--border)',borderRadius:9,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',resize:'none',lineHeight:1.5,boxSizing:'border-box'}}
+              style={{width:'100%',padding:'10px 12px',border:'0.5px solid #1C1C1C',borderRadius:9,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',resize:'none',lineHeight:1.5,boxSizing:'border-box'}}
             />
           </div>
           <button onClick={save} disabled={saving} style={{width:'100%',padding:13,background:'#D4570A',color:'white',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
@@ -124,10 +124,10 @@ export default function CheckinSettimanale() {
         {/* STORICO */}
         {history.length > 1 && (
           <div style={s.card}>
-            <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:12}}>Storico</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:12}}>Storico</div>
             {history.slice(0,8).map(c => (
-              <div key={c.week_date} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'0.5px solid var(--border)'}}>
-                <div style={{fontSize:11,color:'var(--text-muted)',width:80,flexShrink:0}}>
+              <div key={c.week_date} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'0.5px solid #1A1A1A'}}>
+                <div style={{fontSize:11,color:'#555555',width:80,flexShrink:0}}>
                   {new Date(c.week_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
                 </div>
                 <div style={{display:'flex',gap:12,flex:1}}>
@@ -138,7 +138,7 @@ export default function CheckinSettimanale() {
                     </div>
                   ))}
                 </div>
-                {c.notes && <i className="ti ti-notes" style={{fontSize:13,color:'var(--text-muted)'}}/>}
+                {c.notes && <i className="ti ti-notes" style={{fontSize:13,color:'#555555'}}/>}
               </div>
             ))}
           </div>

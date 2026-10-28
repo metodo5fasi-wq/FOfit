@@ -38,29 +38,29 @@ export default function Notifiche() {
   }
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0, overflow:'hidden', background:'var(--bg)' }}>
-      <div style={{ background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 16px', height:56, display:'flex', alignItems:'center', flexShrink:0 }}>
-        <div style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>Notifiche</div>
+    <div style={{ display:'flex', flexDirection:'column', flex:1, minHeight:0, overflow:'hidden', background:'#080808' }}>
+      <div style={{ background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 16px', height:56, display:'flex', alignItems:'center', flexShrink:0 }}>
+        <div style={{ fontSize:15, fontWeight:700, color:'#F0F0F0' }}>Notifiche</div>
       </div>
       <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'14px' }}>
         {loading ? (
-          <div style={{ textAlign:'center', padding:'40px', color:'var(--text-muted)' }}>Caricamento...</div>
+          <div style={{ textAlign:'center', padding:'40px', color:'#555555' }}>Caricamento...</div>
         ) : notifiche.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'40px', color:'var(--text-muted)' }}>
+          <div style={{ textAlign:'center', padding:'40px', color:'#555555' }}>
             <i className="ti ti-bell-off" style={{ fontSize:40, display:'block', marginBottom:10, opacity:0.3 }} />
             <div>Nessuna notifica</div>
           </div>
         ) : notifiche.map(n => {
           const { bg, color, icon } = iconColor(n.type)
           return (
-            <div key={n.id} style={{ background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'14px', marginBottom:10, display:'flex', gap:12, opacity: n.read ? 0.7 : 1 }}>
+            <div key={n.id} style={{ background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'14px', marginBottom:10, display:'flex', gap:12, opacity: n.read ? 0.7 : 1 }}>
               <div style={{ width:40, height:40, borderRadius:10, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <i className={`ti ${icon}`} style={{ fontSize:18, color }} />
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'var(--text)', marginBottom:3 }}>{n.title}</div>
-                <div style={{ fontSize:12, color:'var(--text-muted)', lineHeight:1.5 }}>{n.body}</div>
-                <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:5 }}>{timeAgo(n.created_at)}</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#F0F0F0', marginBottom:3 }}>{n.title}</div>
+                <div style={{ fontSize:12, color:'#555555', lineHeight:1.5 }}>{n.body}</div>
+                <div style={{ fontSize:10, color:'#555555', marginTop:5 }}>{timeAgo(n.created_at)}</div>
               </div>
               {!n.read && <div style={{ width:8, height:8, borderRadius:'50%', background:'#D4570A', flexShrink:0, marginTop:4 }} />}
             </div>

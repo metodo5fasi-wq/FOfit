@@ -150,14 +150,14 @@ export default function CreaAllenamento() {
   }
 
   const s = {
-    page: {minHeight:'100dvh',background:'var(--bg)',color:'var(--text)',fontFamily:'inherit'},
-    topbar: {background:'var(--bg-card)',borderBottom:'0.5px solid var(--border)',padding:'12px 16px',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:50},
-    card: {background:'var(--bg-card)',borderRadius:12,padding:'14px 16px',marginBottom:10,border:'0.5px solid var(--border)'},
-    label: {fontSize:11,fontWeight:700,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',display:'block',marginBottom:6},
-    input: {width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
-    select: {width:'100%',padding:'9px 12px',border:'0.5px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text)',background:'var(--bg-input)',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
+    page: {minHeight:'100dvh',background:'#080808',color:'#F0F0F0',fontFamily:'inherit'},
+    topbar: {background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'12px 16px',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:50},
+    card: {background:'#0D0D0D',borderRadius:12,padding:'14px 16px',marginBottom:10,border:'0.5px solid #1C1C1C'},
+    label: {fontSize:11,fontWeight:700,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',display:'block',marginBottom:6},
+    input: {width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
+    select: {width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
     btn: {padding:'10px 18px',background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'},
-    btnGray: {padding:'8px 14px',background:'var(--bg-input)',color:'var(--text-muted)',border:'0.5px solid var(--border)',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
+    btnGray: {padding:'8px 14px',background:'#161616',color:'#555555',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
     btnDanger: {padding:'5px 10px',background:'none',color:'#E24B4A',border:'0.5px solid #E24B4A',borderRadius:6,fontSize:11,cursor:'pointer',fontFamily:'inherit'},
   }
 
@@ -165,12 +165,12 @@ export default function CreaAllenamento() {
     <div style={s.page}>
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button onClick={()=>navigate('/admin')} style={{width:32,height:32,borderRadius:8,border:'0.5px solid var(--border)',background:'var(--bg-input)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',flexShrink:0}}>
+        <button onClick={()=>navigate('/admin')} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>Crea Scheda Allenamento</div>
-          <div style={{fontSize:11,color:'var(--text-muted)'}}>Costruisci la scheda giorno per giorno</div>
+          <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Crea Scheda Allenamento</div>
+          <div style={{fontSize:11,color:'#555555'}}>Costruisci la scheda giorno per giorno</div>
         </div>
         <button onClick={savePlan} disabled={saving} style={{...s.btn,display:'flex',alignItems:'center',gap:6}}>
           <i className="ti ti-device-floppy" style={{fontSize:14}}/>
@@ -219,7 +219,7 @@ export default function CreaAllenamento() {
         {/* COPIA GIORNO */}
         {days[selectedDay].length > 0 && (
           <div style={{marginBottom:12,display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-            <span style={{fontSize:11,color:'var(--text-muted)'}}>Copia {DAY_NAMES[selectedDay]} su:</span>
+            <span style={{fontSize:11,color:'#555555'}}>Copia {DAY_NAMES[selectedDay]} su:</span>
             {DAY_NAMES.map((d,i) => i!==selectedDay && (
               <button key={i} onClick={()=>copyDay(selectedDay,i)} style={s.btnGray}>{d.slice(0,3)}</button>
             ))}
@@ -231,7 +231,7 @@ export default function CreaAllenamento() {
           <div key={exIdx} style={s.card}>
             <div style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:10}}>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{ex.exercise_name}</div>
+                <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{ex.exercise_name}</div>
                 <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{ex.muscle_group}</div>
               </div>
               {ex.video_url && (
@@ -288,7 +288,7 @@ export default function CreaAllenamento() {
           </button>
         ) : (
           <div style={{...s.card,marginBottom:20}}>
-            <div style={{fontSize:13,fontWeight:700,color:'var(--text)',marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',marginBottom:12}}>
               Aggiungi esercizio — {DAY_NAMES[selectedDay]}
             </div>
 
@@ -310,20 +310,20 @@ export default function CreaAllenamento() {
               placeholder="Cerca esercizio..." autoFocus/>
 
             {/* Lista esercizi */}
-            <div style={{maxHeight:240,overflowY:'auto',borderRadius:8,border:'0.5px solid var(--border)',marginBottom:10}}>
+            <div style={{maxHeight:240,overflowY:'auto',borderRadius:8,border:'0.5px solid #1C1C1C',marginBottom:10}}>
               {filteredExercises().map((ex,i) => (
                 <div key={i} onClick={()=>addExercise(ex)}
-                  style={{padding:'10px 12px',cursor:'pointer',borderBottom:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',
-                    background:'var(--bg-input)'}}>
+                  style={{padding:'10px 12px',cursor:'pointer',borderBottom:'0.5px solid #1A1A1A',display:'flex',justifyContent:'space-between',alignItems:'center',
+                    background:'#161616'}}>
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{ex.name}</div>
-                    <div style={{fontSize:11,color:'var(--text-muted)'}}>{ex.cat}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{ex.name}</div>
+                    <div style={{fontSize:11,color:'#555555'}}>{ex.cat}</div>
                   </div>
                   {ex.youtube && <i className="ti ti-brand-youtube" style={{fontSize:14,color:'#D4570A',flexShrink:0}}/>}
                 </div>
               ))}
               {filteredExercises().length === 0 && (
-                <div style={{padding:'16px',textAlign:'center',fontSize:12,color:'var(--text-muted)'}}>
+                <div style={{padding:'16px',textAlign:'center',fontSize:12,color:'#555555'}}>
                   Nessun esercizio trovato
                 </div>
               )}

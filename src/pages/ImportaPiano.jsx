@@ -4,12 +4,12 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const s = {
-  card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#888780', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
-  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:9, fontSize:13, color:'#111', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
+  card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
+  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   tag: { display:'inline-flex', alignItems:'center', padding:'3px 9px', borderRadius:12, fontSize:11, fontWeight:600 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#F5F3EF', color:'#888780', border:'0.5px solid #E0DDD6', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
 }
 
 export default function ImportaPiano() {
@@ -294,15 +294,15 @@ export default function ImportaPiano() {
   }
 
   return (
-    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#F5F3EF'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#161616'}}>
       {/* TOPBAR */}
-      <div style={{background:'white',borderBottom:'0.5px solid #E0DDD6',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-        <button onClick={()=>step===2?setStep(1):navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #E0DDD6',background:'#F5F3EF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#111'}}>
+      <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
+        <button onClick={()=>step===2?setStep(1):navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#F0F0F0'}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div>
-          <div style={{fontSize:15,fontWeight:700,color:'#111'}}>Importa piano alimentare</div>
-          <div style={{fontSize:11,color:'#888780'}}>Passo {step} di 2</div>
+          <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Importa piano alimentare</div>
+          <div style={{fontSize:11,color:'#555555'}}>Passo {step} di 2</div>
         </div>
       </div>
 
@@ -315,7 +315,7 @@ export default function ImportaPiano() {
 
         {/* ERRORE */}
         {error && (
-          <div style={{background:'#FEE2E2',border:'0.5px solid #E24B4A',borderRadius:10,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#E24B4A'}}>
+          <div style={{background:'rgba(226,75,74,0.1)',border:'0.5px solid #E24B4A',borderRadius:10,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#E24B4A'}}>
             ⚠️ {error}
           </div>
         )}
@@ -323,8 +323,8 @@ export default function ImportaPiano() {
         {/* ── STEP 1 — INCOLLA TESTO ── */}
         {step === 1 && <>
           <div style={s.card}>
-            <div style={{fontSize:16,fontWeight:700,color:'#111',marginBottom:4}}>📋 Piano del nutrizionista</div>
-            <div style={{fontSize:12,color:'#888780',marginBottom:14,lineHeight:1.6}}>
+            <div style={{fontSize:16,fontWeight:700,color:'#F0F0F0',marginBottom:4}}>📋 Piano del nutrizionista</div>
+            <div style={{fontSize:12,color:'#555555',marginBottom:14,lineHeight:1.6}}>
               Copia e incolla il piano alimentare del nutrizionista. Può essere in qualsiasi formato — testo, tabella, PDF copiato. L'AI lo struttura automaticamente.
             </div>
             <label style={s.label}>Testo del piano</label>
@@ -334,13 +334,13 @@ export default function ImportaPiano() {
               placeholder="Incolla qui il piano alimentare completo..."
               style={{...s.input, minHeight:320, resize:'vertical', lineHeight:1.6, fontSize:12}}
             />
-            <div style={{fontSize:11,color:'#888780',marginTop:6}}>{rawText.length} caratteri</div>
+            <div style={{fontSize:11,color:'#555555',marginTop:6}}>{rawText.length} caratteri</div>
           </div>
 
           {/* PROGRESS BAR ELABORAZIONE */}
           {loading && progress.total > 0 && (
-            <div style={{marginBottom:10,background:'white',borderRadius:10,padding:'12px',border:'0.5px solid #E0DDD6'}}>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888780',marginBottom:6}}>
+            <div style={{marginBottom:10,background:'#0D0D0D',borderRadius:10,padding:'12px',border:'0.5px solid #1C1C1C'}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#555555',marginBottom:6}}>
                 <span>📅 {progress.label}</span>
                 <span style={{fontWeight:600,color:'#D4570A'}}>{progress.current}/{progress.total}</span>
               </div>
@@ -364,7 +364,7 @@ export default function ImportaPiano() {
         {/* ── STEP 2 — ANTEPRIMA E ASSEGNA ── */}
         {step === 2 && parsedPlan && <>
           {/* CONFERMA ELABORAZIONE */}
-          <div style={{background:'#EAF3DE',border:'0.5px solid #3B6D11',borderRadius:12,padding:'14px',marginBottom:14}}>
+          <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid #3B6D11',borderRadius:12,padding:'14px',marginBottom:14}}>
             <div style={{fontSize:13,fontWeight:700,color:'#3B6D11',marginBottom:4}}>
               ✓ Piano elaborato — {parsedPlan.varianti?.length} giorni · {parsedPlan.varianti?.reduce((s,v)=>s+(v.pasti?.length||0),0)} pasti totali
             </div>
@@ -411,22 +411,22 @@ export default function ImportaPiano() {
           {parsedPlan.varianti?.map((v, vi) => (
             <div key={vi} style={s.card}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-                <div style={{fontSize:13,fontWeight:700,color:'#111'}}>{v.nome}</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>{v.nome}</div>
                 <div style={{display:'flex',gap:6}}>
-                  {v.kcal && <span style={{...s.tag,background:'#FEF0E7',color:'#D4570A'}}>{Math.round(v.kcal)} kcal</span>}
-                  {v.proteine_g && <span style={{...s.tag,background:'#EBF3FD',color:'#4A90D4'}}>P{Math.round(v.proteine_g)}g</span>}
+                  {v.kcal && <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#D4570A'}}>{Math.round(v.kcal)} kcal</span>}
+                  {v.proteine_g && <span style={{...s.tag,background:'rgba(74,144,212,0.1)',color:'#4A90D4'}}>P{Math.round(v.proteine_g)}g</span>}
                 </div>
               </div>
               {(v.pasti||[]).map((p2, pi) => (
                 <div key={pi} style={{padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
                   <div style={{fontSize:12,fontWeight:600,color:'#D4570A',marginBottom:4}}>{p2.nome}</div>
                   {(p2.alimenti||[]).map((a, ai) => (
-                    <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#888780',padding:'2px 0'}}>
+                    <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#555555',padding:'2px 0'}}>
                       <span>{a.nome} <span style={{color:'#BBB8B0'}}>{a.quantita_g}g</span></span>
                       <div style={{display:'flex',gap:6}}>
                         <span>{a.kcal} kcal</span>
                         {a.proteine_g>0&&<span style={{color:'#4A90D4'}}>P{a.proteine_g}g</span>}
-                        {a.opzioni?.length>0&&<span style={{...s.tag,background:'#F5F3EF',color:'#888780',padding:'1px 6px'}}>+{a.opzioni.length} alt.</span>}
+                        {a.opzioni?.length>0&&<span style={{...s.tag,background:'#161616',color:'#555555',padding:'1px 6px'}}>+{a.opzioni.length} alt.</span>}
                       </div>
                     </div>
                   ))}

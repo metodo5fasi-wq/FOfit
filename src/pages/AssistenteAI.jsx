@@ -16,13 +16,13 @@ const MEAL_SLOTS = ['colazione','spuntino','pranzo','pre-workout','cena','merend
 const MEAL_LABELS = { colazione:'Colazione', spuntino:'Spuntino', pranzo:'Pranzo', 'pre-workout':'Pre-workout', cena:'Cena', merenda:'Merenda' }
 
 const s = {
-  topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 22px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 },
+  topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px 22px', display:'flex', flexDirection:'column', gap:12 },
   msgUser: { alignSelf:'flex-end', background:'#D4570A', color:'white', borderRadius:'14px 14px 4px 14px', padding:'10px 14px', maxWidth:'80%', fontSize:13, lineHeight:1.5 },
-  msgAI: { alignSelf:'flex-start', background:'var(--bg-card)', border:'0.5px solid var(--border)', borderRadius:'14px 14px 14px 4px', padding:'12px 14px', maxWidth:'88%', fontSize:13, lineHeight:1.7, color:'var(--text)' },
-  msgLoading: { alignSelf:'flex-start', background:'var(--bg-card)', border:'0.5px solid var(--border)', borderRadius:'14px 14px 14px 4px', padding:'12px 16px', display:'flex', gap:5, alignItems:'center' },
-  bottom: { padding:'12px 22px 20px', background:'var(--bg-card)', borderTop:'0.5px solid #E0DDD6', flexShrink:0 },
-  input: { flex:1, padding:'10px 14px', border:'0.5px solid var(--border)', borderRadius:22, fontSize:13, color:'var(--text)', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', resize:'none', maxHeight:100, lineHeight:1.5 },
+  msgAI: { alignSelf:'flex-start', background:'#0D0D0D', border:'0.5px solid #1C1C1C', borderRadius:'14px 14px 14px 4px', padding:'12px 14px', maxWidth:'88%', fontSize:13, lineHeight:1.7, color:'#F0F0F0' },
+  msgLoading: { alignSelf:'flex-start', background:'#0D0D0D', border:'0.5px solid #1C1C1C', borderRadius:'14px 14px 14px 4px', padding:'12px 16px', display:'flex', gap:5, alignItems:'center' },
+  bottom: { padding:'12px 22px 20px', background:'#0D0D0D', borderTop:'0.5px solid #1A1A1A', flexShrink:0 },
+  input: { flex:1, padding:'10px 14px', border:'0.5px solid #1C1C1C', borderRadius:22, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'none', maxHeight:100, lineHeight:1.5 },
   sendBtn: { width:40, height:40, borderRadius:'50%', background:'#D4570A', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
 }
 
@@ -44,8 +44,8 @@ function RecipeCard({ recipe, onAdd }) {
           <i className="ti ti-chef-hat" style={{fontSize:18,color:'white'}}/>
         </div>
         <div>
-          <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{recipe.titolo}</div>
-          <div style={{fontSize:11,color:'var(--text-muted)'}}>{recipe.kcal_totali} kcal · P{recipe.p_totali}g C{recipe.c_totali}g G{recipe.g_totali}g</div>
+          <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0'}}>{recipe.titolo}</div>
+          <div style={{fontSize:11,color:'#555555'}}>{recipe.kcal_totali} kcal · P{recipe.p_totali}g C{recipe.c_totali}g G{recipe.g_totali}g</div>
         </div>
       </div>
 
@@ -53,9 +53,9 @@ function RecipeCard({ recipe, onAdd }) {
       <div style={{marginBottom:12}}>
         {recipe.ingredienti.map((ing, i) => (
           <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.1)'}}>
-            <span style={{fontSize:12,color:'var(--text)'}}>{ing.nome}</span>
+            <span style={{fontSize:12,color:'#F0F0F0'}}>{ing.nome}</span>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <span style={{fontSize:11,color:'var(--text-muted)'}}>{ing.quantita_g}g</span>
+              <span style={{fontSize:11,color:'#555555'}}>{ing.quantita_g}g</span>
               <span style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{ing.kcal} kcal</span>
             </div>
           </div>
@@ -68,7 +68,7 @@ function RecipeCard({ recipe, onAdd }) {
           <select
             value={selectedMeal}
             onChange={e=>setSelectedMeal(e.target.value)}
-            style={{flex:1,padding:'8px 10px',border:'0.5px solid #F4C9A8',borderRadius:8,fontSize:12,color:'var(--text)',background:'var(--bg-card)',outline:'none',fontFamily:'inherit'}}>
+            style={{flex:1,padding:'8px 10px',border:'0.5px solid #F4C9A8',borderRadius:8,fontSize:12,color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}>
             {MEAL_SLOTS.map(m => (
               <option key={m} value={m}>{MEAL_LABELS[m]}</option>
             ))}
@@ -253,7 +253,7 @@ export default function AssistenteAI() {
           <i className="ti ti-robot" style={{fontSize:18,color:'white'}}/>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:500,color:'var(--text)'}}>FO Coach</div>
+          <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>FO Coach</div>
           <div style={{fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:6}}>
             <PulseDot color="#3B6D11"/>
             Assistente nutrizionale attivo
@@ -294,7 +294,7 @@ export default function AssistenteAI() {
         <div style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:10,marginBottom:10}}>
           {SUGGERIMENTI.map((sg, i) => (
             <button key={i} onClick={()=>sendMessage(sg.text)} style={{
-              background:'#FEF0E7',color:'#D4570A',border:'0.5px solid #F4894A',
+              background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #F4894A',
               borderRadius:20,padding:'6px 12px',fontSize:12,fontWeight:500,
               cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'
             }}>{sg.label}</button>
@@ -312,7 +312,7 @@ export default function AssistenteAI() {
       </div>
 
       {/* NAVIGAZIONE RAPIDA */}
-      <div style={{padding:'8px 16px 12px',background:'var(--bg-card)',borderTop:'0.5px solid var(--border)',display:'flex',gap:6,overflowX:'auto',flexShrink:0}}>
+      <div style={{padding:'8px 16px 12px',background:'#0D0D0D',borderTop:'0.5px solid #1A1A1A',display:'flex',gap:6,overflowX:'auto',flexShrink:0}}>
         {[
           {to:'/',icon:'ti-layout-dashboard',label:'Home'},
           {to:'/piano',icon:'ti-clipboard-list',label:'Piano'},
@@ -321,9 +321,9 @@ export default function AssistenteAI() {
           {to:'/spesa',icon:'ti-shopping-cart',label:'Spesa'},
         ].map(item=>(
           <button key={item.to} onClick={()=>navigate(item.to)}
-            style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'6px 12px',borderRadius:10,border:'0.5px solid var(--border)',background:'var(--bg-input)',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+            style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'6px 12px',borderRadius:10,border:'0.5px solid #1C1C1C',background:'#161616',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
             <i className={`ti ${item.icon}`} style={{fontSize:16,color:'#D4570A'}}/>
-            <span style={{fontSize:10,color:'var(--text-muted)',fontWeight:500}}>{item.label}</span>
+            <span style={{fontSize:10,color:'#555555',fontWeight:500}}>{item.label}</span>
           </button>
         ))}
       </div>

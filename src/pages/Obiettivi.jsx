@@ -87,14 +87,14 @@ export default function Obiettivi() {
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', background: '#080808' }}>
       <div style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border)', padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>I miei obiettivi</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>I miei obiettivi</div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#888780' }}>Caricamento...</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#555555' }}>Caricamento...</div>
         ) : <>
 
           {/* PROGRESS VERSO OBIETTIVO PESO */}
@@ -133,7 +133,7 @@ export default function Obiettivi() {
 
           {/* MILESTONE PESO */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               🏅 Milestone
             </div>
             {milestones.map((m, i) => {
@@ -155,7 +155,7 @@ export default function Obiettivi() {
 
           {/* HABIT GOALS */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#888780', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               🎯 Obiettivi abitudine
             </div>
             {HABIT_GOALS.map((g, i) => (
@@ -184,7 +184,7 @@ export default function Obiettivi() {
               </div>
             )}
             {data.streak === 0 && (
-              <div style={{ marginTop: 10, fontSize: 12, color: '#888780' }}>
+              <div style={{ marginTop: 10, fontSize: 12, color: '#555555' }}>
                 Compila il diario oggi per iniziare la tua streak!
               </div>
             )}
