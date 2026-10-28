@@ -70,6 +70,8 @@ export default function Dashboard() {
   const [notifStatus, setNotifStatus] = useState('default')
   const [weeklyComp, setWeeklyComp] = useState(null) // confronto settimana precedente
   const [nextWorkout, setNextWorkout] = useState(null)
+  const [nextWorkoutExercises, setNextWorkoutExercises] = useState([])
+  const [weekStats, setWeekStats] = useState(null)
   const prevKcalRef = useRef(0)
 
   useEffect(() => {
@@ -108,6 +110,8 @@ export default function Dashboard() {
     calcWeeklyComparison()
     // Prossimo allenamento
     loadNextWorkout()
+    // Riepilogo settimana
+    loadWeekStats()
   }, [profile])
 
   async function calcStreak() {
@@ -158,9 +162,46 @@ export default function Dashboard() {
 
   async function loadNextWorkout() {
     const { data } = await supabase.from('workout_plans')
-      .select('name, days_per_week').eq('client_id', profile.id)
+      .select('id, name, days_per_week').eq('client_id', profile.id)
       .eq('is_active', true).limit(1)
-    if (data?.[0]) setNextWorkout(data[0])
+    if (!data?.[0]) return
+    setNextWorkout(data[0])
+    // Carica esercizi del giorno corrente
+    const todayDow = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+    const { data: exData } = await supabase.from('workout_exercises')
+      .select('exercise_name, muscle_group, sets, reps')
+      .eq('plan_id', data[0].id)
+      .eq('day_of_week', todayDow)
+      .order('sort_order')
+      .limit(6)
+    if (exData?.length) {
+      setNextWorkoutExercises(exData)
+    } else {
+      // Prova col giorno dopo
+      const nextDow = (todayDow + 1) % 7
+      const { data: nextEx } = await supabase.from('workout_exercises')
+        .select('exercise_name, muscle_group, sets, reps')
+        .eq('plan_id', data[0].id)
+        .eq('day_of_week', nextDow)
+        .order('sort_order')
+        .limit(6)
+      setNextWorkoutExercises(nextEx || [])
+    }
+  }
+
+  async function loadWeekStats() {
+    const weekStart = new Date()
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1))
+    const weekStartStr = weekStart.toISOString().split('T')[0]
+    const [diary, sessions] = await Promise.all([
+      supabase.from('diary_entries').select('entry_date')
+        .eq('client_id', profile.id).gte('entry_date', weekStartStr),
+      supabase.from('workout_sessions').select('id')
+        .eq('client_id', profile.id).gte('session_date', weekStartStr),
+    ])
+    const diaryDays = new Set((diary.data||[]).map(d => d.entry_date)).size
+    const sessions_count = sessions.data?.length || 0
+    setWeekStats({ diaryDays, sessions: sessions_count })
   }
 
   function showToast(message, emoji) {
@@ -312,25 +353,78 @@ export default function Dashboard() {
           </FadeIn>
         )}
 
-        {/* QUICK ACTIONS */}
-        <FadeIn delay={80}>
-        <div style={{marginBottom:14}}>
-          <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
-            {QUICK_LINKS.map(link => (
-              <Link key={link.to} to={link.to} style={{
-                background:'#0D0D0D',borderRadius:12,padding:'10px 6px',textDecoration:'none',
-                border:'0.5px solid #161616',display:'flex',flexDirection:'column',alignItems:'center',gap:6,
-              }}>
-                <div style={{width:34,height:34,borderRadius:10,background:`${link.color}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <i className={`ti ${link.icon}`} style={{fontSize:17,color:link.color}}/>
+        {/* PROSSIMO ALLENAMENTO */}
+        {nextWorkout && (
+          <FadeIn delay={80}>
+          <Link to="/allenamento" style={{textDecoration:'none',display:'block',marginBottom:12}}>
+            <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
+              <div style={{padding:'12px 14px 10px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:34,height:34,borderRadius:10,background:'rgba(59,140,90,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <i className="ti ti-barbell" style={{fontSize:17,color:'#3B8C5A'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:2}}>
+                      {new Date().toLocaleDateString('it-IT',{weekday:'long'}).charAt(0).toUpperCase() + new Date().toLocaleDateString('it-IT',{weekday:'long'}).slice(1)}
+                    </div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
+                      {nextWorkout.name}
+                    </div>
+                  </div>
                 </div>
-                <div style={{fontSize:9,fontWeight:600,color:'#DDD',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
-              </Link>
-            ))}
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  {nextWorkoutExercises.length > 0 && (
+                    <div style={{background:'rgba(59,140,90,0.15)',borderRadius:20,padding:'3px 9px',fontSize:10,fontWeight:700,color:'#3B8C5A'}}>
+                      {nextWorkoutExercises.length} es.
+                    </div>
+                  )}
+                  <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333'}}/>
+                </div>
+              </div>
+              {nextWorkoutExercises.length > 0 && (
+                <div style={{padding:'0 14px 12px',display:'flex',flexDirection:'column',gap:5}}>
+                  {nextWorkoutExercises.slice(0,4).map((ex,i) => (
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{width:5,height:5,borderRadius:'50%',background:'#3B8C5A',flexShrink:0}}/>
+                      <span style={{fontSize:12,color:'#DDD',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</span>
+                      <span style={{fontSize:10,color:'#555',flexShrink:0}}>{ex.sets}×{ex.reps}</span>
+                    </div>
+                  ))}
+                  {nextWorkoutExercises.length > 4 && (
+                    <div style={{fontSize:10,color:'#555',marginLeft:13}}>+{nextWorkoutExercises.length-4} altri esercizi</div>
+                  )}
+                </div>
+              )}
+              {nextWorkoutExercises.length === 0 && (
+                <div style={{padding:'0 14px 12px',fontSize:12,color:'#555'}}>Nessun esercizio per oggi — giorno di riposo 😌</div>
+              )}
+            </div>
+          </Link>
+          </FadeIn>
+        )}
+
+        {/* RIEPILOGO SETTIMANA */}
+        {weekStats && (
+          <FadeIn delay={100}>
+          <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:12}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Questa settimana</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616'}}>
+                <div style={{fontSize:24,fontWeight:800,color:'#3B8C5A',lineHeight:1}}>{weekStats.sessions}</div>
+                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>sessioni</div>
+              </div>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616'}}>
+                <div style={{fontSize:24,fontWeight:800,color:'#4A90D4',lineHeight:1}}>{weekStats.diaryDays}</div>
+                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>giorni diario</div>
+              </div>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #161616',borderBottom:`2px solid ${streak>=7?'#D4570A':'#1C1C1C'}`}}>
+                <div style={{fontSize:24,fontWeight:800,color:streak>=7?'#F4894A':'#F0F0F0',lineHeight:1}}>{streak}</div>
+                <div style={{fontSize:9,color:'#888',marginTop:4,fontWeight:600}}>streak 🔥</div>
+              </div>
+            </div>
           </div>
-        </div>
-        </FadeIn>
+          </FadeIn>
+        )}
 
         {/* ULTIMA MISURAZIONE */}
         {measurements && (
