@@ -104,7 +104,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                   display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
                   borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
                   background:isActive?`${item.color}18`:'transparent',
-                  color:isActive?'#F0F0F0':'#444',
+                  color:isActive?'#FFFFFF':'#DDD',
                 })}>
                 <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}${`22`}`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
@@ -126,7 +126,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                   display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
                   borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
                   background:isActive?`${item.color}18`:'transparent',
-                  color:isActive?'#F0F0F0':'#444',
+                  color:isActive?'#FFFFFF':'#DDD',
                 })}>
                 <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
@@ -142,7 +142,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                   display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
                   borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
                   background:isActive?`${item.color}18`:'transparent',
-                  color:isActive?'#F0F0F0':'#444',
+                  color:isActive?'#FFFFFF':'#DDD',
                 })}>
                 <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
@@ -158,7 +158,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
                   display:'flex',alignItems:'center',gap:9,padding:'8px 10px',
                   borderRadius:10,marginBottom:1,textDecoration:'none',transition:'background 0.15s',
                   background:isActive?`${item.color}18`:'transparent',
-                  color:isActive?'#F0F0F0':'#444',
+                  color:isActive?'#FFFFFF':'#DDD',
                 })}>
                 <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`${item.color}22`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${item.icon}`} style={{fontSize:15,color:item.color}}/>
