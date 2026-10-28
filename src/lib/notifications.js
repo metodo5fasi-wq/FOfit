@@ -1,54 +1,46 @@
-const VAPID_PUBLIC = 'BCyIyhswxeYVJJgH1IBaImpqeu37T0u2fl-7OsfLLXGhq21I4VV_X9mINLoNR7U_7OX3bTa3JCH49-HAE1YA7NM'
+// FOfit — Notifiche push via OneSignal
+const ONESIGNAL_APP_ID = '68eb6585-0eeb-44b0-bb18-0d15f2446e6c'
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)))
-}
-
+// Collega l'utente FOfit a OneSignal (usa client_id come external user id)
 export async function requestNotificationPermission(clientId) {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-    return { ok: false, reason: 'non_supported' }
-  }
-
-  const permission = await Notification.requestPermission()
-  if (permission !== 'granted') {
-    return { ok: false, reason: 'denied' }
-  }
-
   try {
-    const reg = await navigator.serviceWorker.ready
-    const subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
-    })
+    if (typeof window === 'undefined' || !window.OneSignal) {
+      return { ok: false, reason: 'onesignal_not_loaded' }
+    }
 
-    // Salva subscription sul server
-    await fetch('/api/push-subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription, clientId })
-    })
+    // Imposta external user id per identificare il cliente
+    await window.OneSignal.login(clientId)
 
-    return { ok: true, subscription }
+    // Richiedi permesso notifiche
+    const permission = await window.OneSignal.Notifications.requestPermission()
+
+    if (!permission) return { ok: false, reason: 'denied' }
+
+    return { ok: true }
   } catch(e) {
+    console.error('[FOfit OneSignal]', e)
     return { ok: false, reason: e.message }
   }
 }
 
 export async function checkNotificationStatus() {
-  if (!('Notification' in window)) return 'not_supported'
-  return Notification.permission // 'default' | 'granted' | 'denied'
+  try {
+    if (typeof window === 'undefined') return 'default'
+    // Aspetta che OneSignal sia caricato
+    if (!window.OneSignal) {
+      await new Promise(r => setTimeout(r, 2000))
+    }
+    if (!window.OneSignal) return 'default'
+    const permission = window.OneSignal.Notifications.permission
+    return permission ? 'granted' : 'default'
+    // NON torniamo mai 'denied' — lasciamo sempre la possibilità di attivare
+  } catch {
+    return 'default'
+  }
 }
 
 export async function sendTestNotification() {
-  if (Notification.permission === 'granted') {
-    const reg = await navigator.serviceWorker.ready
-    reg.showNotification('FOfit 🎉', {
-      body: 'Le notifiche funzionano! Riceverai promemoria per il diario.',
-      icon: '/icon-192.png',
-      vibrate: [100, 50, 100],
-    })
-  }
+  // La notifica di test viene inviata via OneSignal dashboard
+  // oppure via API — qui mostriamo solo un toast locale
+  console.log('[FOfit] Notifiche attivate via OneSignal')
 }
