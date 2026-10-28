@@ -726,10 +726,10 @@ export default function AdminPanel() {
                           <div onClick={()=>setSelectedClient(isSelected?null:c)} style={{display:'flex',alignItems:'center',gap:9,marginBottom:9,cursor:'pointer'}}>
                             <div style={{
                               width:38,height:38,borderRadius:10,flexShrink:0,
-                              background: isSelected ? '#D4570A' : `${goalColor[c.goal]||'#FEF0E7'}`,
+                              background: isSelected ? '#D4570A' : 'rgba(212,87,10,0.15)',
                               display:'flex',alignItems:'center',justifyContent:'center',
                               fontSize:12,fontWeight:800,
-                              color: isSelected ? 'white' : (goalTextColor[c.goal]||'#D4570A'),
+                              color: isSelected ? 'white' : '#D4570A',
                             }}>{initials(c.full_name)}</div>
 
                             <div style={{flex:1,minWidth:0}}>
@@ -737,7 +737,7 @@ export default function AdminPanel() {
                               <div style={{fontSize:10,color:'#CCC',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
                                 <span>{goalLabel[c.goal]||'—'}</span>
                                 {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#D4570A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
-                                {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'#FEE2E2':days<=7?'#FEF0E7':'#EAF3DE',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B6D11'}}>{days<0?'Scaduto':`${days}gg`}</span>}
+                                {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'rgba(226,75,74,0.15)':days<=7?'rgba(212,87,10,0.15)':'rgba(59,140,90,0.15)',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B8C5A'}}>{days<0?'Scaduto':`${days}gg`}</span>}
                               </div>
                             </div>
 
@@ -751,12 +751,12 @@ export default function AdminPanel() {
                           {/* RIGA 2: Stats */}
                           <div onClick={()=>setSelectedClient(isSelected?null:c)} style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:5,marginBottom:9,cursor:'pointer'}}>
                             {[
-                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:st.latestMeasure?.weight_kg?'#111':'#C0BDB8'},
+                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:st.latestMeasure?.weight_kg?'#F0F0F0':'#444'},
                               {l:'Diario',v:st.diaryToday?'✓':'✗',c:st.diaryToday?'#3B6D11':'#E24B4A'},
                               {l:'Sessioni',v:sessWeek,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
-                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct!==null?(adherencePct>=70?'#3B6D11':adherencePct>=50?'#E8A020':'#E24B4A'):'#C0BDB8'},
+                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct!==null?(adherencePct>=70?'#3B8C5A':adherencePct>=50?'#E8A020':'#E24B4A'):'#444'},
                             ].map(stat=>(
-                              <div key={stat.l} style={{background:'#F7F5F2',borderRadius:7,padding:'5px 3px',textAlign:'center'}}>
+                              <div key={stat.l} style={{background:'#1A1A1A',borderRadius:7,padding:'5px 3px',textAlign:'center'}}>
                                 <div style={{fontSize:13,fontWeight:700,color:stat.c,lineHeight:1.1}}>{stat.v}</div>
                                 <div style={{fontSize:7.5,color:'#B8B5B0',textTransform:'uppercase',letterSpacing:'0.04em',marginTop:1}}>{stat.l}</div>
                               </div>
