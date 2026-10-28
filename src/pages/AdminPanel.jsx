@@ -34,9 +34,9 @@ const s = {
   cancelBtn: { width:'100%', padding:11, background:'#161616', color:'#CCC', border:'0.5px solid #222', borderRadius:9, fontSize:13, cursor:'pointer', fontFamily:'inherit', marginTop:8 },
 }
 
-const goalLabel = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza' }
-const goalColor = { dimagrimento:'#FEE2E2', massa:'#EAF3DE', mantenimento:'#FEF0E7', forza:'#EDE9FE', resistenza:'#E0F2FE' }
-const goalTextColor = { dimagrimento:'#9B1C1C', massa:'#3B6D11', mantenimento:'#7a3508', forza:'#4C1D95', resistenza:'#075985' }
+const goalLabel = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza', ricomposizione:'Ricomposizione corporea' }
+const goalColor = { dimagrimento:'#FEE2E2', massa:'#EAF3DE', mantenimento:'#FEF0E7', forza:'#EDE9FE', resistenza:'#E0F2FE', ricomposizione:'#E0F2FE' }
+const goalTextColor = { dimagrimento:'#9B1C1C', massa:'#3B6D11', mantenimento:'#7a3508', forza:'#4C1D95', resistenza:'#075985', ricomposizione:'#075985' }
 const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'U'
 const today = new Date().toISOString().split('T')[0]
 
@@ -851,7 +851,7 @@ export default function AdminPanel() {
             </div>
             <div style={s.formGroup}><label style={s.label}>Obiettivo</label>
               <select style={s.select} value={newClient.goal} onChange={e=>setNewClient(p=>({...p,goal:e.target.value}))}>
-                <option value="dimagrimento">Dimagrimento</option><option value="massa">Massa muscolare</option><option value="mantenimento">Mantenimento</option><option value="forza">Forza</option><option value="resistenza">Resistenza</option>
+                <option value="dimagrimento">Dimagrimento</option><option value="massa">Massa muscolare</option><option value="ricomposizione">Ricomposizione corporea</option><option value="mantenimento">Mantenimento</option><option value="forza">Forza</option><option value="resistenza">Resistenza</option>
               </select>
             </div>
             <div style={s.formGroup}><label style={s.label}>Note</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))}/></div>
@@ -1069,7 +1069,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Obiettivo</label>
                 <select style={s.select} value={form.goal} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}>
-                  <option value="dimagrimento">Dimagrimento</option><option value="massa">Massa muscolare</option><option value="mantenimento">Mantenimento</option><option value="forza">Forza</option><option value="resistenza">Resistenza</option>
+                  <option value="dimagrimento">Dimagrimento</option><option value="massa">Massa muscolare</option><option value="ricomposizione">Ricomposizione corporea</option><option value="mantenimento">Mantenimento</option><option value="forza">Forza</option><option value="resistenza">Resistenza</option>
                 </select>
               </div>
               <div style={s.formGroup}><label style={s.label}>Altezza (cm)</label><input style={s.input} type="number" value={form.height_cm} onChange={e=>setForm(f=>({...f,height_cm:e.target.value}))}/></div>
