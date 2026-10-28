@@ -220,7 +220,7 @@ export default function Dashboard() {
             <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',letterSpacing:-0.8,lineHeight:1.1}}>
               {greeting}, <span style={{color:'#F4894A'}}>{firstName}</span>
             </div>
-            <div style={{fontSize:12,color:'#CCC',marginTop:5}}>{motivMsg}</div>
+            <div style={{fontSize:12,color:'#DDD',marginTop:5}}>{motivMsg}</div>
           </div>
           {streak > 0 && (
             <div style={{background:'#120800',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:14,padding:'8px 12px',textAlign:'center',flexShrink:0}}>
@@ -280,7 +280,7 @@ export default function Dashboard() {
                 <div style={{height:3,background:'#1A1A1A',borderRadius:3,marginBottom:5,overflow:'hidden'}}>
                   <div style={{height:3,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
                 </div>
-                <div style={{fontSize:9,color:'#CCC',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
+                <div style={{fontSize:9,color:'#DDD',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
               </div>
             )
           })}
@@ -299,7 +299,7 @@ export default function Dashboard() {
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Attiva i promemoria</div>
-              <div style={{fontSize:10,color:'#CCC',marginTop:1}}>Reminder serale per il diario</div>
+              <div style={{fontSize:10,color:'#BBB',marginTop:1}}>Reminder serale per il diario</div>
             </div>
             <button onClick={async()=>{
               const r = await requestNotificationPermission(profile.id)
@@ -315,7 +315,7 @@ export default function Dashboard() {
         {/* QUICK ACTIONS */}
         <FadeIn delay={80}>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
+          <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
             {QUICK_LINKS.map(link => (
               <Link key={link.to} to={link.to} style={{
@@ -325,7 +325,7 @@ export default function Dashboard() {
                 <div style={{width:34,height:34,borderRadius:10,background:`${link.color}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${link.icon}`} style={{fontSize:17,color:link.color}}/>
                 </div>
-                <div style={{fontSize:9,fontWeight:600,color:'#CCC',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
+                <div style={{fontSize:9,fontWeight:600,color:'#DDD',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
               </Link>
             ))}
           </div>
@@ -337,7 +337,7 @@ export default function Dashboard() {
           <FadeIn delay={100}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
               <div style={{fontSize:10,color:'#A0A0A0'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
             </div>
             <div style={{display:'flex',gap:12}}>
@@ -361,21 +361,21 @@ export default function Dashboard() {
         {weeklyComp && (weeklyComp.thisSess > 0 || weeklyComp.kcalDiff !== 0) && (
           <FadeIn delay={120}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
+            <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B8C5A':'#E24B4A'}}>
                   {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
                 </div>
-                <div style={{fontSize:9,color:'#CCC',marginTop:3}}>sessioni allenamento</div>
-                <div style={{fontSize:9,color:'#CCC',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:3}}>sessioni allenamento</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
               </div>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B8C5A':'#E8A020'}}>
                   {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
                 </div>
-                <div style={{fontSize:9,color:'#CCC',marginTop:3}}>kcal medie/giorno</div>
-                <div style={{fontSize:9,color:'#CCC',marginTop:2}}>rispetto alla sett. scorsa</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:3}}>kcal medie/giorno</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:2}}>rispetto alla sett. scorsa</div>
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function Dashboard() {
           <FadeIn delay={140}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
               <Link to="/progressi" style={{fontSize:10,color:'#D4570A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
             </div>
             <GraficoPeso compact={true}/>
