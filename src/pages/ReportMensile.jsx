@@ -26,18 +26,18 @@ export default function ReportMensile() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>Report mensili</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>Analisi del tuo percorso</div>
+          <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Report mensili</div>
+          <div style={{fontSize:12,color:'#888'}}>Analisi del tuo percorso</div>
         </div>
       </div>
       <div style={s.page}>
-        {loading && <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)',fontSize:13}}>Caricamento...</div>}
+        {loading && <div style={{textAlign:'center',padding:'40px 0',color:'#888',fontSize:13}}>Caricamento...</div>}
 
         {!loading && reports.length === 0 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-chart-bar" style={{fontSize:44,color:'#E0DDD6',display:'block',marginBottom:14}}/>
-            <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>Nessun report ancora</div>
-            <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>Il tuo coach genererà il primo report dopo il primo mese di percorso.</div>
+            <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',marginBottom:6}}>Nessun report ancora</div>
+            <div style={{fontSize:13,color:'#888',lineHeight:1.6}}>Il tuo coach genererà il primo report dopo il primo mese di percorso.</div>
           </div>
         )}
 
@@ -48,17 +48,17 @@ export default function ReportMensile() {
                 <i className="ti ti-chart-line" style={{fontSize:18,color:'#D4570A'}}/>
               </div>
               <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
                   Report {new Date(r.report_date+'T12:00:00').toLocaleDateString('it-IT',{month:'long',year:'numeric'})}
                 </div>
-                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>
+                <div style={{fontSize:11,color:'#888',marginTop:2}}>
                   {new Date(r.period_start+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – {new Date(r.period_end+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}
                 </div>
               </div>
-              <i className={`ti ti-chevron-${expanded===r.id?'up':'down'}`} style={{fontSize:16,color:'var(--text-muted)'}}/>
+              <i className={`ti ti-chevron-${expanded===r.id?'up':'down'}`} style={{fontSize:16,color:'#888'}}/>
             </div>
             {expanded===r.id && (
-              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)',fontSize:13,color:'var(--text)',lineHeight:1.8,whiteSpace:'pre-line'}}>
+              <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)',fontSize:13,color:'#F0F0F0',lineHeight:1.8,whiteSpace:'pre-line'}}>
                 {r.content}
               </div>
             )}

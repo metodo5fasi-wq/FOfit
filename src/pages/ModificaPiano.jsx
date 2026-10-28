@@ -662,7 +662,7 @@ export default function ModificaPiano() {
                     }
                     setDirty(true)
                   }}
-                  style={{width:'100%',padding:'3px 2px',border:`1px solid ${item.c}55`,borderRadius:5,fontSize:11,fontWeight:600,color:'#555',background:'#111111',textAlign:'center',fontFamily:'inherit',outline:'none'}}
+                  style={{width:'100%',padding:'3px 2px',border:`1px solid ${item.c}55`,borderRadius:5,fontSize:11,fontWeight:600,color:'#777',background:'#111111',textAlign:'center',fontFamily:'inherit',outline:'none'}}
                 />
                 {/* % */}
                 <div style={{fontSize:8,color:barColor,fontWeight:700}}>{item.t>0?`${pct}%`:''}</div>

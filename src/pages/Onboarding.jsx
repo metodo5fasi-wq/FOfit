@@ -138,7 +138,7 @@ export default function Onboarding() {
       {/* CONTENUTO */}
       <div style={{flex:1,display:'flex',flexDirection:'column',padding:'24px 28px',justifyContent:'space-between'}}>
         <div>
-          <p style={{fontSize:15,color:'#444',lineHeight:1.7,textAlign:'center',margin:0}}>
+          <p style={{fontSize:15,color:'#888',lineHeight:1.7,textAlign:'center',margin:0}}>
             {current.desc}
           </p>
 
@@ -169,7 +169,7 @@ export default function Onboarding() {
           {!isLast && (
             <button onClick={finish} style={{
               width:'100%', marginTop:12, padding:'12px',
-              background:'none', border:'none', color:'#888780',
+              background:'none', border:'none', color:'#888',
               fontSize:13, cursor:'pointer', fontFamily:'inherit'
             }}>
               Salta introduzione

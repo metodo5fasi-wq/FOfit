@@ -119,13 +119,13 @@ export default function MessaggiCoach() {
           <span style={{ fontSize:13, fontWeight:700, color:'white' }}>FO</span>
         </div>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:600, color:'var(--text)', lineHeight:1.2 }}>Federico Obinu</div>
+          <div style={{ fontSize:15, fontWeight:600, color:'#F0F0F0', lineHeight:1.2 }}>Federico Obinu</div>
           <div style={{ fontSize:11, color:'#3B6D11', display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#3B6D11' }}/>
             Il tuo coach personale
           </div>
         </div>
-        <div style={{ fontSize:10, color:'var(--text-muted)', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
+        <div style={{ fontSize:10, color:'#888', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
           Risponde entro 24h
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function MessaggiCoach() {
 
         {loading && (
           <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ textAlign:'center', color:'var(--text-muted)', fontSize:13 }}>
+            <div style={{ textAlign:'center', color:'#888', fontSize:13 }}>
               <div style={{ fontSize:24, marginBottom:8 }}>💬</div>
               Caricamento messaggi...
             </div>
@@ -148,8 +148,8 @@ export default function MessaggiCoach() {
               <div style={{ width:64, height:64, borderRadius:'50%', background:'linear-gradient(135deg,#D4570A,#F4894A)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 4px 16px rgba(212,87,10,0.3)' }}>
                 <i className="ti ti-message-circle" style={{ fontSize:28, color:'white' }}/>
               </div>
-              <div style={{ fontSize:16, fontWeight:700, color:'var(--text)', marginBottom:8 }}>Inizia la conversazione</div>
-              <div style={{ fontSize:13, color:'var(--text-muted)', lineHeight:1.7 }}>
+              <div style={{ fontSize:16, fontWeight:700, color:'#F0F0F0', marginBottom:8 }}>Inizia la conversazione</div>
+              <div style={{ fontSize:13, color:'#888', lineHeight:1.7 }}>
                 Scrivi al tuo coach per domande sul piano,<br/>aggiornamenti o qualsiasi cosa ti serva.
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function MessaggiCoach() {
             {/* Etichetta data */}
             <div style={{ display:'flex', alignItems:'center', gap:10, margin:'12px 0 8px' }}>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
-              <span style={{ fontSize:11, color:'var(--text-muted)', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
+              <span style={{ fontSize:11, color:'#888', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
                 {formatDateLabel(date)}
               </span>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
@@ -239,7 +239,7 @@ export default function MessaggiCoach() {
             rows={1}
             style={{
               flex:1, background:'transparent', border:'none', outline:'none',
-              fontSize:13, color:'var(--text)', fontFamily:'inherit',
+              fontSize:13, color:'#F0F0F0', fontFamily:'inherit',
               resize:'none', maxHeight:120, lineHeight:1.5,
               padding:'6px 0', alignSelf:'center',
             }}

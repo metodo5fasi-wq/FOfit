@@ -214,13 +214,13 @@ export default function Dashboard() {
         {/* Saluto + streak */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
           <div>
-            <div style={{fontSize:11,color:'#333',marginBottom:4,fontWeight:500}}>
+            <div style={{fontSize:11,color:'#A0A0A0',marginBottom:4,fontWeight:500}}>
               {todayName} · {new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
             </div>
             <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',letterSpacing:-0.8,lineHeight:1.1}}>
               {greeting}, <span style={{color:'#F4894A'}}>{firstName}</span>
             </div>
-            <div style={{fontSize:12,color:'#444',marginTop:5}}>{motivMsg}</div>
+            <div style={{fontSize:12,color:'#888',marginTop:5}}>{motivMsg}</div>
           </div>
           {streak > 0 && (
             <div style={{background:'#120800',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:14,padding:'8px 12px',textAlign:'center',flexShrink:0}}>
@@ -235,10 +235,10 @@ export default function Dashboard() {
         {/* Barra kcal principale */}
         <div style={{marginBottom:14}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-            <span style={{fontSize:11,color:'#444',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em'}}>Kcal oggi</span>
+            <span style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em'}}>Kcal oggi</span>
             <span style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
               <AnimatedNumber value={Math.round(todayKcal)} duration={500}/>
-              <span style={{color:'#333',fontWeight:400,fontSize:11}}> / {kcalTarget.toLocaleString('it-IT')}</span>
+              <span style={{color:'#A0A0A0',fontWeight:400,fontSize:11}}> / {kcalTarget.toLocaleString('it-IT')}</span>
             </span>
           </div>
           {/* Barra con pallino scorrevole */}
@@ -256,7 +256,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          <div style={{fontSize:10,color:'#333',marginTop:5,textAlign:'right'}}>
+          <div style={{fontSize:10,color:'#A0A0A0',marginTop:5,textAlign:'right'}}>
             {remaining > 0 ? `${remaining.toLocaleString('it-IT')} kcal rimanenti` : 'Target raggiunto 🎉'}
           </div>
         </div>
@@ -275,12 +275,12 @@ export default function Dashboard() {
                   <span style={{fontSize:16,fontWeight:800,color:'#F0F0F0'}}>
                     <AnimatedNumber value={m.val} duration={400}/>
                   </span>
-                  <span style={{fontSize:9,color:'#333',fontWeight:500}}>/{m.target}g</span>
+                  <span style={{fontSize:9,color:'#A0A0A0',fontWeight:500}}>/{m.target}g</span>
                 </div>
                 <div style={{height:3,background:'#1A1A1A',borderRadius:3,marginBottom:5,overflow:'hidden'}}>
                   <div style={{height:3,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
                 </div>
-                <div style={{fontSize:9,color:'#444',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
+                <div style={{fontSize:9,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
               </div>
             )
           })}
@@ -299,7 +299,7 @@ export default function Dashboard() {
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Attiva i promemoria</div>
-              <div style={{fontSize:10,color:'#444',marginTop:1}}>Reminder serale per il diario</div>
+              <div style={{fontSize:10,color:'#888',marginTop:1}}>Reminder serale per il diario</div>
             </div>
             <button onClick={async()=>{
               const r = await requestNotificationPermission(profile.id)
@@ -325,7 +325,7 @@ export default function Dashboard() {
                 <div style={{width:34,height:34,borderRadius:10,background:`${link.color}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${link.icon}`} style={{fontSize:17,color:link.color}}/>
                 </div>
-                <div style={{fontSize:9,fontWeight:600,color:'#444',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
+                <div style={{fontSize:9,fontWeight:600,color:'#888',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
               </Link>
             ))}
           </div>
@@ -338,7 +338,7 @@ export default function Dashboard() {
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
               <div style={{fontSize:9,fontWeight:700,color:'#2A2A2A',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
-              <div style={{fontSize:10,color:'#333'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
+              <div style={{fontSize:10,color:'#A0A0A0'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
             </div>
             <div style={{display:'flex',gap:12}}>
               {[
@@ -349,7 +349,7 @@ export default function Dashboard() {
                 <div key={m.label} style={{flex:1,background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #141414',borderBottom:`2px solid ${m.color}40`}}>
                   <div style={{fontSize:20,fontWeight:800,color:'#F0F0F0',lineHeight:1}}>{m.val}</div>
                   <div style={{fontSize:9,color:m.color,fontWeight:700,margin:'3px 0 2px'}}>{m.unit}</div>
-                  <div style={{fontSize:9,color:'#333'}}>{m.label}</div>
+                  <div style={{fontSize:9,color:'#A0A0A0'}}>{m.label}</div>
                 </div>
               ))}
             </div>
@@ -367,14 +367,14 @@ export default function Dashboard() {
                 <div style={{fontSize:22,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B8C5A':'#E24B4A'}}>
                   {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
                 </div>
-                <div style={{fontSize:9,color:'#444',marginTop:3}}>sessioni allenamento</div>
+                <div style={{fontSize:9,color:'#888',marginTop:3}}>sessioni allenamento</div>
                 <div style={{fontSize:9,color:'#2A2A2A',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
               </div>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B8C5A':'#E8A020'}}>
                   {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
                 </div>
-                <div style={{fontSize:9,color:'#444',marginTop:3}}>kcal medie/giorno</div>
+                <div style={{fontSize:9,color:'#888',marginTop:3}}>kcal medie/giorno</div>
                 <div style={{fontSize:9,color:'#2A2A2A',marginTop:2}}>rispetto alla sett. scorsa</div>
               </div>
             </div>

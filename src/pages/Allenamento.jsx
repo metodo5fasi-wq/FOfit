@@ -515,39 +515,54 @@ export default function Allenamento() {
                   <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
                     {setsArray.map(setNum => {
                       const log = getLog(ex, setNum)
+                      // Genera valori kg: 0, 5, 7.5, 10, 12.5 ... 200 con step 2.5
+                      const kgOptions = []
+                      for (let k = 0; k <= 200; k += 2.5) kgOptions.push(k)
+                      // Genera valori reps: 1-50
+                      const repsOptions = Array.from({length:50}, (_,i) => i+1)
+                      const defaultReps = parseInt(ex.reps?.split('-')[0]) || 10
                       return (
-                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'#161616',borderRadius:8,padding:'8px 12px'}}>
-                          <button onClick={()=>{toggleSet(ex, setNum); showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
-                            width:26,height:26,borderRadius:7,cursor:'pointer',flexShrink:0,
-                            background: log ? '#3B6D11' : 'var(--bg-card)',
-                            border: log ? 'none' : '0.5px solid var(--border)',
-                            display:'flex',alignItems:'center',justifyContent:'center'
-                          }}>
-                            {log && <i className="ti ti-check" style={{fontSize:14,color:'white'}}/>}
-                          </button>
-                          <span style={{fontSize:12,color:'#555555',width:46,flexShrink:0}}>Serie {setNum}</span>
-                          <input
-                            type="number" inputMode="decimal"
-                            placeholder={lastWeight ? String(lastWeight) : 'kg'}
-                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
+                        <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'#111',borderRadius:10,padding:'8px 10px',border: log ? '0.5px solid rgba(59,140,90,0.3)' : '0.5px solid #1A1A1A'}}>
+                          {/* Numero serie */}
+                          <div style={{width:22,height:22,borderRadius:6,background:log?'#3B8C5A':'#1C1C1C',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            <span style={{fontSize:11,fontWeight:800,color:log?'white':'#555'}}>{setNum}</span>
+                          </div>
+                          {/* KG dropdown */}
+                          <select
+                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg') || ''}
                             onChange={e=>{
                               setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
                               if (log) updateWeight(ex, setNum, e.target.value)
                             }}
-                            style={{flex:1,padding:'5px 8px',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:13,color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit',minWidth:0,textAlign:'center'}}
-                          />
-                          <span style={{fontSize:11,color:'#555555',flexShrink:0}}>kg</span>
-                          <input
-                            type="number" inputMode="numeric"
-                            placeholder={ex.reps?.split('-')[0] || 'rep'}
-                            value={getInputVal(ex.exercise_name, setNum, 'reps_done')}
+                            style={{flex:1,padding:'6px 4px',border:'0.5px solid #222',borderRadius:8,fontSize:14,fontWeight:700,color:log?'#3B8C5A':'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',textAlign:'center',cursor:'pointer'}}>
+                            <option value="">{lastWeight ? `${lastWeight}` : '—'} kg</option>
+                            {kgOptions.map(k => (
+                              <option key={k} value={k}>{k % 1 === 0 ? k : k.toFixed(1)} kg</option>
+                            ))}
+                          </select>
+                          <div style={{width:'0.5px',height:24,background:'#1C1C1C',flexShrink:0}}/>
+                          {/* REPS dropdown */}
+                          <select
+                            value={getInputVal(ex.exercise_name, setNum, 'reps_done') || ''}
                             onChange={e=>{
                               setInputVal(ex.exercise_name, setNum, 'reps_done', e.target.value)
                               if (log) updateReps(ex, setNum, e.target.value)
                             }}
-                            style={{flex:1,padding:'5px 8px',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:13,color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit',minWidth:0,textAlign:'center'}}
-                          />
-                          <span style={{fontSize:11,color:'#555555',flexShrink:0}}>reps</span>
+                            style={{flex:1,padding:'6px 4px',border:'0.5px solid #222',borderRadius:8,fontSize:14,fontWeight:700,color:log?'#3B8C5A':'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',textAlign:'center',cursor:'pointer'}}>
+                            <option value="">{defaultReps} rep</option>
+                            {repsOptions.map(r => (
+                              <option key={r} value={r}>{r} rep</option>
+                            ))}
+                          </select>
+                          {/* Check */}
+                          <button onClick={()=>{toggleSet(ex,setNum);showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
+                            width:36,height:36,borderRadius:9,cursor:'pointer',flexShrink:0,
+                            background:log?'#3B8C5A':'#1C1C1C',
+                            border:'none',
+                            display:'flex',alignItems:'center',justifyContent:'center',
+                          }}>
+                            <i className={log?'ti ti-check':'ti ti-circle'} style={{fontSize:17,color:log?'white':'#333'}}/>
+                          </button>
                         </div>
                       )
                     })}

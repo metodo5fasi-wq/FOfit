@@ -8,7 +8,7 @@ const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'var(--bg-input)', color:'var(--text-muted)', border:'0.5px solid var(--border)', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'var(--bg-input)', color:'#888', border:'0.5px solid var(--border)', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
 }
 
 // Configurazione slot: giorno della settimana (0=Dom...6=Sab) -> { start, end }
@@ -169,8 +169,8 @@ export default function Calendario() {
     <>
       <div style={s.topbar}>
         <div>
-          <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>Prenota una chiamata</div>
-          <div style={{fontSize:12,color:'var(--text-muted)'}}>Max {MAX_BOOKINGS_PER_MONTH} al mese · 30 minuti</div>
+          <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Prenota una chiamata</div>
+          <div style={{fontSize:12,color:'#888'}}>Max {MAX_BOOKINGS_PER_MONTH} al mese · 30 minuti</div>
         </div>
       </div>
 
@@ -179,17 +179,17 @@ export default function Calendario() {
         {/* PROSSIME CHIAMATE PRENOTATE */}
         {myBookings.length > 0 && (
           <div style={s.card}>
-            <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
               <i className="ti ti-phone" style={{fontSize:13,color:'#D4570A'}}/>
               Le tue chiamate prenotate
             </div>
             {myBookings.map(b => (
               <div key={b.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'0.5px solid var(--border)'}}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>
+                  <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>
                     {new Date(b.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}
                   </div>
-                  <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>Ore {b.time_slot}</div>
+                  <div style={{fontSize:12,color:'#888',marginTop:2}}>Ore {b.time_slot}</div>
                 </div>
                 <button onClick={()=>cancelBooking(b.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:18}}>
                   <i className="ti ti-trash"/>
@@ -201,19 +201,19 @@ export default function Calendario() {
 
         {/* INFO */}
         <div style={{...s.card, background:'var(--bg-input)', border:'none'}}>
-          <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>
+          <div style={{fontSize:12,color:'#888',lineHeight:1.6}}>
             <i className="ti ti-info-circle" style={{fontSize:13,color:'#D4570A',marginRight:6}}/>
-            Disponibilità: <strong style={{color:'var(--text)'}}>Lun, Mer, Ven 9:00-12:00</strong> e <strong style={{color:'var(--text)'}}>Mar, Gio 15:00-18:30</strong>.
+            Disponibilità: <strong style={{color:'#F0F0F0'}}>Lun, Mer, Ven 9:00-12:00</strong> e <strong style={{color:'#F0F0F0'}}>Mar, Gio 15:00-18:30</strong>.
             Dopo la prenotazione ci sentiremo su WhatsApp per i dettagli della chiamata.
           </div>
         </div>
 
         {/* CALENDARIO GIORNI */}
         {loading ? (
-          <div style={{textAlign:'center',padding:'30px 0',color:'var(--text-muted)',fontSize:13}}>Caricamento...</div>
+          <div style={{textAlign:'center',padding:'30px 0',color:'#888',fontSize:13}}>Caricamento...</div>
         ) : (
           <div style={s.card}>
-            <div style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Giorni disponibili</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Giorni disponibili</div>
 
             {upcomingDates.map(date => {
               const dateKey = formatDateKey(date)
@@ -272,7 +272,7 @@ export default function Calendario() {
               const slots = generateSlots(date.getDay())
               return slots.filter(slot => !isSlotTaken(dateKey, slot) && !isSlotPast(date, slot)).length === 0
             }) && (
-              <div style={{textAlign:'center',padding:'20px 0',fontSize:13,color:'var(--text-muted)'}}>
+              <div style={{textAlign:'center',padding:'20px 0',fontSize:13,color:'#888'}}>
                 Nessuno slot disponibile nelle prossime settimane.
               </div>
             )}
