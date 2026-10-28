@@ -84,7 +84,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
             <div style={{fontSize:13,color:'#F0F0F0',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               {profile?.full_name || 'Utente'}
             </div>
-            <div style={{fontSize:10,color:'#555',marginTop:2}}>
+            <div style={{fontSize:10,color:'#777',marginTop:2}}>
               {isAdmin ? '⚡ Coach · Admin' : goalLabel}
             </div>
           </div>
@@ -171,16 +171,16 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
       </div>
 
             {/* FOOTER */}
-      <div style={{padding:'10px 12px',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(0,0,0,0.3)'}}>
-        <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#333',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
+      <div style={{padding:'10px 16px',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',background:'rgba(0,0,0,0.3)'}}>
+        <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#A0A0A0',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:13,color:'#2A2A2A'}}/>Esci
         </button>
         <button onClick={onToggleTheme} style={{
           background:'rgba(255,255,255,0.04)',border:'0.5px solid rgba(255,255,255,0.06)',borderRadius:20,
           padding:'5px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:5,
-          color:'#333',fontSize:10,fontFamily:'inherit'
+          color:'#A0A0A0',fontSize:10,fontFamily:'inherit'
         }}>
-          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:12,color:'#444'}}/>
+          <i className={`ti ${darkMode?'ti-sun':'ti-moon'}`} style={{fontSize:12,color:'#888'}}/>
           {darkMode?'Light':'Dark'}
         </button>
       </div>
@@ -237,17 +237,17 @@ export default function Layout() {
         <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',marginBottom:8}}>
           {installBlocked ? 'Rata non saldata' : 'Abbonamento scaduto'}
         </div>
-        <div style={{fontSize:14,color:'#555',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
+        <div style={{fontSize:14,color:'#777',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
           {installBlocked
             ? 'Non hai saldato una o più rate del tuo abbonamento. Contatta il coach per sbloccare l\'accesso.'
             : 'Il tuo abbonamento è scaduto. Contatta il coach per rinnovarlo e tornare ad accedere all\'app.'}
         </div>
         <div style={{background:'#101010',borderRadius:12,padding:'16px 20px',border:'0.5px solid #1C1C1C',marginBottom:16}}>
-          <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>Per assistenza contatta</div>
+          <div style={{fontSize:12,color:'#888',marginBottom:4}}>Per assistenza contatta</div>
           <div style={{fontSize:14,fontWeight:700,color:'#D4570A'}}>Federico Obinu — FOfit Coach</div>
         </div>
         <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-          style={{background:'#161616',color:'#555',border:'0.5px solid #222',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+          style={{background:'#161616',color:'#777',border:'0.5px solid #222',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
           Esci dall'account
         </button>
       </div>
