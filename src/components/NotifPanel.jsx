@@ -51,17 +51,17 @@ export default function NotifPanel() {
   }
 
   return (
-    <div style={{background:theme.bgCard,borderRadius:12,border:`0.5px solid ${theme.border}`,padding:'16px',marginBottom:12}}>
-      <div style={{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
+    <div style={{background:'#080808'Card,borderRadius:12,border:'0.5px solid #1C1C1C',padding:'16px',marginBottom:12}}>
+      <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
         <i className="ti ti-bell-ringing" style={{fontSize:15,color:theme.orange}}/>
         Invia notifica ai clienti
       </div>
 
       {/* Destinatario */}
       <div style={{marginBottom:10}}>
-        <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.07em'}}>Destinatario</div>
+        <div style={{fontSize:11,color:'#AAA',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.07em'}}>Destinatario</div>
         <select value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}
-          style={{width:'100%',padding:'9px 12px',border:`0.5px solid ${theme.border}`,borderRadius:8,fontSize:13,color:'var(--text)',background:theme.bgInput,outline:'none',fontFamily:'inherit'}}>
+          style={{width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#080808'Input,outline:'none',fontFamily:'inherit'}}>
           <option value="all">Tutti i clienti</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
         </select>
@@ -69,11 +69,11 @@ export default function NotifPanel() {
 
       {/* Preset messaggi */}
       <div style={{marginBottom:10}}>
-        <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.07em'}}>Messaggi rapidi</div>
+        <div style={{fontSize:11,color:'#AAA',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.07em'}}>Messaggi rapidi</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
           {PRESETS.map((p,i) => (
             <button key={i} onClick={()=>{setTitle(p.title);setBody(p.body)}}
-              style={{padding:'5px 10px',borderRadius:20,border:`0.5px solid ${theme.border}`,background:theme.bgSubtle,color:'var(--text-muted)',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
+              style={{padding:'5px 10px',borderRadius:20,border:'0.5px solid #1C1C1C',background:'#080808'Subtle,color:'#AAA',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
               {p.title}
             </button>
           ))}
@@ -82,9 +82,9 @@ export default function NotifPanel() {
 
       {/* Titolo e corpo */}
       <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Titolo notifica"
-        style={{width:'100%',padding:'9px 12px',border:`0.5px solid ${theme.border}`,borderRadius:8,fontSize:13,color:'var(--text)',background:theme.bgInput,outline:'none',fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
+        style={{width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#080808'Input,outline:'none',fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
       <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Testo della notifica..."
-        style={{width:'100%',padding:'9px 12px',border:`0.5px solid ${theme.border}`,borderRadius:8,fontSize:13,color:'var(--text)',background:theme.bgInput,outline:'none',fontFamily:'inherit',resize:'none',height:70,boxSizing:'border-box',marginBottom:10}}/>
+        style={{width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#080808'Input,outline:'none',fontFamily:'inherit',resize:'none',height:70,boxSizing:'border-box',marginBottom:10}}/>
 
       <button onClick={send} disabled={!title||!body||sending}
         style={{background:sent?'#3B8C5A':theme.orange,color:'white',border:'none',borderRadius:8,padding:'10px 18px',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:6,transition:'background 0.3s'}}>

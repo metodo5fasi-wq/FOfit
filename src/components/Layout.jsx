@@ -97,7 +97,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         {/* MENU CLIENTE */}
         {!isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#999',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Menu</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#CCC',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Menu</div>
             {NAV_CLIENT.map(item => (
               <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
                 style={({ isActive }) => ({
@@ -119,7 +119,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         {/* MENU ADMIN */}
         {isAdmin && (
           <>
-            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#999',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Gestione clienti</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#CCC',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Gestione clienti</div>
             {NAV_ADMIN.map(item => (
               <NavLink key={item.to} to={item.to} end={item.exact} onClick={onClose}
                 style={({ isActive }) => ({
@@ -135,7 +135,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
               </NavLink>
             ))}
 
-            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#999',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Importa</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#CCC',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Importa</div>
             {ADMIN_NAV_IMPORTA.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
@@ -151,7 +151,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
               </NavLink>
             ))}
 
-            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#999',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Modifica</div>
+            <div style={{fontSize:9,letterSpacing:'0.1em',color:'#CCC',padding:'12px 10px 4px',textTransform:'uppercase',fontWeight:700}}>Modifica</div>
             {ADMIN_NAV_MODIFICA.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
                 style={({ isActive }) => ({
@@ -173,7 +173,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
             {/* FOOTER */}
       <div style={{padding:'10px 16px',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',background:'rgba(0,0,0,0.3)'}}>
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#A0A0A0',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
-          <i className="ti ti-logout" style={{fontSize:13,color:'#999'}}/>Esci
+          <i className="ti ti-logout" style={{fontSize:13,color:'#CCC'}}/>Esci
         </button>
         <button onClick={onToggleTheme} style={{
           background:'rgba(255,255,255,0.04)',border:'0.5px solid rgba(255,255,255,0.06)',borderRadius:20,
@@ -278,7 +278,7 @@ export default function Layout() {
       )}
 
       {/* CONTENUTO PRINCIPALE */}
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:theme.bg,minWidth:0}}>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:'#080808',minWidth:0}}>
 
         {/* TOPBAR MOBILE */}
         {isMobile && (

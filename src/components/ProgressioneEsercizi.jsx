@@ -73,7 +73,7 @@ export default function ProgressioneEsercizi({ clientId }) {
       {chartData.length > 0 && (
         <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:8}}>
           <div>
-            <div style={{fontSize:20,fontWeight:800,color:'#111'}}>{chartData[chartData.length-1].peso}kg</div>
+            <div style={{fontSize:20,fontWeight:800,color:'#F0F0F0'}}>{chartData[chartData.length-1].peso}kg</div>
             <div style={{fontSize:10,color:'#CCC'}}>Ultimo max</div>
           </div>
           {trend !== 0 && (
@@ -85,7 +85,7 @@ export default function ProgressioneEsercizi({ clientId }) {
             </div>
           )}
           {stagnant && (
-            <div style={{background:'#FEF0E7',padding:'4px 10px',borderRadius:8}}>
+            <div style={{background:'rgba(212,87,10,0.12)',padding:'4px 10px',borderRadius:8}}>
               <span style={{fontSize:11,fontWeight:600,color:'#D4570A'}}>⚠ In stallo</span>
               <div style={{fontSize:9,color:'#CCC'}}>Ultime 3 sessioni</div>
             </div>
@@ -101,7 +101,7 @@ export default function ProgressioneEsercizi({ clientId }) {
               interval={Math.ceil(chartData.length/4)}/>
             <YAxis tick={{fontSize:9,fill:'#888780'}} tickLine={false} axisLine={false}
               domain={[d=>Math.max(0,d-5), d=>d+5]}/>
-            <Tooltip contentStyle={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:11}}
+            <Tooltip contentStyle={{background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:11}}
               formatter={v=>[`${v}kg`,'Max']}/>
             <Line type="monotone" dataKey="peso" stroke="#D4570A" strokeWidth={2}
               dot={{r:3,fill:'#D4570A'}} activeDot={{r:5}}/>

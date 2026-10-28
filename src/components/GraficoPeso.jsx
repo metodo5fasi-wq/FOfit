@@ -35,7 +35,7 @@ export default function GraficoPeso({ clientId, targetWeight }) {
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
         <div style={{display:'flex',gap:10,alignItems:'center'}}>
-          <span style={{fontSize:20,fontWeight:800,color:'#111'}}>{data[data.length-1]?.peso}kg</span>
+          <span style={{fontSize:20,fontWeight:800,color:'#F0F0F0'}}>{data[data.length-1]?.peso}kg</span>
           {diff !== null && <span style={{fontSize:12,fontWeight:600,color:trendColor,background:trendColor+'15',padding:'2px 8px',borderRadius:8}}>{trend}</span>}
         </div>
         <div style={{display:'flex',gap:4}}>
@@ -53,7 +53,7 @@ export default function GraficoPeso({ clientId, targetWeight }) {
           <XAxis dataKey="date" tick={{fontSize:9,fill:'#888780'}} tickLine={false} axisLine={false}
             interval={Math.ceil(data.length/5)}/>
           <YAxis domain={[min-1, max+1]} tick={{fontSize:9,fill:'#888780'}} tickLine={false} axisLine={false}/>
-          <Tooltip contentStyle={{background:'white',border:'0.5px solid #E0DDD6',borderRadius:8,fontSize:11}}
+          <Tooltip contentStyle={{background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:11}}
             formatter={(v)=>[`${v}kg`,'Peso']}/>
           {targetWeight && <ReferenceLine y={targetWeight} stroke="#3B6D11" strokeDasharray="4 2" label={{value:`Target ${targetWeight}kg`,fontSize:9,fill:'#3B6D11'}}/>}
           <Line type="monotone" dataKey="peso" stroke="#D4570A" strokeWidth={2} dot={{r:3,fill:'#D4570A'}} activeDot={{r:5}}/>

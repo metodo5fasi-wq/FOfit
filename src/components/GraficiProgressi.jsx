@@ -7,7 +7,7 @@ import { useAuth } from '../App'
 function CustomTooltip({ active, payload, label, unit = '' }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: 'white', border: '0.5px solid #E0DDD6', borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', fontSize: 12 }}>
+    <div style={{ background: '#0D0D0D', border: '0.5px solid #1C1C1C', borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', fontSize: 12 }}>
       <div style={{ color: '#CCC', marginBottom: 3 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ fontWeight: 700, color: p.color }}>{p.value}{unit}</div>
@@ -52,8 +52,8 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
     <div>
       {/* MINI STATS */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <div style={{ flex: 1, background: '#F5F3EF', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#111' }}>{last}kg</div>
+        <div style={{ flex: 1, background: '#161616', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#F0F0F0' }}>{last}kg</div>
           <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Attuale</div>
         </div>
         {diff !== null && (
@@ -65,7 +65,7 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
           </div>
         )}
         {targetWeight && (
-          <div style={{ flex: 1, background: '#EBF3FD', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
+          <div style={{ flex: 1, background: 'rgba(74,144,212,0.12)', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#4A90D4' }}>{targetWeight}kg</div>
             <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Target</div>
           </div>
@@ -220,7 +220,7 @@ export default function GraficiProgressi() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', background: 'var(--bg)' }}>
       {/* TOPBAR */}
       <div style={{ background: 'var(--bg-card)', borderBottom: '0.5px solid var(--border)', padding: '0 16px', height: 56, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>I tuoi progressi</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>I tuoi progressi</div>
       </div>
 
       {/* TABS */}
