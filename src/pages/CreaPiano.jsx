@@ -80,6 +80,8 @@ export default function CreaPiano() {
   const [showAI, setShowAI] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiProgress, setAiProgress] = useState(0)
+  const [aiStatus, setAiStatus] = useState('')
 
   // Copia da altri piani
   const [showCopyPlan, setShowCopyPlan] = useState(false)
@@ -231,42 +233,65 @@ export default function CreaPiano() {
   async function generateWithAI() {
     if (!aiPrompt.trim()) return
     setAiLoading(true)
-    try {
-      const context = `
-Sei un nutrizionista esperto. Crea un piano alimentare settimanale completo basandoti su queste indicazioni:
-${aiPrompt}
-${kcalTarget ? `Target calorico: ${kcalTarget} kcal/giorno` : ''}
-${protTarget ? `Proteine: ${protTarget}g, Carboidrati: ${carbsTarget}g, Grassi: ${fatTarget}g` : ''}
+    setAiProgress(0)
+    setAiStatus('Analisi indicazioni...')
 
-Rispondi SOLO con un JSON in questo formato esatto (senza markdown, senza backtick):
-{
-  "days": {
-    "0": [{"meal_type":"Colazione","foods":[{"name":"Fiocchi d'avena","qty":80,"kcal100":389,"p100":13,"c100":67,"g100":7}]}],
-    "1": [...],
-    "2": [...],
-    "3": [...],
-    "4": [...],
-    "5": [...],
-    "6": [...]
-  }
-}
-Usa meal_type tra: Colazione, Spuntino mattina, Pranzo, Spuntino pomeriggio, Cena.
-Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valori nutrizionali corretti per 100g.`
+    // Progresso simulato mentre aspettiamo la risposta
+    const steps = [
+      {pct:10, msg:'Calcolo fabbisogno calorico...'},
+      {pct:22, msg:'Struttura pasti settimanali...'},
+      {pct:38, msg:'Selezione alimenti...'},
+      {pct:55, msg:'Bilanciamento macro...'},
+      {pct:70, msg:'Verifica valori nutrizionali...'},
+      {pct:82, msg:'Ottimizzazione varietà...'},
+      {pct:92, msg:'Rifinitura piano...'},
+    ]
+    let stepIdx = 0
+    const timer = setInterval(() => {
+      if (stepIdx < steps.length) {
+        setAiProgress(steps[stepIdx].pct)
+        setAiStatus(steps[stepIdx].msg)
+        stepIdx++
+      }
+    }, 600)
+
+    try {
+      const context = `Sei un nutrizionista esperto italiano. Crea un piano alimentare settimanale COMPLETO.
+Indicazioni: ${aiPrompt}
+${kcalTarget ? `Target: ${kcalTarget} kcal/die, P${protTarget}g C${carbsTarget}g G${fatTarget}g` : ''}
+
+REGOLE FONDAMENTALI:
+- Rispondi SOLO con JSON valido, zero testo aggiuntivo, zero backtick
+- Ogni giorno (0=Lun, 6=Dom) deve avere esattamente 4 pasti
+- meal_type SOLO tra: Colazione, Pranzo, Spuntino pomeriggio, Cena
+- Usa alimenti italiani comuni con valori nutrizionali realistici
+- Varia gli alimenti tra i giorni
+
+Formato JSON esatto:
+{"days":{"0":[{"meal_type":"Colazione","foods":[{"name":"Fiocchi avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7},{"name":"Latte parzialmente scremato","qty":200,"kcal100":46,"p100":3.4,"c100":4.8,"g100":1.6}]}],"1":[...],"2":[...],"3":[...],"4":[...],"5":[...],"6":[...]}}`
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:4000,
+          model:'claude-haiku-5-5',
+          max_tokens:3000,
           messages:[{role:'user',content:context}]
         })
       })
+
+      clearInterval(timer)
+      setAiProgress(96)
+      setAiStatus('Costruzione piano...')
+
       const data = await res.json()
       const text = data.content?.[0]?.text || ''
-      const parsed = JSON.parse(text.replace(/```json|```/g,'').trim())
+      const clean = text.replace(/```json|```/g,'').trim()
+      const parsed = JSON.parse(clean)
 
       if (parsed.days) {
+        setAiProgress(100)
+        setAiStatus('Piano pronto!')
         const newDays = {}
         for (let i=0;i<7;i++) newDays[i]=[]
         Object.entries(parsed.days).forEach(([dayIdx, meals]) => {
@@ -286,15 +311,19 @@ Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valo
             })
           }))
         })
+        await new Promise(r => setTimeout(r, 400))
         setDays(newDays)
         setShowAI(false)
-        toast('Piano generato dall\'AI! Rivedi e personalizza.', 'success')
+        toast('Piano generato! 🎉 Rivedi e personalizza.', 'success')
       }
     } catch(e) {
+      clearInterval(timer)
       console.error(e)
-      toast('Errore AI: ' + e.message, 'error')
+      toast('Errore: ' + e.message, 'error')
     }
     setAiLoading(false)
+    setAiProgress(0)
+    setAiStatus('')
   }
 
   // ── TOTALI ───────────────────────────────────────────────
@@ -753,17 +782,44 @@ Ogni giorno deve avere almeno 3 pasti. Usa alimenti italiani realistici con valo
               placeholder="es. Piano ipocalorico 1800 kcal per uomo 35 anni sedentario, obiettivo perdita peso, intollerante al lattosio, non mangia pesce. Pasti semplici da preparare."
               style={{...s.input,minHeight:100,resize:'vertical',marginBottom:12,lineHeight:1.6}}
             />
-            {kcalTarget && (
+            {kcalTarget && !aiLoading && (
               <div style={{fontSize:11,color:'#888',marginBottom:12}}>
-                Target impostato: {kcalTarget} kcal · P{protTarget}g · C{carbsTarget}g · G{fatTarget}g
+                Target: {kcalTarget} kcal · P{protTarget}g · C{carbsTarget}g · G{fatTarget}g
               </div>
             )}
+
+            {/* BARRA PROGRESSO */}
+            {aiLoading && (
+              <div style={{marginBottom:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <div style={{fontSize:12,color:'#C39BE0',fontWeight:600}}>{aiStatus}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:'#C39BE0'}}>{aiProgress}%</div>
+                </div>
+                <div style={{height:6,background:'#1A1A1A',borderRadius:6,overflow:'hidden'}}>
+                  <div style={{
+                    height:6,
+                    borderRadius:6,
+                    background:'linear-gradient(90deg,#7C3AED,#C39BE0)',
+                    width:`${aiProgress}%`,
+                    transition:'width 0.5s ease',
+                  }}/>
+                </div>
+                <div style={{fontSize:10,color:'#555',marginTop:6,textAlign:'center'}}>
+                  Haiku AI sta creando la tua settimana alimentare...
+                </div>
+              </div>
+            )}
+
             <div style={{display:'flex',gap:8}}>
-              <button onClick={generateWithAI} disabled={aiLoading||!aiPrompt.trim()} style={{...s.btn,flex:1,justifyContent:'center',background:'rgba(155,89,182,0.8)'}}>
+              <button onClick={generateWithAI} disabled={aiLoading||!aiPrompt.trim()} style={{
+                ...s.btn,flex:1,justifyContent:'center',
+                background: aiLoading ? 'rgba(124,58,237,0.4)' : 'rgba(155,89,182,0.85)',
+                opacity: !aiPrompt.trim() ? 0.4 : 1,
+              }}>
                 <i className="ti ti-sparkles" style={{fontSize:13}}/>
-                {aiLoading?'Genero piano...':'Genera settimana completa'}
+                {aiLoading ? `Generando... ${aiProgress}%` : 'Genera settimana completa'}
               </button>
-              <button onClick={()=>setShowAI(false)} style={s.btnGray}>Annulla</button>
+              {!aiLoading && <button onClick={()=>setShowAI(false)} style={s.btnGray}>Annulla</button>}
             </div>
           </div>
         </div>
