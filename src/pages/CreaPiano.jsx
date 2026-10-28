@@ -786,7 +786,7 @@ export default function CreaPiano() {
                   }}/>
                 </div>
                 <div style={{fontSize:10,color:'#555',marginTop:6,textAlign:'center'}}>
-                  Haiku AI sta creando la tua settimana alimentare...
+                  AI sta creando la tua settimana alimentare...
                 </div>
               </div>
             )}
