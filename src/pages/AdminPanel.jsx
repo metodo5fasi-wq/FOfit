@@ -558,10 +558,10 @@ export default function AdminPanel() {
             <div style={{marginBottom:6}}>
               <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Crea da zero</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
-                <button onClick={()=>navigate('/crea-piano')} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <button onClick={()=>window.location.href='/crea-piano'} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   <i className="ti ti-pencil-plus" style={{fontSize:15}}/>Piano
                 </button>
-                <button onClick={()=>navigate('/crea-allenamento')} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <button onClick={()=>window.location.href='/crea-allenamento'} style={{padding:'8px',background:'rgba(212,87,10,0.2)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   <i className="ti ti-pencil-plus" style={{fontSize:15}}/>Scheda
                 </button>
               </div>
@@ -569,10 +569,10 @@ export default function AdminPanel() {
             <div>
               <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Importa</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
-                <button onClick={()=>navigate('/importa')} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <button onClick={()=>window.location.href='/importa'} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   <i className="ti ti-salad" style={{fontSize:15}}/>Piano
                 </button>
-                <button onClick={()=>navigate('/importa-allenamento')} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <button onClick={()=>window.location.href='/importa-allenamento'} style={{padding:'8px',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.1)',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   <i className="ti ti-barbell" style={{fontSize:15}}/>Scheda
                 </button>
               </div>
