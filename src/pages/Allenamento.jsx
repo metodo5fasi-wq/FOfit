@@ -349,7 +349,7 @@ export default function Allenamento() {
   if (loading) return (
     <>
       <div style={s.topbar}><div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Allenamento</div></div>
-      <div style={s.page}><div style={{textAlign:'center',padding:'40px 0',color:'#555555',fontSize:13}}>Caricamento...</div></div>
+      <div style={s.page}><div style={{textAlign:'center',padding:'40px 0',color:'#AAA',fontSize:13}}>Caricamento...</div></div>
     </>
   )
 
@@ -360,7 +360,7 @@ export default function Allenamento() {
         <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
           <i className="ti ti-barbell" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
           <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',marginBottom:8}}>Nessuna scheda assegnata</div>
-          <div style={{fontSize:13,color:'#555555',lineHeight:1.6}}>Il tuo coach ti assegnerà presto una scheda di allenamento.</div>
+          <div style={{fontSize:13,color:'#AAA',lineHeight:1.6}}>Il tuo coach ti assegnerà presto una scheda di allenamento.</div>
         </div>
       </div>
     </>
@@ -376,7 +376,7 @@ export default function Allenamento() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>{plan.title}</div>
-          <div style={{fontSize:12,color:'#555555'}}>{days.length} giorni · {exercises.length} esercizi</div>
+          <div style={{fontSize:12,color:'#AAA'}}>{days.length} giorni · {exercises.length} esercizi</div>
         </div>
         <Link to="/storico-allenamento" style={{width:36,height:36,borderRadius:9,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',textDecoration:'none',flexShrink:0}}>
           <i className="ti ti-history" style={{fontSize:17}}/>
@@ -403,7 +403,7 @@ export default function Allenamento() {
           </div>
           <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>Allenamento di oggi</div>
-            <div style={{fontSize:12,color:'#555555'}}>{completedToday} serie completate</div>
+            <div style={{fontSize:12,color:'#AAA'}}>{completedToday} serie completate</div>
           </div>
           {weekStreak > 0 && (
             <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'6px 12px',textAlign:'center',flexShrink:0}}>
@@ -465,7 +465,7 @@ export default function Allenamento() {
 
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</div>
-                  <div style={{fontSize:11,color:'#555555',marginTop:2}}>
+                  <div style={{fontSize:11,color:'#AAA',marginTop:2}}>
                     {ex.muscle_group} · {(() => {
                       const prog = progressionTracking[ex.id]
                       if (prog) return `S${prog.week}/${prog.maxWeeks} · ${prog.targetSets||ex.sets}×${prog.targetReps||ex.reps} · ${prog.targetKg}kg`
@@ -482,18 +482,18 @@ export default function Allenamento() {
                     <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#D4570A'}}/>
                   </a>
                 )}
-                <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:16,color:'#555555'}}/>
+                <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:16,color:'#AAA'}}/>
               </div>
 
               {isExpanded && (
                 <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #1A1A1A'}}>
                   {ex.description && (
-                    <div style={{fontSize:12,color:'#555555',lineHeight:1.6,marginBottom:12,background:'#161616',padding:'10px 12px',borderRadius:8}}>
+                    <div style={{fontSize:12,color:'#AAA',lineHeight:1.6,marginBottom:12,background:'#161616',padding:'10px 12px',borderRadius:8}}>
                       <i className="ti ti-info-circle" style={{fontSize:13,marginRight:6,color:'#D4570A'}}/>
                       {ex.description}
                     </div>
                   )}
-                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'#555555',flexWrap:'wrap'}}>
+                  <div style={{display:'flex',gap:10,marginBottom:10,fontSize:11,color:'#AAA',flexWrap:'wrap'}}>
                     {(() => {
                       const prog = progressionTracking[ex.id]
                       if (prog) return <>
@@ -568,7 +568,7 @@ export default function Allenamento() {
                     })}
                   </div>
 
-                  <div style={{fontSize:11,color:'#555555',marginBottom:6}}>Note esercizio (opzionale)</div>
+                  <div style={{fontSize:11,color:'#AAA',marginBottom:6}}>Note esercizio (opzionale)</div>
                   <textarea
                     value={getExerciseNote(ex.exercise_name)}
                     onChange={e=>updateNote(ex, e.target.value)}
@@ -584,12 +584,12 @@ export default function Allenamento() {
         {/* NOTE SESSIONI PASSATE PER QUESTO GIORNO */}
         {sessions.filter(s => s.day_label === activeDay && s.session_date !== today && s.notes).slice(0,3).length > 0 && (
           <div style={s.card}>
-            <div style={{fontSize:11,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
+            <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
               <i className="ti ti-notes" style={{fontSize:13,marginRight:5,color:'#D4570A'}}/>Note delle scorse volte
             </div>
             {sessions.filter(s => s.day_label === activeDay && s.session_date !== today && s.notes).slice(0,3).map(sess => (
               <div key={sess.id} style={{background:'#161616',borderRadius:8,padding:'10px 12px',marginBottom:8,fontSize:12,color:'#F0F0F0',lineHeight:1.5}}>
-                <div style={{fontSize:10,color:'#555555',marginBottom:4}}>
+                <div style={{fontSize:10,color:'#AAA',marginBottom:4}}>
                   {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'})} · {sess.sets_completed}/{sess.sets_total} serie
                 </div>
                 {sess.notes}
@@ -621,13 +621,13 @@ export default function Allenamento() {
               </div>
               <div>
                 <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Termina {activeDay}</div>
-                <div style={{fontSize:12,color:'#555555'}}>{completedToday} serie completate</div>
+                <div style={{fontSize:12,color:'#AAA'}}>{completedToday} serie completate</div>
               </div>
             </div>
 
             {/* FEEDBACK RAPIDO */}
             <div style={{marginBottom:16}}>
-              <div style={{fontSize:11,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
+              <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>
                 Come ti senti?
               </div>
               <div style={{display:'flex',gap:8,justifyContent:'space-between'}}>
@@ -651,7 +651,7 @@ export default function Allenamento() {
               </div>
             </div>
 
-            <div style={{fontSize:11,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',margin:'0 0 6px'}}>
+            <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',margin:'0 0 6px'}}>
               Note per il tuo coach (opzionale)
             </div>
 
@@ -661,7 +661,7 @@ export default function Allenamento() {
               if (!dayEx.length) return null
               return (
                 <div style={{marginBottom:16}}>
-                  <div style={{fontSize:11,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
+                  <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:10}}>
                     📈 Progressione carichi — settimana corrente
                   </div>
                   {dayEx.map(ex => {
@@ -672,7 +672,7 @@ export default function Allenamento() {
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
                           <div>
                             <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{ex.exercise_name}</div>
-                            <div style={{fontSize:11,color:'#555555',marginTop:1}}>
+                            <div style={{fontSize:11,color:'#AAA',marginTop:1}}>
                               Settimana {prog.week}/{prog.maxWeeks} · Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong>
                             </div>
                           </div>
@@ -734,7 +734,7 @@ export default function Allenamento() {
               <button onClick={finishSession} disabled={savingSession} style={{flex:1,padding:12,borderRadius:10,border:'none',background:'#D4570A',color:'white',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
                 {savingSession ? 'Salvataggio...' : 'Salva e termina'}
               </button>
-              <button onClick={()=>setShowFinish(false)} style={{padding:'12px 18px',borderRadius:10,border:'0.5px solid #1C1C1C',background:'#161616',color:'#555555',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+              <button onClick={()=>setShowFinish(false)} style={{padding:'12px 18px',borderRadius:10,border:'0.5px solid #1C1C1C',background:'#161616',color:'#AAA',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
                 Annulla
               </button>
             </div>

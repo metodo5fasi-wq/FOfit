@@ -71,7 +71,7 @@ export default function ReportAllenamentoPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#D4570A' }}>📝 Bozza in corso</div>
-                <div style={{ fontSize: 11, color: '#888780', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: '#CCC', marginTop: 2 }}>
                   Ultima modifica: {new Date(draft.updated_at || draft.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>

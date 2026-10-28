@@ -11,10 +11,10 @@ const s = {
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', marginBottom:10, overflow:'hidden' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 },
   btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   btnDanger: { background:'rgba(226,75,74,0.1)', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 8px', fontSize:11, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:3 },
   input: { padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:7, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', width:'100%', boxSizing:'border-box' },
-  label: { fontSize:10, color:'#555555', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
+  label: { fontSize:10, color:'#AAA', display:'block', marginBottom:3, textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
 const EMPTY_EX = { exercise_name:'', muscle_group:'Petto', video_url:'', description:'', sets:3, reps:'10-12', rest_seconds:60, tut:'', weekly_targets:[], _isNew:true }
@@ -59,7 +59,7 @@ function WeeklyTargetsTable({ ex, onChange }) {
       </div>
 
       {targets.length === 0 ? (
-        <div style={{background:'#161616',borderRadius:8,padding:'12px',textAlign:'center',fontSize:12,color:'#555555'}}>
+        <div style={{background:'#161616',borderRadius:8,padding:'12px',textAlign:'center',fontSize:12,color:'#AAA'}}>
           Aggiungi le settimane con il pulsante → il cliente vedrà automaticamente la settimana corretta
         </div>
       ) : (
@@ -302,7 +302,7 @@ export default function ModificaAllenamento() {
   if (loading) return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh'}}>
       <div style={s.topbar}><div style={{fontSize:15,fontWeight:600}}>Modifica scheda</div></div>
-      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#555555',fontSize:13}}>Caricamento...</div>
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#AAA',fontSize:13}}>Caricamento...</div>
     </div>
   )
 
@@ -316,10 +316,10 @@ export default function ModificaAllenamento() {
         </button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.name || 'Modifica scheda'}</div>
-          <div style={{fontSize:11,color:'#555555'}}>{clientName}{plan ? ` · ${plan.days_per_week} giorni/sett · ${plan.weeks_duration} settimane` : ''}</div>
+          <div style={{fontSize:11,color:'#AAA'}}>{clientName}{plan ? ` · ${plan.days_per_week} giorni/sett · ${plan.weeks_duration} settimane` : ''}</div>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
-          {saving && <span style={{fontSize:11,color:'#555555'}}>Salvo...</span>}
+          {saving && <span style={{fontSize:11,color:'#AAA'}}>Salvo...</span>}
           {!saving && dirty && (
             <button onClick={saveAll} style={{...s.btn,minWidth:80}}>💾 Salva</button>
           )}
@@ -333,7 +333,7 @@ export default function ModificaAllenamento() {
         {/* SIDEBAR GIORNI (PC) */}
         {!isMobile && (
           <div style={{width:140,flexShrink:0,background:'#0D0D0D',borderRight:'0.5px solid #1A1A1A',overflowY:'auto'}}>
-            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#555555',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
+            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
             {days.map(day => {
               const dayExs = exercises.filter(e=>e.day_label===day)
               return (
@@ -344,12 +344,12 @@ export default function ModificaAllenamento() {
                   transition:'all 0.1s',
                 }}>
                   <div style={{fontSize:12,fontWeight:selectedDay===day?700:500,color:selectedDay===day?'#D4570A':'#111'}}>{day}</div>
-                  <div style={{fontSize:10,color:'#555555',marginTop:1}}>{dayExs.length} esercizi</div>
+                  <div style={{fontSize:10,color:'#AAA',marginTop:1}}>{dayExs.length} esercizi</div>
                 </div>
               )
             })}
             <div style={{padding:'8px 10px'}}>
-              <button onClick={addDay} style={{width:'100%',padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:'inherit',color:'#555555',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+              <button onClick={addDay} style={{width:'100%',padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:'inherit',color:'#AAA',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
                 <i className="ti ti-plus" style={{fontSize:12}}/>Giorno
               </button>
             </div>
@@ -371,14 +371,14 @@ export default function ModificaAllenamento() {
                   borderColor:selectedDay===day?'#D4570A':'#E0DDD6',
                 }}>{day}</button>
               ))}
-              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #E0DDD6',background:'transparent',color:'#555555',fontFamily:'inherit'}}>+ Giorno</button>
+              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #E0DDD6',background:'transparent',color:'#AAA',fontFamily:'inherit'}}>+ Giorno</button>
             </div>
           )}
 
           {/* TOOLBAR GIORNO */}
           <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'8px 14px',display:'flex',gap:8,alignItems:'center',flexShrink:0,flexWrap:'wrap'}}>
             <span style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{selectedDay}</span>
-            <span style={{fontSize:11,color:'#555555'}}>{dayExercises.length} esercizi</span>
+            <span style={{fontSize:11,color:'#AAA'}}>{dayExercises.length} esercizi</span>
             <div style={{flex:1}}/>
             {dayExercises.length > 1 && (
               <button onClick={()=>{if(allExpanded){setExpandedEx(null);setAllExpanded(false)}else{setExpandedEx('all');setAllExpanded(true)}}}
@@ -410,7 +410,7 @@ export default function ModificaAllenamento() {
                   {/* HEADER ESERCIZIO */}
                   <div style={{display:'flex',alignItems:'center',gap:7,padding:'9px 11px',cursor:'pointer'}}
                     onClick={()=>{if(expandedEx==='all'){setAllExpanded(false);setExpandedEx(ex.id)}else setExpandedEx(isExpanded?null:ex.id)}}>
-                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#2A2A2A',flexShrink:0}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#999',flexShrink:0}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:15}}/>
                       <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
                     </div>
@@ -418,8 +418,8 @@ export default function ModificaAllenamento() {
                       <i className="ti ti-barbell" style={{fontSize:14,color:'#D4570A'}}/>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name||<span style={{color:'#555555',fontStyle:'italic'}}>Nuovo esercizio</span>}</div>
-                      <div style={{fontSize:10,color:'#555555',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut?` · TUT ${ex.tut}`:''}{ex.weekly_targets?.length?` · 📅 ${ex.weekly_targets.length}sett`:''}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name||<span style={{color:'#AAA',fontStyle:'italic'}}>Nuovo esercizio</span>}</div>
+                      <div style={{fontSize:10,color:'#AAA',marginTop:1}}>{ex.muscle_group} · {ex.sets}×{ex.reps} · {ex.rest_seconds}s{ex.tut?` · TUT ${ex.tut}`:''}{ex.weekly_targets?.length?` · 📅 ${ex.weekly_targets.length}sett`:''}</div>
                     </div>
                     <div style={{display:'flex',gap:3,flexShrink:0}} onClick={e=>e.stopPropagation()}>
                       <button onClick={()=>moveEx(ex.id,'up')} style={{...s.btnGray,padding:'3px 5px'}} title="Su"><i className="ti ti-arrow-up" style={{fontSize:11}}/></button>
@@ -430,7 +430,7 @@ export default function ModificaAllenamento() {
                       )}
                       <button onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 5px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                     </div>
-                    <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:12,color:'#555555',flexShrink:0}}/>
+                    <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:12,color:'#AAA',flexShrink:0}}/>
                   </div>
 
                   {/* COPIA SU ALTRO GIORNO */}
@@ -542,7 +542,7 @@ export default function ModificaAllenamento() {
                     <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#E24B4A',flexShrink:0}}/>
                     <span style={{fontSize:11,color:'#3B6D11',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Video YouTube trovato ✓</span>
                     <a href={newEx.video_url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#3B6D11',fontWeight:700}}>Apri →</a>
-                    <button onClick={()=>setNewEx(p=>({...p,video_url:''}))} style={{background:'none',border:'none',cursor:'pointer',color:'#555555',fontSize:13}}>✕</button>
+                    <button onClick={()=>setNewEx(p=>({...p,video_url:''}))} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',fontSize:13}}>✕</button>
                   </div>
                 ) : (
                   <div style={{marginBottom:10}}>

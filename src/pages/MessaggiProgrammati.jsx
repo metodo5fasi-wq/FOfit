@@ -6,12 +6,12 @@ const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
+  label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit' },
   textarea: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', resize:'vertical', minHeight:80, boxSizing:'border-box', lineHeight:1.6 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#F5F3EF', color:'#888', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#F5F3EF', color:'#CCC', border:'0.5px solid #E0DDD6', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   btnDanger: { background:'#FEE2E2', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   badge: { fontSize:10, padding:'3px 8px', borderRadius:10, fontWeight:600 },
@@ -119,7 +119,7 @@ export default function MessaggiProgrammati() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Messaggi programmati</div>
-          <div style={{fontSize:12,color:'#888'}}>{pending.length} in attesa · {sent.length} inviati</div>
+          <div style={{fontSize:12,color:'#CCC'}}>{pending.length} in attesa · {sent.length} inviati</div>
         </div>
         <button onClick={()=>setShowForm(!showForm)} style={s.btn}>
           <i className="ti ti-plus" style={{fontSize:14}}/> Programma messaggio
@@ -139,7 +139,7 @@ export default function MessaggiProgrammati() {
                 {TEMPLATES.map(t=>(
                   <button key={t.label} onClick={()=>setForm(p=>({...p,message:t.text}))} style={{
                     padding:'5px 10px', borderRadius:16, fontSize:11, cursor:'pointer', border:'0.5px solid #E0DDD6',
-                    background:'white', color:'#777', fontFamily:'inherit',
+                    background:'white', color:'#CCC', fontFamily:'inherit',
                   }}>{t.label}</button>
                 ))}
               </div>
@@ -182,11 +182,11 @@ export default function MessaggiProgrammati() {
         </div>
 
         {/* LISTA */}
-        {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>Caricamento...</div> :
+        {loading ? <div style={{textAlign:'center',padding:'40px',color:'#CCC'}}>Caricamento...</div> :
           displayed.length === 0 ? (
             <div style={{textAlign:'center',padding:'40px 20px',background:'white',borderRadius:12,border:'0.5px solid #E0DDD6'}}>
               <i className="ti ti-calendar-off" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/>
-              <div style={{fontSize:13,color:'#888'}}>{filter==='pending'?'Nessun messaggio in attesa.':'Nessun messaggio inviato.'}</div>
+              <div style={{fontSize:13,color:'#CCC'}}>{filter==='pending'?'Nessun messaggio in attesa.':'Nessun messaggio inviato.'}</div>
             </div>
           ) :
           displayed.map(msg => {
@@ -215,7 +215,7 @@ export default function MessaggiProgrammati() {
                         )}
                       </div>
                     </div>
-                    <div style={{fontSize:12,color:'#777',lineHeight:1.5,background:'#F5F3EF',borderRadius:8,padding:'8px 10px',marginBottom:8}}>
+                    <div style={{fontSize:12,color:'#CCC',lineHeight:1.5,background:'#F5F3EF',borderRadius:8,padding:'8px 10px',marginBottom:8}}>
                       {msg.message}
                     </div>
                     {!msg.sent && (

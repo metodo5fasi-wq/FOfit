@@ -94,27 +94,27 @@ export default function Obiettivi() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 14, WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#555555' }}>Caricamento...</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#AAA' }}>Caricamento...</div>
         ) : <>
 
           {/* PROGRESS VERSO OBIETTIVO PESO */}
           {data.startWeight && data.targetWeight && (
             <div style={{ background: 'linear-gradient(135deg,#1a0a00,#2d1200)', borderRadius: 16, padding: '18px 16px', marginBottom: 14 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
                 Obiettivo peso
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 800, color: 'white' }}>{data.startWeight}kg</div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Inizio</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Inizio</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 24, fontWeight: 900, color: '#F4894A' }}>{data.weight}kg</div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Ora</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Ora</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 800, color: '#3B6D11' }}>{data.targetWeight}kg</div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Target</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Target</div>
                 </div>
               </div>
               {/* BARRA PROGRESSO */}
@@ -133,7 +133,7 @@ export default function Obiettivi() {
 
           {/* MILESTONE PESO */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               🏅 Milestone
             </div>
             {milestones.map((m, i) => {
@@ -155,7 +155,7 @@ export default function Obiettivi() {
 
           {/* HABIT GOALS */}
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               🎯 Obiettivi abitudine
             </div>
             {HABIT_GOALS.map((g, i) => (
@@ -184,7 +184,7 @@ export default function Obiettivi() {
               </div>
             )}
             {data.streak === 0 && (
-              <div style={{ marginTop: 10, fontSize: 12, color: '#555555' }}>
+              <div style={{ marginTop: 10, fontSize: 12, color: '#AAA' }}>
                 Compila il diario oggi per iniziare la tua streak!
               </div>
             )}

@@ -14,11 +14,11 @@ const initials = n => n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperC
 const s = {
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'9px 16px', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
   btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 },
-  btnGray: { background:'#161616', color:'#777', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
   btnGreen: { background:'rgba(59,109,17,0.1)', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'14px', marginBottom:12 },
-  sectionTitle: { fontSize:10, fontWeight:700, color:'#777', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, display:'flex', alignItems:'center', gap:5 },
-  label: { fontSize:11, color:'#777', display:'block', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' },
+  sectionTitle: { fontSize:10, fontWeight:700, color:'#CCC', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, display:'flex', alignItems:'center', gap:5 },
+  label: { fontSize:11, color:'#CCC', display:'block', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   badge: (bg, color) => ({ fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:600, background:bg, color }),
@@ -178,7 +178,7 @@ function ClientDetail({ client, navigate }) {
           </div>
           <div style={{minWidth:0}}>
             <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{client.full_name}</div>
-            <div style={{fontSize:10,color:'#777'}}>{GOAL_LABEL[client.goal]||'—'}</div>
+            <div style={{fontSize:10,color:'#CCC'}}>{GOAL_LABEL[client.goal]||'—'}</div>
           </div>
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
@@ -240,8 +240,8 @@ function ClientDetail({ client, navigate }) {
             ].map(st=>(
               <div key={st.l} style={s.statBox(st.c)}>
                 <div style={{fontSize:18,fontWeight:800,color:st.c,lineHeight:1.1}}>{st.v}</div>
-                {st.sub&&<div style={{fontSize:9,color:'#777',marginTop:1}}>{st.sub}</div>}
-                <div style={{fontSize:8,color:'#555',textTransform:'uppercase',letterSpacing:'0.06em',marginTop:3}}>{st.l}</div>
+                {st.sub&&<div style={{fontSize:9,color:'#CCC',marginTop:1}}>{st.sub}</div>}
+                <div style={{fontSize:8,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.06em',marginTop:3}}>{st.l}</div>
               </div>
             ))}
           </div>
@@ -257,7 +257,7 @@ function ClientDetail({ client, navigate }) {
                 {l:'Cliente dal',v:new Date(client.created_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})},
               ].map(r=>(
                 <div key={r.l} style={{padding:'7px 10px',background:'#161616',borderRadius:8}}>
-                  <div style={{fontSize:9,color:'#777',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:2}}>{r.l}</div>
+                  <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:2}}>{r.l}</div>
                   <div style={{fontWeight:600,color:'#F0F0F0'}}>{r.v}</div>
                 </div>
               ))}
@@ -269,7 +269,7 @@ function ClientDetail({ client, navigate }) {
               </div>
             )}
             {client.notes && (
-              <div style={{marginTop:6,background:'#161616',borderLeft:'3px solid #888780',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#777'}}>
+              <div style={{marginTop:6,background:'#161616',borderLeft:'3px solid #888780',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#CCC'}}>
                 {client.notes}
               </div>
             )}
@@ -301,7 +301,7 @@ function ClientDetail({ client, navigate }) {
                 )
               })}
             </div>
-            <div style={{display:'flex',gap:12,marginTop:8,fontSize:10,color:'#777'}}>
+            <div style={{display:'flex',gap:12,marginTop:8,fontSize:10,color:'#CCC'}}>
               <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:6,height:6,borderRadius:'50%',background:'#3B6D11'}}/> Diario</span>
               <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:6,height:6,borderRadius:'50%',background:'#4A90D4'}}/> Allenamento</span>
             </div>
@@ -321,13 +321,13 @@ function ClientDetail({ client, navigate }) {
                   const c = item.inv ? (item.v<=2?'#3B6D11':item.v<=3?'#E8A020':'#E24B4A') : (item.v>=4?'#3B6D11':item.v>=3?'#E8A020':'#E24B4A')
                   return (
                     <div key={item.l} style={{textAlign:'center',background:'#161616',borderRadius:9,padding:'8px 4px'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:c}}>{item.v}<span style={{fontSize:9,color:'#777'}}>/{item.max}</span></div>
-                      <div style={{fontSize:8,color:'#777',marginTop:2}}>{item.l}</div>
+                      <div style={{fontSize:18,fontWeight:800,color:c}}>{item.v}<span style={{fontSize:9,color:'#CCC'}}>/{item.max}</span></div>
+                      <div style={{fontSize:8,color:'#CCC',marginTop:2}}>{item.l}</div>
                     </div>
                   )
                 })}
               </div>
-              {checkin.notes&&<div style={{fontSize:11,color:'#777',fontStyle:'italic',padding:'7px 10px',background:'#161616',borderRadius:7}}>"{checkin.notes}"</div>}
+              {checkin.notes&&<div style={{fontSize:11,color:'#CCC',fontStyle:'italic',padding:'7px 10px',background:'#161616',borderRadius:7}}>"{checkin.notes}"</div>}
             </div>
           )}
 
@@ -353,7 +353,7 @@ function ClientDetail({ client, navigate }) {
                 ))}
               </div>
               {photos.length > 6 && (
-                <button onClick={()=>setTab('progressi')} style={{width:'100%',marginTop:8,padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,color:'#777',cursor:'pointer',fontFamily:'inherit'}}>
+                <button onClick={()=>setTab('progressi')} style={{width:'100%',marginTop:8,padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,color:'#CCC',cursor:'pointer',fontFamily:'inherit'}}>
                   Vedi tutte le {photos.length} foto →
                 </button>
               )}
@@ -413,8 +413,8 @@ function ClientDetail({ client, navigate }) {
                   ].map(st=>(
                     <div key={st.l} style={{background:'#161616',borderRadius:9,padding:'9px',textAlign:'center'}}>
                       <div style={{fontSize:16,fontWeight:800,color:st.c}}>{st.v}</div>
-                      <div style={{fontSize:9,color:'#777',textTransform:'uppercase',marginTop:1}}>{st.l}</div>
-                      <div style={{fontSize:8,color:'#555'}}>{st.sub}</div>
+                      <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',marginTop:1}}>{st.l}</div>
+                      <div style={{fontSize:8,color:'#AAA'}}>{st.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -422,15 +422,15 @@ function ClientDetail({ client, navigate }) {
                   <div style={{background:'rgba(226,75,74,0.1)',borderRadius:9,padding:'9px',textAlign:'center'}}>
                     <div style={{fontSize:15,fontWeight:800,color:'#E24B4A'}}>{deficit}</div>
                     <div style={{fontSize:9,color:'#E24B4A',marginTop:1}}>Deficit -20%</div>
-                    <div style={{fontSize:8,color:'#555'}}>Dimagrimento</div>
+                    <div style={{fontSize:8,color:'#AAA'}}>Dimagrimento</div>
                   </div>
                   <div style={{background:'rgba(59,109,17,0.1)',borderRadius:9,padding:'9px',textAlign:'center'}}>
                     <div style={{fontSize:15,fontWeight:800,color:'#3B6D11'}}>{surplus}</div>
                     <div style={{fontSize:9,color:'#3B6D11',marginTop:1}}>Surplus +10%</div>
-                    <div style={{fontSize:8,color:'#555'}}>Massa muscolare</div>
+                    <div style={{fontSize:8,color:'#AAA'}}>Massa muscolare</div>
                   </div>
                 </div>
-                <div style={{fontSize:10,color:'#777',marginTop:8,textAlign:'center'}}>
+                <div style={{fontSize:10,color:'#CCC',marginTop:8,textAlign:'center'}}>
                   Formula Mifflin-St Jeor · {weight}kg · {height}cm{age?` · ${age}anni`:''}
                 </div>
               </div>
@@ -457,7 +457,7 @@ function ClientDetail({ client, navigate }) {
                     {[{l:'Kcal',v:mealPlan.kcal_target,c:'#D4570A'},{l:'Prot',v:mealPlan.protein_target_g+'g',c:'#4A90D4'},{l:'Carbo',v:mealPlan.carbs_target_g+'g',c:'#E8A020'},{l:'Grassi',v:mealPlan.fat_target_g+'g',c:'#3B8C5A'}].map(m=>(
                       <div key={m.l} style={{textAlign:'center',background:'#0D0D0D',borderRadius:7,padding:'6px'}}>
                         <div style={{fontSize:14,fontWeight:800,color:m.c}}>{m.v}</div>
-                        <div style={{fontSize:9,color:'#777',textTransform:'uppercase'}}>{m.l}</div>
+                        <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase'}}>{m.l}</div>
                       </div>
                     ))}
                   </div>
@@ -498,7 +498,7 @@ function ClientDetail({ client, navigate }) {
                             }
                           }}/>
                       </div>
-                      <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#777'}}>×4 kcal</span></label>
+                      <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#CCC'}}>×4 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.protein_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -506,7 +506,7 @@ function ClientDetail({ client, navigate }) {
                             setPlanEdit(p=>({...p,protein_target_g:v,kcal_target:newKcal}))
                           }}/>
                       </div>
-                      <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#777'}}>×4 kcal</span></label>
+                      <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#CCC'}}>×4 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.carbs_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -514,7 +514,7 @@ function ClientDetail({ client, navigate }) {
                             setPlanEdit(p=>({...p,carbs_target_g:v,kcal_target:newKcal}))
                           }}/>
                       </div>
-                      <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#777'}}>×9 kcal</span></label>
+                      <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#CCC'}}>×9 kcal</span></label>
                         <input style={s.input} type="number" value={planEdit.fat_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
@@ -529,7 +529,7 @@ function ClientDetail({ client, navigate }) {
                 )}
               </>
             ) : (
-              <div style={{textAlign:'center',padding:'20px',color:'#777',fontSize:12}}>Nessun piano alimentare caricato</div>
+              <div style={{textAlign:'center',padding:'20px',color:'#CCC',fontSize:12}}>Nessun piano alimentare caricato</div>
             )}
           </div>
 
@@ -555,7 +555,7 @@ function ClientDetail({ client, navigate }) {
             </div>
             {adherence && (
               <div style={{marginTop:10,background:adherence.followed/adherence.total>=0.7?'#EAF3DE':'#FEF0E7',borderRadius:8,padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontSize:12,color:'#777'}}>Aderenza piano</span>
+                <span style={{fontSize:12,color:'#CCC'}}>Aderenza piano</span>
                 <span style={{fontSize:14,fontWeight:700,color:adherence.followed/adherence.total>=0.7?'#3B6D11':'#D4570A'}}>{Math.round(adherence.followed/adherence.total*100)}% · {adherence.followed}/{adherence.total} pasti</span>
               </div>
             )}
@@ -581,7 +581,7 @@ function ClientDetail({ client, navigate }) {
                 <div style={{fontSize:11,color:'#D4570A',marginTop:3}}>{workoutPlan.days_per_week} giorni/settimana · {workoutPlan.weeks_duration} settimane</div>
               </div>
             ) : (
-              <div style={{textAlign:'center',padding:16,color:'#777',fontSize:12}}>Nessuna scheda caricata</div>
+              <div style={{textAlign:'center',padding:16,color:'#CCC',fontSize:12}}>Nessuna scheda caricata</div>
             )}
           </div>
 
@@ -594,7 +594,7 @@ function ClientDetail({ client, navigate }) {
             ].map(st=>(
               <div key={st.l} style={s.statBox(st.c)}>
                 <div style={{fontSize:20,fontWeight:800,color:st.c}}>{st.v}</div>
-                <div style={{fontSize:9,color:'#777',textTransform:'uppercase',marginTop:2}}>{st.l}</div>
+                <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',marginTop:2}}>{st.l}</div>
               </div>
             ))}
           </div>
@@ -613,17 +613,17 @@ function ClientDetail({ client, navigate }) {
                     <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
                       <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{sess.day_label}</div>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <span style={{fontSize:11,color:'#777'}}>{new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+                        <span style={{fontSize:11,color:'#CCC'}}>{new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                         <span style={{...s.badge(pct>=80?'#EAF3DE':pct>=50?'#FEF0E7':'#FEE2E2', pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A')}}>{pct}%</span>
                       </div>
                     </div>
                     {Object.entries(byEx).map(([name,ls],idx)=>(
                       <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #1A1A1A'}}>
-                        <span style={{color:'#777'}}>{name}</span>
+                        <span style={{color:'#CCC'}}>{name}</span>
                         <span style={{color:'#D4570A',fontWeight:600}}>{ls.length}×{Math.max(...ls.map(l=>l.weight_kg||0))||'—'}kg</span>
                       </div>
                     ))}
-                    {sess.notes&&<div style={{fontSize:10,color:'#777',marginTop:5,fontStyle:'italic'}}>{sess.notes}</div>}
+                    {sess.notes&&<div style={{fontSize:10,color:'#CCC',marginTop:5,fontStyle:'italic'}}>{sess.notes}</div>}
                   </div>
                 )
               })}
@@ -648,13 +648,13 @@ function ClientDetail({ client, navigate }) {
                       <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>
                         {r.period_start&&r.period_end ? `${new Date(r.period_start+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})} – ${new Date(r.period_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}` : new Date(r.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
                       </div>
-                      <div style={{fontSize:10,color:'#777',marginTop:2,display:'flex',gap:8}}>
+                      <div style={{fontSize:10,color:'#CCC',marginTop:2,display:'flex',gap:8}}>
                         {r.benessere_generale!=null&&<span>😊 {r.benessere_generale}/10</span>}
                         {r.energia_allenamento!=null&&<span>⚡ {r.energia_allenamento}/10</span>}
                         {r.stress_periodo!=null&&<span>🧠 stress {r.stress_periodo}/10</span>}
                       </div>
                     </div>
-                    <i className={`ti ti-chevron-${expandedReport===r.id?'up':'down'}`} style={{fontSize:13,color:'#777'}}/>
+                    <i className={`ti ti-chevron-${expandedReport===r.id?'up':'down'}`} style={{fontSize:13,color:'#CCC'}}/>
                   </div>
                   {expandedReport===r.id && (
                     <div style={{borderTop:'0.5px solid #1A1A1A'}}>
@@ -685,7 +685,7 @@ function ClientDetail({ client, navigate }) {
                 <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
                   <div>
                     <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{m.weight_kg}kg</div>
-                    <div style={{fontSize:10,color:'#777'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>
+                    <div style={{fontSize:10,color:'#CCC'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>
                   </div>
                   {i>0 && measurements[i-1] && (
                     <span style={s.badge(
@@ -695,7 +695,7 @@ function ClientDetail({ client, navigate }) {
                       {(m.weight_kg-measurements[i-1].weight_kg)>0?'+':''}{Math.round((m.weight_kg-measurements[i-1].weight_kg)*10)/10}kg
                     </span>
                   )}
-                  {m.body_fat_pct && <span style={{fontSize:11,color:'#777'}}>{m.body_fat_pct}% BF</span>}
+                  {m.body_fat_pct && <span style={{fontSize:11,color:'#CCC'}}>{m.body_fat_pct}% BF</span>}
                 </div>
               ))}
             </div>
@@ -727,7 +727,7 @@ function ClientDetail({ client, navigate }) {
                 </div>
               )}
 
-              <div style={{fontSize:10,color:'#777',marginBottom:6}}>
+              <div style={{fontSize:10,color:'#CCC',marginBottom:6}}>
                 {comparePair.length===0?'Tocca per ingrandire · Seleziona 2 foto per confrontarle':comparePair.length===1?'Seleziona un\'altra foto per confrontare':''}
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
@@ -772,7 +772,7 @@ function ClientDetail({ client, navigate }) {
               </button>
             </div>
             {anamnesi ? (
-              <div style={{fontSize:12,color:'#777',lineHeight:1.6}}>
+              <div style={{fontSize:12,color:'#CCC',lineHeight:1.6}}>
                 {anamnesi.completed_at && <div style={{...s.badge('#EAF3DE','#3B6D11'),display:'inline-flex',marginBottom:8}}>✓ Completata {new Date(anamnesi.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>}
                 {anamnesi.submitted_at && <div style={{...s.badge('#EBF3FD','#4A90D4'),display:'inline-flex',marginBottom:8,marginLeft:4}}>📨 Inviata al coach</div>}
                 {anamnesi.motivazione && <div style={{background:'#161616',borderRadius:7,padding:'8px 10px',marginBottom:6,fontStyle:'italic'}}>"{anamnesi.motivazione}"</div>}
@@ -784,14 +784,14 @@ function ClientDetail({ client, navigate }) {
                     {l:'Orari',v:anamnesi.orari_lavoro?.join(', ')},
                   ].filter(r=>r.v).map(r=>(
                     <div key={r.l} style={{background:'#161616',borderRadius:7,padding:'7px 9px'}}>
-                      <div style={{fontSize:9,color:'#777',textTransform:'uppercase',marginBottom:1}}>{r.l}</div>
+                      <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',marginBottom:1}}>{r.l}</div>
                       <div style={{fontSize:11,fontWeight:600,color:'#F0F0F0'}}>{r.v}</div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div style={{textAlign:'center',padding:16,color:'#777',fontSize:12}}>Anamnesi non ancora compilata</div>
+              <div style={{textAlign:'center',padding:16,color:'#CCC',fontSize:12}}>Anamnesi non ancora compilata</div>
             )}
           </div>
 
@@ -831,7 +831,7 @@ function ClientDetail({ client, navigate }) {
           <div style={{marginTop:12,textAlign:'center'}}>
             <div style={{fontSize:13,fontWeight:700,color:'white',textTransform:'uppercase',letterSpacing:'0.05em'}}>{lightbox.label}</div>
             {lightbox.date&&<div style={{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:3}}>{new Date(lightbox.date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>}
-            <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:8}}>Tocca fuori per chiudere</div>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:8}}>Tocca fuori per chiudere</div>
           </div>
         </div>
       )}

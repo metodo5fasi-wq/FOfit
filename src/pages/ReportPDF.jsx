@@ -5,7 +5,7 @@ const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px', WebkitOverflowScrolling:'touch' },
   card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
@@ -15,7 +15,7 @@ const s = {
   grid4: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8 },
   statBox: (color='#D4570A') => ({ background:'#F5F3EF', borderRadius:10, padding:'12px', textAlign:'center' }),
   statVal: (color='#D4570A') => ({ fontSize:22, fontWeight:800, color, marginBottom:2 }),
-  statLbl: { fontSize:9, color:'#888', textTransform:'uppercase', letterSpacing:'0.07em' },
+  statLbl: { fontSize:9, color:'#CCC', textTransform:'uppercase', letterSpacing:'0.07em' },
 }
 
 const initials = n => n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase() : '?'
@@ -414,7 +414,7 @@ export default function ReportPDF() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Report PDF</div>
-          <div style={{fontSize:11,color:'#888'}}>Genera report professionale per il cliente</div>
+          <div style={{fontSize:11,color:'#CCC'}}>Genera report professionale per il cliente</div>
         </div>
       </div>
       <div style={s.page}>
@@ -459,7 +459,7 @@ export default function ReportPDF() {
         {/* ANTEPRIMA */}
         {reportData && (
           <>
-            <div style={{fontSize:11,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,fontWeight:600}}>
+            <div style={{fontSize:11,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,fontWeight:600}}>
               Anteprima · {reportData.client.full_name}
             </div>
 
@@ -474,7 +474,7 @@ export default function ReportPDF() {
                 <div key={st.l} style={s.statBox()}>
                   <div style={s.statVal(st.c)}>{st.v}</div>
                   <div style={s.statLbl}>{st.l}</div>
-                  {st.sub && <div style={{fontSize:10,color:'#888',marginTop:2}}>{st.sub}</div>}
+                  {st.sub && <div style={{fontSize:10,color:'#CCC',marginTop:2}}>{st.sub}</div>}
                 </div>
               ))}
             </div>
@@ -492,7 +492,7 @@ export default function ReportPDF() {
                   ].filter(i=>i.v!==null&&i.v!==undefined).map(item=>(
                     <div key={item.l}>
                       <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                        <span style={{color:'#888'}}>{item.l}</span>
+                        <span style={{color:'#CCC'}}>{item.l}</span>
                         <span style={{fontWeight:700,color:colorForScore(item.v,item.inv)}}>{item.v}/10</span>
                       </div>
                       <ScoreBar value={item.v} max={10} color={colorForScore(item.v,item.inv)}/>
@@ -500,7 +500,7 @@ export default function ReportPDF() {
                   ))}
                 </div>
                 {reportData.latestReport.note_coach && (
-                  <div style={{marginTop:10,background:'#F5F3EF',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#777',fontStyle:'italic',borderLeft:'3px solid #D4570A'}}>
+                  <div style={{marginTop:10,background:'#F5F3EF',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#CCC',fontStyle:'italic',borderLeft:'3px solid #D4570A'}}>
                     "{reportData.latestReport.note_coach}"
                   </div>
                 )}
@@ -520,7 +520,7 @@ export default function ReportPDF() {
                   ].filter(i=>i.v!==null&&i.v!==undefined).map(item=>(
                     <div key={item.l}>
                       <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                        <span style={{color:'#888'}}>{item.l}</span>
+                        <span style={{color:'#CCC'}}>{item.l}</span>
                         <span style={{fontWeight:700,color:colorForScore(item.v*2,item.inv)}}>{item.v}/5</span>
                       </div>
                       <ScoreBar value={item.v} max={5} color={colorForScore(item.v*2,item.inv)}/>

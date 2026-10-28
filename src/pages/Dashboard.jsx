@@ -34,8 +34,8 @@ function CalorieRing({ current, target }) {
         <div style={{fontSize:24,fontWeight:700,color:'white',lineHeight:1}}>
           <AnimatedNumber value={Math.round(current)} duration={400}/>
         </div>
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>kcal</div>
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:1}}>di {target.toLocaleString('it-IT')}</div>
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.65)',marginTop:2}}>kcal</div>
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:1}}>di {target.toLocaleString('it-IT')}</div>
       </div>
     </div>
   )
@@ -49,7 +49,7 @@ function StreakBadge({ streak }) {
       <span style={{fontSize:16}}>🔥</span>
       <div>
         <div style={{fontSize:14,fontWeight:700,color:'#F4894A',lineHeight:1}}>{streak}</div>
-        <div style={{fontSize:9,color:'rgba(255,255,255,0.4)'}}>giorni</div>
+        <div style={{fontSize:9,color:'rgba(255,255,255,0.65)'}}>giorni</div>
       </div>
     </div>
   )
@@ -220,7 +220,7 @@ export default function Dashboard() {
             <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',letterSpacing:-0.8,lineHeight:1.1}}>
               {greeting}, <span style={{color:'#F4894A'}}>{firstName}</span>
             </div>
-            <div style={{fontSize:12,color:'#888',marginTop:5}}>{motivMsg}</div>
+            <div style={{fontSize:12,color:'#CCC',marginTop:5}}>{motivMsg}</div>
           </div>
           {streak > 0 && (
             <div style={{background:'#120800',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:14,padding:'8px 12px',textAlign:'center',flexShrink:0}}>
@@ -235,7 +235,7 @@ export default function Dashboard() {
         {/* Barra kcal principale */}
         <div style={{marginBottom:14}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-            <span style={{fontSize:11,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em'}}>Kcal oggi</span>
+            <span style={{fontSize:11,color:'#CCC',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em'}}>Kcal oggi</span>
             <span style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
               <AnimatedNumber value={Math.round(todayKcal)} duration={500}/>
               <span style={{color:'#A0A0A0',fontWeight:400,fontSize:11}}> / {kcalTarget.toLocaleString('it-IT')}</span>
@@ -280,7 +280,7 @@ export default function Dashboard() {
                 <div style={{height:3,background:'#1A1A1A',borderRadius:3,marginBottom:5,overflow:'hidden'}}>
                   <div style={{height:3,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
                 </div>
-                <div style={{fontSize:9,color:'#888',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
+                <div style={{fontSize:9,color:'#CCC',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
               </div>
             )
           })}
@@ -299,7 +299,7 @@ export default function Dashboard() {
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Attiva i promemoria</div>
-              <div style={{fontSize:10,color:'#888',marginTop:1}}>Reminder serale per il diario</div>
+              <div style={{fontSize:10,color:'#CCC',marginTop:1}}>Reminder serale per il diario</div>
             </div>
             <button onClick={async()=>{
               const r = await requestNotificationPermission(profile.id)
@@ -315,7 +315,7 @@ export default function Dashboard() {
         {/* QUICK ACTIONS */}
         <FadeIn delay={80}>
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:9,fontWeight:700,color:'#2A2A2A',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
+          <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:10}}>Accesso rapido</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
             {QUICK_LINKS.map(link => (
               <Link key={link.to} to={link.to} style={{
@@ -325,7 +325,7 @@ export default function Dashboard() {
                 <div style={{width:34,height:34,borderRadius:10,background:`${link.color}18`,display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <i className={`ti ${link.icon}`} style={{fontSize:17,color:link.color}}/>
                 </div>
-                <div style={{fontSize:9,fontWeight:600,color:'#888',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
+                <div style={{fontSize:9,fontWeight:600,color:'#CCC',textAlign:'center',lineHeight:1.3}}>{link.label.split(' ')[0]}</div>
               </Link>
             ))}
           </div>
@@ -337,7 +337,7 @@ export default function Dashboard() {
           <FadeIn delay={100}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#2A2A2A',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
               <div style={{fontSize:10,color:'#A0A0A0'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
             </div>
             <div style={{display:'flex',gap:12}}>
@@ -361,21 +361,21 @@ export default function Dashboard() {
         {weeklyComp && (weeklyComp.thisSess > 0 || weeklyComp.kcalDiff !== 0) && (
           <FadeIn delay={120}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#2A2A2A',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
+            <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B8C5A':'#E24B4A'}}>
                   {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
                 </div>
-                <div style={{fontSize:9,color:'#888',marginTop:3}}>sessioni allenamento</div>
-                <div style={{fontSize:9,color:'#2A2A2A',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
+                <div style={{fontSize:9,color:'#CCC',marginTop:3}}>sessioni allenamento</div>
+                <div style={{fontSize:9,color:'#999',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
               </div>
               <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
                 <div style={{fontSize:22,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B8C5A':'#E8A020'}}>
                   {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
                 </div>
-                <div style={{fontSize:9,color:'#888',marginTop:3}}>kcal medie/giorno</div>
-                <div style={{fontSize:9,color:'#2A2A2A',marginTop:2}}>rispetto alla sett. scorsa</div>
+                <div style={{fontSize:9,color:'#CCC',marginTop:3}}>kcal medie/giorno</div>
+                <div style={{fontSize:9,color:'#999',marginTop:2}}>rispetto alla sett. scorsa</div>
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function Dashboard() {
           <FadeIn delay={140}>
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-              <div style={{fontSize:9,fontWeight:700,color:'#2A2A2A',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
+              <div style={{fontSize:9,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
               <Link to="/progressi" style={{fontSize:10,color:'#D4570A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
             </div>
             <GraficoPeso compact={true}/>

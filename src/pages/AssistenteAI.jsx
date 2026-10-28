@@ -45,7 +45,7 @@ function RecipeCard({ recipe, onAdd }) {
         </div>
         <div>
           <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0'}}>{recipe.titolo}</div>
-          <div style={{fontSize:11,color:'#555555'}}>{recipe.kcal_totali} kcal · P{recipe.p_totali}g C{recipe.c_totali}g G{recipe.g_totali}g</div>
+          <div style={{fontSize:11,color:'#AAA'}}>{recipe.kcal_totali} kcal · P{recipe.p_totali}g C{recipe.c_totali}g G{recipe.g_totali}g</div>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ function RecipeCard({ recipe, onAdd }) {
           <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.1)'}}>
             <span style={{fontSize:12,color:'#F0F0F0'}}>{ing.nome}</span>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <span style={{fontSize:11,color:'#555555'}}>{ing.quantita_g}g</span>
+              <span style={{fontSize:11,color:'#AAA'}}>{ing.quantita_g}g</span>
               <span style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{ing.kcal} kcal</span>
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function AssistenteAI() {
           <button key={item.to} onClick={()=>navigate(item.to)}
             style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'6px 12px',borderRadius:10,border:'0.5px solid #1C1C1C',background:'#161616',cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
             <i className={`ti ${item.icon}`} style={{fontSize:16,color:'#D4570A'}}/>
-            <span style={{fontSize:10,color:'#555555',fontWeight:500}}>{item.label}</span>
+            <span style={{fontSize:10,color:'#AAA',fontWeight:500}}>{item.label}</span>
           </button>
         ))}
       </div>

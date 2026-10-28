@@ -7,9 +7,9 @@ const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   badge: { fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
-  catHeader: { fontSize:11, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', padding:'10px 0 6px', display:'flex', alignItems:'center', gap:6 },
+  catHeader: { fontSize:11, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', padding:'10px 0 6px', display:'flex', alignItems:'center', gap:6 },
   item: { display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'0.5px solid #1A1A1A', cursor:'pointer' },
 }
 
@@ -20,11 +20,11 @@ const CAT_META = {
   'Verdure': { icon:'ti-leaf', color:'var(--green)' },
   'Cereali e pasta': { icon:'ti-bowl', color:'#F4894A' },
   'Legumi': { icon:'ti-circle', color:'#D4570A' },
-  'Condimenti e grassi': { icon:'ti-droplet', color:'#555555' },
+  'Condimenti e grassi': { icon:'ti-droplet', color:'#AAA' },
   'Integratori': { icon:'ti-pill', color:'#D4570A' },
   'Bevande': { icon:'ti-glass', color:'#4A90D4' },
   'Snack e dolci': { icon:'ti-cookie', color:'#F4894A' },
-  'Altro': { icon:'ti-shopping-cart', color:'#555555' },
+  'Altro': { icon:'ti-shopping-cart', color:'#AAA' },
 }
 
 function getCategory(foodName) {
@@ -136,7 +136,7 @@ export default function ListaSpesa() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Lista della spesa</div>
-          <div style={{fontSize:12,color:'#555555'}}>{checked}/{total} prodotti</div>
+          <div style={{fontSize:12,color:'#AAA'}}>{checked}/{total} prodotti</div>
         </div>
         <div style={{display:'flex',gap:8}}>
           {checked > 0 && (
@@ -162,7 +162,7 @@ export default function ListaSpesa() {
             <div style={{height:8,background:'#161616',borderRadius:4}}>
               <div style={{height:8,borderRadius:4,background:pct===100?'#3B6D11':'#D4570A',width:`${pct}%`,transition:'width 0.3s'}}/>
             </div>
-            <div style={{fontSize:12,color:'#555555',marginTop:6}}>{checked} prodotti nel carrello · {total-checked} rimanenti</div>
+            <div style={{fontSize:12,color:'#AAA',marginTop:6}}>{checked} prodotti nel carrello · {total-checked} rimanenti</div>
           </div>
         )}
 
@@ -170,7 +170,7 @@ export default function ListaSpesa() {
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-shopping-cart" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
             <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0',marginBottom:8}}>Lista vuota</div>
-            <div style={{fontSize:13,color:'#555555',marginBottom:20,lineHeight:1.6}}>
+            <div style={{fontSize:13,color:'#AAA',marginBottom:20,lineHeight:1.6}}>
               {plan ? 'Clicca "Genera dal piano" per creare la lista automaticamente.' : 'Non hai un piano attivo. Contatta il tuo coach!'}
             </div>
             {plan && (
@@ -190,7 +190,7 @@ export default function ListaSpesa() {
               <div style={s.catHeader}>
                 <i className={`ti ${meta.icon}`} style={{fontSize:13,color:meta.color}}/>
                 {cat}
-                <span style={{...s.badge, background:'#161616', color:'#555555', marginLeft:'auto'}}>
+                <span style={{...s.badge, background:'#161616', color:'#AAA', marginLeft:'auto'}}>
                   {catChecked}/{catItems.length}
                 </span>
               </div>
@@ -209,11 +209,11 @@ export default function ListaSpesa() {
                       {item.food_name}
                     </div>
                     {item.brand && item.brand !== '—' && (
-                      <div style={{fontSize:11,color:'#555555'}}>{item.brand}</div>
+                      <div style={{fontSize:11,color:'#AAA'}}>{item.brand}</div>
                     )}
                   </div>
                   {item.quantity_g > 0 && (
-                    <div style={{fontSize:12,color:'#555555',flexShrink:0}}>
+                    <div style={{fontSize:12,color:'#AAA',flexShrink:0}}>
                       {item.quantity_g >= 1000 ? `${(item.quantity_g/1000).toFixed(1)}kg` : `${item.quantity_g}g`}
                     </div>
                   )}
@@ -244,7 +244,7 @@ export default function ListaSpesa() {
 
         {total > 0 && (
           <div style={{textAlign:'center',marginTop:8,marginBottom:20}}>
-            <button onClick={clearAll} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:'#555555',fontFamily:'inherit'}}>
+            <button onClick={clearAll} style={{background:'none',border:'none',cursor:'pointer',fontSize:12,color:'#AAA',fontFamily:'inherit'}}>
               <i className="ti ti-trash" style={{fontSize:12,marginRight:4}}/>Svuota lista
             </button>
           </div>

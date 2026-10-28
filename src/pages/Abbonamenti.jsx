@@ -6,12 +6,12 @@ const s = {
   topbar: { background:'white', borderBottom:'0.5px solid #E0DDD6', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'16px', WebkitOverflowScrolling:'touch' },
   card: { background:'white', borderRadius:12, border:'0.5px solid #E0DDD6', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #E0DDD6', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#F5F3EF', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
   btnSm: { background:'#FEF0E7', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
-  btnGray: { background:'#F5F3EF', color:'#888', border:'0.5px solid #E0DDD6', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#F5F3EF', color:'#CCC', border:'0.5px solid #E0DDD6', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
   btnGreen: { background:'#EAF3DE', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   badge: { fontSize:10, padding:'3px 8px', borderRadius:10, fontWeight:600 },
@@ -26,7 +26,7 @@ function daysLeft(d) {
 }
 
 function StatusBadge({ days }) {
-  if (days === null) return <span style={{...s.badge, background:'#F5F3EF', color:'#888'}}>Non impostato</span>
+  if (days === null) return <span style={{...s.badge, background:'#F5F3EF', color:'#CCC'}}>Non impostato</span>
   if (days < 0) return <span style={{...s.badge, background:'#FEE2E2', color:'#E24B4A'}}>Scaduto {Math.abs(days)}gg fa</span>
   if (days <= 4) return <span style={{...s.badge, background:'#FEE2E2', color:'#E24B4A'}}>⚠ Scade in {days}gg</span>
   if (days <= 7) return <span style={{...s.badge, background:'#FEF0E7', color:'#D4570A'}}>⚠ Scade in {days}gg</span>
@@ -184,7 +184,7 @@ export default function Abbonamenti() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Abbonamenti</div>
-          <div style={{fontSize:11,color:'#888'}}>{clients.length} clienti · {attivi.length} attivi · {scaduti.length} scaduti</div>
+          <div style={{fontSize:11,color:'#CCC'}}>{clients.length} clienti · {attivi.length} attivi · {scaduti.length} scaduti</div>
         </div>
       </div>
 
@@ -218,13 +218,13 @@ export default function Abbonamenti() {
           ].map(st=>(
             <div key={st.l} style={{background:'white',borderRadius:10,border:'0.5px solid #E0DDD6',padding:'10px',textAlign:'center'}}>
               <div style={{fontSize:22,fontWeight:800,color:st.c}}>{st.v}</div>
-              <div style={{fontSize:10,color:'#888',textTransform:'uppercase'}}>{st.l}</div>
+              <div style={{fontSize:10,color:'#CCC',textTransform:'uppercase'}}>{st.l}</div>
             </div>
           ))}
         </div>
 
         {/* LISTA CLIENTI */}
-        {loading ? <div style={{textAlign:'center',padding:40,color:'#888'}}>Caricamento...</div> :
+        {loading ? <div style={{textAlign:'center',padding:40,color:'#CCC'}}>Caricamento...</div> :
           clients.map(c => {
             const days = daysLeft(c.subscription_end)
             const isEditing = editing===c.id
@@ -246,7 +246,7 @@ export default function Abbonamenti() {
                       {isBlocked && <span style={{fontSize:10,background:'#FEE2E2',color:'#E24B4A',padding:'2px 6px',borderRadius:6,fontWeight:700}}>🔒 BLOCCATO</span>}
                       {hasUnpaidRate && !isBlocked && <span style={{fontSize:10,background:'#FEF8E7',color:'#E8A020',padding:'2px 6px',borderRadius:6,fontWeight:700}}>⚠ RATA SCOPERTA</span>}
                     </div>
-                    <div style={{fontSize:11,color:'#888',marginTop:2}}>
+                    <div style={{fontSize:11,color:'#CCC',marginTop:2}}>
                       {c.subscription_type||'—'}
                       {c.payment_type==='rate' && ` · Rate ${paidInst}/${totalInst}`}
                       {c.subscription_end && ` · Scade ${new Date(c.subscription_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`}
@@ -329,7 +329,7 @@ export default function Abbonamenti() {
                                   {inst.paid_at
                                     ? <div style={{display:'flex',alignItems:'center',gap:4}}>
                                         <span style={{fontSize:10,color:'#3B6D11',fontWeight:700}}>✓ Pagata</span>
-                                        <button onClick={()=>unmarkPaid(idx)} style={{background:'none',border:'none',cursor:'pointer',fontSize:10,color:'#888'}}>✕</button>
+                                        <button onClick={()=>unmarkPaid(idx)} style={{background:'none',border:'none',cursor:'pointer',fontSize:10,color:'#CCC'}}>✕</button>
                                       </div>
                                     : <button onClick={()=>markPaid(idx)} style={{...s.btnGreen,padding:'3px 8px',fontSize:10}}>Segna ✓</button>
                                   }
@@ -370,7 +370,7 @@ export default function Abbonamenti() {
                 )}
 
                 {c.subscription_notes && !isEditing && (
-                  <div style={{fontSize:11,color:'#888',marginTop:8,fontStyle:'italic'}}>{c.subscription_notes}</div>
+                  <div style={{fontSize:11,color:'#CCC',marginTop:8,fontStyle:'italic'}}>{c.subscription_notes}</div>
                 )}
               </div>
             )

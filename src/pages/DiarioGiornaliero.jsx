@@ -146,7 +146,7 @@ export default function DiarioGiornaliero() {
             const d = new Date(selectedDate)
             d.setDate(d.getDate()-1)
             setSelectedDate(d.toISOString().split('T')[0])
-          }} style={{background:'none',border:'none',cursor:'pointer',color:'#555555',padding:4,display:'flex',alignItems:'center'}}>
+          }} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',padding:4,display:'flex',alignItems:'center'}}>
             <i className="ti ti-chevron-left" style={{fontSize:18}}/>
           </button>
           <div style={{textAlign:'center'}}>
@@ -188,7 +188,7 @@ export default function DiarioGiornaliero() {
         {/* RIEPILOGO CALORIE */}
         <div style={s.card}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
-            <span style={{fontSize:24,fontWeight:700,color:'#F0F0F0'}}>{totKcal.toLocaleString('it-IT')}<span style={{fontSize:13,color:'#555555',fontWeight:400}}> kcal</span></span>
+            <span style={{fontSize:24,fontWeight:700,color:'#F0F0F0'}}>{totKcal.toLocaleString('it-IT')}<span style={{fontSize:13,color:'#AAA',fontWeight:400}}> kcal</span></span>
             <span style={{fontSize:13,color:pct>100?'#E24B4A':'#D4570A',fontWeight:600}}>{pct}% del target</span>
           </div>
           <div style={{height:8,background:'#161616',borderRadius:4,marginBottom:12,overflow:'hidden'}}>
@@ -198,13 +198,13 @@ export default function DiarioGiornaliero() {
             {[{l:'Proteine',v:totP,t:target.p,c:'#D4570A'},{l:'Carboidrati',v:totC,t:target.c,c:'#F4894A'},{l:'Grassi',v:totG,t:target.g,c:'#FAC775'}].map(m=>(
               <div key={m.l}>
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                  <span style={{color:'#555555'}}>{m.l}</span>
+                  <span style={{color:'#AAA'}}>{m.l}</span>
                   <span style={{fontWeight:600,color:'#F0F0F0'}}>{m.v}g</span>
                 </div>
                 <div style={{height:4,background:'#161616',borderRadius:2}}>
                   <div style={{height:4,borderRadius:2,background:m.c,width:`${Math.min(100,Math.round(m.v/m.t*100))}%`,transition:'width 0.4s'}}/>
                 </div>
-                <div style={{fontSize:10,color:'#555555',marginTop:2}}>di {m.t}g</div>
+                <div style={{fontSize:10,color:'#AAA',marginTop:2}}>di {m.t}g</div>
               </div>
             ))}
           </div>
@@ -250,7 +250,7 @@ export default function DiarioGiornaliero() {
                       <div style={{width:5,height:5,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:12,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.food_name}</div>
-                        <div style={{fontSize:10,color:'#555555'}}>{f.quantity_g}g · P{f.protein_g} C{f.carbs_g} G{f.fat_g}</div>
+                        <div style={{fontSize:10,color:'#AAA'}}>{f.quantity_g}g · P{f.protein_g} C{f.carbs_g} G{f.fat_g}</div>
                       </div>
                       <div style={{fontSize:11,color:'#D4570A',fontWeight:600,flexShrink:0}}>{f.kcal}</div>
                       <button onClick={()=>removeFood(f.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:14,padding:0,flexShrink:0}}>✕</button>
@@ -271,7 +271,7 @@ export default function DiarioGiornaliero() {
 
               {/* Seleziona pasto */}
               <div style={{marginBottom:10}}>
-                <div style={{fontSize:10,color:'#555555',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.06em'}}>Aggiungi a</div>
+                <div style={{fontSize:10,color:'#AAA',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.06em'}}>Aggiungi a</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
                   {MEAL_SLOTS.map(m=>(
                     <button key={m} onClick={()=>setSelectedMeal(m)}
@@ -287,7 +287,7 @@ export default function DiarioGiornaliero() {
 
               {/* Search */}
               <div style={{display:'flex',alignItems:'center',gap:8,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
-                <i className="ti ti-search" style={{fontSize:13,color:'#555555'}}/>
+                <i className="ti ti-search" style={{fontSize:13,color:'#AAA'}}/>
                 <input style={{border:'none',background:'transparent',outline:'none',fontSize:13,color:'#F0F0F0',width:'100%',fontFamily:'inherit'}}
                   placeholder="Cerca alimento..." value={search} onChange={e=>handleSearch(e.target.value)}/>
               </div>
@@ -299,7 +299,7 @@ export default function DiarioGiornaliero() {
                       style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:2,background:'#161616'}}>
                       <div>
                         <div style={{fontSize:12,color:'#F0F0F0',fontWeight:500}}>{f.name}</div>
-                        <div style={{fontSize:10,color:'#555555'}}>{f.brand} · P{f.p} C{f.c} G{f.g}/100g</div>
+                        <div style={{fontSize:10,color:'#AAA'}}>{f.brand} · P{f.p} C{f.c} G{f.g}/100g</div>
                       </div>
                       <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{f.kcal100}</div>
                     </div>
@@ -313,7 +313,7 @@ export default function DiarioGiornaliero() {
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
                     <input type="number" value={qty} onChange={e=>setQty(parseFloat(e.target.value)||100)} min={1}
                       style={{...s.input,width:75,textAlign:'center'}}/>
-                    <span style={{fontSize:12,color:'#555555'}}>g</span>
+                    <span style={{fontSize:12,color:'#AAA'}}>g</span>
                     <span style={{fontSize:13,color:'#D4570A',fontWeight:700,marginLeft:'auto'}}>
                       {Math.round(selectedFood.kcal100*qty/100)} kcal
                     </span>
@@ -321,14 +321,14 @@ export default function DiarioGiornaliero() {
                   <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
                     <span style={{...s.tag,background:'#0D0D0D',color:'#D4570A'}}>P {Math.round(selectedFood.p*qty/100)}g</span>
                     <span style={{...s.tag,background:'#0D0D0D',color:'#F4894A'}}>C {Math.round(selectedFood.c*qty/100)}g</span>
-                    <span style={{...s.tag,background:'#0D0D0D',color:'#555555'}}>G {Math.round(selectedFood.g*qty/100)}g</span>
+                    <span style={{...s.tag,background:'#0D0D0D',color:'#AAA'}}>G {Math.round(selectedFood.g*qty/100)}g</span>
                   </div>
                   <div style={{display:'flex',gap:6}}>
                     <button style={s.btn} onClick={addFood}>
                       <i className="ti ti-plus" style={{fontSize:13}}/>Aggiungi
                     </button>
                     <button onClick={()=>setSelectedFood(null)}
-                      style={{padding:'8px 12px',background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:12,cursor:'pointer',color:'#555555',fontFamily:'inherit'}}>
+                      style={{padding:'8px 12px',background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:12,cursor:'pointer',color:'#AAA',fontFamily:'inherit'}}>
                       ✕
                     </button>
                   </div>
@@ -337,11 +337,11 @@ export default function DiarioGiornaliero() {
 
               <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid #1A1A1A'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-                  <div style={{fontSize:11,color:'#555555',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
+                  <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <div style={{fontSize:11,color:'#D4570A',fontWeight:600}}>{water * 250}ml / {waterGoal * 250}ml</div>
                     <button onClick={()=>{ setWaterGoalInput(waterGoal); setEditingWaterGoal(!editingWaterGoal) }}
-                      style={{background:'none',border:'none',cursor:'pointer',color:'#555555',padding:0}}>
+                      style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',padding:0}}>
                       <i className="ti ti-settings" style={{fontSize:13}}/>
                     </button>
                   </div>
@@ -349,13 +349,13 @@ export default function DiarioGiornaliero() {
 
                 {editingWaterGoal && (
                   <div style={{marginBottom:10,background:'#161616',borderRadius:10,padding:'10px 12px'}}>
-                    <div style={{fontSize:11,color:'#555555',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
+                    <div style={{fontSize:11,color:'#AAA',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <button onClick={()=>setWaterGoalInput(Math.max(1, waterGoalInput-1))}
                         style={{width:32,height:32,borderRadius:8,background:'#0D0D0D',border:'0.5px solid #1C1C1C',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>−</button>
                       <div style={{flex:1,textAlign:'center'}}>
                         <div style={{fontSize:22,fontWeight:700,color:'#F0F0F0'}}>{waterGoalInput}</div>
-                        <div style={{fontSize:10,color:'#555555'}}>{waterGoalInput * 250}ml totali</div>
+                        <div style={{fontSize:10,color:'#AAA'}}>{waterGoalInput * 250}ml totali</div>
                       </div>
                       <button onClick={()=>setWaterGoalInput(Math.min(20, waterGoalInput+1))}
                         style={{width:32,height:32,borderRadius:8,background:'#0D0D0D',border:'0.5px solid #1C1C1C',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>+</button>
@@ -376,9 +376,9 @@ export default function DiarioGiornaliero() {
                   ))}
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div style={{fontSize:10,color:'#555555'}}>{water}/{waterGoal} bicchieri</div>
+                  <div style={{fontSize:10,color:'#AAA'}}>{water}/{waterGoal} bicchieri</div>
                   {water > 0 && (
-                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#555555',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
+                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#AAA',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
                   )}
                 </div>
               </div>

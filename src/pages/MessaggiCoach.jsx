@@ -125,7 +125,7 @@ export default function MessaggiCoach() {
             Il tuo coach personale
           </div>
         </div>
-        <div style={{ fontSize:10, color:'#888', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
+        <div style={{ fontSize:10, color:'#CCC', background:'var(--bg-input)', padding:'4px 10px', borderRadius:12, border:'0.5px solid var(--border)' }}>
           Risponde entro 24h
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function MessaggiCoach() {
 
         {loading && (
           <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ textAlign:'center', color:'#888', fontSize:13 }}>
+            <div style={{ textAlign:'center', color:'#CCC', fontSize:13 }}>
               <div style={{ fontSize:24, marginBottom:8 }}>💬</div>
               Caricamento messaggi...
             </div>
@@ -149,7 +149,7 @@ export default function MessaggiCoach() {
                 <i className="ti ti-message-circle" style={{ fontSize:28, color:'white' }}/>
               </div>
               <div style={{ fontSize:16, fontWeight:700, color:'#F0F0F0', marginBottom:8 }}>Inizia la conversazione</div>
-              <div style={{ fontSize:13, color:'#888', lineHeight:1.7 }}>
+              <div style={{ fontSize:13, color:'#CCC', lineHeight:1.7 }}>
                 Scrivi al tuo coach per domande sul piano,<br/>aggiornamenti o qualsiasi cosa ti serva.
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function MessaggiCoach() {
             {/* Etichetta data */}
             <div style={{ display:'flex', alignItems:'center', gap:10, margin:'12px 0 8px' }}>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>
-              <span style={{ fontSize:11, color:'#888', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
+              <span style={{ fontSize:11, color:'#CCC', fontWeight:500, whiteSpace:'nowrap', padding:'2px 10px', background:'var(--bg-input)', borderRadius:10, border:'0.5px solid var(--border)' }}>
                 {formatDateLabel(date)}
               </span>
               <div style={{ flex:1, height:'0.5px', background:'var(--border)' }}/>

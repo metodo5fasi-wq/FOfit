@@ -207,11 +207,11 @@ export default function CreaPiano() {
     page: {minHeight:'100dvh',background:'#080808',color:'#F0F0F0',fontFamily:'inherit'},
     topbar: {background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'12px 16px',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:50},
     card: {background:'#0D0D0D',borderRadius:12,padding:'14px 16px',marginBottom:10,border:'0.5px solid #1C1C1C'},
-    label: {fontSize:11,fontWeight:700,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',display:'block',marginBottom:6},
+    label: {fontSize:11,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',display:'block',marginBottom:6},
     input: {width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:14,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
     select: {width:'100%',padding:'9px 12px',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'},
     btn: {padding:'10px 18px',background:'#D4570A',color:'white',border:'none',borderRadius:9,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'},
-    btnGray: {padding:'8px 14px',background:'#161616',color:'#555555',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
+    btnGray: {padding:'8px 14px',background:'#161616',color:'#AAA',border:'0.5px solid #1C1C1C',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
     btnDanger: {padding:'5px 10px',background:'none',color:'#E24B4A',border:'0.5px solid #E24B4A',borderRadius:6,fontSize:11,cursor:'pointer',fontFamily:'inherit'},
   }
 
@@ -226,7 +226,7 @@ export default function CreaPiano() {
         </button>
         <div style={{flex:1}}>
           <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Crea Piano Alimentare</div>
-          <div style={{fontSize:11,color:'#555555'}}>Costruisci la dieta giorno per giorno</div>
+          <div style={{fontSize:11,color:'#AAA'}}>Costruisci la dieta giorno per giorno</div>
         </div>
         <button onClick={savePlan} disabled={saving} style={{...s.btn,display:'flex',alignItems:'center',gap:6}}>
           <i className="ti ti-device-floppy" style={{fontSize:14}}/>
@@ -251,7 +251,7 @@ export default function CreaPiano() {
               <input style={s.input} value={planName} onChange={e=>setPlanName(e.target.value)} placeholder="es. Piano ipocalorico fase 1"/>
             </div>
           </div>
-          <div style={{fontSize:11,fontWeight:700,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Target giornaliero</div>
+          <div style={{fontSize:11,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Target giornaliero</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
             {[
               {label:'Kcal',val:kcalTarget,set:setKcalTarget,c:'#D4570A'},
@@ -306,7 +306,7 @@ export default function CreaPiano() {
                     <div style={{height:4,background:'var(--border)',borderRadius:3,margin:'3px 0',overflow:'hidden'}}>
                       <div style={{height:4,background:color,width:`${Math.min(pct,100)}%`,borderRadius:3,transition:'width 0.3s'}}/>
                     </div>
-                    <div style={{fontSize:9,color:'#555555'}}>{m.t>0?`/ ${m.t}`:''}</div>
+                    <div style={{fontSize:9,color:'#AAA'}}>{m.t>0?`/ ${m.t}`:''}</div>
                   </div>
                 )
               })}
@@ -317,7 +317,7 @@ export default function CreaPiano() {
         {/* COPIA GIORNO */}
         {days[selectedDay].length > 0 && (
           <div style={{marginBottom:12,display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-            <span style={{fontSize:11,color:'#555555'}}>Copia {DAY_NAMES[selectedDay]} su:</span>
+            <span style={{fontSize:11,color:'#AAA'}}>Copia {DAY_NAMES[selectedDay]} su:</span>
             {DAY_NAMES.map((d,i) => i!==selectedDay && (
               <button key={i} onClick={()=>copyDay(selectedDay,i)} style={s.btnGray}>{d.slice(0,3)}</button>
             ))}
@@ -342,21 +342,21 @@ export default function CreaPiano() {
               <div key={foodIdx} style={{display:'flex',alignItems:'center',gap:6,background:'#161616',borderRadius:8,padding:'8px 10px',marginBottom:6}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{food.food_name}</div>
-                  <div style={{fontSize:11,color:'#555555',marginTop:1}}>
+                  <div style={{fontSize:11,color:'#AAA',marginTop:1}}>
                     {food.kcal} kcal · P {food.protein_g}g · C {food.carbs_g}g · G {food.fat_g}g
                   </div>
                 </div>
                 <input type="number" value={food.quantity_g}
                   onChange={e=>updateFoodQty(selectedDay,mealIdx,foodIdx,e.target.value)}
                   style={{width:60,padding:'5px 6px',border:'0.5px solid #1C1C1C',borderRadius:6,fontSize:12,textAlign:'center',color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}/>
-                <span style={{fontSize:11,color:'#555555',flexShrink:0}}>g</span>
+                <span style={{fontSize:11,color:'#AAA',flexShrink:0}}>g</span>
                 <button onClick={()=>removeFood(selectedDay,mealIdx,foodIdx)} style={{...s.btnDanger,padding:'4px 8px'}}>✕</button>
               </div>
             ))}
 
             {/* Totale pasto */}
             {meal.foods.length > 0 && (
-              <div style={{fontSize:11,color:'#555555',textAlign:'right',marginTop:6,marginBottom:8}}>
+              <div style={{fontSize:11,color:'#AAA',textAlign:'right',marginTop:6,marginBottom:8}}>
                 Totale: <strong style={{color:'#F0F0F0'}}>{meal.foods.reduce((s,f)=>s+(parseFloat(f.kcal)||0),0)} kcal</strong>
                 {' · '}P {Math.round(meal.foods.reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0)*10)/10}g
                 {' · '}C {Math.round(meal.foods.reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0)*10)/10}g
@@ -380,7 +380,7 @@ export default function CreaPiano() {
                         style={{padding:'10px 12px',cursor:'pointer',borderBottom:'0.5px solid #1A1A1A',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{f.name}</div>
-                          <div style={{fontSize:11,color:'#555555'}}>{f.brand}</div>
+                          <div style={{fontSize:11,color:'#AAA'}}>{f.brand}</div>
                         </div>
                         <div style={{fontSize:11,color:'#D4570A',fontWeight:700,flexShrink:0}}>
                           {Math.round(f.kcal100*parseFloat(newQty||100)/100)} kcal

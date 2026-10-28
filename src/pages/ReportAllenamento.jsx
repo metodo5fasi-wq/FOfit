@@ -5,12 +5,12 @@ import { useAuth } from '../App'
 const s = {
   page: { flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'0 0 20px' },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  label: { fontSize:11, color:'#AAA', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   textarea: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'vertical', minHeight:80, boxSizing:'border-box', lineHeight:1.6 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   chip: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)', transition:'all 0.15s' }),
   scale: (active, color) => ({ width:38, height:38, borderRadius:9, fontSize:13, fontWeight:700, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?(color||'#D4570A'):'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?(color||'#D4570A'):'var(--border)' }),
 }
@@ -281,7 +281,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   const isReadOnly = readOnly || !!report?.submitted_at
 
   if (loading) return (
-    <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#555555',fontSize:13}}>
+    <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#AAA',fontSize:13}}>
       <div style={{textAlign:'center'}}>
         <i className="ti ti-loader-2" style={{fontSize:28,display:'block',marginBottom:8}}/>
         Caricamento report...
@@ -297,8 +297,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Report allenamento</div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             {saved && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ {report?.submitted_at?'Inviato!':'Salvato'}</span>}
-            {saving && <span style={{fontSize:11,color:'#555555'}}>Salvataggio...</span>}
-            <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#555555',fontSize:20}}>✕</button>
+            {saving && <span style={{fontSize:11,color:'#AAA'}}>Salvataggio...</span>}
+            <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',fontSize:20}}>✕</button>
           </div>
         </div>
       )}
@@ -325,8 +325,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <div style={{background:'linear-gradient(135deg,#FEF0E7,#FFF8F5)',border:'0.5px solid #F4C9A8',borderRadius:12,padding:'14px',marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>📊 Dati automatici — ultime 4 settimane</div>
               <div style={{display:'flex',gap:16}}>
-                {adherence && <div><div style={{fontSize:20,fontWeight:800,color:adherence.pct>=70?'#3B6D11':'#D4570A'}}>{adherence.pct}%</div><div style={{fontSize:10,color:'#555555'}}>Aderenza · {adherence.followed}/{adherence.total} pasti</div></div>}
-                {diaryStats && <div><div style={{fontSize:20,fontWeight:800,color:'#F0F0F0'}}>{diaryStats.days}/28</div><div style={{fontSize:10,color:'#555555'}}>Giorni diario · media {diaryStats.avgKcal} kcal</div></div>}
+                {adherence && <div><div style={{fontSize:20,fontWeight:800,color:adherence.pct>=70?'#3B6D11':'#D4570A'}}>{adherence.pct}%</div><div style={{fontSize:10,color:'#AAA'}}>Aderenza · {adherence.followed}/{adherence.total} pasti</div></div>}
+                {diaryStats && <div><div style={{fontSize:20,fontWeight:800,color:'#F0F0F0'}}>{diaryStats.days}/28</div><div style={{fontSize:10,color:'#AAA'}}>Giorni diario · media {diaryStats.avgKcal} kcal</div></div>}
               </div>
             </div>
           )}
@@ -351,14 +351,14 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           {/* S2 — PROGRESSI ESERCIZI */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',marginBottom:4,display:'flex',alignItems:'center',gap:6}}><span>🏋️</span> Progressi di carico</div>
-            <div style={{fontSize:12,color:'#555555',marginBottom:12,lineHeight:1.5}}>
+            <div style={{fontSize:12,color:'#AAA',marginBottom:12,lineHeight:1.5}}>
               {progressi.some(e=>e.sessions?.length>0)
                 ? 'Dati caricati automaticamente dai tuoi allenamenti. Aggiungi note o correggili.'
                 : 'Inserisci i carichi manualmente per ogni esercizio.'}
             </div>
 
             {progressi.length===0 && (
-              <div style={{fontSize:12,color:'#555555',textAlign:'center',padding:'12px 0'}}>
+              <div style={{fontSize:12,color:'#AAA',textAlign:'center',padding:'12px 0'}}>
                 Nessun esercizio trovato nella scheda. Puoi aggiungere feedback libero nelle note finali.
               </div>
             )}
@@ -377,7 +377,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
                         <input style={{...s.input,fontSize:13,fontWeight:600,marginBottom:2}} value={ex.exercise_name||''} disabled={isReadOnly}
                           onChange={e=>setEx(idx,'exercise_name',e.target.value)} placeholder="Nome esercizio..."/>
                       )}
-                      {ex.day_label && <div style={{fontSize:10,color:'#555555',marginTop:1}}>{ex.day_label}</div>}
+                      {ex.day_label && <div style={{fontSize:10,color:'#AAA',marginTop:1}}>{ex.day_label}</div>}
                     </div>
                     {diff!==null && (
                       <span style={{fontSize:12,fontWeight:700,
@@ -392,20 +392,20 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
                   {/* SESSIONI DAI LOG — se disponibili */}
                   {hasSessions && (
                     <div style={{marginBottom:10}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>
                         📊 Sessioni registrate ({ex.sessions.length})
                       </div>
                       <div style={{background:'#080808',borderRadius:8,overflow:'hidden'}}>
                         {/* Header tabella */}
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 60px 60px 60px',gap:4,padding:'5px 8px',background:'var(--border)',fontSize:9,fontWeight:700,color:'#555555',textTransform:'uppercase'}}>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 60px 60px 60px',gap:4,padding:'5px 8px',background:'var(--border)',fontSize:9,fontWeight:700,color:'#AAA',textTransform:'uppercase'}}>
                           <span>Data</span><span style={{textAlign:'center'}}>Kg</span><span style={{textAlign:'center'}}>Reps</span><span style={{textAlign:'center'}}>Serie</span>
                         </div>
                         {ex.sessions.map((s,si)=>(
                           <div key={si} style={{display:'grid',gridTemplateColumns:'1fr 60px 60px 60px',gap:4,padding:'5px 8px',borderBottom:'0.5px solid #1A1A1A',fontSize:12}}>
-                            <span style={{color:'#555555'}}>{new Date(s.date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+                            <span style={{color:'#AAA'}}>{new Date(s.date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                             <span style={{textAlign:'center',fontWeight:700,color:s.weight_kg?'var(--text)':'var(--text-muted)'}}>{s.weight_kg||'—'}</span>
-                            <span style={{textAlign:'center',color:'#555555'}}>{s.reps_done||'—'}</span>
-                            <span style={{textAlign:'center',color:'#555555'}}>{s.sets_done||'—'}</span>
+                            <span style={{textAlign:'center',color:'#AAA'}}>{s.reps_done||'—'}</span>
+                            <span style={{textAlign:'center',color:'#AAA'}}>{s.sets_done||'—'}</span>
                           </div>
                         ))}
                       </div>
@@ -479,7 +479,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           {/* S6 — NOTE LIBERE */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',marginBottom:4,display:'flex',alignItems:'center',gap:6}}><span>💬</span> Note libere al coach</div>
-            <div style={{fontSize:12,color:'#555555',marginBottom:10}}>Tutto quello che vuoi dirmi — domande, richieste, sensazioni.</div>
+            <div style={{fontSize:12,color:'#AAA',marginBottom:10}}>Tutto quello che vuoi dirmi — domande, richieste, sensazioni.</div>
             <textarea style={{...s.textarea,minHeight:100}} value={data.note_coach} disabled={isReadOnly} onChange={e=>set('note_coach',e.target.value)} placeholder="Scrivi liberamente..."/>
           </div>
 

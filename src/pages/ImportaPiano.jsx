@@ -5,11 +5,11 @@ import { useAuth } from '../App'
 
 const s = {
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  label: { fontSize:11, color:'#AAA', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   tag: { display:'inline-flex', alignItems:'center', padding:'3px 9px', borderRadius:12, fontSize:11, fontWeight:600 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
 }
 
 export default function ImportaPiano() {
@@ -302,7 +302,7 @@ export default function ImportaPiano() {
         </button>
         <div>
           <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Importa piano alimentare</div>
-          <div style={{fontSize:11,color:'#555555'}}>Passo {step} di 2</div>
+          <div style={{fontSize:11,color:'#AAA'}}>Passo {step} di 2</div>
         </div>
       </div>
 
@@ -324,7 +324,7 @@ export default function ImportaPiano() {
         {step === 1 && <>
           <div style={s.card}>
             <div style={{fontSize:16,fontWeight:700,color:'#F0F0F0',marginBottom:4}}>📋 Piano del nutrizionista</div>
-            <div style={{fontSize:12,color:'#555555',marginBottom:14,lineHeight:1.6}}>
+            <div style={{fontSize:12,color:'#AAA',marginBottom:14,lineHeight:1.6}}>
               Copia e incolla il piano alimentare del nutrizionista. Può essere in qualsiasi formato — testo, tabella, PDF copiato. L'AI lo struttura automaticamente.
             </div>
             <label style={s.label}>Testo del piano</label>
@@ -334,13 +334,13 @@ export default function ImportaPiano() {
               placeholder="Incolla qui il piano alimentare completo..."
               style={{...s.input, minHeight:320, resize:'vertical', lineHeight:1.6, fontSize:12}}
             />
-            <div style={{fontSize:11,color:'#555555',marginTop:6}}>{rawText.length} caratteri</div>
+            <div style={{fontSize:11,color:'#AAA',marginTop:6}}>{rawText.length} caratteri</div>
           </div>
 
           {/* PROGRESS BAR ELABORAZIONE */}
           {loading && progress.total > 0 && (
             <div style={{marginBottom:10,background:'#0D0D0D',borderRadius:10,padding:'12px',border:'0.5px solid #1C1C1C'}}>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#555555',marginBottom:6}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#AAA',marginBottom:6}}>
                 <span>📅 {progress.label}</span>
                 <span style={{fontWeight:600,color:'#D4570A'}}>{progress.current}/{progress.total}</span>
               </div>
@@ -421,12 +421,12 @@ export default function ImportaPiano() {
                 <div key={pi} style={{padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
                   <div style={{fontSize:12,fontWeight:600,color:'#D4570A',marginBottom:4}}>{p2.nome}</div>
                   {(p2.alimenti||[]).map((a, ai) => (
-                    <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#555555',padding:'2px 0'}}>
+                    <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#AAA',padding:'2px 0'}}>
                       <span>{a.nome} <span style={{color:'#BBB8B0'}}>{a.quantita_g}g</span></span>
                       <div style={{display:'flex',gap:6}}>
                         <span>{a.kcal} kcal</span>
                         {a.proteine_g>0&&<span style={{color:'#4A90D4'}}>P{a.proteine_g}g</span>}
-                        {a.opzioni?.length>0&&<span style={{...s.tag,background:'#161616',color:'#555555',padding:'1px 6px'}}>+{a.opzioni.length} alt.</span>}
+                        {a.opzioni?.length>0&&<span style={{...s.tag,background:'#161616',color:'#AAA',padding:'1px 6px'}}>+{a.opzioni.length} alt.</span>}
                       </div>
                     </div>
                   ))}

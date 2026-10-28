@@ -29,18 +29,18 @@ export default function Login() {
             <div style={{ fontSize:22, fontWeight:500, color:'#F0F0F0', letterSpacing:-0.5 }}>
               FO<span style={{ color:'#D4570A' }}>fit</span>
             </div>
-            <div style={{ fontSize:10, color:'#888', letterSpacing:'0.08em' }}>FOFIT.FIT</div>
+            <div style={{ fontSize:10, color:'#CCC', letterSpacing:'0.08em' }}>FOFIT.FIT</div>
           </div>
         </div>
 
         <div style={{ fontSize:17, fontWeight:500, color:'#F0F0F0', marginBottom:4 }}>Bentornato</div>
-        <div style={{ fontSize:13, color:'#888', marginBottom:26, lineHeight:1.5 }}>
+        <div style={{ fontSize:13, color:'#CCC', marginBottom:26, lineHeight:1.5 }}>
           Accedi per visualizzare il tuo piano personalizzato.
         </div>
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom:14 }}>
-            <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Email</label>
+            <label style={{ fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Email</label>
             <input
               type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="marco@email.com" required
@@ -50,7 +50,7 @@ export default function Login() {
             />
           </div>
           <div style={{ marginBottom:14 }}>
-            <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Password</label>
+            <label style={{ fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Password</label>
             <input
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required
@@ -72,7 +72,7 @@ export default function Login() {
           </button>
         </form>
 
-        <div style={{ fontSize:11, color:'#888', textAlign:'center', marginTop:20, lineHeight:1.6 }}>
+        <div style={{ fontSize:11, color:'#CCC', textAlign:'center', marginTop:20, lineHeight:1.6 }}>
           Problemi di accesso? Contatta il tuo coach.<br />
           <a href="https://instagram.com/federicoobinu_coach" target="_blank" rel="noreferrer"
             style={{ color:'#D4570A', textDecoration:'none' }}>@federicoobinu_coach</a> su Instagram

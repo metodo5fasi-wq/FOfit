@@ -9,8 +9,8 @@ const MISURE = [
   { key:'hips_cm', label:'Fianchi', unit:'cm', color:'#F4894A' },
   { key:'chest_cm', label:'Petto', unit:'cm', color:'#FAC775' },
   { key:'arm_cm', label:'Braccio', unit:'cm', color:'#FAC775' },
-  { key:'thigh_cm', label:'Coscia', unit:'cm', color:'#555555' },
-  { key:'body_fat_pct', label:'Massa grassa', unit:'%', color:'#555555' },
+  { key:'thigh_cm', label:'Coscia', unit:'cm', color:'#AAA' },
+  { key:'body_fat_pct', label:'Massa grassa', unit:'%', color:'#AAA' },
 ]
 
 const PHOTO_LABELS = ['Fronte', 'Fianco', 'Schiena']
@@ -20,9 +20,9 @@ const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 18px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
-  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
+  label: { fontSize:11, color:'#AAA', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 },
   grid3: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 },
   statCard: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'14px', textAlign:'center' },
@@ -57,7 +57,7 @@ function PesoChart({ entries }) {
       </svg>
       <div style={{display:'flex', justifyContent:'space-between', marginTop:4}}>
         {entries.map((e, i) => (
-          <div key={i} style={{fontSize:9, color:'#555555', textAlign:'center'}}>
+          <div key={i} style={{fontSize:9, color:'#AAA', textAlign:'center'}}>
             {new Date(e.entry_date + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short'})}
           </div>
         ))}
@@ -185,7 +185,7 @@ export default function TrackerProgressi() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15, fontWeight:600, color:'#F0F0F0'}}>Tracker progressi</div>
-          <div style={{fontSize:12, color:'#555555'}}>{entries.length} misurazioni · {photos.length} foto</div>
+          <div style={{fontSize:12, color:'#AAA'}}>{entries.length} misurazioni · {photos.length} foto</div>
         </div>
         {activeTab === 'misure' && (
           <button style={s.btn} onClick={() => setShowForm(!showForm)}>
@@ -259,7 +259,7 @@ export default function TrackerProgressi() {
 
             {latest && (
               <div style={s.card}>
-                <div style={{fontSize:12, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12, display:'flex', alignItems:'center', gap:6}}>
+                <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12, display:'flex', alignItems:'center', gap:6}}>
                   <i className="ti ti-chart-line" style={{fontSize:13, color:'#D4570A'}}/>
                   Ultima — {new Date(latest.entry_date + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}
                 </div>
@@ -268,8 +268,8 @@ export default function TrackerProgressi() {
                     const d = diff(m.key)
                     return (
                       <div key={m.key} style={s.statCard}>
-                        <div style={{fontSize:10, color:'#555555', marginBottom:4}}>{m.label}</div>
-                        <div style={{fontSize:18, fontWeight:700, color:'#F0F0F0'}}>{latest[m.key]}<span style={{fontSize:11, color:'#555555'}}>{m.unit}</span></div>
+                        <div style={{fontSize:10, color:'#AAA', marginBottom:4}}>{m.label}</div>
+                        <div style={{fontSize:18, fontWeight:700, color:'#F0F0F0'}}>{latest[m.key]}<span style={{fontSize:11, color:'#AAA'}}>{m.unit}</span></div>
                         {d !== null && (
                           <div style={{fontSize:11, color:diffColor(m.key), marginTop:3, fontWeight:600}}>
                             {parseFloat(d) > 0 ? '+' : ''}{d}{m.unit}
@@ -284,7 +284,7 @@ export default function TrackerProgressi() {
 
             {entries.filter(e => e.weight_kg).length > 1 && (
               <div style={s.card}>
-                <div style={{fontSize:12, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12, display:'flex', alignItems:'center', gap:6}}>
+                <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12, display:'flex', alignItems:'center', gap:6}}>
                   <i className="ti ti-trending-down" style={{fontSize:13, color:'#D4570A'}}/>
                   Andamento peso
                 </div>
@@ -293,13 +293,13 @@ export default function TrackerProgressi() {
             )}
 
             <div style={s.card}>
-              <div style={{fontSize:12, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12}}>Storico</div>
+              <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12}}>Storico</div>
               {loading ? (
-                <div style={{textAlign:'center', padding:'20px 0', color:'#555555', fontSize:13}}>Caricamento...</div>
+                <div style={{textAlign:'center', padding:'20px 0', color:'#AAA', fontSize:13}}>Caricamento...</div>
               ) : entries.length === 0 ? (
                 <div style={{textAlign:'center', padding:'30px 0'}}>
                   <i className="ti ti-ruler" style={{fontSize:40, color:'#E0DDD6', display:'block', marginBottom:12}}/>
-                  <div style={{fontSize:13, color:'#555555'}}>Nessuna misurazione ancora.</div>
+                  <div style={{fontSize:13, color:'#AAA'}}>Nessuna misurazione ancora.</div>
                 </div>
               ) : entries.map((e, i) => (
                 <div key={e.id} style={s.row}>
@@ -310,12 +310,12 @@ export default function TrackerProgressi() {
                     </div>
                     <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
                       {MISURE.filter(m => e[m.key]).map(m => (
-                        <span key={m.key} style={{fontSize:11, color:'#555555', background:'#161616', padding:'2px 8px', borderRadius:10}}>
+                        <span key={m.key} style={{fontSize:11, color:'#AAA', background:'#161616', padding:'2px 8px', borderRadius:10}}>
                           {m.label}: <strong style={{color:'#F0F0F0'}}>{e[m.key]}{m.unit}</strong>
                         </span>
                       ))}
                     </div>
-                    {e.notes && <div style={{fontSize:11, color:'#555555', marginTop:4, fontStyle:'italic'}}>{e.notes}</div>}
+                    {e.notes && <div style={{fontSize:11, color:'#AAA', marginTop:4, fontStyle:'italic'}}>{e.notes}</div>}
                   </div>
                   <button onClick={() => deleteEntry(e.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#E0DDD6', fontSize:16, padding:'0 0 0 12px', flexShrink:0}}>
                     <i className="ti ti-trash"/>
@@ -330,7 +330,7 @@ export default function TrackerProgressi() {
         {activeTab === 'foto' && (
           <>
             <div style={s.card}>
-              <div style={{fontSize:12, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10}}>Tipo di foto</div>
+              <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10}}>Tipo di foto</div>
               <div style={{display:'flex', gap:8, marginBottom:12}}>
                 {PHOTO_LABELS.map(l => (
                   <button key={l} onClick={() => setSelectedLabel(l)} style={{
@@ -357,13 +357,13 @@ export default function TrackerProgressi() {
               <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
                 <i className="ti ti-camera" style={{fontSize:48, color:'#E0DDD6', display:'block', marginBottom:16}}/>
                 <div style={{fontSize:14, fontWeight:600, color:'#F0F0F0', marginBottom:8}}>Nessuna foto ancora</div>
-                <div style={{fontSize:13, color:'#555555', lineHeight:1.6}}>Scegli una foto dalla galleria per iniziare.</div>
+                <div style={{fontSize:13, color:'#AAA', lineHeight:1.6}}>Scegli una foto dalla galleria per iniziare.</div>
               </div>
             )}
 
             {Object.entries(photosByDate).map(([date, dayPhotos]) => (
               <div key={date} style={s.card}>
-                <div style={{fontSize:12, fontWeight:600, color:'#555555', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12}}>
+                <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12}}>
                   {new Date(date + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8}}>
@@ -385,7 +385,7 @@ export default function TrackerProgressi() {
                         <i className="ti ti-x" style={{fontSize:12}}/>
                       </button>
                       {photo.notes && (
-                        <div style={{fontSize:10, color:'#555555', marginTop:4, textAlign:'center'}}>{photo.notes}</div>
+                        <div style={{fontSize:10, color:'#AAA', marginTop:4, textAlign:'center'}}>{photo.notes}</div>
                       )}
                     </div>
                   ))}
@@ -402,7 +402,7 @@ export default function TrackerProgressi() {
             style={{maxWidth:'100%', maxHeight:'80vh', objectFit:'contain', borderRadius:12}}/>
           <div style={{color:'white', marginTop:12, fontSize:13, fontWeight:600}}>{lightbox.label}</div>
           {lightbox.notes && <div style={{color:'rgba(255,255,255,0.6)', fontSize:12, marginTop:4}}>{lightbox.notes}</div>}
-          <div style={{color:'rgba(255,255,255,0.4)', fontSize:11, marginTop:4}}>
+          <div style={{color:'rgba(255,255,255,0.65)', fontSize:11, marginTop:4}}>
             {new Date(lightbox.photo_date + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'})}
           </div>
           <button onClick={() => setLightbox(null)} style={{marginTop:16, background:'rgba(255,255,255,0.1)', border:'none', color:'white', padding:'10px 24px', borderRadius:20, fontSize:13, cursor:'pointer', fontFamily:'inherit'}}>

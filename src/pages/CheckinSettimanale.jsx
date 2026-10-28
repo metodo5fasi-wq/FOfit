@@ -92,7 +92,7 @@ export default function CheckinSettimanale() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:600,color:'#F0F0F0'}}>Check-in settimanale</div>
-          <div style={{fontSize:12,color:'#555555'}}>
+          <div style={{fontSize:12,color:'#AAA'}}>
             Settimana del {new Date(weekDate+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function CheckinSettimanale() {
       <div style={s.page}>
 
         <div style={s.card}>
-          <div style={{fontSize:13,color:'#555555',lineHeight:1.6,marginBottom:18}}>
+          <div style={{fontSize:13,color:'#AAA',lineHeight:1.6,marginBottom:18}}>
             Come è andata questa settimana? Queste informazioni aiutano il tuo coach a capire il tuo stato generale e personalizzare meglio il percorso.
           </div>
           <ScaleInput field="energy" form={form} setForm={setForm}/>
@@ -124,10 +124,10 @@ export default function CheckinSettimanale() {
         {/* STORICO */}
         {history.length > 1 && (
           <div style={s.card}>
-            <div style={{fontSize:12,fontWeight:600,color:'#555555',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:12}}>Storico</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:12}}>Storico</div>
             {history.slice(0,8).map(c => (
               <div key={c.week_date} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'0.5px solid #1A1A1A'}}>
-                <div style={{fontSize:11,color:'#555555',width:80,flexShrink:0}}>
+                <div style={{fontSize:11,color:'#AAA',width:80,flexShrink:0}}>
                   {new Date(c.week_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
                 </div>
                 <div style={{display:'flex',gap:12,flex:1}}>
@@ -138,7 +138,7 @@ export default function CheckinSettimanale() {
                     </div>
                   ))}
                 </div>
-                {c.notes && <i className="ti ti-notes" style={{fontSize:13,color:'#555555'}}/>}
+                {c.notes && <i className="ti ti-notes" style={{fontSize:13,color:'#AAA'}}/>}
               </div>
             ))}
           </div>

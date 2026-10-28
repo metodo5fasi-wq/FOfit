@@ -7,8 +7,8 @@ const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'18px', marginBottom:14 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 20px', fontSize:13, fontWeight:500, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnGray: { background:'#161616', color:'#555555', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
-  label: { fontSize:11, color:'#555555', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
+  btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'10px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  label: { fontSize:11, color:'#AAA', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' },
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit' },
   textarea: { width:'100%', padding:'12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box' },
@@ -18,7 +18,7 @@ const s = {
   dayCard: { border:'0.5px solid #1C1C1C', borderRadius:10, overflow:'hidden', marginBottom:10 },
   dayHeader: { background:'rgba(212,87,10,0.1)', padding:'10px 14px', fontWeight:600, fontSize:13, color:'#D4570A' },
   exRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 14px', borderBottom:'0.5px solid #F5F3EF' },
-  tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500, background:'#161616', color:'#555555' },
+  tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500, background:'#161616', color:'#AAA' },
 }
 
 const EXAMPLE = `Giorno A - Petto e Tricipiti
@@ -130,7 +130,7 @@ export default function ImportaAllenamento() {
       <div style={s.topbar}>
         <div>
           <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Importa scheda allenamento</div>
-          <div style={{fontSize:12,color:'#555555'}}>Incolla il testo, l'AI la struttura automaticamente</div>
+          <div style={{fontSize:12,color:'#AAA'}}>Incolla il testo, l'AI la struttura automaticamente</div>
         </div>
       </div>
       <div style={s.page}>
@@ -138,7 +138,7 @@ export default function ImportaAllenamento() {
         {step === 1 && (
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:600,color:'#F0F0F0',marginBottom:4}}>Incolla la scheda allenamento</div>
-            <div style={{fontSize:12,color:'#555555',lineHeight:1.6,marginBottom:14}}>
+            <div style={{fontSize:12,color:'#AAA',lineHeight:1.6,marginBottom:14}}>
               Scrivi per ogni esercizio: <strong>nome | gruppo muscolare | link video | descrizione | serie x reps | recupero</strong>, raggruppati per giorno.
             </div>
             <textarea style={{...s.textarea, height:260}} placeholder={EXAMPLE} value={rawText} onChange={e=>setRawText(e.target.value)}/>
@@ -182,7 +182,7 @@ export default function ImportaAllenamento() {
                   <div key={ei} style={s.exRow}>
                     <div style={{flex:1}}>
                       <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{ex.exercise_name}</div>
-                      {ex.description && <div style={{fontSize:11,color:'#555555',marginTop:2}}>{ex.description}</div>}
+                      {ex.description && <div style={{fontSize:11,color:'#AAA',marginTop:2}}>{ex.description}</div>}
                     </div>
                     <span style={s.tag}>{ex.muscle_group}</span>
                     <span style={s.tag}>{ex.sets}x{ex.reps}</span>
@@ -214,7 +214,7 @@ export default function ImportaAllenamento() {
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-circle-check" style={{fontSize:48,color:'#3B6D11',display:'block',marginBottom:16}}/>
             <div style={{fontSize:16,fontWeight:600,color:'#F0F0F0',marginBottom:8}}>Scheda salvata!</div>
-            <div style={{fontSize:13,color:'#555555',marginBottom:20}}>Il cliente la troverà nella sezione Allenamento.</div>
+            <div style={{fontSize:13,color:'#AAA',marginBottom:20}}>Il cliente la troverà nella sezione Allenamento.</div>
             <button onClick={reset} style={{...s.btn, margin:'0 auto'}}>
               <i className="ti ti-plus" style={{fontSize:15}}/> Importa un'altra scheda
             </button>

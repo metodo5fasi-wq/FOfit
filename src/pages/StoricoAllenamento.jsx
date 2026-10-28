@@ -185,12 +185,12 @@ export default function StoricoAllenamento() {
 
   const s = {
     card: { background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', marginBottom: 10, overflow: 'hidden' },
-    shareBtn: { background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#555555', display: 'flex', alignItems: 'center', gap: 4 },
+    shareBtn: { background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#AAA', display: 'flex', alignItems: 'center', gap: 4 },
     inp: { padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: 7, fontSize: 12, color: '#F0F0F0', background: 'var(--bg-card)', outline: 'none', fontFamily: 'inherit', textAlign: 'center', width: '100%', boxSizing: 'border-box' },
   }
 
   if (loading) return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555555' }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#AAA' }}>
       <div style={{ textAlign: 'center' }}>
         <i className="ti ti-loader-2" style={{ fontSize: 32, display: 'block', marginBottom: 8 }} />
         Caricamento storico...
@@ -208,7 +208,7 @@ export default function StoricoAllenamento() {
           </Link>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>Storico allenamenti</div>
-            <div style={{ fontSize: 11, color: '#555555' }}>{sessions.length} sessioni totali</div>
+            <div style={{ fontSize: 11, color: '#AAA' }}>{sessions.length} sessioni totali</div>
           </div>
         </div>
         <button onClick={() => setShowPeriodModal(true)} style={s.shareBtn}>
@@ -228,14 +228,14 @@ export default function StoricoAllenamento() {
             <div key={stat.label} style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '12px 10px', textAlign: 'center' }}>
               <i className={`ti ${stat.icon}`} style={{ fontSize: 18, color: '#D4570A', display: 'block', marginBottom: 4 }} />
               <div style={{ fontSize: 18, fontWeight: 800, color: '#F0F0F0' }}>{stat.value}</div>
-              <div style={{ fontSize: 9, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+              <div style={{ fontSize: 9, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
         {/* CALENDARIO 4 SETTIMANE */}
         <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '14px', marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
             Ultime 4 settimane
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(28,1fr)', gap: 3 }}>
@@ -252,7 +252,7 @@ export default function StoricoAllenamento() {
               )
             })}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: '#555555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: '#AAA' }}>
             <span>4 sett. fa</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-input)' }} /><span>Riposo</span>
@@ -264,7 +264,7 @@ export default function StoricoAllenamento() {
 
         {/* SESSIONI PER SETTIMANA */}
         {sessions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555555' }}>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#AAA' }}>
             <i className="ti ti-barbell" style={{ fontSize: 40, display: 'block', marginBottom: 10, opacity: 0.3 }} />
             <div style={{ fontSize: 14, fontWeight: 600 }}>Nessuna sessione ancora</div>
             <div style={{ fontSize: 12, marginTop: 4 }}>Inizia il tuo primo allenamento!</div>
@@ -287,7 +287,7 @@ export default function StoricoAllenamento() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: isExpanded ? '#D4570A' : 'var(--text)' }}>
                     {getWeekLabel(ws)}
                   </div>
-                  <div style={{ fontSize: 11, color: '#555555', marginTop: 2, display: 'flex', gap: 10 }}>
+                  <div style={{ fontSize: 11, color: '#AAA', marginTop: 2, display: 'flex', gap: 10 }}>
                     <span>🏋️ {wSessions.length} session{wSessions.length !== 1 ? 'i' : 'e'}</span>
                     <span>📊 {wSeries} serie</span>
                     {wTonnellaggio > 0 && <span>⚖️ {wTonnellaggio >= 1000 ? (wTonnellaggio / 1000).toFixed(1) + 't' : Math.round(wTonnellaggio) + 'kg'}</span>}
@@ -305,7 +305,7 @@ export default function StoricoAllenamento() {
                       )
                     })}
                   </div>
-                  <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#555555' }} />
+                  <i className={`ti ti-chevron-${isExpanded ? 'up' : 'down'}`} style={{ fontSize: 14, color: '#AAA' }} />
                 </div>
               </div>
 
@@ -333,7 +333,7 @@ export default function StoricoAllenamento() {
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F0F0' }}>
                           {sess.day_label || 'Allenamento'}
                         </div>
-                        <div style={{ fontSize: 11, color: '#555555', marginTop: 1, display: 'flex', gap: 8 }}>
+                        <div style={{ fontSize: 11, color: '#AAA', marginTop: 1, display: 'flex', gap: 8 }}>
                           <span>{new Date(sess.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
                           <span>·</span>
                           <span>{sess.sets_completed}/{sess.sets_total} serie</span>
@@ -347,7 +347,7 @@ export default function StoricoAllenamento() {
                         <button onClick={e => { e.stopPropagation(); shareSession(sess) }} style={s.shareBtn} disabled={sharingId === sess.id}>
                           <i className="ti ti-share" style={{ fontSize: 11 }} />
                         </button>
-                        <i className={`ti ti-chevron-${isExpSess ? 'up' : 'down'}`} style={{ fontSize: 13, color: '#555555' }} />
+                        <i className={`ti ti-chevron-${isExpSess ? 'up' : 'down'}`} style={{ fontSize: 13, color: '#AAA' }} />
                       </div>
                     </div>
 
@@ -356,7 +356,7 @@ export default function StoricoAllenamento() {
                       <div style={{ padding: '0 14px 12px', borderTop: '0.5px solid var(--border)' }}>
                         {/* Note */}
                         {sess.notes && (
-                          <div style={{ background: 'var(--bg-input)', borderRadius: 8, padding: '8px 10px', marginTop: 10, marginBottom: 10, fontSize: 12, color: '#555555', fontStyle: 'italic' }}>
+                          <div style={{ background: 'var(--bg-input)', borderRadius: 8, padding: '8px 10px', marginTop: 10, marginBottom: 10, fontSize: 12, color: '#AAA', fontStyle: 'italic' }}>
                             💬 {sess.notes}
                           </div>
                         )}
@@ -384,14 +384,14 @@ export default function StoricoAllenamento() {
                               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                                 {exLogs.map(log => (
                                   <div key={log.id} style={{ background: 'var(--bg-input)', borderRadius: 7, padding: '4px 8px', fontSize: 11, textAlign: 'center' }}>
-                                    <div style={{ fontSize: 9, color: '#555555' }}>S{log.set_number}</div>
+                                    <div style={{ fontSize: 9, color: '#AAA' }}>S{log.set_number}</div>
                                     <div style={{ fontWeight: 700, color: '#F0F0F0' }}>{log.weight_kg || '—'}kg</div>
-                                    <div style={{ color: '#555555' }}>×{log.reps_done || '—'}</div>
+                                    <div style={{ color: '#AAA' }}>×{log.reps_done || '—'}</div>
                                   </div>
                                 ))}
                               </div>
                               {exLogs.some(l => l.exercise_note) && (
-                                <div style={{ fontSize: 11, color: '#555555', marginTop: 3, fontStyle: 'italic' }}>
+                                <div style={{ fontSize: 11, color: '#AAA', marginTop: 3, fontStyle: 'italic' }}>
                                   {exLogs.find(l => l.exercise_note)?.exercise_note}
                                 </div>
                               )}
@@ -399,7 +399,7 @@ export default function StoricoAllenamento() {
                           )
                         })}
                         {Object.keys(byEx).length === 0 && (
-                          <div style={{ fontSize: 12, color: '#555555', textAlign: 'center', padding: '10px 0' }}>
+                          <div style={{ fontSize: 12, color: '#AAA', textAlign: 'center', padding: '10px 0' }}>
                             Nessun dato registrato per questa sessione
                           </div>
                         )}
@@ -419,7 +419,7 @@ export default function StoricoAllenamento() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
           <div style={{ background: 'var(--bg-card)', borderRadius: '16px 16px 0 0', padding: 20, width: '100%', maxWidth: 500, maxHeight: '85dvh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0', marginBottom: 2 }}>Modifica sessione</div>
-            <div style={{ fontSize: 12, color: '#555555', marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: '#AAA', marginBottom: 14 }}>
               {editingSession.day_label} · {new Date(editingSession.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -433,7 +433,7 @@ export default function StoricoAllenamento() {
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F0F0', marginBottom: 8 }}>{exName}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 1fr 1fr', gap: 6, marginBottom: 4 }}>
                     {['Serie', 'Kg', 'Reps', 'Note'].map(h => (
-                      <div key={h} style={{ fontSize: 9, color: '#555555', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em', textAlign: 'center' }}>{h}</div>
+                      <div key={h} style={{ fontSize: 9, color: '#AAA', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em', textAlign: 'center' }}>{h}</div>
                     ))}
                   </div>
                   {exLogs.map(log => (
@@ -446,7 +446,7 @@ export default function StoricoAllenamento() {
                   ))}
                 </div>
               ))}
-              <div style={{ fontSize: 11, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 600 }}>Note sessione</div>
+              <div style={{ fontSize: 11, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 600 }}>Note sessione</div>
               <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)}
                 placeholder="Come ti sei sentito? Dolori? Note..."
                 style={{ width: '100%', minHeight: 70, padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: 10, fontSize: 13, color: '#F0F0F0', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5, marginBottom: 14 }} />
@@ -457,7 +457,7 @@ export default function StoricoAllenamento() {
                 {savingEdit ? 'Salvataggio...' : 'Salva modifiche'}
               </button>
               <button onClick={() => { setEditingSession(null); setEditLogs([]) }}
-                style={{ padding: '12px 16px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#555555' }}>
+                style={{ padding: '12px 16px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#AAA' }}>
                 Annulla
               </button>
             </div>
@@ -476,7 +476,7 @@ export default function StoricoAllenamento() {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>Link generato!</div>
-                <div style={{ fontSize: 12, color: '#555555' }}>Valido per 30 giorni</div>
+                <div style={{ fontSize: 12, color: '#AAA' }}>Valido per 30 giorni</div>
               </div>
             </div>
             <input readOnly value={generatedLink} onFocus={e => e.target.select()}
@@ -489,7 +489,7 @@ export default function StoricoAllenamento() {
                 Condividi / Copia link
               </button>
               <button onClick={() => setGeneratedLink('')}
-                style={{ padding: '11px 14px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 9, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#555555' }}>
+                style={{ padding: '11px 14px', background: 'var(--bg-input)', border: '0.5px solid var(--border)', borderRadius: 9, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#AAA' }}>
                 Chiudi
               </button>
             </div>
@@ -505,12 +505,12 @@ export default function StoricoAllenamento() {
             <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0', marginBottom: 14 }}>Condividi periodo</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
               <div>
-                <label style={{ fontSize: 11, color: '#555555', display: 'block', marginBottom: 4 }}>Dal</label>
+                <label style={{ fontSize: 11, color: '#AAA', display: 'block', marginBottom: 4 }}>Dal</label>
                 <input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)}
                   style={{ width: '100%', padding: '9px 10px', border: '0.5px solid var(--border)', borderRadius: 8, fontSize: 13, color: '#F0F0F0', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#555555', display: 'block', marginBottom: 4 }}>Al</label>
+                <label style={{ fontSize: 11, color: '#AAA', display: 'block', marginBottom: 4 }}>Al</label>
                 <input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)}
                   style={{ width: '100%', padding: '9px 10px', border: '0.5px solid var(--border)', borderRadius: 8, fontSize: 13, color: '#F0F0F0', background: 'var(--bg-input)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
               </div>

@@ -44,9 +44,9 @@ export default function Notifiche() {
       </div>
       <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'14px' }}>
         {loading ? (
-          <div style={{ textAlign:'center', padding:'40px', color:'#555555' }}>Caricamento...</div>
+          <div style={{ textAlign:'center', padding:'40px', color:'#AAA' }}>Caricamento...</div>
         ) : notifiche.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'40px', color:'#555555' }}>
+          <div style={{ textAlign:'center', padding:'40px', color:'#AAA' }}>
             <i className="ti ti-bell-off" style={{ fontSize:40, display:'block', marginBottom:10, opacity:0.3 }} />
             <div>Nessuna notifica</div>
           </div>
@@ -59,8 +59,8 @@ export default function Notifiche() {
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:700, color:'#F0F0F0', marginBottom:3 }}>{n.title}</div>
-                <div style={{ fontSize:12, color:'#555555', lineHeight:1.5 }}>{n.body}</div>
-                <div style={{ fontSize:10, color:'#555555', marginTop:5 }}>{timeAgo(n.created_at)}</div>
+                <div style={{ fontSize:12, color:'#AAA', lineHeight:1.5 }}>{n.body}</div>
+                <div style={{ fontSize:10, color:'#AAA', marginTop:5 }}>{timeAgo(n.created_at)}</div>
               </div>
               {!n.read && <div style={{ width:8, height:8, borderRadius:'50%', background:'#D4570A', flexShrink:0, marginTop:4 }} />}
             </div>

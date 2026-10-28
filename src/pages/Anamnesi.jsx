@@ -7,19 +7,19 @@ const s = {
   topbar: { background:'var(--bg-card)', borderBottom:'0.5px solid var(--border)', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   section: { padding:'20px 20px 0' },
   card: { background:'var(--bg-card)', borderRadius:12, border:'0.5px solid var(--border)', padding:'16px', marginBottom:12 },
-  label: { fontSize:11, color:'#888', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
+  label: { fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em', fontWeight:600 },
   fieldLabel: { fontSize:13, fontWeight:600, color:'#F0F0F0', marginBottom:8, marginTop:14, display:'block' },
   input: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   textarea: { width:'100%', padding:'10px 12px', border:'0.5px solid var(--border)', borderRadius:9, fontSize:13, color:'#F0F0F0', background:'var(--bg-input)', outline:'none', fontFamily:'inherit', resize:'vertical', lineHeight:1.6, boxSizing:'border-box', minHeight:80 },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   grid3: { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnGray: { background:'var(--bg-input)', color:'#888', border:'0.5px solid var(--border)', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
+  btnGray: { background:'var(--bg-input)', color:'#CCC', border:'0.5px solid var(--border)', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   chip: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)', transition:'all 0.15s' }),
   chipCheck: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#EAF3DE':'var(--bg-card)', color:active?'#3B6D11':'var(--text-muted)', borderColor:active?'#3B6D11':'var(--border)', transition:'all 0.15s' }),
   scale: (active) => ({ width:36, height:36, borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)' }),
   sectionTitle: { fontSize:18, fontWeight:800, color:'#F0F0F0', marginBottom:4 },
-  sectionSub: { fontSize:13, color:'#888', marginBottom:18, lineHeight:1.5 },
+  sectionSub: { fontSize:13, color:'#CCC', marginBottom:18, lineHeight:1.5 },
 }
 
 const SECTIONS = [
@@ -161,12 +161,12 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       <div style={s.topbar}>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{isAdmin?'Anamnesi cliente':'La tua anamnesi'}</div>
-          <div style={{fontSize:11,color:'#888',marginTop:1}}>Sezione {current} di 12</div>
+          <div style={{fontSize:11,color:'#CCC',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           {saved && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ Salvato</span>}
-          {saving && <span style={{fontSize:11,color:'#888'}}>Salvataggio...</span>}
-          {isAdmin && <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:20,padding:4}}>✕</button>}
+          {saving && <span style={{fontSize:11,color:'#CCC'}}>Salvataggio...</span>}
+          {isAdmin && <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',fontSize:20,padding:4}}>✕</button>}
         </div>
       </div>
 
@@ -237,9 +237,9 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
             <div style={s.card}>
               <label style={s.label}>Dove consumi normalmente i pasti?</label>
-              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'#888'}}>Colazione</span><div style={{marginTop:4}}><Chips options={['Casa','Bar','Salto','Ufficio','Vario']} value={data.dove_colazione} onChange={v=>set('dove_colazione',v)}/></div></div>
-              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'#888'}}>Pranzo</span><div style={{marginTop:4}}><Chips options={['Casa','Ristorante/mensa','Portato da casa','Bar','Vario']} value={data.dove_pranzo} onChange={v=>set('dove_pranzo',v)}/></div></div>
-              <div><span style={{fontSize:12,color:'#888'}}>Cena</span><div style={{marginTop:4}}><Chips options={['Casa','Fuori','Vario']} value={data.dove_cena} onChange={v=>set('dove_cena',v)}/></div></div>
+              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'#CCC'}}>Colazione</span><div style={{marginTop:4}}><Chips options={['Casa','Bar','Salto','Ufficio','Vario']} value={data.dove_colazione} onChange={v=>set('dove_colazione',v)}/></div></div>
+              <div style={{marginBottom:8}}><span style={{fontSize:12,color:'#CCC'}}>Pranzo</span><div style={{marginTop:4}}><Chips options={['Casa','Ristorante/mensa','Portato da casa','Bar','Vario']} value={data.dove_pranzo} onChange={v=>set('dove_pranzo',v)}/></div></div>
+              <div><span style={{fontSize:12,color:'#CCC'}}>Cena</span><div style={{marginTop:4}}><Chips options={['Casa','Fuori','Vario']} value={data.dove_cena} onChange={v=>set('dove_cena',v)}/></div></div>
             </div>
             <div style={s.card}>
               <label style={s.label}>Mangi principalmente...</label>
@@ -802,7 +802,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                 ['autonomia_senza_piano_scritto','Mantenere buone abitudini senza un piano scritto'],
               ].map(([field,label])=>(
                 <div key={field} style={{marginBottom:14}}>
-                  <label style={{fontSize:12,color:'#888',display:'block',marginBottom:6}}>{label}</label>
+                  <label style={{fontSize:12,color:'#CCC',display:'block',marginBottom:6}}>{label}</label>
                   <Scale value={data[field]} onChange={v=>set(field,v)}/>
                 </div>
               ))}
