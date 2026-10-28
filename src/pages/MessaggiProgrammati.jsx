@@ -93,7 +93,7 @@ export default function MessaggiProgrammati() {
 
   async function sendNow(msg) {
     setSending(msg.id)
-    // Invia notifica in-app
+    // 1. Notifica in-app (centro notifiche)
     await supabase.from('notifications').insert({
       client_id: msg.client_id,
       type: 'coach_message',
@@ -101,7 +101,18 @@ export default function MessaggiProgrammati() {
       body: msg.message,
       read: false,
     })
-    // Invia anche come messaggio chat
+    // 2. Push notification sul telefono (anche con app chiusa)
+    await fetch('/api/push-send', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        clientId: msg.client_id,
+        title: '💬 Messaggio dal coach',
+        body: msg.message,
+        url: '/notifiche',
+      })
+    }).catch(() => {}) // ignora se non ha subscription
+    // 3. Messaggio chat
     await fetch('/api/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -131,6 +142,10 @@ export default function MessaggiProgrammati() {
           body: msg.message,
           read: false,
         })
+        await fetch('/api/push-send', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ clientId: msg.client_id, title: '💬 Messaggio dal coach', body: msg.message, url: '/notifiche' })
+        }).catch(()=>{})
         await fetch('/api/messages', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, coachId: msg.coach_id, message: msg.message, senderRole: 'coach' })
