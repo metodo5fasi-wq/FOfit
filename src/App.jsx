@@ -306,13 +306,13 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
-      else setLoading(false)
+      else setTimeout(() => setLoading(false), 1500)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      else { setProfile(null); setTimeout(() => setLoading(false), 1500) }
     })
 
     return () => subscription.unsubscribe()
@@ -327,7 +327,7 @@ export default function App() {
     if (data) {
       setProfile(data)
     }
-    setLoading(false)
+    setTimeout(() => setLoading(false), 1500)
   }
 
   if (loading) return (
