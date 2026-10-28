@@ -412,44 +412,7 @@ export default function Dashboard() {
 
 
 
-        {/* SCHEDA ALLENAMENTO */}
-        {nextWorkout && (
-          <FadeIn delay={80}>
-          <Link to="/allenamento" style={{textDecoration:'none',display:'block',marginBottom:12}}>
-            <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
-              {/* Header */}
-              <div style={{padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'0.5px solid #161616'}}>
-                <div style={{display:'flex',alignItems:'center',gap:10}}>
-                  <div style={{width:36,height:36,borderRadius:10,background:'rgba(59,140,90,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                    <i className="ti ti-barbell" style={{fontSize:17,color:'#3B8C5A'}}/>
-                  </div>
-                  <div>
-                    <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:2}}>La tua scheda</div>
-                    <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>{nextWorkout.name}</div>
-                  </div>
-                </div>
-                <i className="ti ti-chevron-right" style={{fontSize:14,color:'#444'}}/>
-              </div>
-              {/* Gruppi muscolari */}
-              {nextWorkoutExercises.length > 0 && (
-                <div style={{padding:'10px 14px'}}>
-                  <div style={{fontSize:9,color:'#555',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Muscoli allenati</div>
-                  <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-                    {[...new Set(nextWorkoutExercises.map(e=>e.muscle_group).filter(Boolean))].map((g,i) => (
-                      <div key={i} style={{background:'rgba(59,140,90,0.12)',borderRadius:20,padding:'3px 10px',fontSize:11,fontWeight:600,color:'#3B8C5A',border:'0.5px solid rgba(59,140,90,0.2)'}}>
-                        {g}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{fontSize:10,color:'#555',marginTop:8}}>
-                    {nextWorkoutExercises.length} esercizi totali nella scheda
-                  </div>
-                </div>
-              )}
-            </div>
-          </Link>
-          </FadeIn>
-        )}
+
 
         {/* NOTIFICHE */}
         <FadeIn delay={90}>
@@ -507,7 +470,7 @@ export default function Dashboard() {
                   : 'Nessuna nuova notifica'}
               </div>
               <div style={{fontSize:10,color:'#444',marginTop:2}}>
-                {unreadNotifs > 0 ? 'Tocca per vedere' : 'Sei aggiornato/a 👍'}
+                {unreadNotifs > 0 ? 'Tocca per vedere' : ''}
               </div>
             </div>
             <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333',flexShrink:0}}/>
