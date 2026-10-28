@@ -68,6 +68,7 @@ export default function Dashboard() {
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
   const [weeklyComp, setWeeklyComp] = useState(null) // confronto settimana precedente
   const [nextWorkout, setNextWorkout] = useState(null)
   const [nextWorkoutExercises, setNextWorkoutExercises] = useState([])
@@ -112,6 +113,10 @@ export default function Dashboard() {
     loadNextWorkout()
     // Riepilogo settimana
     loadWeekStats()
+    // Notifiche non lette
+    supabase.from('notifications').select('id', {count:'exact',head:true})
+      .eq('client_id', profile.id).eq('read', false)
+      .then(({count}) => setUnreadNotifs(count || 0))
     // Riepilogo settimana
     loadWeekStats()
   }, [profile])
@@ -445,6 +450,70 @@ export default function Dashboard() {
           </Link>
           </FadeIn>
         )}
+
+        {/* NOTIFICHE */}
+        <FadeIn delay={90}>
+        <style>{`
+          @keyframes notif-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.92); }
+          }
+        `}</style>
+        <Link to="/notifiche" style={{textDecoration:'none',display:'block',marginBottom:12}}>
+          <div style={{
+            background:'#0D0D0D',
+            borderRadius:14,
+            border: unreadNotifs > 0 ? '0.5px solid rgba(212,87,10,0.4)' : '0.5px solid #1C1C1C',
+            padding:'12px 14px',
+            display:'flex',
+            alignItems:'center',
+            gap:12,
+            transition:'border-color 0.3s',
+          }}>
+            {/* Icona con badge */}
+            <div style={{position:'relative',flexShrink:0}}>
+              <div style={{
+                width:38,height:38,borderRadius:10,
+                background: unreadNotifs > 0 ? 'rgba(212,87,10,0.15)' : '#141414',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                animation: unreadNotifs > 0 ? 'notif-pulse 1.5s ease-in-out infinite' : 'none',
+              }}>
+                <i className="ti ti-bell" style={{
+                  fontSize:18,
+                  color: unreadNotifs > 0 ? '#F4894A' : '#333',
+                }}/>
+              </div>
+              {unreadNotifs > 0 && (
+                <div style={{
+                  position:'absolute',top:-4,right:-4,
+                  width:18,height:18,borderRadius:'50%',
+                  background:'#D4570A',
+                  border:'2px solid #0D0D0D',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontSize:9,fontWeight:800,color:'white',
+                }}>
+                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                </div>
+              )}
+            </div>
+            {/* Testo */}
+            <div style={{flex:1}}>
+              <div style={{
+                fontSize:13,fontWeight:700,
+                color: unreadNotifs > 0 ? '#F0F0F0' : '#555',
+              }}>
+                {unreadNotifs > 0
+                  ? `${unreadNotifs} nuova${unreadNotifs > 1 ? ' notifiche' : ' notifica'}`
+                  : 'Nessuna nuova notifica'}
+              </div>
+              <div style={{fontSize:10,color:'#444',marginTop:2}}>
+                {unreadNotifs > 0 ? 'Tocca per vedere' : 'Sei aggiornato/a 👍'}
+              </div>
+            </div>
+            <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333',flexShrink:0}}/>
+          </div>
+        </Link>
+        </FadeIn>
 
         {/* RIEPILOGO SETTIMANA */}
         {weekStats && (
