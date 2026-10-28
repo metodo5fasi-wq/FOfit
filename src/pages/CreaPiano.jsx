@@ -296,12 +296,15 @@ export default function CreaPiano() {
       }
     } catch(e) {
       clearInterval(timer)
-      console.error(e)
-      toast('Errore: ' + e.message, 'error')
+      console.error('[AI Piano]', e)
+      setAiProgress(0)
+      setAiStatus('')
+      toast('Errore: ' + (e.message || 'Riprova'), 'error')
+    } finally {
+      setAiLoading(false)
+      setAiProgress(0)
+      setAiStatus('')
     }
-    setAiLoading(false)
-    setAiProgress(0)
-    setAiStatus('')
   }
 
   // ── TOTALI ───────────────────────────────────────────────
