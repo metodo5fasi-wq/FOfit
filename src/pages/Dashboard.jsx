@@ -342,54 +342,36 @@ export default function Dashboard() {
         {notifStatus !== 'granted' && (
           <FadeIn delay={50}>
           <div style={{
-            background: notifStatus === 'denied' ? 'rgba(226,75,74,0.08)' : '#0D0D0D',
+            background:'#0D0D0D',
             borderRadius:12, padding:'12px 14px', marginBottom:12,
-            border: notifStatus === 'denied'
-              ? '0.5px solid rgba(226,75,74,0.25)'
-              : '0.5px solid rgba(212,87,10,0.2)',
+            border:'0.5px solid rgba(212,87,10,0.2)',
             display:'flex', alignItems:'center', gap:10,
           }}>
             <div style={{
               width:34,height:34,borderRadius:9,flexShrink:0,
-              background: notifStatus === 'denied' ? 'rgba(226,75,74,0.12)' : 'rgba(212,87,10,0.12)',
+              background:'rgba(212,87,10,0.12)',
               display:'flex',alignItems:'center',justifyContent:'center',
             }}>
-              <i className="ti ti-bell" style={{fontSize:16,color:notifStatus==='denied'?'#E24B4A':'#D4570A'}}/>
+              <i className="ti ti-bell" style={{fontSize:16,color:'#D4570A'}}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>
-                {notifStatus === 'denied' ? 'Notifiche bloccate' : 'Attiva le notifiche'}
-              </div>
+              <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Attiva le notifiche</div>
               <div style={{fontSize:10,color:'#888',marginTop:1}}>
-                {notifStatus === 'denied'
-                  ? 'Abilita dai impostazioni del browser/telefono'
-                  : 'Ricevi i messaggi del coach anche con l\'app chiusa'}
+                Ricevi i messaggi del coach anche con l'app chiusa
               </div>
             </div>
-            {notifStatus !== 'denied' && (
-              <button onClick={async()=>{
-                const r = await requestNotificationPermission(profile.id)
-                if (r.ok) {
-                  setNotifStatus('granted')
-                  sendTestNotification()
-                  showToast('Notifiche attivate! 🔔','')
-                } else {
-                  setNotifStatus('denied')
-                  showToast('Notifiche bloccate — abilita dalle impostazioni','')
-                }
-              }} style={{background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'7px 14px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0,whiteSpace:'nowrap'}}>
-                Attiva ora
-              </button>
-            )}
-            {notifStatus === 'denied' && (
-              <button onClick={async()=>{
-                // Riprova — su alcuni browser si può riprovare
-                const r = await requestNotificationPermission(profile.id)
-                if (r.ok) { setNotifStatus('granted'); sendTestNotification(); showToast('Notifiche attivate! 🔔','') }
-              }} style={{background:'rgba(226,75,74,0.15)',color:'#E24B4A',border:'0.5px solid rgba(226,75,74,0.3)',borderRadius:8,padding:'7px 14px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0,whiteSpace:'nowrap'}}>
-                Riprova
-              </button>
-            )}
+            <button onClick={async()=>{
+              const r = await requestNotificationPermission(profile.id)
+              if (r.ok) {
+                setNotifStatus('granted')
+                sendTestNotification()
+                showToast('Notifiche attivate! 🔔','')
+              } else {
+                showToast('Tocca "Consenti" quando appare il popup','')
+              }
+            }} style={{background:'#D4570A',color:'white',border:'none',borderRadius:8,padding:'7px 14px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',flexShrink:0,whiteSpace:'nowrap'}}>
+              Attiva ora
+            </button>
           </div>
           </FadeIn>
         )}
