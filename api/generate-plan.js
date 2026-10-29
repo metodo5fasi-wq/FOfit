@@ -5,58 +5,35 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { formData, kcalTarget, protTarget, carbsTarget, fatTarget, dietType, dayCalories } = req.body
+  const { formData, kcalTarget, protTarget, carbsTarget, fatTarget, dayCalories } = req.body
   if (!formData) return res.status(400).json({ error: 'Dati mancanti' })
 
-  const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
+  const DAY_NAMES = ['Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato','Domenica']
   const days = {}
 
   try {
-    // Costruisci contesto cliente completo
     const clientCtx = buildClientContext(formData)
 
     for (let d = 0; d < 7; d++) {
-      const dayName = DAY_NAMES[d]
       const kcalDay = dayCalories?.[d] || kcalTarget || 2000
 
-      const prompt = `Sei un nutrizionista italiano esperto. Crea i pasti di ${dayName} per questo cliente.
+      const prompt = `Sei un nutrizionista. Crea i pasti di ${DAY_NAMES[d]} per questo cliente.
 
-PROFILO CLIENTE:
-${clientCtx}
+CLIENTE: ${clientCtx}
+TARGET: ${kcalDay} kcal, P${protTarget||0}g C${carbsTarget||0}g G${fatTarget||0}g
+PASTI: ${formData.pastiSelezionati || 'Colazione, Pranzo, Spuntino pomeriggio, Cena'}
+CUCINA: ${formData.stileCucina || 'italiana'}, ${formData.preferenzePasti || 'varia e gustosa'}
+PREPARAZIONE: ${formData.metodiCottura || 'qualsiasi'}, ${formData.tempoCottura || 'tempo medio'}
 
-TARGET ${dayName.toUpperCase()}: ${kcalDay} kcal, P${protTarget||''}g C${carbsTarget||''}g G${fatTarget||''}g
-TOLLERANZA: ±50 kcal dal target. I macro DEVONO sommare esattamente al target calorico.
+REGOLE JSON:
+1. Rispondi SOLO con array JSON, zero testo prima o dopo
+2. Nei nomi degli alimenti NON usare apostrofi - scrivi "Fiocchi di avena" non "Fiocchi d'avena"
+3. Usa solo virgolette doppie nel JSON
+4. Le kcal totali dei pasti devono essere ${kcalDay} kcal (±80 kcal)
+5. Alimenti italiani gustosi e variati, non solo pollo e riso
 
-PASTI DA CREARE: ${formData.pastiSelezionati || 'Colazione, Pranzo, Spuntino pomeriggio, Cena'}
-
-METODI PREPARAZIONE PREFERITI: ${formData.metodiCottura || 'qualsiasi'}
-ATTREZZATURA DISPONIBILE: ${formData.attrezzatura || 'completa'}
-TEMPO DISPONIBILE: ${formData.tempoCottura || 'medio'}
-LIVELLO CULINARIO: ${formData.livelloCulinario || 'medio'}
-BUDGET: ${formData.budget || 'medio'}
-STILE CUCINA: ${formData.stileCucina || 'italiana'}
-PASTI SFIZOSI: ${formData.preferenzePasti || 'normale varietà'}
-MEAL PREP: ${formData.mealPrep || 'ogni giorno'}
-
-REGOLE IMPORTANTI:
-- Usa SOLO alimenti che il cliente può mangiare (rispetta allergie e intolleranze)
-- Includi metodo di preparazione per ogni alimento nel campo "prep"
-- Includi breve istruzione di preparazione del pasto nel campo "note_pasto"
-- Varia gli alimenti rispetto agli altri giorni della settimana
-- Pasti gustosi e realistici, non solo pollo e riso
-- Le kcal totali di tutti i pasti del giorno DEVONO essere ${kcalDay} ±50 kcal
-
-Rispondi SOLO con array JSON valido. Zero testo prima o dopo.
-[
-  {
-    "meal_type": "Colazione",
-    "note_pasto": "Preparazione rapida, ottima per chi ha poco tempo la mattina",
-    "foods": [
-      {"name": "Fiocchi d'avena", "qty": 60, "kcal100": 372, "p100": 13, "c100": 67, "g100": 7, "prep": "a crudo con latte"},
-      {"name": "Latte parzialmente scremato", "qty": 200, "kcal100": 46, "p100": 3.4, "c100": 4.8, "g100": 1.6, "prep": "freddo"}
-    ]
-  }
-]`
+FORMATO (segui esattamente):
+[{"meal_type":"Colazione","note_pasto":"Preparazione in 5 minuti","foods":[{"name":"Fiocchi di avena","qty":60,"kcal100":372,"p100":13,"c100":67,"g100":7,"prep":"a crudo con latte"},{"name":"Latte parzialmente scremato","qty":200,"kcal100":46,"p100":3.4,"c100":4.8,"g100":1.6,"prep":"freddo"}]},{"meal_type":"Pranzo","note_pasto":"Pasto completo e bilanciato","foods":[{"name":"Petto di pollo","qty":150,"kcal100":110,"p100":23,"c100":0,"g100":1.5,"prep":"griglia"},{"name":"Riso basmati","qty":80,"kcal100":352,"p100":7,"c100":78,"g100":0.5,"prep":"bollitura"},{"name":"Zucchine","qty":150,"kcal100":17,"p100":1.2,"c100":2.8,"g100":0.2,"prep":"padella con olio"}]},{"meal_type":"Spuntino pomeriggio","note_pasto":"Spuntino proteico","foods":[{"name":"Yogurt greco 0%","qty":150,"kcal100":57,"p100":10,"c100":3.6,"g100":0.2,"prep":"freddo"},{"name":"Mandorle","qty":20,"kcal100":579,"p100":21,"c100":22,"g100":50,"prep":"al naturale"}]},{"meal_type":"Cena","note_pasto":"Cena leggera e gustosa","foods":[{"name":"Salmone","qty":150,"kcal100":208,"p100":20,"c100":0,"g100":13,"prep":"forno con limone"},{"name":"Patate lesse","qty":200,"kcal100":77,"p100":2,"c100":17,"g100":0.1,"prep":"bollite"},{"name":"Insalata mista","qty":100,"kcal100":15,"p100":1,"c100":2,"g100":0.2,"prep":"cruda con aceto balsamico"}]}]`
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -73,23 +50,35 @@ Rispondi SOLO con array JSON valido. Zero testo prima o dopo.
       })
 
       const data = await response.json()
-      if (!response.ok || data.error) throw new Error(data.error?.message || 'Errore API giorno ' + d)
+      if (!response.ok || data.error) throw new Error(data.error?.message || 'Errore API')
 
       const text = data.content?.[0]?.text || ''
+      
+      // Estrai array JSON robusto
       const start = text.indexOf('[')
       const end = text.lastIndexOf(']')
-      if (start === -1 || end === -1) throw new Error(`Giorno ${d}: nessun array JSON`)
+      if (start === -1 || end === -1) throw new Error(`Giorno ${d}: nessun array`)
+
+      let jsonStr = text.slice(start, end + 1)
+      
+      // Sanitizza
+      jsonStr = jsonStr
+        .replace(/\/\/[^\n\r]*/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
 
       try {
-        days[String(d)] = JSON.parse(text.slice(start, end + 1))
+        const parsed = JSON.parse(jsonStr)
+        if (!Array.isArray(parsed)) throw new Error('Non è un array')
+        days[String(d)] = parsed
       } catch(e) {
-        throw new Error(`Giorno ${d} JSON non valido: ${e.message}`)
+        console.error(`Day ${d} error:`, e.message, jsonStr.slice(0, 300))
+        throw new Error(`Giorno ${d}: ${e.message}`)
       }
     }
 
-    // Genera feedback AI sul piano completo
-    const feedback = await generateFeedback(days, { kcalTarget, protTarget, carbsTarget, fatTarget, dayCalories })
-
+    // Feedback AI
+    const feedback = await generateFeedback(days, kcalTarget, protTarget)
     return res.status(200).json({ ok: true, days, feedback })
 
   } catch (e) {
@@ -99,49 +88,42 @@ Rispondi SOLO con array JSON valido. Zero testo prima o dopo.
 }
 
 function buildClientContext(f) {
-  const lines = []
-  if (f.eta) lines.push(`Età: ${f.eta} anni`)
-  if (f.sesso && f.sesso !== '—') lines.push(`Sesso: ${f.sesso}`)
-  if (f.peso) lines.push(`Peso: ${f.peso} kg`)
-  if (f.altezza) lines.push(`Altezza: ${f.altezza} cm`)
-  if (f.lavoro && f.lavoro !== '—') lines.push(`Lavoro: ${f.lavoro}`)
-  if (f.attivita && f.attivita !== '—') lines.push(`Attività fisica: ${f.attivita}`)
-  if (f.obiettivo && f.obiettivo !== '—') lines.push(`Obiettivo: ${f.obiettivo}`)
-  if (f.obiettivoEstetico) lines.push(`Obiettivo estetico: ${f.obiettivoEstetico}`)
-  if (f.pesoObiettivo) lines.push(`Peso obiettivo: ${f.pesoObiettivo} kg`)
-  if (f.intolleranze) lines.push(`INTOLLERANZE/ALLERGIE (VIETATI): ${f.intolleranze}`)
-  if (f.patologie) lines.push(`Patologie: ${f.patologie}`)
-  if (f.farmaci) lines.push(`Farmaci: ${f.farmaci}`)
-  if (f.nonMangia) lines.push(`Non mangia (VIETATI): ${f.nonMangia}`)
-  if (f.amaMangiare) lines.push(`Preferisce: ${f.amaMangiare}`)
-  if (f.integratoriUsati) lines.push(`Integratori già usati: ${f.integratoriUsati}`)
-  if (f.orariPasti) lines.push(`Orari pasti: ${f.orariPasti}`)
-  if (f.stilVita) lines.push(`Stile vita: ${f.stilVita}`)
-  if (f.noteExtra) lines.push(`Note extra coach: ${f.noteExtra}`)
-  return lines.join('\n')
+  const parts = []
+  if (f.eta) parts.push(`Eta ${f.eta} anni`)
+  if (f.sesso && f.sesso !== '—') parts.push(`Sesso ${f.sesso}`)
+  if (f.peso) parts.push(`Peso ${f.peso}kg`)
+  if (f.altezza) parts.push(`Altezza ${f.altezza}cm`)
+  if (f.lavoro && f.lavoro !== '—') parts.push(`Lavoro: ${f.lavoro}`)
+  if (f.attivita && f.attivita !== '—') parts.push(`Attivita: ${f.attivita}`)
+  if (f.obiettivo && f.obiettivo !== '—') parts.push(`Obiettivo: ${f.obiettivo}`)
+  if (f.variazione && f.variazione !== '—') parts.push(`Variazione: ${f.variazione}`)
+  if (f.intolleranze) parts.push(`VIETATI per intolleranze: ${f.intolleranze}`)
+  if (f.patologie) parts.push(`Patologie: ${f.patologie}`)
+  if (f.farmaci) parts.push(`Farmaci: ${f.farmaci}`)
+  if (f.nonMangia) parts.push(`Non mangia (VIETATI): ${f.nonMangia}`)
+  if (f.amaMangiare) parts.push(`Preferisce: ${f.amaMangiare}`)
+  if (f.budget && f.budget !== '—') parts.push(`Budget: ${f.budget}`)
+  if (f.noteExtra) parts.push(`Note: ${f.noteExtra}`)
+  return parts.length ? parts.join('. ') : 'Cliente generico'
 }
 
-async function generateFeedback(days, targets) {
+async function generateFeedback(days, kcalTarget, protTarget) {
   try {
     const summary = Object.entries(days).map(([d, meals]) => {
       const tot = meals.reduce((acc, m) => {
-        m.foods.forEach(f => { acc.kcal += (f.kcal100||0)*(f.qty||0)/100; acc.p += (f.p100||0)*(f.qty||0)/100 })
+        ;(m.foods || []).forEach(f => { acc.k += (f.kcal100||0)*(f.qty||0)/100; acc.p += (f.p100||0)*(f.qty||0)/100 })
         return acc
-      }, {kcal:0, p:0})
-      return `Giorno ${parseInt(d)+1}: ${Math.round(tot.kcal)} kcal, P${Math.round(tot.p)}g`
+      }, {k:0, p:0})
+      return `G${parseInt(d)+1}: ${Math.round(tot.k)}kcal P${Math.round(tot.p)}g`
     }).join(' | ')
 
-    const prompt = `Sei un nutrizionista. Analizza brevemente questo piano alimentare e dai feedback in 3 punti max.
-Dati: ${summary}
-Target: ${targets.kcalTarget} kcal/giorno
-Rispondi in italiano, max 100 parole, formato: "✅ Punto di forza: ... ⚠️ Attenzione: ... 💡 Suggerimento: ..."`
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 200, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 150,
+        messages: [{ role: 'user', content: `Nutrizionista. Feedback breve (max 80 parole) su questo piano: ${summary}. Target: ${kcalTarget}kcal, P${protTarget}g. Formato: "Forza: ... Attenzione: ... Suggerimento: ..."` }] }),
     })
-    const data = await res.json()
+    const data = await r.json()
     return data.content?.[0]?.text || ''
   } catch { return '' }
 }
