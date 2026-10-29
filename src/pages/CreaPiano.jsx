@@ -264,6 +264,7 @@ export default function CreaPiano() {
       setAiStatus('Costruzione piano...')
 
       const data = await res.json()
+      console.log('[AI Piano] risposta:', JSON.stringify(data).slice(0, 500))
       if (!res.ok || data.error) throw new Error(data.error || 'Errore generazione')
       const parsed = { days: data.days }
 
