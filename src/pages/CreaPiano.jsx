@@ -5,6 +5,34 @@ import { useToast } from '../components/Toast'
 import { searchFoods } from '../data/foodDatabase.js'
 
 const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
+
+// Componenti helper per il form AI
+function AISection({title, color, children}) {
+  return (
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:11,fontWeight:700,color,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+        {title}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function AIField({label, id, placeholder, type='text', options=[], style={}}) {
+  const base = {width:'100%',padding:'8px 10px',border:'0.5px solid #222',borderRadius:8,fontSize:12,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}
+  return (
+    <div>
+      {label && <div style={{fontSize:9,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>{label}</div>}
+      {type==='select' ? (
+        <select id={id} style={base}>
+          {options.map(o=><option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input id={id} type={type} placeholder={placeholder} style={{...base,...style}}/>
+      )}
+    </div>
+  )
+}
 const MEAL_TYPES = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena','Spuntino sera']
 const MEAL_ICONS = {'Colazione':'☀️','Spuntino mattina':'🍎','Pranzo':'🍽️','Spuntino pomeriggio':'🥜','Cena':'🌙','Spuntino sera':'🫐'}
 
@@ -749,60 +777,202 @@ export default function CreaPiano() {
         </div>
       )}
 
-      {/* MODAL AI */}
+      {/* MODAL AI — form strutturato */}
       {showAI && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div style={{background:'#0D0D0D',borderRadius:'16px 16px 0 0',padding:'20px',width:'100%',maxWidth:560,border:'0.5px solid rgba(155,89,182,0.3)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-              <i className="ti ti-sparkles" style={{fontSize:16,color:'#C39BE0'}}/>
-              <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Genera piano con AI</div>
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.88)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+          <div style={{background:'#0D0D0D',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:600,maxHeight:'92dvh',display:'flex',flexDirection:'column',border:'0.5px solid rgba(155,89,182,0.3)'}}>
+
+            {/* Header fisso */}
+            <div style={{padding:'18px 20px 14px',borderBottom:'0.5px solid #1A1A1A',flexShrink:0}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <i className="ti ti-sparkles" style={{fontSize:17,color:'#C39BE0'}}/>
+                  <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Genera Piano con AI</div>
+                </div>
+                {!aiLoading && (
+                  <button onClick={()=>setShowAI(false)} style={{width:30,height:30,borderRadius:8,background:'#161616',border:'0.5px solid #222',cursor:'pointer',color:'#888',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+                )}
+              </div>
+              <div style={{fontSize:11,color:'#666',marginTop:4}}>Compila i campi per un piano personalizzato e professionale</div>
             </div>
-            <div style={{fontSize:11,color:'#888',marginBottom:14}}>Descrivi cosa vuoi e l'AI crea una settimana completa</div>
-            <textarea
-              value={aiPrompt}
-              onChange={e=>setAiPrompt(e.target.value)}
-              placeholder="es. Piano ipocalorico 1800 kcal per uomo 35 anni sedentario, obiettivo perdita peso, intollerante al lattosio, non mangia pesce. Pasti semplici da preparare."
-              style={{...s.input,minHeight:100,resize:'vertical',marginBottom:12,lineHeight:1.6}}
-            />
-            {kcalTarget && !aiLoading && (
-              <div style={{fontSize:11,color:'#888',marginBottom:12}}>
-                Target: {kcalTarget} kcal · P{protTarget}g · C{carbsTarget}g · G{fatTarget}g
+
+            {/* Form scrollabile */}
+            {!aiLoading ? (
+              <div style={{flex:1,overflowY:'auto',padding:'16px 20px'}}>
+
+                {/* SOGGETTO */}
+                <AISection title="👤 Soggetto" color="#4A90D4">
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <AIField label="Età" placeholder="es. 35" id="eta"/>
+                    <AIField label="Sesso" type="select" options={['—','Uomo','Donna']} id="sesso"/>
+                    <AIField label="Peso attuale (kg)" placeholder="es. 82" id="peso"/>
+                    <AIField label="Altezza (cm)" placeholder="es. 175" id="altezza"/>
+                    <AIField label="Tipo di lavoro" type="select" options={['—','Sedentario (ufficio)','Leggero (in piedi)','Moderato (fisico medio)','Pesante (fisico intenso)']} id="lavoro"/>
+                    <AIField label="Attività fisica" type="select" options={['—','Nessuna','1-2 volte/settimana','3-4 volte/settimana','5+ volte/settimana','Atleta']} id="attivita"/>
+                  </div>
+                </AISection>
+
+                {/* OBIETTIVO */}
+                <AISection title="🎯 Obiettivo" color="#D4570A">
+                  <AIField label="Obiettivo principale" type="select" options={['—','Dimagrimento / Perdita peso','Dimagrimento lento e costante','Ricomposizione corporea','Aumento massa muscolare','Mantenimento peso','Miglioramento prestazioni','Dieta terapeutica']} id="obiettivo"/>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+                    <AIField label="Variazione calorica" type="select" options={['—','Deficit lieve -200 kcal','Deficit moderato -400 kcal','Deficit aggressivo -600 kcal','Mantenimento','Surplus lieve +200 kcal','Surplus moderato +400 kcal']} id="variazione"/>
+                    <AIField label="Peso obiettivo (kg)" placeholder="es. 75" id="pesoObiettivo"/>
+                  </div>
+                  <div style={{marginTop:8}}>
+                    <AIField label="Note obiettivo" placeholder="es. vuole perdere principalmente a livello addominale, ha un evento importante tra 3 mesi..." id="noteObiettivo"/>
+                  </div>
+                </AISection>
+
+                {/* PASTI */}
+                <AISection title="🍽️ Struttura pasti" color="#3B8C5A">
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <AIField label="Numero pasti/giorno" type="select" options={['—','3 pasti','4 pasti','5 pasti','6 pasti']} id="numPasti"/>
+                    <AIField label="Stile cucina" type="select" options={['—','Italiana classica','Mediterranea','Internazionale','Vegana','Vegetariana','Low carb','Paleo','Dieta zona']} id="stileCucina"/>
+                  </div>
+                  <div style={{marginTop:8}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:6}}>Pasti da includere</div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                      {['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena','Spuntino sera'].map(p=>(
+                        <label key={p} style={{display:'flex',alignItems:'center',gap:5,background:'#161616',border:'0.5px solid #222',borderRadius:7,padding:'5px 10px',cursor:'pointer',fontSize:12,color:'#CCC'}}>
+                          <input type="checkbox" defaultChecked={['Colazione','Pranzo','Spuntino pomeriggio','Cena'].includes(p)}
+                            onChange={e=>{
+                              const el = document.getElementById('pasti_selezionati')
+                              const current = el.value ? el.value.split(',') : []
+                              if(e.target.checked) el.value = [...new Set([...current,p])].join(',')
+                              else el.value = current.filter(x=>x!==p).join(',')
+                            }}/>{p}
+                        </label>
+                      ))}
+                    </div>
+                    <input type="hidden" id="pasti_selezionati" defaultValue="Colazione,Pranzo,Spuntino pomeriggio,Cena"/>
+                  </div>
+                  <div style={{marginTop:8}}>
+                    <AIField label="Preferenze pasti sfizosi" placeholder="es. vuole colazioni sfiziose, qualche dessert sano, niente pollo e riso ogni giorno..." id="preferenzePasti"/>
+                  </div>
+                  <div style={{marginTop:8}}>
+                    <AIField label="Tempo per cucinare" type="select" options={['—','Minimo (max 15 min)','Medio (30 min)','Elevato (anche ricette elaborate)']} id="tempoCottura"/>
+                  </div>
+                </AISection>
+
+                {/* INTOLLERANZE */}
+                <AISection title="⚠️ Intolleranze, allergie e patologie" color="#E24B4A">
+                  <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>
+                    {['Lattosio','Glutine/Celiachia','Nichel','Istamina','Fruttosio','Uova','Arachidi','Frutta a guscio','Pesce','Crostacei','Soia','Sesamo'].map(i=>(
+                      <label key={i} style={{display:'flex',alignItems:'center',gap:4,background:'rgba(226,75,74,0.08)',border:'0.5px solid rgba(226,75,74,0.2)',borderRadius:7,padding:'4px 9px',cursor:'pointer',fontSize:11,color:'#CCC'}}>
+                        <input type="checkbox" onChange={e=>{
+                          const el = document.getElementById('intolleranze')
+                          const cur = el.value ? el.value.split(',').filter(Boolean) : []
+                          el.value = e.target.checked ? [...cur,i].join(',') : cur.filter(x=>x!==i).join(',')
+                        }}/>{i}
+                      </label>
+                    ))}
+                  </div>
+                  <input type="hidden" id="intolleranze" defaultValue=""/>
+                  <AIField label="Patologie / condizioni particolari" placeholder="es. diabete tipo 2, ipertensione, ipotiroidismo, PCOS, gastrite, colite, colesterolo alto..." id="patologie"/>
+                  <div style={{marginTop:8}}>
+                    <AIField label="Farmaci che influenzano la dieta" placeholder="es. metformina, levotiroxina, cortisonici..." id="farmaci"/>
+                  </div>
+                </AISection>
+
+                {/* PREFERENZE ALIMENTARI */}
+                <AISection title="🥩 Preferenze alimentari" color="#E8A020">
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <div>
+                      <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Non mangia</div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                        {['Carne rossa','Maiale','Pollo','Pesce','Frutti di mare','Uova','Latticini','Legumi','Verdure cotte','Frutta'].map(a=>(
+                          <label key={a} style={{display:'flex',alignItems:'center',gap:3,background:'#161616',border:'0.5px solid #222',borderRadius:6,padding:'3px 7px',cursor:'pointer',fontSize:10,color:'#CCC'}}>
+                            <input type="checkbox" onChange={e=>{
+                              const el = document.getElementById('nonMangia')
+                              const cur = el.value ? el.value.split(',').filter(Boolean) : []
+                              el.value = e.target.checked ? [...cur,a].join(',') : cur.filter(x=>x!==a).join(',')
+                            }}/>{a}
+                          </label>
+                        ))}
+                      </div>
+                      <input type="hidden" id="nonMangia" defaultValue=""/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:5}}>Ama particolarmente</div>
+                      <AIField id="amaMangiare" placeholder="es. pasta, pollo, verdure grigliate, frutta, yogurt..."/>
+                    </div>
+                  </div>
+                  <div style={{marginTop:8}}>
+                    <AIField label="Altre note alimentari" placeholder="es. non fa colazione, mangia fuori a pranzo, ha poco tempo la mattina..." id="altreNote"/>
+                  </div>
+                </AISection>
+
+                {/* NOTE EXTRA */}
+                <AISection title="📝 Note aggiuntive per il coach" color="#9B59B6">
+                  <AIField id="noteExtra" placeholder="Qualsiasi altra indicazione importante: integratori da includere, timing dei pasti rispetto all'allenamento, gestione dei pasti fuori casa, giorni di sgarro..." style={{minHeight:60}}/>
+                </AISection>
+
+              </div>
+            ) : (
+              /* LOADING */
+              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32}}>
+                <i className="ti ti-sparkles" style={{fontSize:36,color:'#C39BE0',marginBottom:16}}/>
+                <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',marginBottom:4}}>{aiStatus}</div>
+                <div style={{fontSize:11,color:'#666',marginBottom:20}}>Creazione settimana alimentare personalizzata...</div>
+                <div style={{width:'100%',maxWidth:320}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                    <div style={{fontSize:11,color:'#888'}}>Giorno {Math.ceil(aiProgress/14)} di 7</div>
+                    <div style={{fontSize:11,fontWeight:800,color:'#C39BE0'}}>{aiProgress}%</div>
+                  </div>
+                  <div style={{height:8,background:'#1A1A1A',borderRadius:8,overflow:'hidden'}}>
+                    <div style={{height:8,borderRadius:8,background:'linear-gradient(90deg,#7C3AED,#C39BE0)',width:`${aiProgress}%`,transition:'width 0.4s ease'}}/>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* BARRA PROGRESSO */}
-            {aiLoading && (
-              <div style={{marginBottom:16}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                  <div style={{fontSize:12,color:'#C39BE0',fontWeight:600}}>{aiStatus}</div>
-                  <div style={{fontSize:12,fontWeight:800,color:'#C39BE0'}}>{aiProgress}%</div>
-                </div>
-                <div style={{height:6,background:'#1A1A1A',borderRadius:6,overflow:'hidden'}}>
-                  <div style={{
-                    height:6,
-                    borderRadius:6,
-                    background:'linear-gradient(90deg,#7C3AED,#C39BE0)',
-                    width:`${aiProgress}%`,
-                    transition:'width 0.5s ease',
-                  }}/>
-                </div>
-                <div style={{fontSize:10,color:'#555',marginTop:6,textAlign:'center'}}>
-                  AI sta creando la tua settimana alimentare...
-                </div>
+            {/* Footer con bottone */}
+            {!aiLoading && (
+              <div style={{padding:'14px 20px',borderTop:'0.5px solid #1A1A1A',flexShrink:0}}>
+                {kcalTarget && (
+                  <div style={{fontSize:10,color:'#555',marginBottom:10,textAlign:'center'}}>
+                    Target impostato: {kcalTarget} kcal · P{protTarget}g · C{carbsTarget}g · G{fatTarget}g
+                  </div>
+                )}
+                <button onClick={()=>{
+                  // Costruisci prompt da tutti i campi
+                  const get = id => document.getElementById(id)?.value || ''
+                  const parts = []
+                  if(get('eta')) parts.push(`Età: ${get('eta')} anni`)
+                  if(get('sesso')!=='—') parts.push(`Sesso: ${get('sesso')}`)
+                  if(get('peso')) parts.push(`Peso: ${get('peso')} kg`)
+                  if(get('altezza')) parts.push(`Altezza: ${get('altezza')} cm`)
+                  if(get('lavoro')!=='—') parts.push(`Lavoro: ${get('lavoro')}`)
+                  if(get('attivita')!=='—') parts.push(`Attività fisica: ${get('attivita')}`)
+                  if(get('obiettivo')!=='—') parts.push(`Obiettivo: ${get('obiettivo')}`)
+                  if(get('variazione')!=='—') parts.push(`Variazione calorica: ${get('variazione')}`)
+                  if(get('pesoObiettivo')) parts.push(`Peso obiettivo: ${get('pesoObiettivo')} kg`)
+                  if(get('noteObiettivo')) parts.push(`Note obiettivo: ${get('noteObiettivo')}`)
+                  if(get('numPasti')!=='—') parts.push(`Numero pasti: ${get('numPasti')}`)
+                  if(get('stileCucina')!=='—') parts.push(`Stile cucina: ${get('stileCucina')}`)
+                  const pastiSel = get('pasti_selezionati')
+                  if(pastiSel) parts.push(`Pasti da includere: ${pastiSel}`)
+                  if(get('preferenzePasti')) parts.push(`Preferenze pasti: ${get('preferenzePasti')}`)
+                  if(get('tempoCottura')!=='—') parts.push(`Tempo cottura: ${get('tempoCottura')}`)
+                  const intoll = get('intolleranze')
+                  if(intoll) parts.push(`Intolleranze/allergie: ${intoll}`)
+                  if(get('patologie')) parts.push(`Patologie: ${get('patologie')}`)
+                  if(get('farmaci')) parts.push(`Farmaci: ${get('farmaci')}`)
+                  const nonMang = get('nonMangia')
+                  if(nonMang) parts.push(`Non mangia: ${nonMang}`)
+                  if(get('amaMangiare')) parts.push(`Ama: ${get('amaMangiare')}`)
+                  if(get('altreNote')) parts.push(`Note alimentari: ${get('altreNote')}`)
+                  if(get('noteExtra')) parts.push(`Note extra: ${get('noteExtra')}`)
+                  if(parts.length === 0) { toast('Compila almeno un campo','error'); return }
+                  setAiPrompt(parts.join('. '))
+                  setTimeout(generateWithAI, 100)
+                }} style={{...s.btn,width:'100%',justifyContent:'center',padding:'13px',background:'rgba(155,89,182,0.85)',fontSize:14}}>
+                  <i className="ti ti-sparkles" style={{fontSize:15}}/>
+                  Genera settimana alimentare completa
+                </button>
               </div>
             )}
-
-            <div style={{display:'flex',gap:8}}>
-              <button onClick={generateWithAI} disabled={aiLoading||!aiPrompt.trim()} style={{
-                ...s.btn,flex:1,justifyContent:'center',
-                background: aiLoading ? 'rgba(124,58,237,0.4)' : 'rgba(155,89,182,0.85)',
-                opacity: !aiPrompt.trim() ? 0.4 : 1,
-              }}>
-                <i className="ti ti-sparkles" style={{fontSize:13}}/>
-                {aiLoading ? `Generando... ${aiProgress}%` : 'Genera settimana completa'}
-              </button>
-              {!aiLoading && <button onClick={()=>setShowAI(false)} style={s.btnGray}>Annulla</button>}
-            </div>
           </div>
         </div>
       )}
