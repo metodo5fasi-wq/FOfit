@@ -131,11 +131,12 @@ export default function CreaPiano(){
 
   // Ricalcola calorie per giorno quando cambia dieta o target
   useEffect(()=>{
-    if(!kcalTarget) return
+    const kcal=parseInt(kcalTarget)||0
+    if(!kcal) return
     const dt=DIET_TYPES.find(d=>d.id===selectedDiet)
     if(dt){
       const tdee=clientAnamnesi?calcolaTDEE(clientAnamnesi)?.tdee:null
-      setDayCalories(dt.calc(parseInt(kcalTarget)||2000,tdee))
+      setDayCalories(dt.calc(kcal,tdee))
     }
   },[selectedDiet,kcalTarget,clientAnamnesi])
 
@@ -433,16 +434,39 @@ export default function CreaPiano(){
       <div style={{maxWidth:700,margin:'0 auto',padding:'14px 16px'}}>
 
         {/* FEEDBACK AI */}
-        {showFeedback&&aiFeedback&&(
+        {showFeedback&&(
           <div style={{...s.card,background:'rgba(155,89,182,0.08)',border:'0.5px solid rgba(155,89,182,0.25)',marginBottom:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
-              <div>
-                <div style={{fontSize:11,fontWeight:700,color:'#C39BE0',marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
-                  <i className="ti ti-sparkles" style={{fontSize:12}}/>Feedback AI sul piano
-                </div>
-                <div style={{fontSize:12,color:'#DDD',lineHeight:1.6}}>{aiFeedback}</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#C39BE0',display:'flex',alignItems:'center',gap:5}}>
+                <i className="ti ti-sparkles" style={{fontSize:12}}/>Feedback AI — modifica e applica
               </div>
-              <button onClick={()=>setShowFeedback(false)} style={{...s.btnGray,padding:'3px 7px',flexShrink:0}}>✕</button>
+              <button onClick={()=>setShowFeedback(false)} style={{...s.btnGray,padding:'3px 7px'}}>✕</button>
+            </div>
+            <textarea
+              value={aiFeedback}
+              onChange={e=>setAiFeedback(e.target.value)}
+              rows={4}
+              style={{width:'100%',padding:'8px 10px',border:'0.5px solid rgba(155,89,182,0.3)',borderRadius:8,fontSize:12,color:'#DDD',background:'rgba(155,89,182,0.06)',outline:'none',fontFamily:'inherit',resize:'vertical',lineHeight:1.6,boxSizing:'border-box',marginBottom:8}}
+            />
+            <div style={{fontSize:10,color:'#666',marginBottom:8}}>
+              Scrivi qui le tue modifiche al piano (es. "sostituisci il salmone con il tonno", "aggiungi più verdure a cena", "riduci i carboidrati a pranzo") e premi Applica.
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={async()=>{
+                if(!aiFeedback.trim()) return
+                // Rigenera tutti i giorni applicando il feedback come nota extra
+                const formEl=document.getElementById('ai_note_extra')
+                const prevNote=formEl?.value||''
+                if(formEl) formEl.value=`${prevNote ? prevNote+'. ' : ''}MODIFICHE RICHIESTE: ${aiFeedback}`
+                setShowFeedback(false)
+                setShowAI(false)
+                await generateWithAI()
+              }} style={{...s.btn,flex:1,justifyContent:'center',background:'rgba(155,89,182,0.8)',fontSize:12}}>
+                <i className="ti ti-refresh" style={{fontSize:12}}/>Rigenera piano con queste modifiche
+              </button>
+              <button onClick={()=>setAiFeedback('')} style={{...s.btnGray,fontSize:11}}>
+                Svuota
+              </button>
             </div>
           </div>
         )}
@@ -635,11 +659,16 @@ export default function CreaPiano(){
                 )}
               </div>
 
-              {/* Note preparazione pasto */}
-              {meal.note_pasto&&(
-                <div style={{background:'rgba(155,89,182,0.08)',borderRadius:8,padding:'7px 10px',marginBottom:8,fontSize:11,color:'#C39BE0',borderLeft:'2px solid rgba(155,89,182,0.4)'}}>
-                  <i className="ti ti-chef-hat" style={{fontSize:11,marginRight:5}}/>
-                  {meal.note_pasto}
+              {/* Note preparazione pasto — sempre editabile */}
+              {meal.foods.length>0&&(
+                <div style={{marginBottom:8}}>
+                  <textarea
+                    value={meal.note_pasto||''}
+                    onChange={e=>setDays(p=>{const d={...p};d[selectedDay][mi]={...d[selectedDay][mi],note_pasto:e.target.value};return d})}
+                    placeholder="🍳 Istruzioni di preparazione del pasto (generate dall'AI o scrivi tu)..."
+                    rows={2}
+                    style={{width:'100%',padding:'7px 10px',border:'0.5px solid rgba(155,89,182,0.2)',borderRadius:8,fontSize:11,color:'#C39BE0',background:'rgba(155,89,182,0.06)',outline:'none',fontFamily:'inherit',resize:'vertical',lineHeight:1.5,boxSizing:'border-box'}}
+                  />
                 </div>
               )}
 
@@ -656,13 +685,15 @@ export default function CreaPiano(){
                     <span style={{fontSize:10,color:'#555',flexShrink:0}}>g</span>
                     <button onClick={()=>removeFood(selectedDay,mi,fi)} style={s.btnDanger}>✕</button>
                   </div>
-                  {/* Metodo preparazione */}
-                  <div style={{display:'flex',alignItems:'center',gap:5}}>
-                    <span style={{fontSize:13}}>{PREP_ICONS[food.prep]||'🍽️'}</span>
-                    <input value={food.prep||''} onChange={e=>updatePrep(selectedDay,mi,fi,e.target.value)}
-                      placeholder="metodo preparazione (es. griglia, vapore...)"
-                      style={{flex:1,padding:'3px 8px',border:'0.5px solid #1A1A1A',borderRadius:6,fontSize:10,color:'#888',background:'transparent',outline:'none',fontFamily:'inherit'}}/>
-                  </div>
+                  {/* Metodo preparazione — solo per pasti con cottura reale */}
+                  {(meal.foods.length>1||['Colazione','Pranzo','Cena'].includes(meal.meal_type))&&(
+                    <div style={{display:'flex',alignItems:'center',gap:5,marginTop:3}}>
+                      <span style={{fontSize:12,flexShrink:0}}>{PREP_ICONS[food.prep]||'🍳'}</span>
+                      <input value={food.prep||''} onChange={e=>updatePrep(selectedDay,mi,fi,e.target.value)}
+                        placeholder="es. griglia, vapore, forno, padella..."
+                        style={{flex:1,padding:'3px 8px',border:'0.5px solid #1A1A1A',borderRadius:6,fontSize:10,color:'#888',background:'transparent',outline:'none',fontFamily:'inherit'}}/>
+                    </div>
+                  )}
                 </div>
               ))}
 
