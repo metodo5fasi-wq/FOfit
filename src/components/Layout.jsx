@@ -308,7 +308,7 @@ export default function Layout() {
           </div>
         )}
 
-        <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+        <div style={{flex:1,overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column',WebkitOverflowScrolling:'touch'}}>
 
           {/* BANNER SCADENZA ABBONAMENTO */}
           {showCountdown && (
