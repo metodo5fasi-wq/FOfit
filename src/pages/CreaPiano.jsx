@@ -251,6 +251,7 @@ export default function CreaPiano(){
   }
 
   function parseDayMeals(meals){
+    if(!Array.isArray(meals)) return []
     return meals.map(m=>({
       meal_type:m.meal_type,
       note_pasto:m.note_pasto||'',
