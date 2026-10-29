@@ -1,5 +1,30 @@
 {
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/parse-plan.js": { "maxDuration": 60 },
+    "api/create-user.js": { "maxDuration": 30 },
+    "api/ai-coach.js": { "maxDuration": 60 },
+    "api/push-send.js": { "maxDuration": 30 },
+    "api/push-subscribe.js": { "maxDuration": 30 }
+  }
 }
