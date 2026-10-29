@@ -275,14 +275,14 @@ export default function CreaPiano(){
   }
 
   function parseDayMeals(meals){
-    if(!Array.isArray(meals)) return []
-    return meals.map(m=>({
-      meal_type:m.meal_type,
+    if(!meals||!Array.isArray(meals)) return []
+    return meals.filter(m=>m&&m.meal_type).map(m=>({
+      meal_type:m.meal_type||'Pasto',
       note_pasto:m.note_pasto||'',
-      foods:(m.foods||[]).map(f=>{
-        const qty=f.qty||100
-        return{food_name:f.name,quantity_g:qty,kcal:Math.round((f.kcal100||0)*qty/100),protein_g:Math.round((f.p100||0)*qty/100*10)/10,carbs_g:Math.round((f.c100||0)*qty/100*10)/10,fat_g:Math.round((f.g100||0)*qty/100*10)/10,_k100:f.kcal100||0,_p100:f.p100||0,_c100:f.c100||0,_g100:f.g100||0,prep:f.prep||''}
-      })
+      foods:Array.isArray(m.foods)?m.foods.filter(f=>f&&f.name).map(f=>{
+        const qty=parseFloat(f.qty)||100
+        return{food_name:f.name,quantity_g:qty,kcal:Math.round((parseFloat(f.kcal100)||0)*qty/100),protein_g:Math.round((parseFloat(f.p100)||0)*qty/100*10)/10,carbs_g:Math.round((parseFloat(f.c100)||0)*qty/100*10)/10,fat_g:Math.round((parseFloat(f.g100)||0)*qty/100*10)/10,_k100:parseFloat(f.kcal100)||0,_p100:parseFloat(f.p100)||0,_c100:parseFloat(f.c100)||0,_g100:parseFloat(f.g100)||0,prep:f.prep||''}
+      }):[]
     }))
   }
 
@@ -478,13 +478,10 @@ export default function CreaPiano(){
             <div style={{display:'flex',gap:6}}>
               <button onClick={async()=>{
                 if(!aiFeedback.trim()) return
-                // Usa lastFormData (dati dell'ultima generazione) + aggiunge il feedback come nota
                 const base = lastFormData || {}
-                const merged = {...base, noteExtra: (base.noteExtra ? base.noteExtra+'. ' : '') + 'MODIFICHE RICHIESTE: ' + aiFeedback}
+                const merged = {...base, noteExtra: (base.noteExtra ? base.noteExtra+'. ' : '')+'MODIFICHE RICHIESTE: '+aiFeedback}
                 setLastFormData(merged)
                 setShowFeedback(false)
-                setShowAI(false)
-                // Genera direttamente senza aprire il modal
                 await generateWithAIFromData(merged)
               }} style={{...s.btn,flex:1,justifyContent:'center',background:'rgba(155,89,182,0.8)',fontSize:12}}>
                 <i className="ti ti-refresh" style={{fontSize:12}}/>Rigenera con queste modifiche
