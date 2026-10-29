@@ -102,6 +102,7 @@ export default function CreaPiano(){
   const [aiFeedback,setAiFeedback]=useState('')
   const [showFeedback,setShowFeedback]=useState(false)
   const [regenDay,setRegenDay]=useState(null)
+  const [lastFormData,setLastFormData]=useState(null) // ultimi dati form usati per generazione
 
   // Preview
   const [showPreview,setShowPreview]=useState(false)
@@ -234,9 +235,31 @@ export default function CreaPiano(){
     toast('Piano importato!','success')
   }
 
+  // Genera da dati già pronti (senza leggere DOM)
+  async function generateWithAIFromData(formData){
+    setAiLoading(true);setAiProgress(5);setAiStatus('Analisi modifiche...')
+    const msgs=['Analisi modifiche...','Lunedì...','Martedì...','Mercoledì...','Giovedì...','Venerdì...','Sabato...','Domenica...','Feedback AI...']
+    let cur=5
+    const timer=setInterval(()=>{cur=Math.min(cur+1.5,88);const di=Math.floor((cur-5)/12);setAiProgress(Math.round(cur));setAiStatus(msgs[Math.min(di,msgs.length-1)])},400)
+    try{
+      const res=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({formData,kcalTarget,protTarget,carbsTarget,fatTarget,dietType:selectedDiet,dayCalories})})
+      clearInterval(timer);setAiProgress(95);setAiStatus('Applicando modifiche...')
+      const data=await res.json()
+      if(!res.ok||data.error) throw new Error(data.error)
+      const newDays={};for(let i=0;i<7;i++) newDays[i]=[]
+      Object.entries(data.days).forEach(([di,meals])=>{newDays[parseInt(di)]=parseDayMeals(meals)})
+      setDays(newDays)
+      if(data.feedback){setAiFeedback(data.feedback);setShowFeedback(true)}
+      setAiProgress(100);await new Promise(r=>setTimeout(r,400))
+      toast('Piano rigenerato con le tue modifiche! 🎉','success')
+    }catch(e){clearInterval(timer);toast('Errore: '+e.message,'error')}
+    finally{setAiLoading(false);setAiProgress(0);setAiStatus('')}
+  }
+
   // Rigenera singolo giorno
   async function regenSingleDay(di){
-    const formData=buildFormDataFromDOM()
+    const formData=lastFormData||buildFormDataFromDOM()
     setRegenDay(di)
     try{
       const res=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -285,6 +308,7 @@ export default function CreaPiano(){
     const formData=buildFormDataFromDOM()
     const hasData=Object.values(formData).some(v=>v&&v!=='—')
     if(!hasData){toast('Compila almeno un campo','error');return}
+    setLastFormData(formData) // salva per usi successivi
 
     setAiLoading(true);setAiProgress(5);setAiStatus('Analisi cliente...')
     setAiFeedback('');setShowFeedback(false)
@@ -454,15 +478,16 @@ export default function CreaPiano(){
             <div style={{display:'flex',gap:6}}>
               <button onClick={async()=>{
                 if(!aiFeedback.trim()) return
-                // Rigenera tutti i giorni applicando il feedback come nota extra
-                const formEl=document.getElementById('ai_note_extra')
-                const prevNote=formEl?.value||''
-                if(formEl) formEl.value=`${prevNote ? prevNote+'. ' : ''}MODIFICHE RICHIESTE: ${aiFeedback}`
+                // Usa lastFormData (dati dell'ultima generazione) + aggiunge il feedback come nota
+                const base = lastFormData || {}
+                const merged = {...base, noteExtra: (base.noteExtra ? base.noteExtra+'. ' : '') + 'MODIFICHE RICHIESTE: ' + aiFeedback}
+                setLastFormData(merged)
                 setShowFeedback(false)
                 setShowAI(false)
-                await generateWithAI()
+                // Genera direttamente senza aprire il modal
+                await generateWithAIFromData(merged)
               }} style={{...s.btn,flex:1,justifyContent:'center',background:'rgba(155,89,182,0.8)',fontSize:12}}>
-                <i className="ti ti-refresh" style={{fontSize:12}}/>Rigenera piano con queste modifiche
+                <i className="ti ti-refresh" style={{fontSize:12}}/>Rigenera con queste modifiche
               </button>
               <button onClick={()=>setAiFeedback('')} style={{...s.btnGray,fontSize:11}}>
                 Svuota
@@ -931,6 +956,13 @@ export default function CreaPiano(){
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
                     <Fld label="Numero pasti/giorno" id="ai_num_pasti" type="select" options={['—','3 pasti','4 pasti','5 pasti','6 pasti']}/>
                     <Fld label="Stile cucina" id="ai_stile" type="select" options={['—','Italiana classica','Mediterranea','Internazionale varia','Vegana','Vegetariana','Low carb / Chetogenica','Paleo','Dieta zona']}/>
+                  <div>
+                    <div style={{fontSize:9,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:4}}>Tipo di dieta</div>
+                    <select id="ai_diet_type" style={{width:'100%',padding:'8px 10px',border:'0.5px solid #222',borderRadius:8,fontSize:12,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}
+                      onChange={e=>setSelectedDiet(e.target.value)} value={selectedDiet}>
+                      {DIET_TYPES.map(dt=><option key={dt.id} value={dt.id}>{dt.label} — {dt.desc}</option>)}
+                    </select>
+                  </div>
                     <Fld label="Budget settimanale" id="ai_budget" type="select" options={['—','Economico (spesa minima)','Medio','Ampio (ingredienti premium)']}/>
                     <Fld label="Meal prep" id="ai_meal_prep" type="select" options={['—','Cucina tutto domenica','Cucina 2-3 volte/settimana','Cucina ogni giorno','Solo pasti freddi/veloci']}/>
                     <Fld label="Tempo cottura" id="ai_tempo" type="select" options={['—','Minimo (max 10 min)','Breve (15-20 min)','Medio (30 min)','Nessun limite']}/>
