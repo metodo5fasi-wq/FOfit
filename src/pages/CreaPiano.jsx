@@ -424,7 +424,7 @@ export default function CreaPiano(){
     btnGray:{padding:'7px 12px',background:'#161616',color:'#CCC',border:'0.5px solid #222',borderRadius:8,fontSize:12,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5},
     btnDanger:{padding:'5px 8px',background:'none',color:'#E24B4A',border:'0.5px solid rgba(226,75,74,0.3)',borderRadius:6,fontSize:11,cursor:'pointer',fontFamily:'inherit'},
     modal:{position:'fixed',inset:0,background:'rgba(0,0,0,0.88)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'},
-    modalBox:{background:'#0D0D0D',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:600,maxHeight:'92dvh',display:'flex',flexDirection:'column',border:'0.5px solid #1C1C1C'},
+    modalBox:{background:'#0D0D0D',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:600,maxHeight:'92dvh',display:'flex',flexDirection:'column',border:'0.5px solid #1C1C1C',overflow:'hidden'},
   }
 
   const tot=dayTotals(selectedDay)
@@ -814,7 +814,7 @@ export default function CreaPiano(){
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>I tuoi template pasti</div>
               <button onClick={()=>setShowTemplates(null)} style={{...s.btnGray,padding:'3px 8px'}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:'auto',padding:'12px 16px'}}>
+            <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px 16px'}}>
               {templates.length===0?(
                 <div style={{textAlign:'center',color:'#444',fontSize:12,padding:'20px 0'}}>Nessun template. Crea un pasto e salvalo!</div>
               ):templates.map(t=>(
@@ -845,7 +845,7 @@ export default function CreaPiano(){
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Importa piano da altro cliente</div>
               <button onClick={()=>setShowCopyPlan(false)} style={{...s.btnGray,padding:'3px 8px'}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:'auto',padding:'12px 16px'}}>
+            <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px 16px'}}>
               {otherPlans.length===0?<div style={{textAlign:'center',color:'#444',fontSize:12,padding:'20px 0'}}>Nessun piano disponibile</div>:
                 otherPlans.map(p=>(
                   <div key={p.id} style={{background:'#161616',borderRadius:10,padding:'12px',marginBottom:8,border:'0.5px solid #222',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -870,7 +870,7 @@ export default function CreaPiano(){
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Preview piano — riepilogo 7 giorni</div>
               <button onClick={()=>setShowPreview(false)} style={{...s.btnGray,padding:'3px 8px'}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:'auto',padding:'12px 16px'}}>
+            <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px 16px'}}>
               {DAY_NAMES.map((d,i)=>{
                 const t=dayTotals(i);const target=dayCalories[i]||parseInt(kcalTarget)||0
                 const diff=target?Math.round(t.kcal-target):0;const ok=Math.abs(diff)<=100
@@ -924,7 +924,7 @@ export default function CreaPiano(){
             </div>
 
             {!aiLoading?(
-              <div style={{flex:1,overflowY:'auto',padding:'14px 20px'}}>
+              <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'14px 20px'}}>
 
                 <Sec title="👤 Anagrafica e stile di vita" color="#4A90D4">
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>

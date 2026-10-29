@@ -417,7 +417,7 @@ export default function StoricoAllenamento() {
       {editingSession && (
         <div onClick={e => e.target === e.currentTarget && setEditingSession(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: '16px 16px 0 0', padding: 20, width: '100%', maxWidth: 500, maxHeight: '85dvh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px 16px 0 0', padding: 20, width: '100%', maxWidth: 500, maxHeight: '85dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0', marginBottom: 2 }}>Modifica sessione</div>
             <div style={{ fontSize: 12, color: '#AAA', marginBottom: 14 }}>
               {editingSession.day_label} · {new Date(editingSession.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
