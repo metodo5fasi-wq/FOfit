@@ -1,7 +1,7 @@
 // Funzioni pure per la creazione schede allenamento (testabili senza interfaccia)
 import { EXERCISE_DB } from '../data/exerciseDatabase.js'
 
-export const MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Femorali','Glutei','Polpacci','Addominali','Cardio','Corpo libero']
+export const MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Avambracci','Gambe','Femorali','Glutei','Polpacci','Addominali','Cardio','Corpo libero','Mobilità e postura']
 
 const FOCUS = {
   full:  ['Gambe','Petto','Schiena','Spalle','Addominali'],
@@ -82,6 +82,8 @@ export function normalizeMuscle(m) {
   if (/femor|hamstring/.test(k)) return 'Femorali'
   if (/polpac|calf/.test(k)) return 'Polpacci'
   if (/cardio|corsa|bici/.test(k)) return 'Cardio'
+  if (/avambrac|polso|polsi|presa|grip/.test(k)) return 'Avambracci'
+  if (/mobil|stretch|postur|foam|respir|allung|correttiv/.test(k)) return 'Mobilità e postura'
   return 'Corpo libero'
 }
 
