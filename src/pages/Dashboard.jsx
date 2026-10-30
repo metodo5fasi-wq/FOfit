@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useTheme } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber, FadeIn, PulseDot } from '../components/Animations'
 import { requestNotificationPermission, checkNotificationStatus, sendTestNotification } from '../lib/notifications'
+import { GraficoPeso, GraficoKcal } from '../components/GraficiProgressi'
 
 const QUICK_LINKS = [
   { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
@@ -33,8 +34,8 @@ function CalorieRing({ current, target }) {
         <div style={{fontSize:24,fontWeight:700,color:'white',lineHeight:1}}>
           <AnimatedNumber value={Math.round(current)} duration={400}/>
         </div>
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>kcal</div>
-        <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:1}}>di {target.toLocaleString('it-IT')}</div>
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.65)',marginTop:2}}>kcal</div>
+        <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:1}}>di {target.toLocaleString('it-IT')}</div>
       </div>
     </div>
   )
@@ -48,7 +49,7 @@ function StreakBadge({ streak }) {
       <span style={{fontSize:16}}>🔥</span>
       <div>
         <div style={{fontSize:14,fontWeight:700,color:'#F4894A',lineHeight:1}}>{streak}</div>
-        <div style={{fontSize:9,color:'rgba(255,255,255,0.4)'}}>giorni</div>
+        <div style={{fontSize:9,color:'rgba(255,255,255,0.65)'}}>giorni</div>
       </div>
     </div>
   )
@@ -67,7 +68,12 @@ export default function Dashboard() {
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const [notifStatus, setNotifStatus] = useState('default')
-  const prevKcalRef = React.useRef(0)
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
+  const [weeklyComp, setWeeklyComp] = useState(null) // confronto settimana precedente
+  const [nextWorkout, setNextWorkout] = useState(null)
+  const [nextWorkoutExercises, setNextWorkoutExercises] = useState([])
+  const [weekStats, setWeekStats] = useState(null)
+  const prevKcalRef = useRef(0)
 
   useEffect(() => {
     checkNotificationStatus().then(setNotifStatus)
@@ -101,6 +107,18 @@ export default function Dashboard() {
       .then(({ data }) => data?.length && setPlan(data[0]))
     // Calcola streak
     calcStreak()
+    // Confronto settimana precedente
+    calcWeeklyComparison()
+    // Prossimo allenamento
+    loadNextWorkout()
+    // Riepilogo settimana
+    loadWeekStats()
+    // Notifiche non lette
+    supabase.from('notifications').select('id', {count:'exact',head:true})
+      .eq('client_id', profile.id).eq('read', false)
+      .then(({count}) => setUnreadNotifs(count || 0))
+    // Riepilogo settimana
+    loadWeekStats()
   }, [profile])
 
   async function calcStreak() {
@@ -124,6 +142,75 @@ export default function Dashboard() {
     setStreak(count)
   }
 
+  async function calcWeeklyComparison() {
+    const thisWeekStart = new Date(); thisWeekStart.setDate(thisWeekStart.getDate() - 7)
+    const lastWeekStart = new Date(); lastWeekStart.setDate(lastWeekStart.getDate() - 14)
+    const [thisW, lastW, thisSess, lastSess] = await Promise.all([
+      supabase.from('diary_entries').select('kcal').eq('client_id', profile.id)
+        .gte('entry_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('diary_entries').select('kcal').eq('client_id', profile.id)
+        .gte('entry_date', lastWeekStart.toISOString().split('T')[0])
+        .lt('entry_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('client_id', profile.id)
+        .gte('session_date', thisWeekStart.toISOString().split('T')[0]),
+      supabase.from('workout_sessions').select('id', { count: 'exact', head: true }).eq('client_id', profile.id)
+        .gte('session_date', lastWeekStart.toISOString().split('T')[0])
+        .lt('session_date', thisWeekStart.toISOString().split('T')[0]),
+    ])
+    const thisKcal = Math.round((thisW.data || []).reduce((s, r) => s + (r.kcal || 0), 0) / Math.max((thisW.data?.length || 1), 1))
+    const lastKcal = Math.round((lastW.data || []).reduce((s, r) => s + (r.kcal || 0), 0) / Math.max((lastW.data?.length || 1), 1))
+    setWeeklyComp({
+      kcalDiff: thisKcal - lastKcal,
+      sessDiff: (thisSess.count || 0) - (lastSess.count || 0),
+      thisSess: thisSess.count || 0,
+      lastSess: lastSess.count || 0,
+    })
+  }
+
+  async function loadNextWorkout() {
+    const { data } = await supabase.from('workout_plans')
+      .select('id, name, days_per_week').eq('client_id', profile.id)
+      .eq('is_active', true).limit(1)
+    if (!data?.[0]) return
+    setNextWorkout(data[0])
+    // Carica esercizi del giorno corrente
+    const todayDow = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+    const { data: exData } = await supabase.from('workout_exercises')
+      .select('exercise_name, muscle_group, sets, reps')
+      .eq('plan_id', data[0].id)
+      .eq('day_of_week', todayDow)
+      .order('sort_order')
+      .limit(6)
+    if (exData?.length) {
+      setNextWorkoutExercises(exData)
+    } else {
+      // Prova col giorno dopo
+      const nextDow = (todayDow + 1) % 7
+      const { data: nextEx } = await supabase.from('workout_exercises')
+        .select('exercise_name, muscle_group, sets, reps')
+        .eq('plan_id', data[0].id)
+        .eq('day_of_week', nextDow)
+        .order('sort_order')
+        .limit(6)
+      setNextWorkoutExercises(nextEx || [])
+    }
+  }
+
+  async function loadWeekStats() {
+    const weekStart = new Date()
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1))
+    const weekStartStr = weekStart.toISOString().split('T')[0]
+    const [diary, sessions] = await Promise.all([
+      supabase.from('diary_entries').select('entry_date')
+        .eq('client_id', profile.id).gte('entry_date', weekStartStr),
+      supabase.from('workout_sessions').select('id')
+        .eq('client_id', profile.id).gte('session_date', weekStartStr),
+    ])
+    const diaryDays = new Set((diary.data||[]).map(d => d.entry_date)).size
+    const sessions_count = sessions.data?.length || 0
+    setWeekStats({ diaryDays, sessions: sessions_count })
+  }
+
   function showToast(message, emoji) {
     setToast({ visible: true, message, emoji })
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500)
@@ -144,6 +231,7 @@ export default function Dashboard() {
     }
     prevKcalRef.current = todayKcal
   }, [todayKcal, todayP, plan])
+  const kcalTarget = plan?.kcal_target || 2200
   const pTarget = plan?.protein_target_g || 150
   const cTarget = plan?.carbs_target_g || 220
   const gTarget = plan?.fat_target_g || 65
@@ -163,138 +251,302 @@ export default function Dashboard() {
     <>
       <Confetti active={confetti} onDone={() => setConfetti(false)}/>
       <Toast message={toast.message} emoji={toast.emoji} visible={toast.visible}/>
-      {/* HERO */}
-      <div style={{
-        background:'linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%)',
-        padding:'20px 22px 24px', flexShrink:0, position:'relative', overflow:'hidden'
-      }}>
-        <div style={{position:'absolute',top:-40,right:-40,width:180,height:180,borderRadius:'50%',background:'rgba(212,87,10,0.07)'}}/>
-        <div style={{position:'absolute',bottom:-20,left:60,width:100,height:100,borderRadius:'50%',background:'rgba(244,137,74,0.05)'}}/>
 
-        {/* Header */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20,position:'relative'}}>
+      {/* HERO — sfondo dark premium */}
+      <div style={{
+        background:'#080808',
+        padding:'18px 18px 20px',
+        flexShrink:0,
+        borderBottom:'0.5px solid #111',
+      }}>
+        {/* Saluto + streak */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
           <div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.38)',marginBottom:3}}>{todayName} · {new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long'})}</div>
-            <div style={{fontSize:20,fontWeight:600,color:'white',letterSpacing:-0.3}}>
-              {greeting}, <span style={{color:'#F4894A'}}>{firstName}</span> 👋
+            <div style={{fontSize:11,color:'#A0A0A0',marginBottom:4,fontWeight:500}}>
+              {todayName} · {new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long'})}
             </div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.38)',marginTop:3}}>{motivMsg}</div>
+            <div style={{fontSize:22,fontWeight:800,color:'#F0F0F0',letterSpacing:-0.8,lineHeight:1.1}}>
+              {greeting}, <span style={{color:'#F4894A'}}>{firstName}</span>
+            </div>
+            <div style={{fontSize:12,color:'#DDD',marginTop:5}}>{motivMsg}</div>
           </div>
-          <StreakBadge streak={streak}/>
+          {streak > 0 && (
+            <div style={{background:'#120800',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:14,padding:'8px 12px',textAlign:'center',flexShrink:0}}>
+              <div style={{fontSize:22,fontWeight:800,color:'#F4894A',lineHeight:1}}>
+                <AnimatedNumber value={streak} duration={400}/>
+              </div>
+              <div style={{fontSize:9,color:'#D4570A',fontWeight:700,marginTop:2}}>giorni 🔥</div>
+            </div>
+          )}
         </div>
 
-        {/* Cerchio + macro */}
-        <div style={{display:'flex',alignItems:'center',gap:20,position:'relative'}}>
-          <CalorieRing current={todayKcal} target={kcalTarget}/>
-
-          <div style={{flex:1,display:'flex',flexDirection:'column',gap:10}}>
-            {[
-              { label:'Proteine', val:Math.round(todayP), target:pTarget, unit:'g', color:'#D4570A' },
-              { label:'Carboidrati', val:Math.round(todayC), target:cTarget, unit:'g', color:'#F4894A' },
-              { label:'Grassi', val:Math.round(todayG), target:gTarget, unit:'g', color:'#FAC775' },
-            ].map(m => {
-              const pct = Math.min(100, m.target > 0 ? Math.round(m.val/m.target*100) : 0)
-              return (
-                <div key={m.label}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                    <span style={{fontSize:11,color:'rgba(255,255,255,0.45)'}}>{m.label}</span>
-                    <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:500}}><AnimatedNumber value={m.val} duration={400}/><span style={{color:'rgba(255,255,255,0.3)'}}>/{m.target}{m.unit}</span></span>
-                  </div>
-                  <div style={{height:5,background:'rgba(255,255,255,0.08)',borderRadius:3,overflow:'hidden'}}>
-                    <div style={{height:5,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
-                  </div>
-                </div>
-              )
-            })}
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:2}}>
-              {remaining.toLocaleString('it-IT')} kcal rimanenti
+        {/* Barra kcal principale */}
+        <div style={{marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+            <span style={{fontSize:11,color:'#CCC',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em'}}>Kcal oggi</span>
+            <span style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
+              <AnimatedNumber value={Math.round(todayKcal)} duration={500}/>
+              <span style={{color:'#A0A0A0',fontWeight:400,fontSize:11}}> / {kcalTarget.toLocaleString('it-IT')}</span>
+            </span>
+          </div>
+          {/* Barra con pallino scorrevole */}
+          <div style={{position:'relative',height:8,background:'#161616',borderRadius:6,overflow:'visible'}}>
+            <div style={{
+              height:8,
+              borderRadius:6,
+              background: todayKcal/kcalTarget > 1.05 ? '#E24B4A' : todayKcal/kcalTarget > 0.95 ? '#3B8C5A' : '#D4570A',
+              width:`${Math.min(100, todayKcal/kcalTarget*100)}%`,
+              transition:'width 0.8s ease',
+              position:'relative',
+            }}>
+              {todayKcal > 0 && (
+                <div style={{position:'absolute',right:-5,top:'50%',transform:'translateY(-50%)',width:14,height:14,background:'#F4894A',borderRadius:'50%',border:'2px solid #080808'}}/>
+              )}
             </div>
           </div>
+          <div style={{fontSize:10,color:'#A0A0A0',marginTop:5,textAlign:'right'}}>
+            {remaining > 0 ? `${remaining.toLocaleString('it-IT')} kcal rimanenti` : 'Target raggiunto 🎉'}
+          </div>
+        </div>
+
+        {/* Macro trio */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {[
+            {label:'Proteine', val:Math.round(todayP), target:pTarget, color:'#4A90D4'},
+            {label:'Carboidrati', val:Math.round(todayC), target:cTarget, color:'#E8A020'},
+            {label:'Grassi', val:Math.round(todayG), target:gTarget, color:'#3B8C5A'},
+          ].map(m => {
+            const pct = Math.min(100, m.target > 0 ? Math.round(m.val/m.target*100) : 0)
+            return (
+              <div key={m.label} style={{background:'#0D0D0D',borderRadius:10,padding:'10px 10px 8px',border:'0.5px solid #161616'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
+                  <span style={{fontSize:16,fontWeight:800,color:'#F0F0F0'}}>
+                    <AnimatedNumber value={m.val} duration={400}/>
+                  </span>
+                  <span style={{fontSize:9,color:'#A0A0A0',fontWeight:500}}>/{m.target}g</span>
+                </div>
+                <div style={{height:3,background:'#1A1A1A',borderRadius:3,marginBottom:5,overflow:'hidden'}}>
+                  <div style={{height:3,borderRadius:3,background:m.color,width:`${pct}%`,transition:'width 0.6s ease'}}/>
+                </div>
+                <div style={{fontSize:9,color:'#DDD',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em'}}>{m.label}</div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      <div style={{flex:1,overflowY:'auto',padding:'16px 18px'}}>
+      {/* CONTENUTO SCROLLABILE */}
+      <div style={{flex:1,overflowY:'auto',padding:'14px 16px'}}>
 
-        {/* BANNER NOTIFICHE */}
-        {notifStatus === 'default' && (
-          <FadeIn delay={50}>
-          <div style={{background:theme.bgCard,borderRadius:12,padding:'14px 16px',border:`0.5px solid ${theme.border}`,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:36,height:36,borderRadius:10,background:theme.orangeLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-              <i className="ti ti-bell" style={{fontSize:18,color:theme.orange}}/>
+
+
+        {/* PROSSIMO ALLENAMENTO */}
+        {nextWorkout && (
+          <FadeIn delay={80}>
+          <Link to="/allenamento" style={{textDecoration:'none',display:'block',marginBottom:12}}>
+            <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
+              <div style={{padding:'12px 14px 10px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:34,height:34,borderRadius:10,background:'rgba(59,140,90,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <i className="ti ti-barbell" style={{fontSize:17,color:'#3B8C5A'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:2}}>
+                      {new Date().toLocaleDateString('it-IT',{weekday:'long'}).charAt(0).toUpperCase() + new Date().toLocaleDateString('it-IT',{weekday:'long'}).slice(1)}
+                    </div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>
+                      {nextWorkout.name}
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  {nextWorkoutExercises.length > 0 && (
+                    <div style={{background:'rgba(59,140,90,0.15)',borderRadius:20,padding:'3px 9px',fontSize:10,fontWeight:700,color:'#3B8C5A'}}>
+                      {nextWorkoutExercises.length} es.
+                    </div>
+                  )}
+                  <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333'}}/>
+                </div>
+              </div>
+              {nextWorkoutExercises.length > 0 && (
+                <div style={{padding:'0 14px 12px',display:'flex',flexDirection:'column',gap:5}}>
+                  {nextWorkoutExercises.slice(0,4).map((ex,i) => (
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{width:5,height:5,borderRadius:'50%',background:'#3B8C5A',flexShrink:0}}/>
+                      <span style={{fontSize:12,color:'#DDD',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</span>
+                      <span style={{fontSize:10,color:'#555',flexShrink:0}}>{ex.sets}×{ex.reps}</span>
+                    </div>
+                  ))}
+                  {nextWorkoutExercises.length > 4 && (
+                    <div style={{fontSize:10,color:'#555',marginLeft:13}}>+{nextWorkoutExercises.length-4} altri esercizi</div>
+                  )}
+                </div>
+              )}
+              {nextWorkoutExercises.length === 0 && (
+                <div style={{padding:'0 14px 12px',fontSize:12,color:'#555'}}>Nessun esercizio per oggi — giorno di riposo 😌</div>
+              )}
             </div>
+          </Link>
+          </FadeIn>
+        )}
+
+
+
+
+
+        {/* NOTIFICHE */}
+        <FadeIn delay={90}>
+        <style>{`
+          @keyframes notif-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.92); }
+          }
+        `}</style>
+        <Link to="/notifiche" style={{textDecoration:'none',display:'block',marginBottom:12}}>
+          <div style={{
+            background:'#0D0D0D',
+            borderRadius:14,
+            border: unreadNotifs > 0 ? '0.5px solid rgba(212,87,10,0.4)' : '0.5px solid #1C1C1C',
+            padding:'12px 14px',
+            display:'flex',
+            alignItems:'center',
+            gap:12,
+            transition:'border-color 0.3s',
+          }}>
+            {/* Icona con badge */}
+            <div style={{position:'relative',flexShrink:0}}>
+              <div style={{
+                width:38,height:38,borderRadius:10,
+                background: unreadNotifs > 0 ? 'rgba(212,87,10,0.15)' : '#141414',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                animation: unreadNotifs > 0 ? 'notif-pulse 1.5s ease-in-out infinite' : 'none',
+              }}>
+                <i className="ti ti-bell" style={{
+                  fontSize:18,
+                  color: unreadNotifs > 0 ? '#F4894A' : '#333',
+                }}/>
+              </div>
+              {unreadNotifs > 0 && (
+                <div style={{
+                  position:'absolute',top:-4,right:-4,
+                  width:18,height:18,borderRadius:'50%',
+                  background:'#D4570A',
+                  border:'2px solid #0D0D0D',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontSize:9,fontWeight:800,color:'white',
+                }}>
+                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                </div>
+              )}
+            </div>
+            {/* Testo */}
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>Attiva i promemoria</div>
-              <div style={{fontSize:11,color:'var(--text-muted)'}}>Ricevi un reminder serale per compilare il diario</div>
+              <div style={{
+                fontSize:13,fontWeight:700,
+                color: unreadNotifs > 0 ? '#F0F0F0' : '#555',
+              }}>
+                {unreadNotifs > 0
+                  ? `${unreadNotifs} nuova${unreadNotifs > 1 ? ' notifiche' : ' notifica'}`
+                  : 'Nessuna nuova notifica'}
+              </div>
+              <div style={{fontSize:10,color:'#444',marginTop:2}}>
+                {unreadNotifs > 0 ? 'Tocca per vedere' : ''}
+              </div>
             </div>
-            <button onClick={async()=>{
-              const r = await requestNotificationPermission(profile.id)
-              if (r.ok) {
-                setNotifStatus('granted')
-                sendTestNotification()
-                showToast('Notifiche attivate!', '🔔')
-              } else {
-                setNotifStatus('denied')
-              }
-            }} style={{background:theme.orange,color:'white',border:'none',borderRadius:8,padding:'7px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
-              Attiva
-            </button>
+            <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333',flexShrink:0}}/>
+          </div>
+        </Link>
+        </FadeIn>
+
+        {/* RIEPILOGO SETTIMANA */}
+        {weekStats && (
+          <FadeIn delay={100}>
+          <div style={{background:'#0D0D0D',borderRadius:14,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:12}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Questa settimana</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'12px',textAlign:'center',border:'0.5px solid #161616'}}>
+                <div style={{fontSize:28,fontWeight:800,color:'#3B8C5A',lineHeight:1}}>{weekStats.sessions}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:5,fontWeight:600}}>allenamenti</div>
+              </div>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'12px',textAlign:'center',border:'0.5px solid #161616'}}>
+                <div style={{fontSize:28,fontWeight:800,color:'#4A90D4',lineHeight:1}}>{weekStats.diaryDays}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:5,fontWeight:600}}>giorni diario</div>
+              </div>
+            </div>
           </div>
           </FadeIn>
         )}
 
-        {/* QUICK LINKS */}
-        <FadeIn delay={100}>
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,fontWeight:600,color:'#888780',textTransform:'uppercase',letterSpacing:'0.09em',marginBottom:10}}>Accesso rapido</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-            {QUICK_LINKS.map(link => (
-              <Link key={link.to} to={link.to} style={{
-                background:'white', borderRadius:14, padding:'16px 14px', textDecoration:'none',
-                border:'0.5px solid #E0DDD6', display:'flex', flexDirection:'column', gap:10,
-                boxShadow:'0 2px 6px rgba(0,0,0,0.06)'
-              }}>
-                <div style={{width:44,height:44,borderRadius:12,background:link.bg,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 2px 8px ${link.color}22`}}>
-                  <i className={`ti ${link.icon}`} style={{fontSize:22,color:link.color}}/>
-                </div>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#111'}}>{link.label}</div>
-                  <div style={{fontSize:11,color:'#888780',marginTop:2}}>{link.sub}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-        </FadeIn>
-
-        {/* STATO FISICO */}
+        {/* ULTIMA MISURAZIONE */}
         {measurements && (
-          <div style={{background:'white',borderRadius:12,padding:'14px 16px',border:'0.5px solid #E0DDD6',marginBottom:14,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-            <div style={{fontSize:11,fontWeight:600,color:'#888780',textTransform:'uppercase',letterSpacing:'0.09em',marginBottom:12}}>Ultima misurazione</div>
-            <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+          <FadeIn delay={100}>
+          <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+              <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em'}}>Ultima misurazione</div>
+              <div style={{fontSize:10,color:'#A0A0A0'}}>{new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>
+            </div>
+            <div style={{display:'flex',gap:12}}>
               {[
-                { label:'Peso', val:measurements.weight_kg, unit:'kg' },
-                { label:'Vita', val:measurements.waist_cm, unit:'cm' },
-                { label:'% Grasso', val:measurements.body_fat_pct, unit:'%' },
+                {label:'Peso', val:measurements.weight_kg, unit:'kg', color:'#F4894A'},
+                {label:'Vita', val:measurements.waist_cm, unit:'cm', color:'#4A90D4'},
+                {label:'Grasso', val:measurements.body_fat_pct, unit:'%', color:'#9B59B6'},
               ].filter(m=>m.val).map(m=>(
-                <div key={m.label}>
-                  <div style={{fontSize:10,color:'#888780'}}>{m.label}</div>
-                  <div style={{fontSize:20,fontWeight:600,color:'#111',lineHeight:1.2}}>{m.val}<span style={{fontSize:11,color:'#888780',fontWeight:400}}>{m.unit}</span></div>
+                <div key={m.label} style={{flex:1,background:'#0A0A0A',borderRadius:10,padding:'10px 8px',textAlign:'center',border:'0.5px solid #141414',borderBottom:`2px solid ${m.color}40`}}>
+                  <div style={{fontSize:20,fontWeight:800,color:'#F0F0F0',lineHeight:1}}>{m.val}</div>
+                  <div style={{fontSize:9,color:m.color,fontWeight:700,margin:'3px 0 2px'}}>{m.unit}</div>
+                  <div style={{fontSize:9,color:'#A0A0A0'}}>{m.label}</div>
                 </div>
               ))}
             </div>
-            <div style={{fontSize:11,color:'#888780',marginTop:8}}>
-              {new Date(measurements.entry_date).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
+          </div>
+          </FadeIn>
+        )}
+
+        {/* CONFRONTO SETTIMANA */}
+        {weeklyComp && (weeklyComp.thisSess > 0 || weeklyComp.kcalDiff !== 0) && (
+          <FadeIn delay={120}>
+          <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Vs settimana scorsa</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
+                <div style={{fontSize:22,fontWeight:800,color:weeklyComp.sessDiff>=0?'#3B8C5A':'#E24B4A'}}>
+                  {weeklyComp.sessDiff>0?'+':''}{weeklyComp.sessDiff}
+                </div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:3}}>sessioni allenamento</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:2}}>{weeklyComp.thisSess} questa · {weeklyComp.lastSess} scorsa</div>
+              </div>
+              <div style={{background:'#0A0A0A',borderRadius:10,padding:'10px',textAlign:'center',border:'0.5px solid #141414'}}>
+                <div style={{fontSize:22,fontWeight:800,color:Math.abs(weeklyComp.kcalDiff)<150?'#3B8C5A':'#E8A020'}}>
+                  {weeklyComp.kcalDiff>0?'+':''}{weeklyComp.kcalDiff}
+                </div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:3}}>kcal medie/giorno</div>
+                <div style={{fontSize:9,color:'#BBB',marginTop:2}}>rispetto alla sett. scorsa</div>
+              </div>
             </div>
           </div>
+          </FadeIn>
+        )}
+
+        {/* GRAFICO PESO */}
+        {measurements && (
+          <FadeIn delay={140}>
+          <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
+              <Link to="/progressi" style={{fontSize:10,color:'#D4570A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
+            </div>
+            <GraficoPeso compact={true}/>
+          </div>
+          </FadeIn>
         )}
 
         {/* NOTE COACH */}
         {plan?.notes && (
-          <div style={{background:'linear-gradient(135deg,#FEF0E7,#FEF8F4)',borderRadius:12,padding:'14px 16px',border:'0.5px solid #F4C9A8',marginBottom:14}}>
-            <div style={{fontSize:11,fontWeight:600,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.09em',marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
+          <div style={{background:'#120800',borderRadius:14,padding:'14px 16px',border:'0.5px solid rgba(212,87,10,0.2)',marginBottom:12}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:8,display:'flex',alignItems:'center',gap:5}}>
               <i className="ti ti-message-circle" style={{fontSize:12}}/> Note del coach
             </div>
-            <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{plan.notes}</div>
+            <div style={{fontSize:13,color:'#C5783A',lineHeight:1.6}}>{plan.notes}</div>
           </div>
         )}
 
