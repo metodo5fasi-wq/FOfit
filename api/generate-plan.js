@@ -5,6 +5,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  // Scheda allenamento: stessa funzione (limite Vercel di 12 funzioni), ramo separato
+  if (req.body && req.body.kind === 'workout') return handleWorkout(req, res)
+
   const { formData, kcalTarget, protTarget, carbsTarget, fatTarget, dayCalories } = req.body
   if (!formData) return res.status(400).json({ error: 'Dati mancanti' })
 
@@ -186,4 +189,111 @@ async function generateFeedback(days, kcalTarget, protTarget) {
     const data = await r.json()
     return data.content?.[0]?.text || ''
   } catch { return '' }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// SCHEDA ALLENAMENTO
+// ══════════════════════════════════════════════════════════════
+const WK_MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Femorali','Glutei','Polpacci','Addominali','Cardio','Corpo libero']
+
+async function callClaudeText(prompt, maxTokens) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+  })
+  const data = await r.json()
+  if (!r.ok || data.error) throw new Error(data.error?.message || 'Errore API')
+  return data.content?.[0]?.text || ''
+}
+
+function parseExerciseList(text, label) {
+  const clean = String(text).replace(/\/\/[^\n\r]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+  let parsed
+  const a = clean.indexOf('['), b = clean.lastIndexOf(']')
+  if (a !== -1 && b > a) { try { parsed = JSON.parse(clean.slice(a, b + 1)) } catch (e) { /* riprovo come oggetto */ } }
+  if (!parsed) {
+    const c = clean.indexOf('{'), d = clean.lastIndexOf('}')
+    if (c === -1 || d <= c) throw new Error(`${label}: nessun elenco di esercizi nella risposta`)
+    try { parsed = JSON.parse(clean.slice(c, d + 1)) } catch (e) { throw new Error(`${label}: JSON non valido (${e.message})`) }
+  }
+  const list = Array.isArray(parsed) ? parsed : (parsed.exercises || parsed.esercizi)
+  if (!Array.isArray(list) || !list.length) throw new Error(`${label}: elenco esercizi vuoto`)
+  return list.filter(e => e && (e.name || e.exercise_name)).map(e => ({
+    name: String(e.name || e.exercise_name).trim().slice(0, 80),
+    muscle: String(e.muscle || e.muscle_group || '').trim().slice(0, 30),
+    sets: Math.max(1, Math.min(10, parseInt(e.sets) || 3)),
+    reps: String(e.reps || '8-12').slice(0, 20),
+    rest: Math.max(15, Math.min(300, parseInt(e.rest ?? e.rest_seconds) || 90)),
+    tut: e.tut ? String(e.tut).slice(0, 12) : '',
+    note: e.note ? String(e.note).slice(0, 240) : '',
+  }))
+}
+
+function workoutClientContext(f = {}) {
+  const parts = []
+  const add = (k, v) => { if (v !== undefined && v !== null && String(v).trim() && String(v).trim() !== '—') parts.push(`${k}: ${v}`) }
+  add('Età', f.eta ? f.eta + ' anni' : ''); add('Sesso', f.sesso); add('Peso', f.peso ? f.peso + ' kg' : ''); add('Altezza', f.altezza ? f.altezza + ' cm' : '')
+  add('Obiettivo', f.obiettivo); add('Livello', f.livello); add('Attrezzatura/luogo', f.attrezzatura)
+  add('INFORTUNI/LIMITAZIONI (da rispettare)', f.infortuni); add('Mal di schiena', f.mal_schiena); add('Postura e lavoro sedentario', f.postura)
+  add('Esercizi che ODIA (evitare)', f.evitare); add('Esercizi preferiti', f.preferiti)
+  if (Array.isArray(f.enfasi) && f.enfasi.length) add('Gruppi da enfatizzare', f.enfasi.join(', '))
+  if (f.cardio) add('Cardio', 'includere un finale cardio breve a fine seduta quando ha senso')
+  if (f.correttivo) add('Approccio correttivo', 'includere in ogni seduta esercizi di mobilità/stabilità/core per postura e schiena')
+  add('Note del coach', f.noteExtra)
+  return parts.length ? parts.join('\n') : 'Cliente generico'
+}
+
+async function handleWorkout(req, res) {
+  try {
+    const { formData = {}, structure, library = {}, avoid = [] } = req.body
+    if (!Array.isArray(structure) || !structure.length) return res.status(400).json({ error: 'Struttura giorni mancante' })
+    const days = structure.slice(0, 7)
+    const ctx = workoutClientContext(formData)
+    const durata = Math.max(20, Math.min(120, parseInt(formData.durata) || 60))
+    const nEx = Math.max(4, Math.min(9, Math.round(durata / 9)))
+    const result = []
+    const used = [...(Array.isArray(avoid) ? avoid : [])].slice(0, 60)
+
+    for (let i = 0; i < days.length; i++) {
+      const d = days[i]
+      const focus = (Array.isArray(d.focus) ? d.focus : []).filter(m => WK_MUSCLES.includes(m))
+      const groups = [...new Set([...focus, ...(formData.cardio ? ['Cardio'] : []), ...(formData.correttivo ? ['Addominali', 'Corpo libero'] : [])])]
+      const libLines = groups.map(g => `${g}: ${(library[g] || []).slice(0, 40).join(' | ')}`).filter(l => !l.endsWith(': ')).join('\n')
+      const prompt = `Sei un personal trainer italiano esperto. Crea la seduta "${d.title || 'Giorno ' + (i + 1)}" (giorno ${i + 1} di ${days.length}) di una scheda di allenamento.
+
+CLIENTE:
+${ctx}
+
+DURATA SEDUTA: circa ${durata} minuti → ${nEx} esercizi (riscaldamento escluso).
+GRUPPI MUSCOLARI DI QUESTA SEDUTA: ${focus.join(', ') || 'a tua scelta'}
+${libLines ? `ESERCIZI DISPONIBILI IN LIBRERIA (usa questi nomi ESATTI quando possibile):\n${libLines}\n` : ''}${used.length ? `ESERCIZI GIA' USATI NEI GIORNI PRECEDENTI (varia: stessa funzione ma esercizio o angolazione diversi):\n${used.join(', ')}\n` : ''}
+REGOLE:
+- Rispondi SOLO con un array JSON valido, zero testo prima o dopo, zero commenti.
+- Ogni elemento: {"name":"...","muscle":"...","sets":3,"reps":"8-12","rest":90,"tut":"","note":"..."}
+- "muscle" DEVE essere uno tra: ${WK_MUSCLES.join(', ')}.
+- Nei nomi non usare apostrofi. Solo virgolette doppie.
+- Prima i multiarticolari, poi gli esercizi di isolamento. Riposo: 120-180 s multiarticolari pesanti, 60-90 s isolamento.
+- Ripetizioni coerenti con obiettivo e livello (forza 3-6, ipertrofia 6-12, resistenza/definizione 12-20).
+- "note": 1-2 frasi in italiano, max 160 caratteri, con indicazioni tecniche di esecuzione per il cliente.
+- Rispetta SEMPRE infortuni, limitazioni e mal di schiena: scegli varianti sicure.`
+      const text = await callClaudeText(prompt, 2200)
+      const exercises = parseExerciseList(text, d.title || `Giorno ${i + 1}`)
+      result.push({ title: d.title || `Giorno ${i + 1}`, focus, exercises })
+      exercises.forEach(e => used.push(e.name))
+    }
+
+    let feedback = ''
+    try {
+      const summary = result.map(d => `${d.title}: ${d.exercises.map(e => `${e.name} ${e.sets}x${e.reps}`).join('; ')}`).join('\n')
+      feedback = await callClaudeText(`Sei un personal trainer. Valuta in modo breve e concreto (max 90 parole, in italiano) questa scheda per il cliente descritto.
+CLIENTE:\n${ctx}\nDURATA: ${durata} min\nSCHEDA:\n${summary}\nFormato: "Forza: ... Attenzione: ... Suggerimento: ..."`, 260)
+    } catch (e) { feedback = '' }
+
+    return res.status(200).json({ ok: true, days: result, feedback })
+  } catch (e) {
+    console.error('[generate-plan:workout]', e.message)
+    return res.status(500).json({ error: e.message })
+  }
 }
