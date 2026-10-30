@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
+import { useNavigate } from 'react-router-dom'
 import Anamnesi from './Anamnesi'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
@@ -189,6 +190,9 @@ function MacroBox({ label, prefix, color='#D4570A', bg='#FEF0E7' }) {
 
 
 export default function AdminPanel() {
+  const navigate = useNavigate()
+  // "Nuovo piano": porta direttamente su Crea piano con il cliente già selezionato
+  const goCreaPiano = (clientId) => navigate('/crea-piano?client=' + clientId)
   const toast = useToast()
   const { profile } = useAuth()
   const [tab, setTab] = useState('overview')
@@ -792,7 +796,7 @@ export default function AdminPanel() {
                                 + Piano
                               </a>
                             )}
-                            <button onClick={()=>{setNewPlan(p=>({...p,client_id:c.id}));setShowNewPlan(true)}}
+                            <button onClick={()=>goCreaPiano(c.id)}
                               style={{flex:1,padding:'6px 4px',background:'#161616',color:'#CCC',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
                               + Nuovo
                             </button>
@@ -828,7 +832,7 @@ export default function AdminPanel() {
                 plans={plans.filter(p=>p.client_id===selectedClient.id)}
                 onClose={()=>setSelectedClient(null)}
                 onSaved={fetchAll}
-                onNewPlan={()=>{setNewPlan(p=>({...p,client_id:selectedClient.id}));setShowNewPlan(true)}}
+                onNewPlan={()=>goCreaPiano(selectedClient.id)}
               />
             </div>
           )}
@@ -844,7 +848,7 @@ export default function AdminPanel() {
               plans={plans.filter(p=>p.client_id===selectedClient.id)}
               onClose={()=>setSelectedClient(null)}
               onSaved={fetchAll}
-              onNewPlan={()=>{setNewPlan(p=>({...p,client_id:selectedClient.id}));setShowNewPlan(true);setSelectedClient(null)}}
+              onNewPlan={()=>goCreaPiano(selectedClient.id)}
             />
           </div>
         </div>
