@@ -46,6 +46,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState(false)   // finestra di conferma dopo l'invio
   const [report, setReport] = useState(null)
   const [exercises, setExercises] = useState([])
   const [progressi, setProgressi] = useState([])
@@ -266,12 +267,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       if (submitErr) throw submitErr
 
       setSubmitting(false)
-      // Mostra conferma 2 secondi poi chiudi
       setSaved(true)
-      setTimeout(() => {
-        if (onClose) onClose()
-        else { setSaved(true) }
-      }, 2000)
+      setConfirm(true)   // si chiude col tasto "Perfetto" (poi si torna all'elenco dei report)
     } catch(e) {
       setSubmitting(false)
       setError('Errore invio: ' + e.message + ' — i tuoi dati sono stati salvati come bozza')
@@ -498,6 +495,30 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
 
         </div>
       </div>
+
+      {confirm && (
+        <div role="dialog" aria-modal="true" onClick={()=>{ setConfirm(false); if (onClose) onClose() }}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.82)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:'#0D0D0D',border:'0.5px solid rgba(111,207,151,0.5)',borderRadius:18,padding:'28px 24px 22px',width:'100%',maxWidth:380,textAlign:'center'}}>
+            <div style={{width:68,height:68,borderRadius:'50%',background:'rgba(59,140,90,0.18)',border:'1.5px solid #6FCF97',margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <i className="ti ti-check" style={{fontSize:34,color:'#6FCF97'}}/>
+            </div>
+            <div style={{fontSize:20,fontWeight:800,color:'#F0F0F0',marginBottom:8}}>Report inviato!</div>
+            <div style={{fontSize:14,color:'#DDD',lineHeight:1.6,marginBottom:6}}>
+              {profile?.full_name ? 'Grazie ' + profile.full_name.split(' ')[0] + '! ' : 'Grazie! '}
+              Il tuo coach ha ricevuto il report e lo leggerà al più presto.
+            </div>
+            <div style={{fontSize:12,color:'#AAA',lineHeight:1.5,marginBottom:20}}>
+              Lo ritrovi nell'elenco dei tuoi report.
+            </div>
+            <button onClick={()=>{ setConfirm(false); if (onClose) onClose() }}
+              style={{width:'100%',padding:'13px',background:'#3B8C5A',color:'white',border:'none',borderRadius:11,fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+              Perfetto
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
