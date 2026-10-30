@@ -39,8 +39,28 @@ const SECTIONS = [
   { n:14, icon:'✅', title:'Check finale',                 sub:'Note aggiuntive e consenso' },
 ]
 
+// Le colonne nuove sono di tipo text: una scelta multipla torna dal DB come testo JSON ('["a","b"]').
+// Qui la riconverto in lista, altrimenti toccare una opzione già scelta darebbe errore.
+function toArr(v) {
+  if (Array.isArray(v)) return v
+  if (typeof v === 'string' && v.trim().startsWith('[')) {
+    try { const p = JSON.parse(v); if (Array.isArray(p)) return p } catch (e) {}
+  }
+  return v ? [v] : []
+}
+function normalizeLoaded(d) {
+  const out = { ...d }
+  Object.keys(out).forEach(k => {
+    const v = out[k]
+    if (typeof v === 'string' && v.trim().startsWith('[') && v.trim().endsWith(']')) {
+      try { const p = JSON.parse(v); if (Array.isArray(p)) out[k] = p } catch (e) {}
+    }
+  })
+  return out
+}
+
 function Chips({ options, value, onChange, multi=false }) {
-  const arr = multi ? (value||[]) : null
+  const arr = multi ? toArr(value) : null
   return (
     <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
       {options.map(o => {
@@ -62,7 +82,7 @@ function Scale({ value, onChange, max=10 }) {
   return (
     <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
       {Array.from({length:max+1},(_,i)=>(
-        <button key={i} onClick={()=>onChange(i)} style={s.scale(value===i)}>{i}</button>
+        <button key={i} onClick={()=>onChange(i)} style={s.scale(value!==null && value!==undefined && value!=='' && Number(value)===i)}>{i}</button>
       ))}
     </div>
   )
@@ -79,6 +99,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [confirm, setConfirm] = useState(null)   // {update:boolean} quando l'invio è andato a buon fine
   const autosaveRef = useRef(null)
   const dataRef = useRef({})
 
@@ -106,7 +127,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     try {
       const { data: d, error } = await supabase.from('anamnesi').select('*').eq('client_id', clientId).maybeSingle()
       if (error) throw error
-      if (d) { setData(d); setCurrent(d.current_section || 1) }
+      if (d) { setData(normalizeLoaded(d)); setCurrent(d.current_section || 1) }
     } catch(e) { console.error('Anamnesi load error:', e) }
   }
 
@@ -114,7 +135,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   function setArr(field, val) { setData(p => ({...p, [field]:val})) }
 
   async function saveSection(goTo) {
-    if (!clientId) { setSaveError('Sessione scaduta — ricarica la pagina'); return }
+    if (!clientId) { setSaveError('Sessione scaduta — ricarica la pagina'); return false }
     setSaving(true)
     setSaveError('')
     try {
@@ -129,8 +150,11 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     } catch(e) {
       setSaveError('Errore salvataggio: ' + e.message)
       console.error('Anamnesi save error:', e)
+      setSaving(false)
+      return false
     }
     setSaving(false)
+    return true
   }
 
   function next() { saveSection(Math.min(current+1, 14)) }
@@ -141,13 +165,21 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSubmitting(true)
     setSaveError('')
     try {
-      await saveSection(13)
+      const wasSent = !!data.submitted_at
+      const ok = await saveSection(14)
+      if (!ok) {
+        setSaveError(e => (e || 'Errore salvataggio') + " — l'anamnesi NON è stata inviata, riprova")
+        setSubmitting(false)
+        return
+      }
+      const now = new Date().toISOString()
       const { error } = await supabase.from('anamnesi')
-        .update({ submitted_at: new Date().toISOString(), read_by_coach: false })
+        .update({ submitted_at: now, read_by_coach: false })
         .eq('client_id', clientId)
       if (error) throw error
       setSaved(true)
-      setData(p => ({...p, submitted_at: new Date().toISOString()}))
+      setData(p => ({...p, submitted_at: now, read_by_coach: false}))
+      if (!isAdmin) setConfirm({ update: wasSent })
     } catch(e) { setSaveError('Errore invio: ' + e.message) }
     setSubmitting(false)
   }
@@ -856,7 +888,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </button>
           : <>
               {data.submitted_at && (
-                <div style={{background:'rgba(59,140,90,0.12)',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#3B6D11',fontWeight:600}}>
+                <div style={{background:'rgba(59,140,90,0.12)',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#6FCF97',fontWeight:600}}>
                   ✓ Inviata il {new Date(data.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})} — puoi modificare e reinviare
                 </div>
               )}
@@ -872,6 +904,34 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </>
         }
       </div>
+
+      {confirm && !isAdmin && (
+        <div role="dialog" aria-modal="true" onClick={()=>setConfirm(null)}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.82)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:'#0D0D0D',border:'0.5px solid rgba(111,207,151,0.5)',borderRadius:18,padding:'28px 24px 22px',width:'100%',maxWidth:380,textAlign:'center'}}>
+            <div style={{width:68,height:68,borderRadius:'50%',background:'rgba(59,140,90,0.18)',border:'1.5px solid #6FCF97',margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <i className="ti ti-check" style={{fontSize:34,color:'#6FCF97'}}/>
+            </div>
+            <div style={{fontSize:20,fontWeight:800,color:'#F0F0F0',marginBottom:8}}>
+              {confirm.update ? 'Anamnesi aggiornata!' : 'Anamnesi inviata!'}
+            </div>
+            <div style={{fontSize:14,color:'#DDD',lineHeight:1.6,marginBottom:6}}>
+              {profile?.full_name ? 'Grazie ' + profile.full_name.split(' ')[0] + '! ' : 'Grazie! '}
+              {confirm.update
+                ? 'Il tuo coach ha ricevuto le tue modifiche.'
+                : 'Il tuo coach ha ricevuto le tue risposte e le leggerà al più presto.'}
+            </div>
+            <div style={{fontSize:12,color:'#AAA',lineHeight:1.5,marginBottom:20}}>
+              Se vuoi aggiungere o correggere qualcosa puoi modificare le risposte e reinviare quando vuoi.
+            </div>
+            <button onClick={()=>setConfirm(null)}
+              style={{width:'100%',padding:'13px',background:'#3B8C5A',color:'white',border:'none',borderRadius:11,fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+              Perfetto
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

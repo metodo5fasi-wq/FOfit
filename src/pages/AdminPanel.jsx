@@ -2537,7 +2537,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                     { l: 'Energia', v: r.energia_allenamento, emoji: '⚡' },
                     { l: 'Sonno', v: r.qualita_sonno, emoji: '😴' },
                     { l: 'Stress', v: r.stress_periodo, emoji: '🧠', inverted: true },
-                  ].map(item => item.v && (
+                  ].filter(item => item.v !== null && item.v !== undefined && item.v !== '').map(item => (
                     <div key={item.l} style={{ background: '#161616', borderRadius: 8, padding: '8px', textAlign: 'center' }}>
                       <div style={{ fontSize: 16, marginBottom: 2 }}>{item.emoji}</div>
                       <div style={{ fontSize: 16, fontWeight: 800, color: '#F0F0F0' }}>{item.v}/10</div>
@@ -2548,9 +2548,11 @@ function ReportTab({ clients, clientStats, onRefresh }) {
 
                 {/* CAMPI TESTO */}
                 {[
+                  { l: '⚖️ Peso inizio → fine periodo', v: (r.peso_inizio || r.peso_fine) ? `${r.peso_inizio ?? '—'} → ${r.peso_fine ?? '—'} kg` : null },
                   { l: '🥗 Alimentazione — difficoltà', v: r.difficolta_alimentazione },
                   { l: '🥗 Pasti saltati', v: r.pasti_saltati },
                   { l: '🥗 Fame/sazietà', v: r.fame_saziet },
+                  { l: '🥗 Note alimentazione', v: r.note_alimentazione },
                   { l: '💤 DOMS', v: r.doms },
                   { l: '💤 Recupero', v: r.qualita_recupero },
                   { l: '💤 Zona affaticata', v: r.zona_affaticata },
@@ -2560,7 +2562,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                   { l: '📋 Cosa cambierebbe', v: r.cosa_cambieresti },
                   { l: '📋 Obiettivo prossimo periodo', v: r.obiettivo_prossimo },
                   { l: '💬 Note al coach', v: r.note_coach },
-                ].filter(f => f.v).map(f => (
+                ].filter(f => f.v !== null && f.v !== undefined && f.v !== '').map(f => (
                   <div key={f.l} style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#AAA', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.l}</div>
                     <div style={{ fontSize: 13, color: '#F0F0F0', lineHeight: 1.5, background: '#161616', borderRadius: 8, padding: '8px 10px' }}>{f.v}</div>
@@ -2671,6 +2673,10 @@ function generateReportPDF(r, clientName) {
 function generateAnamnesiPDF(a, clientName) {
   function field(label, value) {
     if (!value) return ''
+    if (typeof value === 'string' && value.trim().charAt(0) === '[') {
+      try { var parsed = JSON.parse(value); if (Array.isArray(parsed)) value = parsed } catch (e) {}
+    }
+    if (Array.isArray(value) && value.length === 0) return ''
     var v = Array.isArray(value) ? value.join(', ') : String(value)
     return '<div class="field"><div class="fl">'+label+'</div><div class="fv">'+v+'</div></div>'
   }
@@ -2748,14 +2754,55 @@ function generateAnamnesiPDF(a, clientName) {
     field('Importanza (0-10)', a.importanza_obiettivo),
   ])
 
-  html += section('3. Salute generale', [
+  html += section('3. Lavoro e stile di vita', [
+    field('Tipo di lavoro', a.tipo_lavoro),
+    field('Altro (specificato)', a.tipo_lavoro_altro),
+    field('Ore seduto/a al giorno', a.ore_seduto),
+    field('Ore consecutive senza alzarsi', a.ore_consecutive_seduto),
+    field('Postazione di lavoro', a.postazione_lavoro),
+    field('Pause attive', a.pause_attive),
+    field('In cosa consistono le pause', a.tipo_pause),
+    field('Come arriva al lavoro', a.mezzo_lavoro),
+    field('Passi medi al giorno', a.passi_die),
+    field('Sensazioni a fine giornata', a.sensazioni_fine_lavoro),
+    field('Dopo il lavoro', a.dopo_lavoro),
+  ])
+
+  html += section('4. Postura e mal di schiena', [
+    field('Mal di schiena', a.mal_schiena),
+    field('Zona del dolore', a.zona_dolore_schiena),
+    field('Da quanto tempo', a.durata_dolore_schiena),
+    field('Intensità media (0-10)', a.intensita_dolore_schiena),
+    field('Tipo di dolore', a.tipo_dolore_schiena),
+    field('Quando peggiora', a.quando_peggio_schiena),
+    field('Quando migliora', a.quando_meglio_schiena),
+    field('Cosa dà sollievo', a.sollievo_schiena),
+    field('Irradiazione', a.irradiazione_dolore),
+    field('Esami / visite fatte', a.visite_schiena),
+    field('Diagnosi', a.diagnosi_schiena),
+    field('Impatto sulla vita quotidiana', a.impatto_schiena_vita),
+    field('Traumi / incidenti', a.traumi_schiena),
+    field('Dettaglio traumi', a.traumi_schiena_dettaglio),
+    field('Correlazione con lo stress', a.stress_schiena),
+    field('Postura abituale', a.postura_abituale),
+    field('Postura alla scrivania', a.postura_scrivania),
+    field('Posizione del monitor', a.posizione_monitor),
+    field('Zone di tensione', a.zone_tensione),
+    field('Tensione collo/spalle', a.frequenza_tensione_collo),
+    field('Formicolii a braccia/mani', a.formicolio_mani),
+    field('Stretching / mobilità', a.stretching_mobilita),
+    field('Movimenti evitati', a.movimenti_evitati_dolore),
+    field('Rapporto con la schiena (sue parole)', a.rapporto_schiena),
+  ])
+
+  html += section('5. Salute generale', [
     field('Diagnosi attive', a.diagnosi_attive),
     field('Interventi chirurgici', a.interventi_chirurgici),
     field('Condizioni particolari', a.condizioni_salute),
     field('Familiarità', a.familiarita),
   ])
 
-  html += section('4. Farmaci e stimolanti', [
+  html += section('6. Farmaci e stimolanti', [
     field('Farmaci', a.farmaci),
     field('Integratori', a.integratori),
     field('Caffeina', a.caffeina),
@@ -2763,7 +2810,7 @@ function generateAnamnesiPDF(a, clientName) {
     field('Alcol', a.alcol),
   ])
 
-  html += section('5. Sonno e recupero', [
+  html += section('7. Sonno e recupero', [
     field('Ore di sonno', a.ore_sonno),
     field('Orario letto / sveglia', a.orario_letto&&a.orario_sveglia ? a.orario_letto+' → '+a.orario_sveglia : a.orario_letto||a.orario_sveglia),
     field('Qualità sonno', a.qualita_sonno ? a.qualita_sonno+'/10' : null),
@@ -2771,7 +2818,7 @@ function generateAnamnesiPDF(a, clientName) {
     field('Cosa rovina il sonno', a.cosa_rovina_sonno),
   ])
 
-  html += section('6. Stress ed energia', [
+  html += section('8. Stress ed energia', [
     field('Stress medio', a.stress_medio ? a.stress_medio+'/10' : null),
     field('Crollo energia', a.crollo_energia),
     field('Sintomi frequenti', a.sintomi_frequenti),
@@ -2780,14 +2827,14 @@ function generateAnamnesiPDF(a, clientName) {
 
   html += '</div><div>'
 
-  html += section('7. Digestione', [
+  html += section('9. Digestione', [
     field('Gonfiore', a.gonfiore),
     field('Reflusso', a.reflusso),
     field('Evacuazione', a.evacuazione),
     field('Cibi che gonfiano', a.cibi_gonfiano),
   ])
 
-  html += section('8. Storia peso', [
+  html += section('10. Storia peso', [
     field('Peso minimo (5 anni)', a.peso_minimo ? a.peso_minimo+'kg' : null),
     field('Peso massimo (5 anni)', a.peso_massimo ? a.peso_massimo+'kg' : null),
     field('Accumulo grasso', a.accumulo_grasso),
@@ -2795,7 +2842,7 @@ function generateAnamnesiPDF(a, clientName) {
     field('Perché non ha funzionato', a.perche_non_funzionato),
   ])
 
-  html += section('9. Alimentazione', [
+  html += section('11. Alimentazione', [
     field('Pasti preferiti', a.pasti_preferiti),
     field('Quando ha più fame', a.quando_fame),
     field('Giorno tipo', a.giorno_tipo),
@@ -2808,7 +2855,7 @@ function generateAnamnesiPDF(a, clientName) {
     field('Livello tracking', a.livello_tracking),
   ])
 
-  html += section('10. Allenamento', [
+  html += section('12. Allenamento', [
     field('Si allena', a.si_allena===true?'Sì':a.si_allena===false?'No':null),
     field('Tipologia', a.tipo_allenamento),
     field('Orario preferito', a.orario_allenamento),
@@ -2820,7 +2867,7 @@ function generateAnamnesiPDF(a, clientName) {
     field('Dolori/limitazioni', a.dolori_limitazioni),
   ])
 
-  html += section('11. Vincoli e sostenibilità', [
+  html += section('13. Vincoli e sostenibilità', [
     field('Tempo disponibile', a.tempo_settimana),
     field('Giorni migliori', a.giorni_migliori),
     field('Cibi da non togliere', a.cibi_non_togliere),
@@ -2828,7 +2875,7 @@ function generateAnamnesiPDF(a, clientName) {
   ])
 
   if (a.note_finali) {
-    html += section('12. Note finali', [field('Note aggiuntive', a.note_finali)])
+    html += section('14. Note finali', [field('Note aggiuntive', a.note_finali)])
   }
 
   html += '</div></div>'
@@ -2852,6 +2899,7 @@ function AnamnesiTab({ clients, onRefresh }) {
   const [anamnesi, setAnamnesi] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('nuove')
+  const [openAnamnesi, setOpenAnamnesi] = useState(null)
 
   useEffect(() => { fetchAnamnesi() }, [])
 
@@ -2878,7 +2926,7 @@ function AnamnesiTab({ clients, onRefresh }) {
     <div style={{padding:'0 0 40px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
         <div style={{fontSize:13,color:'#CCC'}}>
-          {nonLette.length>0&&<span style={{fontWeight:700,color:'#3B6D11'}}>{nonLette.length} non letta{nonLette.length>1?'e':''} · </span>}
+          {nonLette.length>0&&<span style={{fontWeight:700,color:'#6FCF97'}}>{nonLette.length} non letta{nonLette.length>1?'e':''} · </span>}
           {anamnesi.length} totali
         </div>
         <div style={{display:'flex',gap:6}}>
@@ -2886,9 +2934,9 @@ function AnamnesiTab({ clients, onRefresh }) {
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{
               padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:500,cursor:'pointer',
               border:'0.5px solid',fontFamily:'inherit',
-              background:filter===f.id?'#3B6D11':'white',
-              color:filter===f.id?'white':'#AAA',
-              borderColor:filter===f.id?'#3B6D11':'#E0DDD6'
+              background:filter===f.id?'#3B6D11':'#161616',
+              color:filter===f.id?'white':'#DDD',
+              borderColor:filter===f.id?'#3B6D11':'#333'
             }}>{f.l}</button>
           ))}
         </div>
@@ -2898,7 +2946,7 @@ function AnamnesiTab({ clients, onRefresh }) {
 
       {!loading&&displayed.length===0&&(
         <div style={{textAlign:'center',padding:'60px 20px',background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C'}}>
-          <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#E0DDD6',display:'block',marginBottom:10}}/>
+          <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#444',display:'block',marginBottom:10}}/>
           <div style={{fontSize:13,color:'#CCC'}}>Nessuna anamnesi {filter==='nuove'?'non letta':'compilata'}.</div>
         </div>
       )}
@@ -2907,9 +2955,9 @@ function AnamnesiTab({ clients, onRefresh }) {
         const clientName = a.profiles?.full_name || clients.find(c=>c.id===a.client_id)?.full_name || '—'
         const isNew = !a.read_by_coach
         return (
-          <div key={a.id} style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${isNew?'#A7D9A0':'#E0DDD6'}`,marginBottom:10,overflow:'hidden'}}>
-            <div style={{padding:'14px',display:'flex',alignItems:'center',gap:12,background:isNew?'#F0FAF0':'white'}}>
-              <div style={{width:40,height:40,borderRadius:'50%',background:isNew?'#3B6D11':'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
+          <div key={a.id} style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${isNew?'rgba(111,207,151,0.55)':'#1C1C1C'}`,marginBottom:10,overflow:'hidden'}}>
+            <div style={{padding:'14px',display:'flex',alignItems:'center',gap:12,background:isNew?'rgba(59,140,90,0.12)':'#0D0D0D'}}>
+              <div style={{width:40,height:40,borderRadius:'50%',background:isNew?'#3B6D11':'#333',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
                 {initials(clientName)}
               </div>
               <div style={{flex:1}}>
@@ -2923,8 +2971,15 @@ function AnamnesiTab({ clients, onRefresh }) {
                 </div>
               </div>
               <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>{setOpenAnamnesi(a.client_id);if(isNew)markRead(a.id)}} style={{
+                  background:'rgba(74,144,212,0.14)',color:'#8CC2F5',border:'0.5px solid rgba(74,144,212,0.5)',
+                  borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+                  display:'flex',alignItems:'center',gap:4
+                }}>
+                  <i className="ti ti-eye" style={{fontSize:12}}/>Apri
+                </button>
                 <button onClick={()=>{generateAnamnesiPDF(a,clientName);if(isNew)markRead(a.id)}} style={{
-                  background:'rgba(59,109,17,0.1)',color:'#3B6D11',border:'0.5px solid #3B6D11',
+                  background:'rgba(59,140,90,0.14)',color:'#6FCF97',border:'0.5px solid rgba(111,207,151,0.5)',
                   borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
                   display:'flex',alignItems:'center',gap:4
                 }}>
@@ -2936,6 +2991,14 @@ function AnamnesiTab({ clients, onRefresh }) {
           </div>
         )
       })}
+
+      {openAnamnesi && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+          <div style={{width:'100%',maxWidth:640,maxHeight:'90vh',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+            <Anamnesi clientId={openAnamnesi} onClose={()=>setOpenAnamnesi(null)}/>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
