@@ -229,6 +229,17 @@ const globalStyles = `
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Modal e panel — sempre scrollabili */
+  [data-modal] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-modal-body] {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+  }
+
   /* Input autofill dark */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
