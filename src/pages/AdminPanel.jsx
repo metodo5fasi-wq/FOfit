@@ -1361,7 +1361,7 @@ function ClientProgress({ client }) {
         <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,color:'white',flexShrink:0}}>{ini}</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:500,color:'#F0F0F0'}}>{client.full_name}</div>
-          <div style={{fontSize:11,color:'#CCC'}}>{client.goal || 'Obiettivo non impostato'}</div>
+          <div style={{fontSize:11,color:'#CCC'}}>{goalLabel[client.goal] || client.goal || 'Obiettivo non impostato'}</div>
         </div>
         <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
           <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:diaryToday?'#EAF3DE':'#FEE2E2',color:diaryToday?'#3B6D11':'#E24B4A'}}>

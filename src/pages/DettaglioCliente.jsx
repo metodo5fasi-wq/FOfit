@@ -7,8 +7,8 @@ import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
 import Anamnesi from './Anamnesi'
 
-const GOAL_LABEL = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza' }
-const GOAL_COLOR = { dimagrimento:'#E24B4A', massa:'#3B6D11', mantenimento:'#E8A020', forza:'#7C3AED', resistenza:'#4A90D4' }
+const GOAL_LABEL = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', ricomposizione:'Ricomposizione corporea', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza' }
+const GOAL_COLOR = { dimagrimento:'#E24B4A', massa:'#3B6D11', ricomposizione:'#14B8A6', mantenimento:'#E8A020', forza:'#7C3AED', resistenza:'#4A90D4' }
 const initials = n => n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase() : 'U'
 
 const s = {
