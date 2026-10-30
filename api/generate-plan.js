@@ -195,7 +195,10 @@ async function generateFeedback(days, kcalTarget, protTarget) {
 // ══════════════════════════════════════════════════════════════
 // SCHEDA ALLENAMENTO
 // ══════════════════════════════════════════════════════════════
-const WK_MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Femorali','Glutei','Polpacci','Addominali','Cardio','Corpo libero']
+const WK_MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Avambracci','Gambe','Femorali','Glutei','Polpacci','Addominali','Cardio','Corpo libero','Mobilità e postura']
+
+// Campione casuale dei nomi in libreria: con centinaia di esercizi l'AI non deve vedere sempre gli stessi
+function sampleNames(arr, n) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a.slice(0, n) }
 
 async function callClaudeText(prompt, maxTokens) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -259,8 +262,8 @@ async function handleWorkout(req, res) {
     for (let i = 0; i < days.length; i++) {
       const d = days[i]
       const focus = (Array.isArray(d.focus) ? d.focus : []).filter(m => WK_MUSCLES.includes(m))
-      const groups = [...new Set([...focus, ...(formData.cardio ? ['Cardio'] : []), ...(formData.correttivo ? ['Addominali', 'Corpo libero'] : [])])]
-      const libLines = groups.map(g => `${g}: ${(library[g] || []).slice(0, 40).join(' | ')}`).filter(l => !l.endsWith(': ')).join('\n')
+      const groups = [...new Set([...focus, ...(formData.cardio ? ['Cardio'] : []), ...(formData.correttivo ? ['Addominali', 'Mobilità e postura'] : [])])]
+      const libLines = groups.map(g => `${g}: ${sampleNames(library[g] || [], 60).join(' | ')}`).filter(l => !l.endsWith(': ')).join('\n')
       const prompt = `Sei un personal trainer italiano esperto. Crea la seduta "${d.title || 'Giorno ' + (i + 1)}" (giorno ${i + 1} di ${days.length}) di una scheda di allenamento.
 
 CLIENTE:
