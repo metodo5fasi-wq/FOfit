@@ -59,9 +59,12 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
   const goalLabel = {
     dimagrimento: '🔥 Dimagrimento',
     massa: '💪 Aumento massa',
+    ricomposizione: '🔄 Ricomposizione corporea',
     mantenimento: '⚖️ Mantenimento',
+    forza: '🏋️ Forza',
+    resistenza: '🏃 Resistenza',
     definizione: '✨ Definizione',
-  }[profile?.goal] || '🎯 Obiettivo'
+  }[String(profile?.goal || '').trim().toLowerCase()] || '🎯 Obiettivo'
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#050505'}}>
