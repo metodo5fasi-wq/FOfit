@@ -283,8 +283,12 @@ export default function AdminPanel() {
     const { data: prof } = await supabase.from('profiles').select('*')
       .neq('role','admin').order('created_at',{ascending:false})
     setClients(prof||[])
-    const { data: pl } = await supabase.from('meal_plans').select('*, profiles(full_name)').order('created_at',{ascending:false})
-    setPlans(pl||[])
+    // Nessuna unione con "profiles": meal_plans ha DUE collegamenti verso profiles (client_id e created_by),
+    // quindi l'unione è ambigua e può fallire in silenzio → nessun piano riconosciuto. Il nome arriva dai clienti già caricati.
+    const { data: plRaw, error: plErr } = await supabase.from('meal_plans').select('*').order('created_at',{ascending:false})
+    if (plErr) console.error('Errore caricamento piani:', plErr)
+    const pl = (plRaw||[]).map(pp => ({ ...pp, profiles: { full_name: (prof||[]).find(cc => cc.id === pp.client_id)?.full_name } }))
+    setPlans(pl)
 
     if (prof?.length) {
       const ids = prof.map(c => c.id)
@@ -358,6 +362,7 @@ export default function AdminPanel() {
           diaryToday: diaryDays.includes(today),
           diaryDays7: diaryDays.length,
           activePlan: cp.find(p => p.is_active) || null,
+          inactivePlan: cp.some(p => p.is_active) ? null : (cp[0] || null),   // i piani arrivano dal più recente
           latestMeasure: latestByClient[c.id] || null,
           sessions7: sessionsByClient[c.id] || [],
           lastCheckin: checkinByClient[c.id] || null,
@@ -441,6 +446,11 @@ export default function AdminPanel() {
     setSaving(false)
   }
 
+  async function reactivatePlan(planId) {
+    const { error } = await supabase.from('meal_plans').update({ is_active: true }).eq('id', planId)
+    if (error) { alert('Errore riattivazione piano: ' + error.message); return }
+    fetchAll()
+  }
   async function togglePlan(id, cur) { await supabase.from('meal_plans').update({is_active:!cur}).eq('id',id); fetchAll() }
   async function deletePlan(id) { if (!confirm('Eliminare?')) return; await supabase.from('meal_plans').delete().eq('id',id); fetchAll() }
   const macroKcal = p => (parseInt(p.protein_target_g||0)*4+parseInt(p.carbs_target_g||0)*4+parseInt(p.fat_target_g||0)*9)
@@ -514,13 +524,15 @@ export default function AdminPanel() {
     if (search && !c.full_name?.toLowerCase().includes(search.toLowerCase())) return false
     const st = clientStats[c.id]
     if (!st) return true
-    if (filter === 'no-piano' && st.activePlan) return false
+    if (filter === 'no-piano' && (st.activePlan || st.inactivePlan)) return false
     if (filter === 'no-diario' && st.diaryToday) return false
     if (filter === 'piano-attivo' && !st.activePlan) return false
+    if (filter === 'piano-non-attivo' && !st.inactivePlan) return false
     return true
   })
 
-  const countNoPiano = clients.filter(c => clientStats[c.id] && !clientStats[c.id].activePlan).length
+  const countNoPiano = clients.filter(c => clientStats[c.id] && !clientStats[c.id].activePlan && !clientStats[c.id].inactivePlan).length
+  const countPianoNonAttivo = clients.filter(c => clientStats[c.id]?.inactivePlan).length
   const countNoDiario = clients.filter(c => clientStats[c.id] && !clientStats[c.id].diaryToday).length
 
   const SIDEBAR_TABS = [
@@ -678,7 +690,7 @@ export default function AdminPanel() {
                       {id:'tutti',label:`Tutti (${clients.length})`},
                       {id:'no-diario',label:`✗ Diario (${countNoDiario})`},
                       {id:'no-piano',label:`Senza piano (${countNoPiano})`},
-                      {id:'piano-attivo',label:'Con piano'},
+                      {id:'piano-attivo',label:'Con piano'},...(countPianoNonAttivo>0?[{id:'piano-non-attivo',label:`Piano non attivo (${countPianoNonAttivo})`}]:[]),
                     ].map(f=>(
                       <button key={f.id} onClick={()=>setFilter(f.id)} style={{
                         padding:'5px 11px',borderRadius:14,fontSize:11,fontWeight:filter===f.id?700:500,
@@ -735,7 +747,7 @@ export default function AdminPanel() {
                             <div style={{flex:1,minWidth:0}}>
                               <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
                               <div style={{fontSize:10,color:'#CCC',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
-                                <span>{goalLabel[c.goal]||'—'}</span>
+                                <span>{goalLabel[c.goal]||'—'}</span>{st.inactivePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#F5B041',fontWeight:700}}>Piano non attivo</span></>}
                                 {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#D4570A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
                                 {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'rgba(226,75,74,0.15)':days<=7?'rgba(212,87,10,0.15)':'rgba(59,140,90,0.15)',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B8C5A'}}>{days<0?'Scaduto':`${days}gg`}</span>}
                               </div>
@@ -770,6 +782,10 @@ export default function AdminPanel() {
                                 style={{flex:1,padding:'6px 4px',background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
                                 🥗 Piano
                               </a>
+                            ) : st.inactivePlan ? (
+                              <button onClick={()=>reactivatePlan(st.inactivePlan.id)} style={{flex:1,padding:'6px 4px',background:'rgba(245,176,65,0.15)',color:'#F5B041',border:'0.5px solid rgba(245,176,65,0.5)',borderRadius:7,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+                                ↻ Riattiva piano
+                              </button>
                             ) : (
                               <a href="/importa" onClick={e=>{e.preventDefault();window.location.href='/importa'}}
                                 style={{flex:1,padding:'6px 4px',background:'#161616',color:'#CCC',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,fontWeight:500,textDecoration:'none',textAlign:'center'}}>
@@ -1562,7 +1578,8 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
   const newAnamnesi = clients.filter(c => clientStats[c.id]?.newAnamnesi)
   const totalUnread = clients.reduce((sum,c) => sum + (clientStats[c.id]?.unreadMessages||0), 0)
   const withPlan = clients.filter(c => clientStats[c.id]?.activePlan).length
-  const noPlan = totalClients - withPlan
+  const pianoNonAttivo = clients.filter(c => clientStats[c.id]?.inactivePlan).length
+  const noPlan = totalClients - withPlan - pianoNonAttivo
   const inScadenza = clients.filter(c => {
     if (!c.subscription_end) return false
     const days = Math.ceil((new Date(c.subscription_end) - new Date()) / (1000*60*60*24))
@@ -1589,6 +1606,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
           <div style={{marginLeft:'auto',textAlign:'right'}}>
             <div style={{fontSize:12,fontWeight:600,color:OK}}>{withPlan} con piano</div>
             {noPlan > 0 && <div style={{fontSize:11,color:ALERT}}>{noPlan} senza piano</div>}
+            {pianoNonAttivo > 0 && <div style={{fontSize:11,color:'#F5B041'}}>{pianoNonAttivo} con piano non attivo</div>}
           </div>
         </div>
 

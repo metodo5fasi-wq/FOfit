@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
+import { useAuth } from '../App'
 import { searchFoods } from '../data/foodDatabase.js'
 
 const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
@@ -58,6 +59,7 @@ export default function CreaPiano(){
   const [searchParams]=useSearchParams()
   const clientId=searchParams.get('client')
   const {toast}=useToast()
+  const {profile}=useAuth()
 
   const [clients,setClients]=useState([])
   const [selectedClient,setSelectedClient]=useState(clientId||'')
@@ -219,17 +221,32 @@ export default function CreaPiano(){
 
   // Copy from other plan
   async function loadOtherPlans(){
-    const{data}=await supabase.from('meal_plans').select('id,name,client_id,profiles!meal_plans_client_id_fkey(full_name)').eq('is_active',true).neq('client_id',selectedClient).limit(20)
+    const{data}=await supabase.from('meal_plans').select('id,title,client_id,profiles!meal_plans_client_id_fkey(full_name)').eq('is_active',true).neq('client_id',selectedClient).limit(20)
     setOtherPlans(data||[]);setShowCopyPlan(true)
   }
 
+  // Tipi pasto: nel database sono in minuscolo ('colazione' | 'spuntino' | 'pranzo' | 'cena'); qui usiamo le etichette complete
+  function mealLabelFromDb(m){
+    if(m.meal_name && MEAL_TYPES.includes(m.meal_name)) return m.meal_name
+    const k=String(m.meal_type||'').toLowerCase()
+    if(k==='colazione') return 'Colazione'
+    if(k==='pranzo') return 'Pranzo'
+    if(k==='cena') return 'Cena'
+    return 'Spuntino pomeriggio'
+  }
+  function mealTypeToDb(label){
+    const k=String(label||'').toLowerCase()
+    if(k==='colazione'||k==='pranzo'||k==='cena') return k
+    return 'spuntino'
+  }
+
   async function importPlan(planId){
-    const{data:meals}=await supabase.from('plan_meals').select('*,plan_meal_foods(*)').eq('plan_id',planId)
+    const{data:meals}=await supabase.from('plan_meals').select('*,plan_meal_foods(*)').eq('plan_id',planId).order('meal_order')
     if(!meals?.length) return
     const nd={};for(let i=0;i<7;i++)nd[i]=[]
     meals.forEach(m=>{
-      const di=m.day_of_week??0
-      nd[di]=[...(nd[di]||[]),{meal_type:m.meal_type,note_pasto:m.notes||'',foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:''}))}]
+      const di=Math.min(6,Math.max(0,(parseInt(m.day_of_week)||1)-1))
+      nd[di]=[...(nd[di]||[]),{meal_type:mealLabelFromDb(m),note_pasto:m.coach_note||'',foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:''}))}]
     })
     setDays(nd);setShowCopyPlan(false)
     toast('Piano importato!','success')
@@ -380,36 +397,53 @@ export default function CreaPiano(){
   // Salva piano
   async function savePlan(){
     if(!selectedClient){toast('Seleziona un cliente','error');return}
-    const hasMeals=Object.values(days).some(d=>d.length>0)
-    if(!hasMeals){toast('Aggiungi almeno un pasto','error');return}
+    const hasMeals=Object.values(days).some(d=>d.some(m=>m.foods.length>0))
+    if(!hasMeals){toast('Aggiungi almeno un pasto con degli alimenti','error');return}
+    if(!profile?.id){toast('Sessione scaduta, ricarica la pagina','error');return}
     setSaving(true)
+    let newPlanId=null
     try{
-      await supabase.from('meal_plans').update({is_active:false}).eq('client_id',selectedClient)
+      // 1) crea il nuovo piano NON ancora attivo: il piano attuale del cliente resta intatto
       const{data:plan,error:planErr}=await supabase.from('meal_plans').insert({
-        client_id:selectedClient,name:planName,is_active:true,
-        kcal_target:parseInt(kcalTarget)||null,protein_target_g:parseInt(protTarget)||null,
-        carbs_target_g:parseInt(carbsTarget)||null,fat_target_g:parseInt(fatTarget)||null,
+        client_id:selectedClient, created_by:profile.id, title:planName||'Piano alimentare', week_number:1,
+        kcal_target:parseInt(kcalTarget)||2000, protein_target_g:parseInt(protTarget)||150,
+        carbs_target_g:parseInt(carbsTarget)||200, fat_target_g:parseInt(fatTarget)||65,
+        is_active:false,
       }).select().single()
       if(planErr) throw planErr
+      newPlanId=plan.id
 
+      // 2) pasti e alimenti (giorni 1-7, tipi pasto come nel resto dell'app)
       for(const[di,meals] of Object.entries(days)){
-        for(const[mi,meal] of meals.entries()){
+        let order=0
+        for(const meal of meals){
           if(!meal.foods.length) continue
           const{data:md,error:me}=await supabase.from('plan_meals').insert({
-            plan_id:plan.id,meal_type:meal.meal_type,day_of_week:parseInt(di),
-            day_label:DAY_NAMES[parseInt(di)],sort_order:mi,
-            notes:mealNotes[`${di}-${mi}`]||meal.note_pasto||null,
+            plan_id:plan.id, day_of_week:parseInt(di)+1, meal_type:mealTypeToDb(meal.meal_type), meal_name:meal.meal_type,
+            meal_order:order++, day_label:DAY_NAMES[parseInt(di)],
+            coach_note:(mealNotes[`${di}-${meals.indexOf(meal)}`]||meal.note_pasto||'')||null,
           }).select().single()
           if(me) throw me
-          await supabase.from('plan_meal_foods').insert(meal.foods.map((f,fi)=>({
-            plan_meal_id:md.id,food_name:f.food_name,quantity_g:f.quantity_g,
-            kcal:f.kcal,protein_g:f.protein_g,carbs_g:f.carbs_g,fat_g:f.fat_g,sort_order:fi,
+          const{error:fe}=await supabase.from('plan_meal_foods').insert(meal.foods.map((f,fi)=>({
+            plan_meal_id:md.id, food_name:f.food_name, quantity_g:Math.round(f.quantity_g), kcal:Math.round(f.kcal),
+            protein_g:f.protein_g, carbs_g:f.carbs_g, fat_g:f.fat_g, sort_order:fi,
           })))
+          if(fe) throw fe
         }
       }
+
+      // 3) solo ora che il nuovo piano è completo: disattiva gli altri e attiva questo
+      const{error:offErr}=await supabase.from('meal_plans').update({is_active:false}).eq('client_id',selectedClient).neq('id',plan.id)
+      if(offErr) throw offErr
+      const{error:onErr}=await supabase.from('meal_plans').update({is_active:true}).eq('id',plan.id)
+      if(onErr) throw onErr
       toast('Piano salvato! 🎉','success')
       setTimeout(()=>navigate(`/modifica-piano/${plan.id}`),800)
-    }catch(e){toast('Errore: '+e.message,'error')}
+    }catch(e){
+      // se qualcosa non va, il piano incompleto viene eliminato e quello precedente del cliente resta com'era
+      if(newPlanId){ try{ await supabase.from('meal_plans').delete().eq('id',newPlanId) }catch(_){} }
+      toast('Errore: '+(e.message||'salvataggio non riuscito')+' — il piano precedente del cliente non è stato toccato','error')
+    }
     setSaving(false)
   }
 
@@ -850,7 +884,7 @@ export default function CreaPiano(){
                 otherPlans.map(p=>(
                   <div key={p.id} style={{background:'#161616',borderRadius:10,padding:'12px',marginBottom:8,border:'0.5px solid #222',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                     <div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{p.name}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{p.title}</div>
                       <div style={{fontSize:10,color:'#888'}}>{p.profiles?.full_name}</div>
                     </div>
                     <button onClick={()=>importPlan(p.id)} style={s.btn}>Importa</button>
