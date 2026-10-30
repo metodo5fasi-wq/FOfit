@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'
 
-const MUSCLE_GROUPS = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Quadricipiti','Femorali','Polpacci','Glutei','Addominali','Cardio','Corpo libero','Altro']
+const MUSCLE_GROUPS = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Quadricipiti','Femorali','Polpacci','Glutei','Addominali','Cardio','Corpo libero','Avambracci','Mobilità e postura','Altro']
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'18px 16px' },
@@ -497,9 +497,9 @@ export default function ModificaAllenamento() {
                     {['Tutti',...MUSCLE_GROUPS].map(g => (
                       <button key={g} onClick={()=>setNewEx(p=>({...p,muscle_group:g==='Tutti'?'Petto':g,exercise_name:'',video_url:'',_filterGroup:g}))}
                         style={{padding:'5px 10px',borderRadius:14,fontSize:11,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-                          background:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#F5F3EF',
-                          color:(newEx._filterGroup||'Tutti')===g?'white':'#888780',
-                          borderColor:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#E0DDD6',
+                          background:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#161616',
+                          color:(newEx._filterGroup||'Tutti')===g?'white':'#DDD',
+                          borderColor:(newEx._filterGroup||'Tutti')===g?'#D4570A':'#333',
                         }}>{g}</button>
                     ))}
                   </div>
@@ -508,7 +508,7 @@ export default function ModificaAllenamento() {
                 {/* STEP 2: Seleziona esercizio dalla libreria */}
                 <div style={{marginBottom:10}}>
                   <label style={s.label}>2. Seleziona dalla libreria (o scrivi sotto)</label>
-                  <select style={{...s.input,fontWeight:newEx.exercise_name?600:400,color:newEx.exercise_name?'#111':'#888780'}}
+                  <select style={{...s.input,fontWeight:newEx.exercise_name?600:400,color:newEx.exercise_name?'#F0F0F0':'#AAA'}}
                     value={newEx.exercise_name}
                     onChange={e=>{
                       const sel = EXERCISE_DB.find(x=>x.name===e.target.value)
@@ -519,10 +519,13 @@ export default function ModificaAllenamento() {
                       }
                     }}>
                     <option value="">— Seleziona dalla libreria —</option>
-                    {EXERCISE_DB
-                      .filter(ex => !newEx._filterGroup || newEx._filterGroup==='Tutti' || ex.muscle===newEx._filterGroup)
-                      .map(ex => (
-                        <option key={ex.name} value={ex.name}>{ex.name} {ex.yt?'🎬':''}</option>
+                    {(newEx._filterGroup && newEx._filterGroup!=='Tutti'
+                        ? [[newEx._filterGroup, EXERCISE_DB.filter(ex=>ex.muscle===newEx._filterGroup)]]
+                        : Object.entries(EXERCISE_DB.reduce((acc,ex)=>{ (acc[ex.muscle]=acc[ex.muscle]||[]).push(ex); return acc },{}))
+                      ).map(([grp, list]) => (
+                        <optgroup key={grp} label={grp}>
+                          {list.map(ex => <option key={grp+'|'+ex.name} value={ex.name}>{ex.name} {ex.yt?'🎬':''}</option>)}
+                        </optgroup>
                       ))
                     }
                   </select>

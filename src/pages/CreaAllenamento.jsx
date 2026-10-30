@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
-import { searchExercises } from '../data/exerciseDatabase.js'
+import { EXERCISE_DB, searchExercises } from '../data/exerciseDatabase.js'
 import {
   MUSCLES, letter, buildStructure, libraryByMuscle, matchExercise, normalizeMuscle, buildExerciseRows,
   estimateMinutes, totalSets, volumeByMuscle, dayLabel, parseDayTitle, prefillFromAnamnesi,
@@ -85,7 +85,7 @@ function ExerciseCard({ ex, first, last, selectMode, isSel, isOpen, onSel, onOpe
           </Field>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
             <Field label="TUT"><input value={ex.tut} onChange={e => onChange({ tut: e.target.value })} placeholder="es. 3-1-1" style={S.input} /></Field>
-            <Field label="Link video (YouTube)"><input value={ex.video_url} onChange={e => onChange({ video_url: e.target.value })} placeholder="https://youtube.com/..." style={S.input} /></Field>
+            <Field label="Link video (YouTube)"><div style={{ display: 'flex', gap: 6 }}><input value={ex.video_url} onChange={e => onChange({ video_url: e.target.value })} placeholder="https://youtube.com/..." style={S.input} /><a href={`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.exercise_name || '') + ' esecuzione corretta')}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btnGray, textDecoration: 'none', whiteSpace: 'nowrap' }}>🔎 Cerca</a></div></Field>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             <Field label="Progressione"><select value={ex.prog_weeks} onChange={e => onChange({ prog_weeks: parseInt(e.target.value) })} style={S.input} aria-label="Settimane progressione">
@@ -281,10 +281,9 @@ export default function CreaAllenamento() {
   const volume = volumeByMuscle(days)
   const clientName = clients.find(c => c.id === selectedClient)?.full_name
   const pickerList = (() => {
-    let list = pSearch.trim().length >= 2 ? searchExercises(pSearch) : []
-    if (pSearch.trim().length < 2 && pMuscle !== 'Tutti') list = Object.entries(LIB).filter(([m]) => m === pMuscle).flatMap(([, names]) => names.map(n => ({ name: n, muscle: pMuscle })))
+    let list = pSearch.trim().length >= 2 ? searchExercises(pSearch, 400) : (pMuscle !== 'Tutti' ? EXERCISE_DB : [])
     if (pMuscle !== 'Tutti') list = list.filter(e => e.muscle === pMuscle)
-    return list.slice(0, 60)
+    return list.slice(0, 300)
   })()
 
   return (
@@ -393,15 +392,15 @@ export default function CreaAllenamento() {
           <div style={{ ...S.modalBox, height: '88dvh' }}>
             <div style={S.mHead}><div style={{ fontWeight: 700, fontSize: 14 }}>Aggiungi esercizio{pAdded > 0 ? ` · ${pAdded} aggiunti` : ''}</div><button onClick={() => setPicker(false)} style={{ ...S.btn, padding: '6px 14px' }}>{pAdded > 0 ? 'Fatto' : 'Chiudi'}</button></div>
             <div style={{ padding: '10px 18px 0', flexShrink: 0 }}>
-              <input autoFocus value={pSearch} onChange={e => setPSearch(e.target.value)} placeholder="Cerca tra 179 esercizi..." style={S.input} aria-label="Cerca esercizio" />
+              <input autoFocus value={pSearch} onChange={e => setPSearch(e.target.value)} placeholder={`Cerca tra ${EXERCISE_DB.length} esercizi...`} style={S.input} aria-label="Cerca esercizio" />
               <div style={{ display: 'flex', gap: 5, overflowX: 'auto', padding: '8px 0' }}>
                 {['Tutti', ...MUSCLES].map(m => <button key={m} onClick={() => setPMuscle(m)} style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 16, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: pMuscle === m ? 700 : 400, background: pMuscle === m ? '#D4570A' : '#161616', color: pMuscle === m ? 'white' : '#CCC', border: pMuscle === m ? 'none' : '0.5px solid #222' }}>{m}</button>)}
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               {pickerList.map(e => (
-                <div key={e.name} onClick={() => { const m = matchExercise(e.name, e.muscle); addExercise({ exercise_name: e.name, muscle_group: e.muscle, video_url: m?.yt || e.yt || '' }) }} style={{ padding: '11px 18px', borderBottom: '0.5px solid #111', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div><div style={{ fontSize: 13, fontWeight: 600 }}>{e.name}</div><div style={{ fontSize: 10, color: '#888' }}>{e.muscle}</div></div>
+                <div key={e.muscle + '|' + e.name} onClick={() => addExercise({ exercise_name: e.name, muscle_group: e.muscle, video_url: e.yt || '' })} style={{ padding: '11px 18px', borderBottom: '0.5px solid #111', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div><div style={{ fontSize: 13, fontWeight: 600 }}>{e.name}{e.yt && <i className="ti ti-brand-youtube" title="Con video" style={{ fontSize: 13, color: '#D4570A', marginLeft: 6 }} />}</div><div style={{ fontSize: 10, color: '#888' }}>{e.muscle}</div></div>
                   <i className="ti ti-plus" style={{ color: '#D4570A', fontSize: 16 }} />
                 </div>
               ))}
@@ -516,7 +515,7 @@ export default function CreaAllenamento() {
                 <Field label="Esercizi che odia (da evitare)"><input value={aiForm.evitare} onChange={e => setF('evitare', e.target.value)} style={S.input} /></Field>
                 <span style={S.label}>Gruppi da enfatizzare</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
-                  {MUSCLES.filter(m => m !== 'Cardio' && m !== 'Corpo libero').map(m => { const on = aiForm.enfasi.includes(m); return <button key={m} onClick={() => setF('enfasi', on ? aiForm.enfasi.filter(x => x !== m) : [...aiForm.enfasi, m])} style={{ padding: '4px 10px', borderRadius: 14, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', background: on ? 'rgba(212,87,10,0.2)' : '#161616', color: on ? '#F4894A' : '#CCC', border: on ? '0.5px solid rgba(212,87,10,0.5)' : '0.5px solid #222' }}>{m}</button> })}
+                  {MUSCLES.filter(m => m !== 'Cardio' && m !== 'Corpo libero' && m !== 'Mobilità e postura').map(m => { const on = aiForm.enfasi.includes(m); return <button key={m} onClick={() => setF('enfasi', on ? aiForm.enfasi.filter(x => x !== m) : [...aiForm.enfasi, m])} style={{ padding: '4px 10px', borderRadius: 14, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', background: on ? 'rgba(212,87,10,0.2)' : '#161616', color: on ? '#F4894A' : '#CCC', border: on ? '0.5px solid rgba(212,87,10,0.5)' : '0.5px solid #222' }}>{m}</button> })}
                 </div>
                 <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: '#DDD', cursor: 'pointer' }}><input type="checkbox" checked={aiForm.cardio} onChange={e => setF('cardio', e.target.checked)} />Aggiungi un breve finale cardio</label>
               </Sec>
