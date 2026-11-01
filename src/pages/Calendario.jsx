@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Toast } from '../components/Animations'
+import { generateSlots, describeAvailability } from '../lib/callAvailability.js'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -11,33 +12,9 @@ const s = {
   btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:8, padding:'8px 14px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
 }
 
-// Configurazione slot: giorno della settimana (0=Dom...6=Sab) -> { start, end }
-const AVAILABILITY = {
-  1: { start: '09:00', end: '12:00' }, // Lunedì
-  2: { start: '15:00', end: '18:30' }, // Martedì
-  3: { start: '09:00', end: '12:00' }, // Mercoledì
-  4: { start: '15:00', end: '18:30' }, // Giovedì
-  5: { start: '09:00', end: '12:00' }, // Venerdì
-}
-
-const SLOT_MINUTES = 30
 const MAX_BOOKINGS_PER_MONTH = 2
 
 const DAY_NAMES = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']
-
-function generateSlots(dayOfWeek) {
-  const avail = AVAILABILITY[dayOfWeek]
-  if (!avail) return []
-  const slots = []
-  let [h, m] = avail.start.split(':').map(Number)
-  const [endH, endM] = avail.end.split(':').map(Number)
-  while (h < endH || (h === endH && m < endM)) {
-    slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
-    m += SLOT_MINUTES
-    if (m >= 60) { m -= 60; h += 1 }
-  }
-  return slots
-}
 
 // Genera le prossime N date disponibili (escludendo oggi se è già passato l'orario)
 function getUpcomingDates(weeksAhead = 3) {
@@ -47,7 +24,7 @@ function getUpcomingDates(weeksAhead = 3) {
     const d = new Date(now)
     d.setDate(now.getDate() + i)
     const dow = d.getDay()
-    if (AVAILABILITY[dow]) {
+    if (generateSlots(dow).length > 0) {
       dates.push(d)
     }
   }
@@ -203,7 +180,7 @@ export default function Calendario() {
         <div style={{...s.card, background:'#161616', border:'none'}}>
           <div style={{fontSize:12,color:'#CCC',lineHeight:1.6}}>
             <i className="ti ti-info-circle" style={{fontSize:13,color:'#D4570A',marginRight:6}}/>
-            Disponibilità: <strong style={{color:'#F0F0F0'}}>Lun, Mer, Ven 9:00-12:00</strong> e <strong style={{color:'#F0F0F0'}}>Mar, Gio 15:00-18:30</strong>.
+            Disponibilità: <strong style={{color:'#F0F0F0'}}>{describeAvailability()}</strong>.
             Dopo la prenotazione ci sentiremo su WhatsApp per i dettagli della chiamata.
           </div>
         </div>

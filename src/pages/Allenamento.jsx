@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Toast, Confetti } from '../components/Animations'
+import KgPicker from '../components/KgPicker'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -515,9 +516,6 @@ export default function Allenamento() {
                   <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
                     {setsArray.map(setNum => {
                       const log = getLog(ex, setNum)
-                      // Genera valori kg: 0, 5, 7.5, 10, 12.5 ... 200 con step 2.5
-                      const kgOptions = []
-                      for (let k = 0; k <= 200; k += 2.5) kgOptions.push(k)
                       // Genera valori reps: 1-50
                       const repsOptions = Array.from({length:50}, (_,i) => i+1)
                       const defaultReps = parseInt(ex.reps?.split('-')[0]) || 10
@@ -527,19 +525,14 @@ export default function Allenamento() {
                           <div style={{width:22,height:22,borderRadius:6,background:log?'#3B8C5A':'#1C1C1C',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                             <span style={{fontSize:11,fontWeight:800,color:log?'white':'#555'}}>{setNum}</span>
                           </div>
-                          {/* KG dropdown */}
-                          <select
-                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg') || ''}
-                            onChange={e=>{
-                              setInputVal(ex.exercise_name, setNum, 'weight_kg', e.target.value)
-                              if (log) updateWeight(ex, setNum, e.target.value)
-                            }}
-                            style={{flex:1,padding:'6px 4px',border:'0.5px solid #222',borderRadius:8,fontSize:14,fontWeight:700,color:log?'#3B8C5A':'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',textAlign:'center',cursor:'pointer'}}>
-                            <option value="">{lastWeight ? `${lastWeight}` : '—'} kg</option>
-                            {kgOptions.map(k => (
-                              <option key={k} value={k}>{k % 1 === 0 ? k : k.toFixed(1)} kg</option>
-                            ))}
-                          </select>
+                          {/* KG: parte intera e decimale a scorrimento (es. 6,2 — 10,5) */}
+                          <KgPicker
+                            value={getInputVal(ex.exercise_name, setNum, 'weight_kg')}
+                            done={!!log}
+                            onChange={v=>{
+                              setInputVal(ex.exercise_name, setNum, 'weight_kg', v)
+                              if (log) updateWeight(ex, setNum, v)
+                            }}/>
                           <div style={{width:'0.5px',height:24,background:'#1C1C1C',flexShrink:0}}/>
                           {/* REPS dropdown */}
                           <select

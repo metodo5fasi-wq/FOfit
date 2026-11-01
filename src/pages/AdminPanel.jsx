@@ -7,6 +7,7 @@ import Anamnesi from './Anamnesi'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
+import { AVAILABILITY, generateSlots } from '../lib/callAvailability.js'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -1421,28 +1422,7 @@ function ClientProgress({ client }) {
 // ─────────────────────────────────────────────────────────
 // TAB CALENDARIO — gestione prenotazioni chiamate
 // ─────────────────────────────────────────────────────────
-const AVAIL_ADMIN = {
-  1: { start:'09:00', end:'12:00' },
-  2: { start:'15:00', end:'18:30' },
-  3: { start:'09:00', end:'12:00' },
-  4: { start:'15:00', end:'18:30' },
-  5: { start:'09:00', end:'12:00' },
-}
 const DAY_NAMES_ADMIN = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']
-
-function genSlotsAdmin(dow) {
-  const avail = AVAIL_ADMIN[dow]
-  if (!avail) return []
-  const slots = []
-  let [h,m] = avail.start.split(':').map(Number)
-  const [eh,em] = avail.end.split(':').map(Number)
-  while (h < eh || (h===eh && m < em)) {
-    slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
-    m += 30
-    if (m>=60) { m-=60; h+=1 }
-  }
-  return slots
-}
 
 function CalendarioAdmin() {
   const [bookings, setBookings] = useState([])
@@ -1484,7 +1464,7 @@ function CalendarioAdmin() {
   for (let i=0;i<21;i++) {
     const d = new Date(now)
     d.setDate(now.getDate()+i)
-    if (AVAIL_ADMIN[d.getDay()]) upcomingDates.push(d)
+    if (AVAILABILITY[d.getDay()] !== undefined) upcomingDates.push(d)
   }
 
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
@@ -1522,7 +1502,7 @@ function CalendarioAdmin() {
 
         {upcomingDates.map(date => {
           const dateKey = date.toISOString().split('T')[0]
-          const slots = genSlotsAdmin(date.getDay())
+          const slots = generateSlots(date.getDay())
           const isSelected = selectedDate === dateKey
           return (
             <div key={dateKey} style={{marginBottom:8}}>
@@ -1532,7 +1512,8 @@ function CalendarioAdmin() {
                 <span>{DAY_NAMES_ADMIN[date.getDay()]} {date.getDate()}/{date.getMonth()+1}</span>
                 <span style={{fontSize:11}}>{isSelected?'▲':'▼'}</span>
               </button>
-              {isSelected && (
+              {isSelected && slots.length === 0 && (<div style={{marginTop:8,fontSize:12,color:'#AAA',textAlign:'center',padding:'10px 0'}}>Nessuna disponibilità in questo giorno</div>)}
+              {isSelected && slots.length > 0 && (
                 <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginTop:8}}>
                   {slots.map(slot => {
                     const booked = bookings.find(b=>b.booking_date===dateKey && b.time_slot===slot && b.status==='confirmed')
