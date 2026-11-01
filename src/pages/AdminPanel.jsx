@@ -8,6 +8,8 @@ import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
 import { AVAILABILITY, generateSlots } from '../lib/callAvailability.js'
+import { useCoachInbox } from '../lib/useCoachInbox.js'
+import CoachDashboard from '../components/CoachDashboard'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -206,6 +208,8 @@ export default function AdminPanel() {
   const [selectedClient, setSelectedClient] = useState(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  // Dashboard: tutto ciò che i clienti hanno inviato (check-in, messaggi, report, anamnesi, chiamate, foto, misure)
+  const inbox = useCoachInbox({ clients, clientStats, coachId: profile?.id, onChanged: fetchAll })
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
   React.useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900)
@@ -365,6 +369,7 @@ export default function AdminPanel() {
         const diaryDays = (diaryByClient[c.id]||[]).map(d=>d.entry_date)
         stats[c.id] = {
           diaryToday: diaryDays.includes(today),
+          lastDiary: diaryDays.length ? [...diaryDays].sort().pop() : null,
           diaryDays7: diaryDays.length,
           activePlan: cp.find(p => p.is_active) || null,
           inactivePlan: cp.some(p => p.is_active) ? null : (cp[0] || null),   // i piani arrivano dal più recente
@@ -541,6 +546,7 @@ export default function AdminPanel() {
   const countNoDiario = clients.filter(c => clientStats[c.id] && !clientStats[c.id].diaryToday).length
 
   const SIDEBAR_TABS = [
+    { id:'overview', icon:'ti-layout-dashboard', label:'Dashboard', badge: inbox.unseenCount },
     { id:'clienti', icon:'ti-users', label:'Clienti' },
     { id:'report', icon:'ti-clipboard-check', label:'Report' },
     { id:'anamnesi', icon:'ti-clipboard-heart', label:'Anamnesi' },
@@ -611,6 +617,7 @@ export default function AdminPanel() {
               }}>
                 <i className={`ti ${t.icon}`} style={{fontSize:17,flexShrink:0}}/>
                 {t.label}
+                {t.badge > 0 && <span style={{marginLeft:'auto',background:'#D4570A',color:'white',fontSize:10,fontWeight:800,padding:'1px 7px',borderRadius:10}}>{t.badge}</span>}
               </button>
             ))}
           </nav>
@@ -676,9 +683,16 @@ export default function AdminPanel() {
                     background:tab===t.id?'#D4570A':'#161616',
                     color:tab===t.id?'white':'#AAA',
                     borderColor:tab===t.id?'#D4570A':'#E0DDD6',
-                  }}>{t.label}</button>
+                  }}>{t.label}{t.badge > 0 && <span style={{marginLeft:6,background:tab===t.id?'rgba(255,255,255,0.25)':'#D4570A',color:'white',fontSize:10,fontWeight:800,padding:'1px 6px',borderRadius:10}}>{t.badge}</span>}</button>
                 ))}
               </div>
+            )}
+
+            {/* TAB DASHBOARD */}
+            {tab==='overview' && (
+              <CoachDashboard inbox={inbox} clients={clients}
+                onOpenTab={(id)=>{setTab(id);setSelectedClient(null)}}
+                onOpenClient={(c)=>setSelectedClient(c)}/>
             )}
 
             {/* TAB CLIENTI */}
