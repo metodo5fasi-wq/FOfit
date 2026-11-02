@@ -10,6 +10,8 @@ import ReportAllenamento from './ReportAllenamento'
 import { AVAILABILITY, generateSlots } from '../lib/callAvailability.js'
 import { useCoachInbox } from '../lib/useCoachInbox.js'
 import CoachDashboard from '../components/CoachDashboard'
+import { ReportSignals, ReportAnswers } from '../components/ReportInsights'
+import { reportExtraHtml } from '../lib/reportQuestions.js'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -2416,6 +2418,7 @@ function CheckinAdmin() {
 // TAB REPORT
 // ─────────────────────────────────────────────────────────
 function ReportTab({ clients, clientStats, onRefresh }) {
+  const goalOf = id => (clients || []).find(c => c.id === id)?.goal
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
@@ -2508,7 +2511,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                 {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#3B6D11' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#AAA' }}>🧠</div></div>}
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                <button onClick={(e)=>{e.stopPropagation();generateReportPDF(r,clientName)}} style={{
+                <button onClick={(e)=>{e.stopPropagation();generateReportPDF(r,clientName,goalOf(r.client_id))}} style={{
                   background:'#EDE9FE',color:'#7C3AED',border:'0.5px solid #7C3AED',
                   borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
                   display:'flex',alignItems:'center',gap:4
@@ -2522,6 +2525,9 @@ function ReportTab({ clients, clientStats, onRefresh }) {
             {/* CONTENUTO ESPANSO */}
             {isExpanded && (
               <div style={{ borderTop: '0.5px solid #F5F3EF', padding: '14px', maxHeight: 500, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+
+                {/* SEGNALI PER AGGIORNARE I PIANI */}
+                <ReportSignals r={r} goal={goalOf(r.client_id)} />
 
                 {/* PROGRESSI ESERCIZI */}
                 {r.progressi_esercizi?.length > 0 && (
@@ -2585,6 +2591,8 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                     <div style={{ fontSize: 13, color: '#F0F0F0', lineHeight: 1.5, background: '#161616', borderRadius: 8, padding: '8px 10px' }}>{f.v}</div>
                   </div>
                 ))}
+                {/* RISPOSTE ALLE DOMANDE AGGIUNTIVE */}
+                <ReportAnswers r={r} />
               </div>
             )}
           </div>
@@ -2599,7 +2607,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
 // ─────────────────────────────────────────────────────────
 function _initials(n) { return n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase() : '?' }
 
-function generateReportPDF(r, clientName) {
+function generateReportPDF(r, clientName, goal) {
   function bar(val, max, color) {
     const pct = Math.min(Math.round((val/max)*100),100)
     return '<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:5px;background:#F0EDE8;border-radius:3px"><div style="height:5px;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div><span style="font-size:11px;font-weight:700;color:'+color+';min-width:20px;text-align:right">'+val+'</span></div>'
@@ -2676,7 +2684,7 @@ function generateReportPDF(r, clientName) {
   if (r.note_coach) {
     html += '<div class="sec"><div class="st">💬 Note al coach</div><div class="note">"'+r.note_coach+'"</div></div>'
   }
-  html += '</div></div></div>'
+  html += '</div></div>' + reportExtraHtml(r, { goal: goal }) + '</div>'
   html += '<div class="footer"><span>Generato il <strong>'+new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})+'</strong></span><span>FOfit · Federico Obinu Coach · <strong>fofit.fit</strong></span></div>'
   html += '</body></html>'
 

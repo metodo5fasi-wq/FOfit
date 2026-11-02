@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import ReportQuestions from '../components/ReportQuestions'
+import { cleanAnswers } from '../lib/reportQuestions.js'
 
 const s = {
   page: { flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'0 0 20px' },
@@ -52,6 +54,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   const [progressi, setProgressi] = useState([])
   const [adherence, setAdherence] = useState(null)
   const [diaryStats, setDiaryStats] = useState(null)
+  const [answers, setAnswers] = useState({})          // risposte alle domande aggiuntive (colonna "answers")
+  const [answersOk, setAnswersOk] = useState(false)   // true solo se la colonna esiste nel database
 
   const [data, setData] = useState({
     period_start:'', period_end:'',
@@ -71,6 +75,17 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   const progressiRef = useRef(progressi)
   useEffect(() => { dataRef.current = data }, [data])
   useEffect(() => { progressiRef.current = progressi }, [progressi])
+  const answersRef = useRef(answers), answersOkRef = useRef(answersOk)
+  useEffect(() => { answersRef.current = answers }, [answers])
+  useEffect(() => { answersOkRef.current = answersOk }, [answersOk])
+
+  // Le nuove domande compaiono solo se la colonna "answers" esiste già (script SQL eseguito): altrimenti il report resta com'era, senza perdere dati
+  useEffect(() => {
+    if (adminView || readOnly) return
+    let on = true
+    Promise.resolve(supabase.from('workout_reports').select('answers').limit(1)).then(r => { if (on) setAnswersOk(!r.error) }, () => { if (on) setAnswersOk(false) })
+    return () => { on = false }
+  }, [adminView, readOnly])
 
   // Autosave ogni 2 minuti
   useEffect(() => {
@@ -83,6 +98,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
         ...dataRef.current,
         client_id: clientId,
         progressi_esercizi: progressiRef.current,
+        ...(answersOkRef.current ? { answers: cleanAnswers(answersRef.current) } : {}),
         period_start: dataRef.current.period_start || null,
         period_end: dataRef.current.period_end || null,
         peso_inizio: dataRef.current.peso_inizio ? parseFloat(String(dataRef.current.peso_inizio).replace(',','.')) : null,
@@ -99,6 +115,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       ...data,
       client_id: clientId,
       progressi_esercizi: progressi,
+      ...(answersOk ? { answers: cleanAnswers(answers) } : {}),
       period_start: data.period_start || null,
       period_end: data.period_end || null,
       peso_inizio: data.peso_inizio ? parseFloat(String(data.peso_inizio).replace(',','.')) : null,
@@ -147,6 +164,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           note_coach: rep.note_coach||'',
         })
         if (rep.progressi_esercizi) setProgressi(rep.progressi_esercizi)
+        setAnswers(rep.answers && typeof rep.answers === 'object' ? rep.answers : {})
       }
 
       if (!adminView && clientId) {
@@ -218,6 +236,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   }
 
   function set(field, val) { setData(p=>({...p,[field]:val})) }
+  function setAnswer(id, val) { setAnswers(p => ({ ...p, [id]: val })) }
   function setEx(idx, field, val) { setProgressi(p=>p.map((e,i)=>i===idx?{...e,[field]:val}:e)) }
 
   // SALVA BOZZA
@@ -276,6 +295,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   }
 
   const isReadOnly = readOnly || !!report?.submitted_at
+  // schede di domande aggiuntive: in modifica solo se la colonna esiste; in sola lettura solo quelle con risposte
+  const extra = sid => (isReadOnly || answersOk) ? <ReportQuestions sectionId={sid} answers={answers} onChange={setAnswer} disabled={isReadOnly} /> : null
 
   if (loading) return (
     <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#AAA',fontSize:13}}>
@@ -319,7 +340,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
 
           {/* DATI AUTO */}
           {!adminView && (adherence||diaryStats) && (
-            <div style={{background:'linear-gradient(135deg,#FEF0E7,#FFF8F5)',border:'0.5px solid #F4C9A8',borderRadius:12,padding:'14px',marginBottom:14}}>
+            <div style={{background:'rgba(212,87,10,0.08)',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:12,padding:'14px',marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>📊 Dati automatici — ultime 4 settimane</div>
               <div style={{display:'flex',gap:16}}>
                 {adherence && <div><div style={{fontSize:20,fontWeight:800,color:adherence.pct>=70?'#3B6D11':'#D4570A'}}>{adherence.pct}%</div><div style={{fontSize:10,color:'#AAA'}}>Aderenza · {adherence.followed}/{adherence.total} pasti</div></div>}
@@ -446,6 +467,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             )}
           </div>
 
+          {extra('allenamento')}
+
           {/* S3 — ALIMENTAZIONE */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><span>🥗</span> Alimentazione</div>
@@ -454,6 +477,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <div style={{marginBottom:10}}><label style={s.label}>Pasti che salti più spesso</label><input style={s.input} value={data.pasti_saltati} disabled={isReadOnly} onChange={e=>set('pasti_saltati',e.target.value)} placeholder="Es. colazione, spuntino pomeridiano..."/></div>
             <div><label style={s.label}>Note sull'alimentazione</label><textarea style={s.textarea} value={data.note_alimentazione} disabled={isReadOnly} onChange={e=>set('note_alimentazione',e.target.value)}/></div>
           </div>
+
+          {extra('alimentazione')}
 
           {/* S4 — RECUPERO */}
           <div style={s.card}>
@@ -464,6 +489,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <div><label style={s.label}>Dolori o fastidi nuovi</label><textarea style={s.textarea} value={data.dolori_nuovi} disabled={isReadOnly} onChange={e=>set('dolori_nuovi',e.target.value)} placeholder="Es. fastidio al ginocchio durante gli squat..."/></div>
           </div>
 
+          {extra('recupero')}
+
           {/* S5 — FEEDBACK */}
           <div style={s.card}>
             <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><span>📋</span> Feedback sulla scheda</div>
@@ -472,6 +499,9 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
             <div style={{marginBottom:10}}><label style={s.label}>Cosa cambieresti</label><textarea style={s.textarea} value={data.cosa_cambieresti} disabled={isReadOnly} onChange={e=>set('cosa_cambieresti',e.target.value)}/></div>
             <div><label style={s.label}>Obiettivo prossimo periodo</label><textarea style={s.textarea} value={data.obiettivo_prossimo} disabled={isReadOnly} onChange={e=>set('obiettivo_prossimo',e.target.value)}/></div>
           </div>
+
+          {extra('corpo')}
+          {extra('prossime')}
 
           {/* S6 — NOTE LIBERE */}
           <div style={s.card}>
