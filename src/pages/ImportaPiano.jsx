@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import { DAY_LABEL, parseNum, extractMacros, splitByDay, missingDays, foodsSum, makeVariante, checkDays, planKcalTarget } from '../lib/planImport'
 
 const s = {
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
@@ -28,6 +29,9 @@ export default function ImportaPiano() {
   const [planNotes, setPlanNotes] = useState('')
   const [targets, setTargets] = useState({ kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65 })
   const [rawText, setRawText] = useState('')
+  const blocksRef = useRef([])                 // testo di ogni giorno, per poterlo rileggere
+  const [gaps, setGaps] = useState([])           // giorni che non si trovano nel testo
+  const [rereading, setRereading] = useState(null)
 
   useEffect(() => {
     supabase.from('profiles').select('*').eq('role','client').order('full_name')
@@ -35,60 +39,30 @@ export default function ImportaPiano() {
   }, [])
 
   const [progress, setProgress] = useState({ current: 0, total: 0, label: '' })
+  const checks = useMemo(() => checkDays(parsedPlan?.varianti || [], { target: parseInt(targets.kcal_target) || null }), [parsedPlan, targets.kcal_target])
 
-  // Estrai macro dal testo "TOTALE: 2198 kcal | P: 174g | C: 261g | G: 64g"
-  function extractMacros(text) {
-    const m = text.match(/TOTALE:\s*([\d.,]+)\s*kcal\s*\|\s*P:\s*([\d.,]+)g\s*\|\s*C:\s*([\d.,]+)g\s*\|\s*G:\s*([\d.,]+)g/i)
-    if (m) return { kcal: Math.round(parseFloat(m[1])), proteine_g: Math.round(parseFloat(m[2])), carboidrati_g: Math.round(parseFloat(m[3])), grassi_g: Math.round(parseFloat(m[4])) }
-    return null
+  // Legge UN giorno con l'AI (con un secondo tentativo per l'avvio a freddo del servizio)
+  async function readDay(db) {
+    const call = async () => {
+      const r = await fetch('/api/parse-day', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dayText: db.body, macros: db.macros }) })
+      const txt = await r.text(); let parsed = null; try { parsed = JSON.parse(txt) } catch (e) {}
+      return parsed?.pasti?.length ? parsed : null
+    }
+    try {
+      let res = await call()
+      if (!res) { await new Promise(r => setTimeout(r, 800)); res = await call() }
+      return res || { pasti: [] }
+    } catch (e) { return { pasti: [] } }
   }
 
-  // Dividi il testo in blocchi per giorno
-  function splitByDay(text) {
-    const dayMap = { 'LUNEDÌ':1,'MARTEDÌ':2,'MERCOLEDÌ':3,'GIOVEDÌ':4,'VENERDÌ':5,'SABATO':6,'DOMENICA':7 }
-    const dayKeys = Object.keys(dayMap)
-
-    // Tronca prima del riepilogo/sezioni extra
-    let clean = text
-    for (const stop of ['RIEPILOGO SETTIMANALE','RIEPILOGO','FONTI PROTEICHE','CONSIGLI PRATICI']) {
-      const idx = clean.toUpperCase().indexOf(stop)
-      if (idx > 100) { clean = clean.substring(0, idx); break }
-    }
-
-    // Trova tutte le posizioni dei giorni (nome giorno preceduto da = o da inizio riga)
-    const positions = []
-    for (const day of dayKeys) {
-      // Cerca il giorno come parola intera, preceduto da = o newline o inizio testo
-      const re = new RegExp('(?:={3,}[^\n]*\n)?' + day + '(?:\s*\n={3,})?', 'gi')
-      let m
-      while ((m = re.exec(clean)) !== null) {
-        positions.push({ dayName: day, index: m.index, len: m[0].length })
-      }
-    }
-
-    // Ordina per posizione e deduplicata (primo occorrenza di ogni giorno)
-    positions.sort((a, b) => a.index - b.index)
-    const seen = new Set()
-    const unique = positions.filter(p => {
-      if (seen.has(p.dayName)) return false
-      seen.add(p.dayName); return true
-    })
-
-    if (unique.length === 0) return []
-
-    // Estrai blocchi
-    const blocks = []
-    for (let i = 0; i < unique.length; i++) {
-      const { dayName, index, len } = unique[i]
-      const start = index + len
-      const end = i + 1 < unique.length ? unique[i+1].index : clean.length
-      const body = clean.substring(start, end).replace(/={3,}/g, '').trim()
-      if (body.length > 30) {
-        blocks.push({ dayName, dayNum: dayMap[dayName]||1, body, macros: extractMacros(body) })
-      }
-    }
-    return blocks
+  async function reparse(dayNum) {
+    const db = blocksRef.current.find(b => b.dayNum === dayNum); if (!db) return
+    setRereading(dayNum)
+    const v = makeVariante(db, await readDay(db))
+    setParsedPlan(pl => ({ ...pl, varianti: (pl.varianti || []).filter(x => x.dayNum !== dayNum).concat(v).sort((a, b) => a.dayNum - b.dayNum) }))
+    setRereading(null)
   }
+
   async function elabora() {
     setError('')
     if (rawText.trim().length < 20) { setError('Incolla il testo del piano alimentare.'); return }
@@ -113,104 +87,52 @@ export default function ImportaPiano() {
 
         if (!dayData.pasti?.length) throw new Error('Piano non riconosciuto. Controlla il formato.')
 
-        // Estrai macro dal testo
-        const macroMatch = rawText.match(/(\d+)\s*kcal[^\n]*P[:\s]*(\d+)g[^\n]*C[:\s]*(\d+)g[^\n]*G[:\s]*(\d+)g/i)
-        const kcal = macroMatch ? parseInt(macroMatch[1]) : 2000
-        const prot = macroMatch ? parseInt(macroMatch[2]) : 150
-        const carb = macroMatch ? parseInt(macroMatch[3]) : 200
-        const fat  = macroMatch ? parseInt(macroMatch[4]) : 65
+        // Totali: dal documento se ci sono, altrimenti la somma degli alimenti (mai un valore inventato)
+        const doc = extractMacros(rawText), sum = foodsSum(dayData.pasti)
+        const kcal = sum.kcal > 0 ? sum.kcal : (doc?.kcal ?? null)
+        const prot = doc?.proteine_g ?? (sum.proteine_g || null), carb = doc?.carboidrati_g ?? (sum.carboidrati_g || null), fat = doc?.grassi_g ?? (sum.grassi_g || null)
 
         const plan = {
           titolo: 'Piano alimentare',
           kcal_totali: kcal, proteine_g: prot, carboidrati_g: carb, grassi_g: fat,
           diet_type: 'lineare', note_generali: '',
-          varianti: [{ nome: 'Piano giornaliero', kcal, proteine_g: prot, carboidrati_g: carb, grassi_g: fat, pasti: dayData.pasti }],
+          varianti: [{ nome: 'Piano giornaliero', dayNum: 1, kcal, kcalDoc: doc?.kcal ?? null, missingKcal: sum.missing, foods: sum.foods, truncated: !!dayData.truncated, failed: false, docHasKcal: /kcal/i.test(rawText), proteine_g: prot, carboidrati_g: carb, grassi_g: fat, pasti: dayData.pasti }],
           integratori: [],
         }
+        blocksRef.current = []; setGaps([])
         setParsedPlan(plan)
         setPlanTitle(plan.titolo)
         setPlanNotes('')
-        setTargets({ kcal_target: kcal, protein_target_g: prot, carbs_target_g: carb, fat_target_g: fat })
+        setTargets(t0 => ({ kcal_target: kcal || t0.kcal_target, protein_target_g: prot || t0.protein_target_g, carbs_target_g: carb || t0.carbs_target_g, fat_target_g: fat || t0.fat_target_g }))
         setProgress({ current: 1, total: 1, label: 'Completato!' })
         setStep(2)
         return
       }
 
-      // Piano con giorni — elabora UN GIORNO ALLA VOLTA direttamente con Anthropic
+      // Piano con giorni — si legge UN GIORNO ALLA VOLTA. Un giorno non letto resta visibile (da rileggere), non sparisce e non sposta gli altri.
+      blocksRef.current = dayBlocks; setGaps(missingDays(dayBlocks))
       setProgress({ current: 0, total: dayBlocks.length, label: `0 / ${dayBlocks.length} giorni` })
       const varianti = []
-
       for (let i = 0; i < dayBlocks.length; i++) {
         const db = dayBlocks[i]
-        const dayLabel = db.dayName.charAt(0) + db.dayName.slice(1).toLowerCase()
-        setProgress({ current: i, total: dayBlocks.length, label: `${dayLabel}...` })
-
-        let data = { pasti: [] }
-        try {
-          // Prima chiamata — warm up se necessario
-          const r = await fetch('/api/parse-day', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dayText: db.body, macros: db.macros })
-          })
-          const txt = await r.text()
-          let parsed = null
-          try { parsed = JSON.parse(txt) } catch(e) {}
-          
-          if (parsed?.pasti?.length) {
-            data = parsed
-          } else {
-            // Riprova dopo 800ms (cold start Vercel)
-            await new Promise(res => setTimeout(res, 800))
-            const r2 = await fetch('/api/parse-day', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ dayText: db.body, macros: db.macros })
-            })
-            const txt2 = await r2.text()
-            try {
-              const parsed2 = JSON.parse(txt2)
-              if (parsed2?.pasti?.length) data = parsed2
-            } catch(e) {}
-          }
-        } catch(e) { continue }
-        if (data.pasti?.length > 0) {
-          const macros = db.macros || {}
-          const totKcal = data.pasti.reduce((s,p) => (p.alimenti||[]).reduce((ss,a) => ss+(a.kcal||0), s), 0)
-          varianti.push({
-            nome: dayLabel,
-            kcal: macros.kcal || totKcal || 2000,
-            proteine_g: macros.proteine_g || 0,
-            carboidrati_g: macros.carboidrati_g || 0,
-            grassi_g: macros.grassi_g || 0,
-            pasti: data.pasti,
-          })
-        }
-        setProgress({ current: i+1, total: dayBlocks.length, label: `${i+1} / ${dayBlocks.length} giorni` })
-        // Piccola pausa tra chiamate per evitare rate limit
-        if (i < dayBlocks.length - 1) await new Promise(res => setTimeout(res, 300))
+        setProgress({ current: i, total: dayBlocks.length, label: `${db.dayName.charAt(0) + db.dayName.slice(1).toLowerCase()}...` })
+        varianti.push(makeVariante(db, await readDay(db)))
+        setProgress({ current: i + 1, total: dayBlocks.length, label: `${i + 1} / ${dayBlocks.length} giorni` })
+        if (i < dayBlocks.length - 1) await new Promise(res => setTimeout(res, 300))      // piccola pausa tra le chiamate
       }
+      if (varianti.every(v => v.failed)) throw new Error('Nessun giorno elaborato. Controlla il formato del piano.')
 
-      if (varianti.length === 0) throw new Error('Nessun giorno elaborato. Controlla il formato del piano.')
-
-      // Calcola macro medi
-      const avg = (arr, key) => Math.round(arr.reduce((s,v) => s+(v[key]||0), 0) / arr.length)
+      const avg = key => { const a = varianti.filter(v => !v.failed && v[key] != null).map(v => v[key]); return a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null }
       const plan = {
         titolo: 'Piano alimentare',
-        kcal_totali: avg(varianti, 'kcal'),
-        proteine_g: avg(varianti, 'proteine_g'),
-        carboidrati_g: avg(varianti, 'carboidrati_g'),
-        grassi_g: avg(varianti, 'grassi_g'),
-        diet_type: 'lineare',
-        note_generali: '',
-        varianti,
-        integratori: [],
+        kcal_totali: planKcalTarget(varianti), proteine_g: avg('proteine_g'), carboidrati_g: avg('carboidrati_g'), grassi_g: avg('grassi_g'),
+        diet_type: 'lineare', note_generali: '', varianti, integratori: [],
       }
 
       setParsedPlan(plan)
       setPlanTitle(plan.titolo)
       setPlanNotes('')
-      setTargets({ kcal_target: plan.kcal_totali, protein_target_g: plan.proteine_g, carbs_target_g: plan.carboidrati_g, fat_target_g: plan.grassi_g })
+      setTargets(t0 => ({ kcal_target: plan.kcal_totali || t0.kcal_target, protein_target_g: plan.proteine_g || t0.protein_target_g, carbs_target_g: plan.carboidrati_g || t0.carbs_target_g, fat_target_g: plan.grassi_g || t0.fat_target_g }))
       setProgress({ current: dayBlocks.length, total: dayBlocks.length, label: 'Completato!' })
       setStep(2)
 
@@ -220,6 +142,8 @@ export default function ImportaPiano() {
 
   async function savePlan() {
     if (!selectedClient) { setError('Seleziona un cliente'); return }
+    const flagged = checks.filter(c => c.status !== 'ok')
+    if ((flagged.length || gaps.length) && !window.confirm(`${flagged.length ? `${flagged.length} ${flagged.length === 1 ? 'giorno ha' : 'giorni hanno'} dei controlli da rivedere` : ''}${flagged.length && gaps.length ? ' e ' : ''}${gaps.length ? `${gaps.length} ${gaps.length === 1 ? 'giorno non è stato trovato' : 'giorni non sono stati trovati'} nel testo` : ''}.\n\nSalvare comunque il piano?`)) return
     setSaving(true)
     setError('')
     try {
@@ -248,16 +172,16 @@ export default function ImportaPiano() {
           const pasto = pasti[mealIdx]
           const { data: mealData, error: mealErr } = await supabase.from('plan_meals').insert({
             plan_id: planData.id,
-            day_of_week: dayIdx + 1,
+            day_of_week: variante.dayNum || dayIdx + 1,      // il giorno vero del documento (se un giorno manca, gli altri non scalano)
             meal_type: pasto.tipo || 'altro',
             meal_name: pasto.nome,
             scheduled_time: pasto.orario || null,
             meal_order: mealIdx,
             day_label: variante.nome,
-            day_kcal_target: Math.round(variante.kcal) || null,
-            day_protein_target_g: Math.round(variante.proteine_g) || null,
-            day_carbs_target_g: Math.round(variante.carboidrati_g) || null,
-            day_fat_target_g: Math.round(variante.grassi_g) || null,
+            day_kcal_target: Math.round(variante.kcal ?? variante.kcalDoc) || null,
+            day_protein_target_g: Math.round(variante.proteine_g || 0) || null,
+            day_carbs_target_g: Math.round(variante.carboidrati_g || 0) || null,
+            day_fat_target_g: Math.round(variante.grassi_g || 0) || null,
           }).select().single()
           if (mealErr) throw mealErr
 
@@ -266,10 +190,10 @@ export default function ImportaPiano() {
               plan_meal_id: mealData.id,
               food_name: a.nome || 'Alimento',
               quantity_g: Math.round(parseFloat(a.quantita_g) || 100),
-              kcal: Math.round(parseFloat(a.kcal) || 0),
-              protein_g: parseFloat(a.proteine_g) || 0,
-              carbs_g: parseFloat(a.carboidrati_g) || 0,
-              fat_g: parseFloat(a.grassi_g) || 0,
+              kcal: Math.round(parseNum(a.kcal) || 0),
+              protein_g: parseNum(a.proteine_g) || 0,
+              carbs_g: parseNum(a.carboidrati_g) || 0,
+              fat_g: parseNum(a.grassi_g) || 0,
               sort_order: i,
               options: (a.opzioni||[]).map(o => ({
                 food_name: o.nome || 'Alternativa',
@@ -364,16 +288,45 @@ export default function ImportaPiano() {
         {/* ── STEP 2 — ANTEPRIMA E ASSEGNA ── */}
         {step === 2 && parsedPlan && <>
           {/* CONFERMA ELABORAZIONE */}
-          <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid #3B6D11',borderRadius:12,padding:'14px',marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#6FCF97',marginBottom:4}}>
-              ✓ Piano elaborato — {parsedPlan.varianti?.length} giorni · {parsedPlan.varianti?.reduce((s,v)=>s+(v.pasti?.length||0),0)} pasti totali
+          {(() => {
+            const bad = checks.filter(c => c.status !== 'ok'), allOk = bad.length === 0 && gaps.length === 0, col = allOk ? '#6FCF97' : '#E8C050'
+            return (
+              <div data-testid="import-summary" style={{background:allOk?'rgba(59,140,90,0.1)':'rgba(232,160,32,0.08)',border:`0.5px solid ${allOk?'#3B6D11':'rgba(232,160,32,0.45)'}`,borderRadius:12,padding:'14px',marginBottom:14}}>
+                <div style={{fontSize:13,fontWeight:700,color:col,marginBottom:4}}>
+                  {allOk ? '✓' : '⚠'} Piano elaborato — {parsedPlan.varianti?.length} giorni · {parsedPlan.varianti?.reduce((s,v)=>s+(v.pasti?.length||0),0)} pasti totali{!allOk && bad.length > 0 ? ` · ${bad.length} da controllare` : ''}
+                </div>
+                <div style={{display:'flex',gap:12,fontSize:12,color:col}}>
+                  <span>{parsedPlan.kcal_totali ? `${Math.round(parsedPlan.kcal_totali)} kcal (media)` : 'kcal n/d'}</span>
+                  <span>P {Math.round(parsedPlan.proteine_g||0)}g</span>
+                  <span>C {Math.round(parsedPlan.carboidrati_g||0)}g</span>
+                  <span>G {Math.round(parsedPlan.grassi_g||0)}g</span>
+                </div>
+                {gaps.length > 0 && <div role="alert" style={{marginTop:8,fontSize:12,color:'#E8C050',lineHeight:1.5}}>Giorni non trovati nel testo: <b>{gaps.map(n => DAY_LABEL[n]).join(', ')}</b>. Controlla che nel documento il nome del giorno sia su una riga a parte.</div>}
+              </div>
+            )
+          })()}
+
+          {/* CONTROLLO KCAL GIORNO PER GIORNO */}
+          <div style={s.card} data-testid="import-checks">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:10,gap:8,flexWrap:'wrap'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>Controllo kcal giorno per giorno</div>
+              <div style={{fontSize:11,color:'#AAA'}}>La somma è quella degli alimenti (ciò che vedrà il cliente). Obiettivo: {parseInt(targets.kcal_target) || '—'} kcal</div>
             </div>
-            <div style={{display:'flex',gap:12,fontSize:12,color:'#6FCF97'}}>
-              <span>{Math.round(parsedPlan.kcal_totali||0)} kcal</span>
-              <span>P {Math.round(parsedPlan.proteine_g||0)}g</span>
-              <span>C {Math.round(parsedPlan.carboidrati_g||0)}g</span>
-              <span>G {Math.round(parsedPlan.grassi_g||0)}g</span>
-            </div>
+            {checks.map(c => (
+              <div key={c.dayNum} data-testid={`check-${c.dayNum}`} data-status={c.status} style={{padding:'9px 0',borderTop:'0.5px solid #1C1C1C'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                  <span aria-label={c.status==='ok'?'a posto':c.status==='error'?'errore':'da controllare'} style={{width:9,height:9,borderRadius:'50%',background:c.status==='ok'?'#3B8C5A':c.status==='error'?'#E24B4A':'#E8A020',flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:700,color:'#F0F0F0',minWidth:84}}>{c.name}</span>
+                  <span style={{fontSize:12,color:'#CCC'}}>{c.meals} pasti · {c.foods ?? 0} alimenti</span>
+                  <span style={{fontSize:13,fontWeight:800,color:'#F4894A',marginLeft:'auto'}}>{c.sum != null ? `${c.sum} kcal` : 'kcal n/d'}</span>
+                  {c.doc != null && <span style={{fontSize:11,color:'#AAA'}}>documento: {c.doc}</span>}
+                  {c.status !== 'ok' && blocksRef.current.some(b => b.dayNum === c.dayNum) && (
+                    <button type="button" onClick={() => reparse(c.dayNum)} disabled={rereading !== null} style={{...s.btnGray,padding:'5px 11px',fontSize:11,color:'#F4894A'}}>{rereading === c.dayNum ? 'Rileggo…' : 'Rileggi'}</button>
+                  )}
+                </div>
+                {c.flags.map(f => <div key={f.code} style={{fontSize:11,color:f.level==='error'?'#F07070':'#E8C050',margin:'4px 0 0 19px',lineHeight:1.45}}>{f.text}</div>)}
+              </div>
+            ))}
           </div>
 
           {/* ASSEGNA CLIENTE */}
@@ -413,7 +366,8 @@ export default function ImportaPiano() {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
                 <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>{v.nome}</div>
                 <div style={{display:'flex',gap:6}}>
-                  {v.kcal && <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>{Math.round(v.kcal)} kcal</span>}
+                  <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>{v.kcal != null ? `${Math.round(v.kcal)} kcal` : 'kcal n/d'}</span>
+                  {v.kcalDoc != null && v.kcal != null && Math.abs(v.kcal - v.kcalDoc) > v.kcalDoc * 0.05 && <span style={{...s.tag,background:'rgba(232,160,32,0.12)',color:'#E8C050'}}>documento {Math.round(v.kcalDoc)}</span>}
                   {v.proteine_g && <span style={{...s.tag,background:'rgba(74,144,212,0.1)',color:'#4A90D4'}}>P{Math.round(v.proteine_g)}g</span>}
                 </div>
               </div>
@@ -424,7 +378,7 @@ export default function ImportaPiano() {
                     <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#AAA',padding:'2px 0'}}>
                       <span>{a.nome} <span style={{color:'#BBB8B0'}}>{a.quantita_g}g</span></span>
                       <div style={{display:'flex',gap:6}}>
-                        <span>{a.kcal} kcal</span>
+                        <span>{a.kcal != null && a.kcal !== '' ? a.kcal : '—'} kcal</span>
                         {a.proteine_g>0&&<span style={{color:'#4A90D4'}}>P{a.proteine_g}g</span>}
                         {a.opzioni?.length>0&&<span style={{...s.tag,background:'#161616',color:'#AAA',padding:'1px 6px'}}>+{a.opzioni.length} alt.</span>}
                       </div>
