@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import PlanPdfButton from '../components/PlanPdfButton'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -104,7 +105,10 @@ export default function PianoAlimentare() {
           <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div>
           <div style={{fontSize:12,color:'#AAA'}}>{plan?.title} — Settimana {plan?.week_number}</div>
         </div>
-        <span style={s.badge}>{plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno</span>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <PlanPdfButton planId={plan?.id}/>
+          <span style={s.badge}>{plan?.kcal_target?.toLocaleString('it-IT')} kcal/giorno</span>
+        </div>
       </div>
 
       <div style={s.page}>

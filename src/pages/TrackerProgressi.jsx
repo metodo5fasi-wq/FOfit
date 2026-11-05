@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
+import PhotoCompare from '../components/PhotoCompare'
 
 const MISURE = [
   { key:'weight_kg', label:'Peso', unit:'kg', color:'#F4894A' },
@@ -360,6 +361,8 @@ export default function TrackerProgressi() {
                 <div style={{fontSize:13, color:'#AAA', lineHeight:1.6}}>Scegli una foto dalla galleria per iniziare.</div>
               </div>
             )}
+
+            <PhotoCompare photos={photos} />
 
             {Object.entries(photosByDate).map(([date, dayPhotos]) => (
               <div key={date} style={s.card}>

@@ -12,6 +12,7 @@ import { useCoachInbox } from '../lib/useCoachInbox.js'
 import CoachDashboard from '../components/CoachDashboard'
 import { ReportSignals, ReportAnswers } from '../components/ReportInsights'
 import { reportExtraHtml } from '../lib/reportQuestions.js'
+import PhotoCompare from '../components/PhotoCompare'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -45,6 +46,16 @@ const goalColor = { dimagrimento:'#FEE2E2', massa:'#EAF3DE', mantenimento:'#FEF0
 const goalTextColor = { dimagrimento:'#F07070', massa:'#6FCF97', mantenimento:'#F4894A', forza:'#4C1D95', resistenza:'#075985', ricomposizione:'#075985' }
 const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'U'
 const today = new Date().toISOString().split('T')[0]
+
+// Porta in vista un elemento e lo evidenzia per un momento (usato quando si arriva a un dato dalla dashboard)
+function flashEl(selector) {
+  setTimeout(() => {
+    const el = document.querySelector(selector); if (!el) return
+    try { el.scrollIntoView?.({ behavior: 'smooth', block: 'center' }) } catch {}
+    const old = el.style.boxShadow; el.style.boxShadow = '0 0 0 2px #D4570A, 0 0 18px rgba(212,87,10,0.45)'
+    setTimeout(() => { el.style.boxShadow = old }, 2600)
+  }, 220)
+}
 
 function NotifBell({ clients }) {
   const [open, setOpen] = React.useState(false)
@@ -198,6 +209,7 @@ export default function AdminPanel() {
   const navigate = useNavigate()
   // "Nuovo piano": porta direttamente su Crea piano con il cliente già selezionato
   const goCreaPiano = (clientId) => navigate('/crea-piano?client=' + clientId)
+  const goCreaAllenamento = (clientId) => navigate('/crea-allenamento?client=' + clientId)
   const toast = useToast()
   const { profile } = useAuth()
   const [tab, setTab] = useState('overview')
@@ -208,6 +220,20 @@ export default function AdminPanel() {
   const [showNewClient, setShowNewClient] = useState(false)
   const [showNewPlan, setShowNewPlan] = useState(false)
   const [selectedClient, setSelectedClient] = useState(null)
+  // "vai a questo dato": la scheda di destinazione riceve il dato e lo apre da sola
+  const [focus, setFocus] = useState(null)
+  const clearFocus = React.useCallback(() => setFocus(null), [])
+  useEffect(() => { if (focus && focus.tab !== tab) setFocus(null) }, [tab])        // se si cambia scheda prima di arrivare, il "vai a" decade
+  function openItem(i) {
+    const f = { type: i.type, id: i.id, clientId: i.clientId, extra: i.extra || {} }
+    const to = { checkin: 'check-in', photo: 'check-in', measure: 'check-in', report: 'report', anamnesi: 'anamnesi', booking: 'calendario' }[i.type]
+    if (to) { setSelectedClient(null); setFocus({ ...f, tab: to }); setTab(to) }
+    else { const c = clients.find(c => c.id === i.clientId); if (c) setSelectedClient(c) }       // messaggi: si apre il cliente
+  }
+  async function replyToClient(clientId, text) {
+    const { error } = await supabase.from('coach_messages').insert({ client_id: clientId, sender_role: 'admin', content: text, is_read: false })
+    return !error
+  }
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   // Dashboard: tutto ciò che i clienti hanno inviato (check-in, messaggi, report, anamnesi, chiamate, foto, misure)
@@ -694,7 +720,8 @@ export default function AdminPanel() {
             {tab==='overview' && (
               <CoachDashboard inbox={inbox} clients={clients}
                 onOpenTab={(id)=>{setTab(id);setSelectedClient(null)}}
-                onOpenClient={(c)=>setSelectedClient(c)}/>
+                onOpenClient={(c)=>setSelectedClient(c)}
+                onOpenItem={openItem} onReply={replyToClient}/>
             )}
 
             {/* TAB CLIENTI */}
@@ -817,6 +844,10 @@ export default function AdminPanel() {
                               style={{flex:1,padding:'6px 4px',background:'#161616',color:'#CCC',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
                               + Nuovo
                             </button>
+                            <button onClick={()=>goCreaAllenamento(c.id)}
+                              style={{flex:1,padding:'6px 4px',background:'#161616',color:'#CCC',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:10,cursor:'pointer',fontFamily:'inherit',fontWeight:500}}>
+                              + Scheda
+                            </button>
                             <button onClick={()=>setSelectedClient(isSelected?null:c)}
                               style={{flex:1,padding:'6px 4px',background:isSelected?'#222':'#161616',color:isSelected?'#F0F0F0':'#AAA',border:`0.5px solid ${isSelected?'#444':'#222'}`,borderRadius:7,fontSize:10,fontWeight:isSelected?700:500,cursor:'pointer',fontFamily:'inherit'}}>
                               {isSelected?'✕ Chiudi':'Apri →'}
@@ -830,10 +861,10 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {tab==='calendario' && <CalendarioAdmin/>}
-            {tab==='check-in' && <CheckinAdmin/>}
-            {tab==='report' && <ReportTab clients={clients} clientStats={clientStats} onRefresh={fetchAll}/>}
-            {tab==='anamnesi' && <AnamnesiTab clients={clients} onRefresh={fetchAll}/>}
+            {tab==='calendario' && <CalendarioAdmin focus={focus} clearFocus={clearFocus}/>}
+            {tab==='check-in' && <CheckinAdmin focus={focus} clearFocus={clearFocus}/>}
+            {tab==='report' && <ReportTab clients={clients} clientStats={clientStats} onRefresh={fetchAll} focus={focus} clearFocus={clearFocus}/>}
+            {tab==='anamnesi' && <AnamnesiTab clients={clients} onRefresh={fetchAll} focus={focus} clearFocus={clearFocus}/>}
           </div>
 
           {/* PANNELLO DETTAGLIO CLIENTE — slide-in a destra su PC */}
@@ -1440,12 +1471,18 @@ function ClientProgress({ client }) {
 // ─────────────────────────────────────────────────────────
 const DAY_NAMES_ADMIN = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']
 
-function CalendarioAdmin() {
+function CalendarioAdmin({ focus, clearFocus }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(null)
 
   useEffect(() => { fetchBookings() }, [])
+  // arrivo dalla dashboard: si apre il giorno della chiamata e la si evidenzia
+  useEffect(() => {
+    if (focus?.type !== 'booking' || loading) return
+    if (focus.extra?.date) { setSelectedDate(focus.extra.date); flashEl(`[data-booking-id="${focus.id}"]`) }
+    clearFocus?.()
+  }, [focus, loading])
 
   async function fetchBookings() {
     setLoading(true)
@@ -1498,7 +1535,7 @@ function CalendarioAdmin() {
           <table style={s.table}>
             <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Data</th><th style={s.th}>Ora</th><th style={s.th}>Azioni</th></tr></thead>
             <tbody>{confirmedBookings.map(b=>(
-              <tr key={b.id}>
+              <tr key={b.id} data-booking-id={b.id}>
                 <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={{...s.avatar,width:24,height:24,fontSize:10,marginRight:6}}>{initials(b.profiles?.full_name||'')}</div><span style={{fontSize:12}}>{b.profiles?.full_name||'—'}</span></div></td>
                 <td style={s.td}>{new Date(b.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</td>
                 <td style={s.td}><span style={{fontWeight:600}}>{b.time_slot}</span></td>
@@ -2085,7 +2122,7 @@ function ScoreBar({v, max=5, inv=false}) {
   )
 }
 
-function CheckinAdmin() {
+function CheckinAdmin({ focus, clearFocus }) {
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState('')
   const [clientProfile, setClientProfile] = useState(null)
@@ -2099,6 +2136,15 @@ function CheckinAdmin() {
   const [expandedSession, setExpandedSession] = useState(null)
   const [expandedCheckin, setExpandedCheckin] = useState(null)
   const [isMobile] = useState(window.innerWidth < 900)
+  // arrivo dalla dashboard: si sceglie il cliente e, a dati caricati, si apre il check-in (o si porta in vista foto / misure)
+  const fromInbox = focus && ['checkin', 'photo', 'measure'].includes(focus.type)
+  useEffect(() => { if (fromInbox && focus.clientId && selectedClient !== focus.clientId) { setSelectedClient(focus.clientId); setExpandedCheckin(null); setExpandedSession(null) } }, [focus])
+  useEffect(() => {
+    if (!fromInbox || selectedClient !== focus.clientId || clientProfile?.id !== focus.clientId || loading) return      // aspetta i dati di QUEL cliente
+    if (focus.type === 'checkin') { setExpandedCheckin(focus.id); flashEl(`[data-checkin-id="${focus.id}"]`) }
+    else flashEl(focus.type === 'photo' ? '[data-focus="photos"]' : '[data-focus="measures"]')
+    clearFocus?.()
+  }, [focus, selectedClient, clientProfile, loading])
 
   useEffect(() => {
     supabase.from('profiles').select('id,full_name,goal').eq('role','client').order('full_name')
@@ -2187,7 +2233,7 @@ function CheckinAdmin() {
           </div>
 
           {/* KPI RAPIDI */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
+          <div data-focus="measures" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
             {[
               {l:'Peso',v:latest?.weight_kg?`${latest.weight_kg}kg`:'—',c:latest?.weight_kg?'#F0F0F0':'#C0BDB8'},
               {l:'Check-in',v:checkins.length,c:'#4A90D4'},
@@ -2227,9 +2273,12 @@ function CheckinAdmin() {
             </div>
           )}
 
+          {/* CONFRONTO PRIMA / DOPO */}
+          <PhotoCompare photos={photos} />
+
           {/* FOTO */}
           {photos.length > 0 && (
-            <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+            <div data-focus="photos" style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>📷 Foto progressi</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                 {photos.map(p=>(
@@ -2257,7 +2306,7 @@ function CheckinAdmin() {
                 const isExp = expandedCheckin===ck.id
                 const dateLabel = new Date(ck.week_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})
                 return (
-                  <div key={ck.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
+                  <div key={ck.id} data-checkin-id={ck.id} style={{borderRadius:10,border:'0.5px solid #1C1C1C',marginBottom:8,overflow:'hidden'}}>
                     {/* HEADER */}
                     <div onClick={()=>setExpandedCheckin(isExp?null:ck.id)}
                       style={{padding:'10px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:'#0D0D0D'}}>
@@ -2417,7 +2466,7 @@ function CheckinAdmin() {
 // ─────────────────────────────────────────────────────────
 // TAB REPORT
 // ─────────────────────────────────────────────────────────
-function ReportTab({ clients, clientStats, onRefresh }) {
+function ReportTab({ clients, clientStats, onRefresh, focus, clearFocus }) {
   const goalOf = id => (clients || []).find(c => c.id === id)?.goal
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
@@ -2425,6 +2474,13 @@ function ReportTab({ clients, clientStats, onRefresh }) {
   const [filter, setFilter] = useState('tutti')
 
   useEffect(() => { fetchReports() }, [])
+  // arrivo dalla dashboard: si apre il report indicato
+  useEffect(() => {
+    if (focus?.type !== 'report' || loading) return
+    const r = reports.find(x => x.id === focus.id)
+    if (r) { setExpanded(r.id); if (!r.read_by_coach) markRead(r.id); flashEl(`[data-report-id="${r.id}"]`) }
+    clearFocus?.()
+  }, [focus, loading, reports])
 
   async function fetchReports() {
     setLoading(true)
@@ -2486,7 +2542,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
         const isNew = !r.read_by_coach
 
         return (
-          <div key={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? 'rgba(155,89,182,0.4)' : '#2A2A2A'}`, marginBottom: 10, overflow: 'hidden' }}>
+          <div key={r.id} data-report-id={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? 'rgba(155,89,182,0.4)' : '#2A2A2A'}`, marginBottom: 10, overflow: 'hidden' }}>
             {/* HEADER REPORT */}
             <div onClick={() => { setExpanded(isExpanded ? null : r.id); if (isNew) markRead(r.id) }}
               style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: isNew ? '#140d1a' : '#0D0D0D' }}>
@@ -2920,13 +2976,20 @@ function generateAnamnesiPDF(a, clientName) {
 // ─────────────────────────────────────────────────────────
 // TAB ANAMNESI
 // ─────────────────────────────────────────────────────────
-function AnamnesiTab({ clients, onRefresh }) {
+function AnamnesiTab({ clients, onRefresh, focus, clearFocus }) {
   const [anamnesi, setAnamnesi] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('nuove')
   const [openAnamnesi, setOpenAnamnesi] = useState(null)
 
   useEffect(() => { fetchAnamnesi() }, [])
+  // arrivo dalla dashboard: si apre l'anamnesi indicata
+  useEffect(() => {
+    if (focus?.type !== 'anamnesi' || loading) return
+    const a = anamnesi.find(x => x.id === focus.id) || anamnesi.find(x => x.client_id === focus.clientId)
+    if (a) { setFilter('tutte'); setOpenAnamnesi(a.client_id); if (!a.read_by_coach) markRead(a.id) }
+    clearFocus?.()
+  }, [focus, loading, anamnesi])
 
   async function fetchAnamnesi() {
     setLoading(true)

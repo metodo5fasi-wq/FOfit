@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import PlanPdfButton from '../components/PlanPdfButton'
 import { useToast } from '../components/Toast'
 import { searchFoods } from '../data/foodDatabase.js'
 
@@ -583,6 +584,7 @@ export default function ModificaPiano() {
           <div style={{fontSize:11,color:'#AAA'}}>{clientName}{plan && ` · target: ${plan.kcal_target} kcal`}</div>
         </div>
         <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
+          <PlanPdfButton planId={planId} confirmMessage={dirty ? 'Ci sono modifiche non salvate: il PDF userà la versione salvata del piano. Continuare?' : null} style={{padding:'5px 9px',fontSize:11}}/>
           <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola tutti i macro dal database"
             style={{...s.btnGray,padding:'5px 9px',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
             {fixingMacros

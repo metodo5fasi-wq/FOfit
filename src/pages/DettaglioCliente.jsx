@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
+import PlanPdfButton from '../components/PlanPdfButton'
+import PhotoCompare from '../components/PhotoCompare'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
 import ReportAllenamento from './ReportAllenamento'
@@ -452,7 +454,7 @@ function ClientDetail({ client, navigate }) {
                 <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#F4894A'}}>{mealPlan.title}</div>
-                    <span style={s.badge(mealPlan.is_active?'#EAF3DE':'#F5F3EF', mealPlan.is_active?'#3B6D11':'#888780')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}><PlanPdfButton planId={mealPlan.id} style={{padding:'4px 9px',fontSize:11}}/><span style={s.badge(mealPlan.is_active?'#EAF3DE':'#F5F3EF', mealPlan.is_active?'#3B6D11':'#888780')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span></div>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                     {[{l:'Kcal',v:mealPlan.kcal_target,c:'#D4570A'},{l:'Prot',v:mealPlan.protein_target_g+'g',c:'#4A90D4'},{l:'Carbo',v:mealPlan.carbs_target_g+'g',c:'#E8A020'},{l:'Grassi',v:mealPlan.fat_target_g+'g',c:'#3B8C5A'}].map(m=>(
@@ -703,6 +705,7 @@ function ClientDetail({ client, navigate }) {
           )}
 
           {/* FOTO PROGRESSI */}
+          <PhotoCompare photos={photos} />
           {photos.length>0 && (
             <div style={s.card}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
