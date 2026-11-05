@@ -61,24 +61,24 @@ export function buildInbox({ checkins = [], messages = [], reports = [], anamnes
   const items = []
   const name = id => clientsById[id]?.full_name || 'Cliente'
   const since = days => new Date(now.getTime() - days * DAY)
-  const add = (type, id, clientId, at, title, detail) => {
+  const add = (type, id, clientId, at, title, detail, extra) => {      // extra = ciò che serve per arrivare al dato (es. la data)
     if (!clientId || !at) return
     const d = new Date(at); if (isNaN(d)) return
-    items.push({ key: itemKey(type, id), type, id, clientId, clientName: name(clientId), at: d, title, detail: detail || '', native: NATIVE.has(type) })
+    items.push({ key: itemKey(type, id), type, id, clientId, clientName: name(clientId), at: d, title, detail: detail || '', extra: extra || {}, native: NATIVE.has(type) })
   }
-  checkins.forEach(r => { const at = r.created_at || (r.week_date && `${r.week_date}T12:00:00`); if (at && new Date(at) >= since(T.inboxWindowDays)) add('checkin', r.id, r.client_id, at, 'Check-in settimanale', checkinDetail(r)) })
+  checkins.forEach(r => { const at = r.created_at || (r.week_date && `${r.week_date}T12:00:00`); if (at && new Date(at) >= since(T.inboxWindowDays)) add('checkin', r.id, r.client_id, at, 'Check-in settimanale', checkinDetail(r), { weekDate: r.week_date }) })
   messages.forEach(r => add('message', r.id, r.client_id, r.created_at, 'Nuovo messaggio', snippet(r.message ?? r.content)))
   reports.forEach(r => add('report', r.id, r.client_id, r.submitted_at, 'Report allenamento', 'Report inviato'))
   anamnesi.forEach(r => add('anamnesi', r.id, r.client_id, r.submitted_at || r.completed_at, 'Anamnesi compilata', ''))
   bookings.forEach(r => { if (r.status !== 'confirmed' || !r.created_at || new Date(r.created_at) < since(T.bookingWindowDays)) return
-    add('booking', r.id, r.client_id, r.created_at, 'Chiamata prenotata', `${fmtDayShort(r.booking_date)} alle ${r.time_slot}`) })
+    add('booking', r.id, r.client_id, r.created_at, 'Chiamata prenotata', `${fmtDayShort(r.booking_date)} alle ${r.time_slot}`, { date: r.booking_date, time: r.time_slot }) })
   // le foto caricate insieme (stesso cliente e stesso giorno) diventano una sola riga
   const grouped = new Map()
   photos.forEach(r => { if (!r.created_at || new Date(r.created_at) < since(T.inboxWindowDays)) return
     const k = `${r.client_id}:${dayKey(r.created_at)}`; const g = grouped.get(k) || { clientId: r.client_id, at: r.created_at, n: 0 }; g.n++; if (new Date(r.created_at) > new Date(g.at)) g.at = r.created_at; grouped.set(k, g) })
-  grouped.forEach((g, k) => add('photo', k, g.clientId, g.at, 'Nuove foto progressi', g.n === 1 ? '1 foto' : `${g.n} foto`))
+  grouped.forEach((g, k) => add('photo', k, g.clientId, g.at, 'Nuove foto progressi', g.n === 1 ? '1 foto' : `${g.n} foto`, { date: dayKey(g.at) }))
   measures.forEach(r => { if (!r.created_at || new Date(r.created_at) < since(T.inboxWindowDays)) return
-    add('measure', r.id, r.client_id, r.created_at, 'Nuova misurazione', [r.weight_kg != null && `Peso ${r.weight_kg} kg`, r.waist_cm != null && `Vita ${r.waist_cm} cm`, r.body_fat_pct != null && `Massa grassa ${r.body_fat_pct}%`].filter(Boolean).join(' · ')) })
+    add('measure', r.id, r.client_id, r.created_at, 'Nuova misurazione', [r.weight_kg != null && `Peso ${r.weight_kg} kg`, r.waist_cm != null && `Vita ${r.waist_cm} cm`, r.body_fat_pct != null && `Massa grassa ${r.body_fat_pct}%`].filter(Boolean).join(' · '), { date: r.entry_date }) })
   items.forEach(i => { i.seen = !i.native && seenKeys.has(i.key) })
   items.sort((a, b) => b.at - a.at)
   return items
