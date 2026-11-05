@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../App'
 
@@ -38,7 +39,7 @@ export default function NotifPanel() {
 
       // Manda a tutti
       await Promise.all(clientIds.map(clientId =>
-        fetch('/api/push-send', {
+        authFetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ clientId, title, body, url: '/' })
