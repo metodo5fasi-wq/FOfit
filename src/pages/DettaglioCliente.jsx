@@ -59,6 +59,7 @@ export default function DettaglioCliente() {
 }
 
 function ClientDetail({ client, navigate }) {
+  const toast = useToast()
   const [tab, setTab] = useState('overview')
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)

@@ -8,6 +8,7 @@ import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Toast, Confetti } from '../components/Animations'
 import KgPicker from '../components/KgPicker'
+import { uuid, enqueue, flush, applyPending, loadWithCache } from '../lib/offline'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -41,34 +42,48 @@ export default function Allenamento() {
   const [savingSession, setSavingSession] = useState(false)
   const [confettiActive, setConfettiActive] = useState(false)
   const [todaySession, setTodaySession] = useState(null)
+  const [usingCache, setUsingCache] = useState(false) // true = si sta usando la scheda salvata sul telefono (senza rete)
 
   useEffect(() => { if (profile) fetchAll() }, [profile])
 
   async function fetchAll() {
     setLoading(true)
-    const { data: planData } = await supabase.from('workout_plans')
-      .select('*').eq('client_id', profile.id).eq('is_active', true).limit(1)
+    const uid = profile.id
+    await flush(supabase, uid).catch(() => {})   // prima si invia ciò che era rimasto in coda
+    let fromCache = false
+    const planR = await loadWithCache(uid, 'wk_plan', () => supabase.from('workout_plans')
+      .select('*').eq('client_id', uid).eq('is_active', true).limit(1))
+    fromCache = fromCache || planR.fromCache
+    const planData = planR.data
     if (planData?.length) {
       setPlan(planData[0])
-      const { data: exData } = await supabase.from('workout_exercises')
-        .select('*').eq('plan_id', planData[0].id).order('order_index', {ascending:true})
-      setExercises(exData || [])
-      if (exData?.length) {
+      const exR = await loadWithCache(uid, 'wk_ex_' + planData[0].id, () => supabase.from('workout_exercises')
+        .select('*').eq('plan_id', planData[0].id).order('order_index', {ascending:true}))
+      const exData = exR.data || []
+      setExercises(exData)
+      if (exData.length) {
         const days = [...new Set(exData.map(e=>e.day_label))]
         const saved = localStorage.getItem('fofit_active_day')
         setActiveDay(saved && days.includes(saved) ? saved : days[0])
         loadProgression(exData) // Carica stato progressione
       }
     }
-    const { data: logData } = await supabase.from('workout_logs')
-      .select('*').eq('client_id', profile.id).eq('log_date', today)
-    setLogs(logData || [])
-    const { data: allLogData } = await supabase.from('workout_logs')
-      .select('*').eq('client_id', profile.id).order('log_date', {ascending:true})
-    setAllLogs(allLogData || [])
-    const { data: sessionData } = await supabase.from('workout_sessions')
-      .select('*').eq('client_id', profile.id).order('session_date', {ascending:false})
-    setSessions(sessionData || [])
+    const todayR = await loadWithCache(uid, 'wk_today_' + today, () => supabase.from('workout_logs')
+      .select('*').eq('client_id', uid).eq('log_date', today))
+    const allR = await loadWithCache(uid, 'wk_all', () => supabase.from('workout_logs')
+      .select('*').eq('client_id', uid).order('log_date', {ascending:true}), { cacheMap: d => (d || []).slice(-1500) })
+    const sessR = await loadWithCache(uid, 'wk_sessions', () => supabase.from('workout_sessions')
+      .select('*').eq('client_id', uid).order('session_date', {ascending:false}), { cacheMap: d => (d || []).slice(0, 200) })
+    fromCache = fromCache || allR.fromCache || sessR.fromCache
+    setUsingCache(fromCache)
+    // alle righe lette si sovrappone ciò che è ancora in coda (salvato sul telefono, non ancora inviato)
+    const allLogData = applyPending(allR.data || [], 'workout_logs', uid)
+    const logData = applyPending(todayR.data || [], 'workout_logs', uid).filter(l => l.log_date === today)
+    const sessionData = applyPending(sessR.data || [], 'workout_sessions', uid)
+      .sort((a, b) => String(b.session_date).localeCompare(String(a.session_date)))
+    setLogs(logData)
+    setAllLogs(allLogData)
+    setSessions(sessionData)
 
     // Calcola streak settimanale
     if (sessionData?.length) {
@@ -137,12 +152,15 @@ export default function Allenamento() {
   async function loadProgression(exList) {
     const progEx = exList.filter(e => e.weekly_targets?.length > 0)
     if (!progEx.length) return
+    const uid = profile.id
     const tracking = {}
     const initStatus = {}
     for (const ex of progEx) {
-      const { data: history } = await supabase.from('progression_tracking')
-        .select('*').eq('client_id', profile.id).eq('exercise_id', ex.id)
-        .order('week_number', { ascending: true })
+      const hR = await loadWithCache(uid, 'wk_prog_' + ex.id, () => supabase.from('progression_tracking')
+        .select('*').eq('client_id', uid).eq('exercise_id', ex.id)
+        .order('week_number', { ascending: true }))
+      const history = applyPending(hR.data || [], 'progression_tracking', uid)
+        .filter(h => h.exercise_id === ex.id).sort((a, b) => a.week_number - b.week_number)
       const maxWeeks = ex.weekly_targets.length
       let currentWeek = 1
       if (history?.length) {
@@ -170,43 +188,35 @@ export default function Allenamento() {
     setProgressionStatus(initStatus)
   }
 
-    async function finishSession() {
+  async function finishSession() {
     setSavingSession(true)
+    const uid = profile.id
     const dayEx = exercises.filter(e=>e.day_label===activeDay)
     const totalSets = dayEx.reduce((s,e)=>s+(e.sets||0),0)
     const completedSets = logs.filter(l => dayEx.some(e=>e.exercise_name===l.exercise_name)).length
 
-    if (todaySession) {
-      await supabase.from('workout_sessions').update({
-        notes: sessionNotes, feeling: sessionFeeling||null, sets_completed: completedSets, sets_total: totalSets,
-      }).eq('id', todaySession.id)
-    } else {
-      await supabase.from('workout_sessions').insert({
-        client_id: profile.id, day_label: activeDay, session_date: today,
-        notes: sessionNotes, sets_completed: completedSets, sets_total: totalSets,
-      })
-    }
+    // La seduta si salva sul telefono e parte appena c'è rete (stesso id = nessun duplicato). Include sempre l'umore (prima si perdeva alla prima seduta del giorno)
+    enqueue({ userId: uid, table: 'workout_sessions', kind: 'upsert', row: {
+      id: todaySession?.id || uuid(), client_id: uid, day_label: todaySession?.day_label || activeDay, session_date: today,
+      notes: sessionNotes, feeling: sessionFeeling || null, sets_completed: completedSets, sets_total: totalSets,
+    } })
 
     // Salva stato progressione per ogni esercizio segnato
     for (const [exerciseId, completed] of Object.entries(progressionStatus)) {
       if (completed === null) continue // Non segnato — non salvare
       const prog = progressionTracking[exerciseId]
-      if (!prog) continue
-      await supabase.from('progression_tracking').upsert({
-        client_id: profile.id,
-        exercise_id: exerciseId,
-        week_number: prog.week,
-        target_kg: prog.targetKg,
-        completed: completed,
-        logged_at: new Date().toISOString(),
-      }, { onConflict: 'client_id,exercise_id,week_number' })
+      if (!prog || prog.targetKg == null) continue // senza carico obiettivo il database rifiuta la riga (target_kg è obbligatorio)
+      enqueue({ userId: uid, table: 'progression_tracking', kind: 'upsert', onConflict: 'client_id,exercise_id,week_number', row: {
+        client_id: uid, exercise_id: exerciseId, week_number: prog.week, target_kg: prog.targetKg,
+        completed: completed, logged_at: new Date().toISOString(),
+      } })
     }
 
     setSavingSession(false)
     setShowFinish(false)
     setConfettiActive(true)
     setTimeout(()=>setConfettiActive(false), 100)
-    showToast('Allenamento salvato! 💪','')
+    showToast(navigator.onLine === false ? 'Allenamento salvato sul telefono 📱' : 'Allenamento salvato! 💪','')
     fetchAll()
   }
 
@@ -267,16 +277,19 @@ export default function Allenamento() {
 
 
   async function toggleSet(ex, setNumber) {
+    const uid = profile.id
     const existing = getLog(ex, setNumber)
     if (existing) {
-      await supabase.from('workout_logs').delete().eq('id', existing.id)
       setLogs(prev => prev.filter(l => l.id !== existing.id))
+      enqueue({ userId: uid, table: 'workout_logs', kind: 'delete', rowId: existing.id })
     } else {
       const weightVal = inputValues[`${ex.id}-${setNumber}-weight_kg`] || inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
       const repsVal = inputValues[`${ex.id}-${setNumber}-reps_done`] || inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
       const noteVal = inputValues[`${ex.id}-note`] || inputValues[`${ex.id}-note`] || null
-      const { data, error } = await supabase.from('workout_logs').insert({
-        client_id: profile.id,
+      // La serie compare subito e si salva sul telefono; parte verso il server appena c'è rete
+      const row = {
+        id: uuid(),
+        client_id: uid,
         exercise_id: ex.id,
         exercise_name: ex.exercise_name,
         log_date: today,
@@ -284,8 +297,10 @@ export default function Allenamento() {
         weight_kg: weightVal ? parseFloat(String(weightVal).replace(',', '.')) : null,
         reps_done: repsVal ? parseInt(repsVal) : null,
         exercise_note: noteVal,
-      }).select().single()
-      if (!error) setLogs(prev => [...prev, data])
+        created_at: new Date().toISOString(),
+      }
+      setLogs(prev => [...prev, row])
+      enqueue({ userId: uid, table: 'workout_logs', kind: 'upsert', row })
     }
   }
 
@@ -298,14 +313,12 @@ export default function Allenamento() {
     // Salva su Supabase dopo 800ms di inattività (debounce)
     const key = ex.exercise_name
     if (noteDebounceRef.current[key]) clearTimeout(noteDebounceRef.current[key])
-    noteDebounceRef.current[key] = setTimeout(async () => {
+    noteDebounceRef.current[key] = setTimeout(() => {
       const exLogs = logs.filter(l => l.exercise_name === ex.exercise_name)
       if (exLogs.length > 0) {
-        await supabase.from('workout_logs')
-          .update({ exercise_note: note })
-          .eq('client_id', profile.id)
-          .eq('exercise_name', ex.exercise_name)
-          .eq('log_date', today)
+        enqueue({ userId: profile.id, table: 'workout_logs', kind: 'update',
+          match: { client_id: profile.id, exercise_name: ex.exercise_name, log_date: today },
+          patch: { exercise_note: note } })
       }
     }, 800)
   }
@@ -322,8 +335,8 @@ export default function Allenamento() {
     const normalized = typeof weight === 'string' ? weight.replace(',', '.') : weight
     const weightNum = normalized === '' ? null : parseFloat(normalized)
     if (existing) {
-      await supabase.from('workout_logs').update({ weight_kg: weightNum }).eq('id', existing.id)
       setLogs(prev => prev.map(l => l.id===existing.id ? {...l, weight_kg:weightNum} : l))
+      enqueue({ userId: profile.id, table: 'workout_logs', kind: 'update', rowId: existing.id, patch: { weight_kg: weightNum } })
     }
     // Se non esiste ancora, il valore è in inputValues — verrà salvato al toggleSet
   }
@@ -332,13 +345,12 @@ export default function Allenamento() {
     const existing = getLog(ex, setNumber)
     const repsNum = reps === '' ? null : parseInt(reps)
     if (existing) {
-      await supabase.from('workout_logs').update({ reps_done: repsNum }).eq('id', existing.id)
       setLogs(prev => prev.map(l => l.id===existing.id ? {...l, reps_done:repsNum} : l))
+      enqueue({ userId: profile.id, table: 'workout_logs', kind: 'update', rowId: existing.id, patch: { reps_done: repsNum } })
     }
     // Se non esiste ancora, il valore è in inputValues — verrà salvato al toggleSet
   }
 
-  // Storico peso per un esercizio (ultimi valori distinti per data)
   function getProgressionData(exerciseName) {
     const byDate = {}
     allLogs.filter(l => l.exercise_name === exerciseName && l.weight_kg).forEach(l => {
@@ -385,6 +397,13 @@ export default function Allenamento() {
       </div>
 
       <div style={s.page}>
+
+        {usingCache && (
+          <div data-testid="cache-notice" style={{background:'rgba(244,137,74,0.1)',border:'0.5px solid rgba(244,137,74,0.35)',borderRadius:10,padding:'10px 12px',marginBottom:12,fontSize:12,color:'#F4894A',display:'flex',gap:8,alignItems:'center'}}>
+            <i className="ti ti-device-mobile" style={{fontSize:15}}/>
+            <span>Stai usando la scheda salvata sul telefono. Le serie che segni si inviano appena c'è rete.</span>
+          </div>
+        )}
 
         {/* TAB GIORNI */}
         <div style={{display:'flex',gap:4,marginBottom:14,overflowX:'auto',background:'#0D0D0D',borderRadius:12,padding:4,border:'0.5px solid #1C1C1C'}}>

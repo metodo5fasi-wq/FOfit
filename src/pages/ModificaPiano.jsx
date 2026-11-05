@@ -152,8 +152,8 @@ export default function ModificaPiano() {
 
   useEffect(() => { if (planId) fetchPlan() }, [planId])
 
-  async function fetchPlan() {
-    setLoading(true)
+  async function fetchPlan(silent = false) {
+    if (!silent) setLoading(true)   // dopo un salvataggio si ricarica senza far lampeggiare la pagina
     const { data: planData } = await supabase.from('meal_plans').select('*').eq('id', planId).single()
     if (!planData) { setLoading(false); return }
     setPlan(planData)
@@ -551,7 +551,7 @@ export default function ModificaPiano() {
       setTimeout(() => setSavedMsg(''), 3000)
       toast('Piano salvato con successo!', 'success')
       // Ricarica da Supabase per avere gli ID reali degli alimenti inseriti
-      await loadPlan()
+      await fetchPlan(true)
     } catch(e) {
       console.error('saveAll:', e)
       toast('Errore nel salvataggio: ' + (e.message || 'Riprova'), 'error')
