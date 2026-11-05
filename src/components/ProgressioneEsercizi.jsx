@@ -62,9 +62,9 @@ export default function ProgressioneEsercizi({ clientId }) {
           <button key={ex.name} onClick={()=>setSelected(ex.name)} style={{
             padding:'5px 10px', borderRadius:16, fontSize:11, fontWeight:500, cursor:'pointer',
             border:'0.5px solid', fontFamily:'inherit',
-            background: selected===ex.name?'#D4570A':'white',
+            background: selected===ex.name?'#D4570A':'#0D0D0D',
             color: selected===ex.name?'white':'#888780',
-            borderColor: selected===ex.name?'#D4570A':'#E0DDD6',
+            borderColor: selected===ex.name?'#D4570A':'#2A2A2A',
           }}>{ex.name}</button>
         ))}
       </div>
@@ -77,8 +77,8 @@ export default function ProgressioneEsercizi({ clientId }) {
             <div style={{fontSize:10,color:'#CCC'}}>Ultimo max</div>
           </div>
           {trend !== 0 && (
-            <div style={{background:trend>0?'#EAF3DE':'#FEE2E2',padding:'4px 10px',borderRadius:8}}>
-              <span style={{fontSize:12,fontWeight:700,color:trend>0?'#3B6D11':'#E24B4A'}}>
+            <div style={{background:trend>0?'rgba(59,140,90,0.16)':'rgba(226,75,74,0.16)',padding:'4px 10px',borderRadius:8}}>
+              <span style={{fontSize:12,fontWeight:700,color:trend>0?'#6FCF97':'#E24B4A'}}>
                 {trend>0?'+':''}{trend.toFixed(1)}kg
               </span>
               <div style={{fontSize:9,color:'#CCC'}}>vs inizio</div>
@@ -86,7 +86,7 @@ export default function ProgressioneEsercizi({ clientId }) {
           )}
           {stagnant && (
             <div style={{background:'rgba(212,87,10,0.12)',padding:'4px 10px',borderRadius:8}}>
-              <span style={{fontSize:11,fontWeight:600,color:'#D4570A'}}>⚠ In stallo</span>
+              <span style={{fontSize:11,fontWeight:600,color:'#F4894A'}}>⚠ In stallo</span>
               <div style={{fontSize:9,color:'#CCC'}}>Ultime 3 sessioni</div>
             </div>
           )}

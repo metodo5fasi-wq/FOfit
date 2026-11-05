@@ -5,9 +5,9 @@ import { useAuth, useTheme } from '../App'
 
 const NAV_CLIENT = [
   { to:'/', icon:'ti-layout-dashboard', label:'Dashboard', exact:true, color:'#F4894A' },
-  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', color:'#D4570A' },
+  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', color:'#F4894A' },
   { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#E8803A' },
-  { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', color:'#D4570A' },
+  { to:'/allenamento', icon:'ti-barbell', label:'Allenamento', color:'#F4894A' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#4A90D4' },
   { to:'/ai', icon:'ti-brain', label:'AI Coach', color:'#9B59B6' },
   { to:'/calendario', icon:'ti-calendar', label:'Prenota chiamata', color:'#4A90D4' },
@@ -17,12 +17,12 @@ const NAV_CLIENT = [
 ]
 
 const NAV_ADMIN = [
-  { to:'/admin', icon:'ti-users', label:'Clienti', color:'#D4570A' },
+  { to:'/admin', icon:'ti-users', label:'Clienti', color:'#F4894A' },
 ]
 
 const ADMIN_NAV_IMPORTA = [
   { to:'/importa', icon:'ti-file-upload', label:'Importa piano alimentare', color:'#F4894A' },
-  { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa scheda allenamento', color:'#D4570A' },
+  { to:'/importa-allenamento', icon:'ti-barbell', label:'Importa scheda allenamento', color:'#F4894A' },
 ]
 
 const ADMIN_NAV_MODIFICA = [
@@ -243,7 +243,7 @@ export default function Layout() {
         </div>
         <div style={{background:'#101010',borderRadius:12,padding:'16px 20px',border:'0.5px solid #1C1C1C',marginBottom:16}}>
           <div style={{fontSize:12,color:'#CCC',marginBottom:4}}>Per assistenza contatta</div>
-          <div style={{fontSize:14,fontWeight:700,color:'#D4570A'}}>Federico Obinu — FOfit Coach</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#F4894A'}}>Federico Obinu — FOfit Coach</div>
         </div>
         <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           style={{background:'#161616',color:'#CCC',border:'0.5px solid #222',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
@@ -371,8 +371,8 @@ export default function Layout() {
             position:'relative',
           }}>
             {[
-              { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true, color:'#D4570A' },
-              { to:'/piano', icon:'ti-clipboard-list', label:'Piano', color:'#D4570A' },
+              { to:'/', icon:'ti-layout-dashboard', label:'Home', exact:true, color:'#F4894A' },
+              { to:'/piano', icon:'ti-clipboard-list', label:'Piano', color:'#F4894A' },
               { to:'/diario', icon:'ti-pencil', label:'Diario', color:'#4A90D4' },
               { to:'/allenamento', icon:'ti-barbell', label:'Workout', color:'#3B8C5A' },
               { to:'/progressi', icon:'ti-chart-line', label:'Progressi', color:'#9B59B6' },

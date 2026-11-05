@@ -40,7 +40,7 @@ export default function GraficoPeso({ clientId, targetWeight }) {
         </div>
         <div style={{display:'flex',gap:4}}>
           {[4,8,12,24].map(w=>(
-            <button key={w} onClick={()=>setPeriod(w)} style={{padding:'4px 8px',borderRadius:6,border:'0.5px solid',fontSize:10,cursor:'pointer',fontFamily:'inherit',background:period===w?'#D4570A':'white',color:period===w?'white':'#888780',borderColor:period===w?'#D4570A':'#E0DDD6'}}>
+            <button key={w} onClick={()=>setPeriod(w)} style={{padding:'4px 8px',borderRadius:6,border:'0.5px solid',fontSize:10,cursor:'pointer',fontFamily:'inherit',background:period===w?'#D4570A':'#0D0D0D',color:period===w?'white':'#888780',borderColor:period===w?'#D4570A':'#2A2A2A'}}>
               {w}w
             </button>
           ))}

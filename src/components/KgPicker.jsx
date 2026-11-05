@@ -19,7 +19,7 @@ export default function KgPicker({ value, onChange, done = false }) {
         onChange={e => onChange(joinKg(int === '' ? 0 : int, parseInt(e.target.value)))}>
         {KG_DECS.map(d => <option key={d} value={d}>{d}</option>)}
       </select>
-      <span style={{ fontSize: 10, color: '#777', fontWeight: 600 }}>kg</span>
+      <span style={{ fontSize: 10, color: '#AAA', fontWeight: 600 }}>kg</span>
     </div>
   )
 }

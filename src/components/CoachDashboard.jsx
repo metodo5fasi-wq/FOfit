@@ -14,7 +14,7 @@ const S = {
 }
 
 function Tile({ label, value, color = '#F0F0F0', hint }) {
-  return <div style={S.tile}><div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1.1 }}>{value}</div><div style={{ fontSize: 11, color: '#AAA', marginTop: 4 }}>{label}</div>{hint && <div style={{ fontSize: 10, color: '#777', marginTop: 2 }}>{hint}</div>}</div>
+  return <div style={S.tile}><div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1.1 }}>{value}</div><div style={{ fontSize: 11, color: '#AAA', marginTop: 4 }}>{label}</div>{hint && <div style={{ fontSize: 10, color: '#AAA', marginTop: 2 }}>{hint}</div>}</div>
 }
 
 export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient }) {
@@ -73,7 +73,7 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
           {FILTERS.filter(([id]) => id === 'all' || id === filter || counts[id] > 0).map(([id, label]) => (
             <button key={id} onClick={() => { setFilter(id); setLimit(15) }} style={{ padding: '5px 11px', borderRadius: 16, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: '0.5px solid', background: filter === id ? '#D4570A' : '#161616', color: filter === id ? 'white' : '#DDD', borderColor: filter === id ? '#D4570A' : '#333' }}>{`${label} (${counts[id]})`}</button>))}
         </div>
-        {list.length === 0 && <div style={{ textAlign: 'center', color: '#777', fontSize: 13, padding: '22px 0' }}>{loading ? 'Carico...' : 'Tutto in ordine: niente da gestire 🎉'}</div>}
+        {list.length === 0 && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 13, padding: '22px 0' }}>{loading ? 'Carico...' : 'Tutto in ordine: niente da gestire 🎉'}</div>}
         {list.slice(0, limit).map(i => {
           const meta = TYPES[i.type]
           return (
@@ -95,7 +95,7 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
         {/* AGENDA */}
         <div style={{ ...S.card, marginBottom: 0 }}>
           <div style={{ ...S.title, marginBottom: 10 }}><i className="ti ti-phone" style={{ fontSize: 16, color: '#E8A020' }} />Chiamate in programma</div>
-          {agendaTotal === 0 && <div style={{ color: '#777', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Nessuna chiamata in programma.</div>}
+          {agendaTotal === 0 && <div style={{ color: '#AAA', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Nessuna chiamata in programma.</div>}
           {GROUPS.map(([k, label]) => agenda[k].length > 0 && (
             <div key={k} style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '6px 0' }}>{label}</div>
@@ -114,7 +114,7 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
         {/* CLIENTI DA SEGUIRE */}
         <div style={{ ...S.card, marginBottom: 0 }}>
           <div style={{ ...S.title, marginBottom: 10 }}><i className="ti ti-eye-exclamation" style={{ fontSize: 16, color: '#F4894A' }} />Clienti da seguire {attention.length > 0 && <span style={{ color: '#999', fontWeight: 400 }}>({attention.length})</span>}</div>
-          {attention.length === 0 && <div style={{ color: '#777', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>{loading ? 'Carico...' : 'Tutti i clienti sono in linea 👌'}</div>}
+          {attention.length === 0 && <div style={{ color: '#AAA', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>{loading ? 'Carico...' : 'Tutti i clienti sono in linea 👌'}</div>}
           {shownAtt.map(a => (
             <div key={a.clientId} data-testid="attention-row" onClick={() => openClient(a.clientId)} style={{ display: 'flex', gap: 10, padding: '8px 0', borderTop: '0.5px solid #151515', cursor: 'pointer' }}>
               <div style={{ width: 9, height: 9, borderRadius: '50%', background: a.severity === 'red' ? '#E24B4A' : '#E8A020', marginTop: 5, flexShrink: 0 }} aria-label={a.severity === 'red' ? 'Urgente' : 'Da controllare'} />

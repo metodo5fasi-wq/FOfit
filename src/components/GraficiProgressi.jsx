@@ -57,8 +57,8 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
           <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Attuale</div>
         </div>
         {diff !== null && (
-          <div style={{ flex: 1, background: diff < 0 ? '#EAF3DE' : diff > 0 ? '#FEE2E2' : '#F5F3EF', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: diff < 0 ? '#3B6D11' : diff > 0 ? '#E24B4A' : '#888780' }}>
+          <div style={{ flex: 1, background: diff < 0 ? 'rgba(59,140,90,0.16)' : diff > 0 ? 'rgba(226,75,74,0.16)' : '#161616', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: diff < 0 ? '#6FCF97' : diff > 0 ? '#E24B4A' : '#888780' }}>
               {diff > 0 ? '+' : ''}{diff}kg
             </div>
             <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Variazione</div>
@@ -79,9 +79,9 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
             <button key={r} onClick={() => setRange(r)} style={{
               flex: 1, padding: '5px', borderRadius: 7, border: '0.5px solid',
               fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-              background: range === r ? '#D4570A' : '#F5F3EF',
+              background: range === r ? '#D4570A' : '#161616',
               color: range === r ? 'white' : '#888780',
-              borderColor: range === r ? '#D4570A' : '#E0DDD6',
+              borderColor: range === r ? '#D4570A' : '#2A2A2A',
             }}>{r}gg</button>
           ))}
         </div>
@@ -90,7 +90,7 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
       {/* GRAFICO */}
       <ResponsiveContainer width="100%" height={compact ? 80 : 160}>
         <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#222" />
           {!compact && <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />}
           <YAxis tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} domain={['auto', 'auto']} />
           <Tooltip content={<CustomTooltip unit="kg" />} />
@@ -145,7 +145,7 @@ export function GraficoKcal({ clientId, targetKcal, compact = false }) {
   return (
     <ResponsiveContainer width="100%" height={compact ? 80 : 150}>
       <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
         {!compact && <XAxis dataKey="week" tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />}
         <YAxis tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />
         <Tooltip content={<CustomTooltip unit=" kcal" />} />
@@ -185,7 +185,7 @@ export function GraficoVolume({ clientId, compact = false }) {
   return (
     <ResponsiveContainer width="100%" height={compact ? 80 : 150}>
       <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F0EDE8" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
         {!compact && <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />}
         <YAxis tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />
         <Tooltip content={<CustomTooltip unit="kg" />} />
@@ -229,7 +229,7 @@ export default function GraficiProgressi() {
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             flex: 1, padding: '12px 4px', border: 'none', background: 'none', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 12, fontWeight: tab === t.id ? 700 : 400,
-            color: tab === t.id ? '#D4570A' : '#888780',
+            color: tab === t.id ? '#F4894A' : '#888780',
             borderBottom: tab === t.id ? '2px solid #D4570A' : '2px solid transparent',
           }}>{t.label}</button>
         ))}
@@ -251,7 +251,7 @@ export default function GraficiProgressi() {
           <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: 14, marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#CCC', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               Medie caloriche settimanali
-              {plan?.kcal_target && <span style={{ color: '#3B6D11', marginLeft: 8 }}>Target: {plan.kcal_target} kcal</span>}
+              {plan?.kcal_target && <span style={{ color: '#6FCF97', marginLeft: 8 }}>Target: {plan.kcal_target} kcal</span>}
             </div>
             <GraficoKcal targetKcal={plan?.kcal_target} />
           </div>
