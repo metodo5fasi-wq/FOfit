@@ -13,6 +13,7 @@ import CoachDashboard from '../components/CoachDashboard'
 import { ReportSignals, ReportAnswers } from '../components/ReportInsights'
 import { reportExtraHtml } from '../lib/reportQuestions.js'
 import PhotoCompare from '../components/PhotoCompare'
+import PhotoLightbox from '../components/PhotoLightbox'
 
 const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -880,7 +881,7 @@ export default function AdminPanel() {
                 plans={plans.filter(p=>p.client_id===selectedClient.id)}
                 onClose={()=>setSelectedClient(null)}
                 onSaved={fetchAll}
-                onNewPlan={()=>goCreaPiano(selectedClient.id)}
+                onNewPlan={()=>goCreaPiano(selectedClient.id)} onOpenCheckin={(c)=>{ setSelectedClient(null); setFocus({ type:'photo', id:null, clientId:c.id, extra:{}, tab:'check-in' }); setTab('check-in') }}
               />
             </div>
           )}
@@ -896,7 +897,7 @@ export default function AdminPanel() {
               plans={plans.filter(p=>p.client_id===selectedClient.id)}
               onClose={()=>setSelectedClient(null)}
               onSaved={fetchAll}
-              onNewPlan={()=>goCreaPiano(selectedClient.id)}
+              onNewPlan={()=>goCreaPiano(selectedClient.id)} onOpenCheckin={(c)=>{ setSelectedClient(null); setFocus({ type:'photo', id:null, clientId:c.id, extra:{}, tab:'check-in' }); setTab('check-in') }}
             />
           </div>
         </div>
@@ -978,7 +979,7 @@ export default function AdminPanel() {
 }
 
 
-function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
+function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan, onOpenCheckin }) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -1003,6 +1004,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
   const [activeMealPlan, setActiveMealPlan] = useState(null)
   const [anamnesi, setAnamnesi] = useState(null)
   const [showAnamnesi, setShowAnamnesi] = useState(false)
+  const [photoView, setPhotoView] = useState(null)      // foto aperta a schermo intero (indice)
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => { loadData() }, [client.id])
@@ -1377,12 +1379,19 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         {/* FOTO RECENTI */}
         {photos.length > 0 && (
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Foto recenti ({photos.length})</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div style={{fontSize:11,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.07em'}}>Foto recenti ({photos.length}) — tocca per ingrandire</div>
+              {onOpenCheckin && <button type="button" onClick={()=>onOpenCheckin(client)} style={{background:'none',border:'none',color:'#F4894A',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',padding:0}}>Tutte le foto →</button>}
+            </div>
             <div style={{display:'flex',gap:6,overflowX:'auto'}}>
-              {photos.map(p => (
-                <img key={p.id} src={p.photo_url} alt={p.label} style={{width:60,height:80,objectFit:'cover',borderRadius:8,flexShrink:0}}/>
+              {photos.map((p,i) => (
+                <button key={p.id} type="button" onClick={()=>setPhotoView(i)} aria-label={`Apri foto ${p.label||''} del ${p.photo_date||''}`.trim()}
+                  style={{padding:0,border:'0.5px solid #2A2A2A',background:'none',borderRadius:8,cursor:'zoom-in',flexShrink:0,overflow:'hidden'}}>
+                  <img src={p.photo_url} alt={p.label} style={{width:60,height:80,objectFit:'cover',display:'block'}}/>
+                </button>
               ))}
             </div>
+            <PhotoLightbox photos={photos} index={photoView} onChange={setPhotoView} onClose={()=>setPhotoView(null)}/>
           </div>
         )}
 
@@ -2142,7 +2151,13 @@ function CheckinAdmin({ focus, clearFocus }) {
   useEffect(() => {
     if (!fromInbox || selectedClient !== focus.clientId || clientProfile?.id !== focus.clientId || loading) return      // aspetta i dati di QUEL cliente
     if (focus.type === 'checkin') { setExpandedCheckin(focus.id); flashEl(`[data-checkin-id="${focus.id}"]`) }
-    else flashEl(focus.type === 'photo' ? '[data-focus="photos"]' : '[data-focus="measures"]')
+    else if (focus.type === 'photo') {
+      const day = focus.extra?.date
+      const mine = photos.filter(p => p.photo_date === day || String(p.created_at || '').slice(0, 10) === day)
+      const target = mine[0] || (!day ? null : photos[0])
+      if (target) setLightbox(target)                                  // le foto appena inviate si aprono subito (si scorre con le frecce)
+      flashEl('[data-focus="photos"]')
+    } else flashEl(focus.id ? `[data-measure-id="${focus.id}"]` : '[data-focus="measures"]')
     clearFocus?.()
   }, [focus, selectedClient, clientProfile, loading])
 
@@ -2233,7 +2248,7 @@ function CheckinAdmin({ focus, clearFocus }) {
           </div>
 
           {/* KPI RAPIDI */}
-          <div data-focus="measures" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
             {[
               {l:'Peso',v:latest?.weight_kg?`${latest.weight_kg}kg`:'—',c:latest?.weight_kg?'#F0F0F0':'#C0BDB8'},
               {l:'Check-in',v:checkins.length,c:'#4A90D4'},
@@ -2269,6 +2284,33 @@ function CheckinAdmin({ focus, clearFocus }) {
               <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'#AAA',marginTop:4}}>
                 <span>{new Date(measurements.slice(0,12).reverse()[0]?.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
                 <span>{new Date(measurements[0]?.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
+              </div>
+            </div>
+          )}
+
+          {/* MISURAZIONI */}
+          {measurements.length > 0 && (
+            <div data-focus="measures" style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',padding:'14px',marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10}}>📏 Misurazioni</div>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:520}}>
+                  <thead><tr>{['Data','Peso','Vita','Fianchi','Petto','Braccio','Coscia','% grasso'].map(h=><th key={h} style={{textAlign:h==='Data'?'left':'right',fontSize:10,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.06em',padding:'4px 8px',fontWeight:700}}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {measurements.slice(0,8).map((m,i)=>{
+                      const prevM = measurements[i+1]
+                      const d = m.weight_kg!=null && prevM?.weight_kg!=null ? Math.round((m.weight_kg-prevM.weight_kg)*10)/10 : null
+                      const v = (x,u) => x!=null && x!=='' ? String(x).replace('.',',')+u : '—'
+                      return (
+                        <tr key={m.id} data-measure-id={m.id} style={{borderTop:'0.5px solid #1C1C1C'}}>
+                          <td style={{padding:'7px 8px',color:'#F0F0F0',whiteSpace:'nowrap'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</td>
+                          <td style={{padding:'7px 8px',textAlign:'right',color:'#F0F0F0',fontWeight:700,whiteSpace:'nowrap'}}>{v(m.weight_kg,' kg')}{d!=null&&d!==0&&<span style={{marginLeft:5,fontSize:10,color:d<0?'#6FCF97':'#F07070'}}>{d>0?'+':''}{String(d).replace('.',',')}</span>}</td>
+                          {[m.waist_cm,m.hips_cm,m.chest_cm,m.arm_cm,m.thigh_cm].map((x,k)=><td key={k} style={{padding:'7px 8px',textAlign:'right',color:'#DDD'}}>{v(x,'')}</td>)}
+                          <td style={{padding:'7px 8px',textAlign:'right',color:'#DDD'}}>{v(m.body_fat_pct,'%')}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -2443,22 +2485,7 @@ function CheckinAdmin({ focus, clearFocus }) {
       )}
 
       {/* LIGHTBOX */}
-      {lightbox && (
-        <div onClick={()=>setLightbox(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.95)',zIndex:9999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
-          <button onClick={()=>setLightbox(null)} style={{position:'absolute',top:16,right:16,width:38,height:38,borderRadius:'50%',background:'rgba(255,255,255,0.15)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <i className="ti ti-x" style={{fontSize:18,color:'white'}}/>
-          </button>
-          <img loading="lazy" src={lightbox.photo_url} alt={lightbox.label} onClick={e=>e.stopPropagation()}
-            style={{maxWidth:'100%',maxHeight:'82vh',objectFit:'contain',borderRadius:12}}/>
-          <div style={{marginTop:12,textAlign:'center'}}>
-            <div style={{fontSize:13,fontWeight:700,color:'white',textTransform:'uppercase'}}>{lightbox.label}</div>
-            {lightbox.photo_date&&<div style={{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:3}}>
-              {new Date(lightbox.photo_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
-            </div>}
-            <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:8}}>Tocca fuori per chiudere</div>
-          </div>
-        </div>
-      )}
+      <PhotoLightbox photos={photos} index={lightbox ? photos.findIndex(x=>x.id===lightbox.id) : null} onChange={(n)=>setLightbox(photos[n])} onClose={()=>setLightbox(null)}/>
     </div>
   )
 }
