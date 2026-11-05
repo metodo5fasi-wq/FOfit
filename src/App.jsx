@@ -95,9 +95,9 @@ function OfflineBanner() {
 }
 
 const C = {
-  orange: '#D4570A', orangeLight: '#FEF0E7', orangeMid: '#F4894A',
-  black: '#111111', white: '#ffffff', gray: '#F5F3EF',
-  grayBorder: '#E0DDD6', textMuted: '#888780'
+  orange: '#D4570A', orangeLight: 'rgba(212,87,10,0.12)', orangeMid: '#F4894A',
+  black: '#F0F0F0', white: '#ffffff', gray: '#161616',
+  grayBorder: '#2A2A2A', textMuted: '#999'
 }
 export { C }
 
@@ -116,8 +116,8 @@ const globalStyles = `
   html { scroll-behavior: smooth; touch-action: pan-x pan-y; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--gray);
-    color: var(--black);
+    background: #080808;
+    color: #F0F0F0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -168,7 +168,7 @@ const globalStyles = `
 
   /* Skeleton loader */
   .skeleton {
-    background: linear-gradient(90deg, var(--gray) 25%, var(--gray-border) 50%, var(--gray) 75%);
+    background: linear-gradient(90deg, '#161616' 25%, var(--gray-border) 50%, '#161616' 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
     border-radius: 8px;
@@ -221,7 +221,7 @@ const globalStyles = `
   ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
 
   /* Selezione testo */
-  ::selection { background: rgba(212,87,10,0.3); color: #F0F0F0; }
+  ::selection { background: rgba(212,87,10,0.45); color: #FFFFFF; }
 
   /* Garantisce leggibilità ovunque */
   p, span, div, label, h1, h2, h3, h4, h5, h6 {
@@ -397,18 +397,18 @@ export default function App() {
               }}
             />
             <span style={{display:'none', fontSize:18, fontWeight:900, color:'#F0F0F0', letterSpacing:-.5}}>
-              FO<span style={{color:'#D4570A'}}>fit</span>
+              FO<span style={{color:'#F4894A'}}>fit</span>
             </span>
           </div>
         </div>
 
         {/* Nome */}
         <div style={{fontSize:36, fontWeight:900, color:'#F0F0F0', letterSpacing:-1.5, lineHeight:1, marginBottom:7}}>
-          FO<span style={{color:'#D4570A'}}>fit</span>
+          FO<span style={{color:'#F4894A'}}>fit</span>
         </div>
 
         {/* Tagline */}
-        <div style={{fontSize:11, color:'#333', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:40}}>
+        <div style={{fontSize:11, color:'#AAA', fontWeight:600, letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:40}}>
           Il tuo coach in tasca
         </div>
 
@@ -428,7 +428,7 @@ export default function App() {
       {/* URL in basso */}
       <div style={{
         position:'absolute', bottom:40,
-        fontSize:9, color:'#222', letterSpacing:'0.1em', fontWeight:700,
+        fontSize:9, color:'#F0F0F0', letterSpacing:'0.1em', fontWeight:700,
         fontFamily:'inherit',
       }}>
         FOFIT.FIT
