@@ -36,6 +36,7 @@ import DettaglioCliente from './pages/DettaglioCliente'
 import Notifiche from './pages/Notifiche'
 import GraficiProgressi from './components/GraficiProgressi'
 import Layout from './components/Layout'
+import { saveLastProfile, loadLastProfile, clearCache, resolveOfflineSession, startAutoSync, subscribe as subscribeSync, snapshot as syncSnapshot, isNetworkError } from './lib/offline'
 
 // ─────────────────────────────────────────────────────────
 // ERROR BOUNDARY — mostra l'errore invece di una pagina bianca
@@ -78,18 +79,36 @@ export const useTheme = () => useContext(ThemeContext)
 // Banner offline
 function OfflineBanner() {
   const [offline, setOffline] = useState(!navigator.onLine)
+  const [sync, setSync] = useState(syncSnapshot())
+  const [justSynced, setJustSynced] = useState(false)
   useEffect(() => {
     const on = () => setOffline(false)
     const off = () => setOffline(true)
     window.addEventListener('online', on)
     window.addEventListener('offline', off)
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+    const un = subscribeSync(s => setSync(s))
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); un() }
   }, [])
-  if (!offline) return null
+  useEffect(() => {
+    if (sync.lastSync?.at && Date.now() - sync.lastSync.at < 4000) {
+      setJustSynced(true)
+      const tm = setTimeout(() => setJustSynced(false), 3500)
+      return () => clearTimeout(tm)
+    }
+  }, [sync.lastSync?.at])
+  const { pending, failed, syncing } = sync
+  if (!offline && !pending && !failed && !justSynced) return null
+  let icon = 'ti-wifi-off', color = '#FAC775', bg = '#1a1a1a', msg
+  if (failed) { icon = 'ti-alert-triangle'; color = '#F07070'; msg = `${failed} ${failed === 1 ? 'elemento non è stato inviato' : 'elementi non sono stati inviati'} — avvisa il coach` }
+  else if (offline) msg = pending
+    ? `Offline — ${pending} ${pending === 1 ? 'modifica salvata' : 'modifiche salvate'} sul telefono, si inviano appena torni online`
+    : 'Sei offline — gli allenamenti si salvano sul telefono e si inviano appena c\'è rete'
+  else if (pending || syncing) { icon = 'ti-refresh'; color = '#F4894A'; msg = `Sincronizzazione in corso… (${pending})` }
+  else { icon = 'ti-circle-check'; color = '#6FCF97'; bg = '#10231a'; msg = 'Tutto sincronizzato' }
   return (
-    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:9999,background:'#1a1a1a',color:'white',padding:'10px 16px',display:'flex',alignItems:'center',gap:8,fontSize:13}}>
-      <i className="ti ti-wifi-off" style={{fontSize:16,color:'#FAC775'}}/>
-      <span>Nessuna connessione — alcune funzioni potrebbero non funzionare</span>
+    <div role="status" style={{position:'fixed',top:0,left:0,right:0,zIndex:9999,background:bg,color:'#F0F0F0',padding:'10px 16px',display:'flex',alignItems:'center',gap:8,fontSize:13}}>
+      <i className={`ti ${icon}`} style={{fontSize:16,color}}/>
+      <span>{msg}</span>
     </div>
   )
 }
@@ -314,29 +333,60 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Senza rete non si può ricontrollare l'accesso: se su questo telefono si è già entrati, si continua con l'ultimo profilo salvato
+    const goOffline = s => { setSession(s); const p = loadLastProfile(); if (p) setProfile(p); setTimeout(() => setLoading(false), 300) }
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      const off = !session ? resolveOfflineSession({ session, error, cachedProfile: loadLastProfile() }) : null
+      if (off) { goOffline(off); return }
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else setTimeout(() => setLoading(false), 1500)
+    }).catch(() => {
+      const off = resolveOfflineSession({ session: null, error: { message: 'Failed to fetch' }, cachedProfile: loadLastProfile() })
+      if (off) goOffline(off); else setTimeout(() => setLoading(false), 1500)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && event !== 'SIGNED_OUT') {
+        const off = resolveOfflineSession({ session, error: null, cachedProfile: loadLastProfile() })
+        if (off) { goOffline(off); return }
+      }
+      if (event === 'SIGNED_OUT') clearCache()
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else { setProfile(null); setTimeout(() => setLoading(false), 1500) }
     })
 
-    return () => subscription.unsubscribe()
+    // quando torna la rete si rinnova l'accesso
+    const onOnline = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setSession(session); fetchProfile(session.user.id) } }).catch(() => {})
+    }
+    window.addEventListener('online', onOnline)
+    return () => { subscription.unsubscribe(); window.removeEventListener('online', onOnline) }
   }, [])
 
+  // Invio automatico di ciò che è stato salvato offline
+  useEffect(() => {
+    if (!session?.user?.id || profile?.role === 'admin') return
+    return startAutoSync(supabase, session.user.id)
+  }, [session?.user?.id, profile?.role])
+
   async function fetchProfile(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, role, goal, height_cm, phone, notes')
-      .eq('id', userId)
-      .maybeSingle()
+    let data = null, error = null
+    try {
+      const r = await supabase
+        .from('profiles')
+        .select('id, full_name, role, goal, height_cm, phone, notes')
+        .eq('id', userId)
+        .maybeSingle()
+      data = r.data; error = r.error
+    } catch (e) { error = e }
     if (data) {
       setProfile(data)
+      saveLastProfile(data)
+    } else if (error && isNetworkError(error)) {
+      const p = loadLastProfile()   // senza rete: ultimo profilo salvato
+      if (p?.id === userId) setProfile(p)
     }
     setTimeout(() => setLoading(false), 1500)
   }
