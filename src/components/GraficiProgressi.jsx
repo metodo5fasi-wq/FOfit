@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import { movingAverage, trendSummary, fmtKg } from '../lib/trend'
 
 // ── TOOLTIP CUSTOM ───────────────────────────────────────────
 function CustomTooltip({ active, payload, label, unit = '' }) {
@@ -16,6 +17,18 @@ function CustomTooltip({ active, payload, label, unit = '' }) {
   )
 }
 
+function PesoTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const row = payload[0]?.payload || {}
+  return (
+    <div style={{ background: '#0D0D0D', border: '0.5px solid #1C1C1C', borderRadius: 10, padding: '8px 12px', fontSize: 12 }}>
+      <div style={{ color: '#CCC', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontWeight: 700, color: '#F0F0F0' }}>Peso: {fmtKg(row.peso)} kg</div>
+      <div style={{ fontWeight: 700, color: '#F4894A' }}>Media 7 gg: {fmtKg(row.media)} kg</div>
+    </div>
+  )
+}
+
 // ── GRAFICO PESO ─────────────────────────────────────────────
 export function GraficoPeso({ clientId, targetWeight, compact = false }) {
   const { profile } = useAuth()
@@ -26,14 +39,19 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
   useEffect(() => {
     if (!id) return
     const from = new Date(Date.now() - range * 86400000).toISOString().split('T')[0]
+    const fromWithWarmup = new Date(Date.now() - (range + 6) * 86400000).toISOString().split('T')[0]   // 6 giorni in più per calcolare bene la media dei primi punti
     supabase.from('progress_entries').select('entry_date, weight_kg, body_fat_pct')
-      .eq('client_id', id).gte('entry_date', from)
+      .eq('client_id', id).gte('entry_date', fromWithWarmup)
       .order('entry_date').then(({ data: d }) => {
-        setData((d || []).map(r => ({
+        const rows = (d || []).filter(r => r.weight_kg != null)
+        const avg = movingAverage(rows.map(r => ({ date: r.entry_date, value: r.weight_kg })), 7)
+        setData(rows.map((r, i) => ({
+          iso: r.entry_date,
           date: new Date(r.entry_date + 'T12:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }),
-          peso: r.weight_kg,
+          peso: Number(r.weight_kg),
+          media: avg[i]?.avg,
           bf: r.body_fat_pct,
-        })))
+        })).filter(r => r.iso >= from))
       })
   }, [id, range])
 
@@ -44,24 +62,29 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
     </div>
   )
 
-  const first = data[0]?.peso
-  const last = data[data.length - 1]?.peso
-  const diff = first && last ? Math.round((last - first) * 10) / 10 : null
+  // La variazione si calcola sulla MEDIA (stabile), non sul singolo giorno
+  const tr = trendSummary(data.map(r => ({ date: r.iso, value: r.peso, avg: r.media })))
+  const last = tr?.lastValue
+  const diff = tr && data.length > 1 ? tr.change : null
 
   return (
     <div>
       {/* MINI STATS */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, background: '#161616', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#F0F0F0' }}>{last}kg</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#F0F0F0' }}>{fmtKg(last)}kg</div>
           <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Attuale</div>
+        </div>
+        <div data-testid="peso-media" style={{ flex: 1, background: 'rgba(212,87,10,0.14)', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#F4894A' }}>{fmtKg(tr.lastAvg)}kg</div>
+          <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Media 7 gg</div>
         </div>
         {diff !== null && (
           <div style={{ flex: 1, background: diff < 0 ? 'rgba(59,140,90,0.16)' : diff > 0 ? 'rgba(226,75,74,0.16)' : '#161616', borderRadius: 9, padding: '8px 10px', textAlign: 'center' }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: diff < 0 ? '#6FCF97' : diff > 0 ? '#E24B4A' : '#888780' }}>
-              {diff > 0 ? '+' : ''}{diff}kg
+              {diff > 0 ? '+' : ''}{fmtKg(diff)}kg
             </div>
-            <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Variazione</div>
+            <div style={{ fontSize: 9, color: '#CCC', textTransform: 'uppercase' }}>Variazione media</div>
           </div>
         )}
         {targetWeight && (
@@ -93,13 +116,17 @@ export function GraficoPeso({ clientId, targetWeight, compact = false }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#222" />
           {!compact && <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} />}
           <YAxis tick={{ fontSize: 9, fill: '#888780' }} tickLine={false} domain={['auto', 'auto']} />
-          <Tooltip content={<CustomTooltip unit="kg" />} />
+          <Tooltip content={<PesoTooltip />} />
           {targetWeight && <ReferenceLine y={targetWeight} stroke="#4A90D4" strokeDasharray="4 4" />}
-          <Line type="monotone" dataKey="peso" stroke="#D4570A" strokeWidth={2.5}
-            dot={{ fill: '#D4570A', r: 3, strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 0 }} />
+          {/* singoli pesi: solo puntini (oscillano ogni giorno) · linea = media degli ultimi 7 giorni */}
+          <Line type="monotone" dataKey="peso" stroke="none" dot={{ fill: '#8A8A8A', r: 2.5, strokeWidth: 0 }} activeDot={{ r: 4, fill: '#BBB', strokeWidth: 0 }} isAnimationActive={false} />
+          <Line type="monotone" dataKey="media" stroke="#D4570A" strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
         </LineChart>
       </ResponsiveContainer>
+      {!compact && <div data-testid="peso-nota" style={{ fontSize: 11, color: '#CCC', lineHeight: 1.5, marginTop: 10 }}>
+        <span style={{ color: '#F4894A', fontWeight: 700 }}>La linea arancione è la media degli ultimi 7 giorni.</span> I puntini grigi sono i singoli pesi: oscillano ogni giorno (acqua, sale, digestione), quindi conta l'andamento della linea.
+        {tr?.perWeek != null && <> In questo periodo la media è cambiata di <b style={{ color: '#F0F0F0' }}>{tr.perWeek > 0 ? '+' : ''}{fmtKg(tr.perWeek)} kg a settimana</b>.</>}
+      </div>}
     </div>
   )
 }

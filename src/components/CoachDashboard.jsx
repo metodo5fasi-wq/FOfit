@@ -4,6 +4,7 @@ import { TYPES, relTime } from '../lib/coachInbox.js'
 const FILTERS = [['all', 'Tutti'], ['checkin', 'Check-in'], ['message', 'Messaggi'], ['report', 'Report'], ['anamnesi', 'Anamnesi'], ['booking', 'Chiamate'], ['media', 'Foto e misure']]
 const matches = (f, i) => f === 'all' || i.type === f || (f === 'media' && (i.type === 'photo' || i.type === 'measure'))
 const TAB_OF = { checkin: 'check-in', report: 'report', anamnesi: 'anamnesi', booking: 'calendario' }
+const QUICK_REPLIES = ['Ottimo lavoro, continua così! 💪', 'Ho letto il tuo check-in: come ti senti? Ne parliamo?', 'Grazie! Ne parliamo alla prossima chiamata 📞']
 const GROUPS = [['today', 'Oggi'], ['tomorrow', 'Domani'], ['week', 'Questa settimana'], ['later', 'Più avanti']]
 
 const S = {
@@ -17,10 +18,12 @@ function Tile({ label, value, color = '#F0F0F0', hint }) {
   return <div style={S.tile}><div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1.1 }}>{value}</div><div style={{ fontSize: 11, color: '#AAA', marginTop: 4 }}>{label}</div>{hint && <div style={{ fontSize: 10, color: '#AAA', marginTop: 2 }}>{hint}</div>}</div>
 }
 
-export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient }) {
+export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient, onOpenItem, onReply }) {
   const [filter, setFilter] = useState('all')
   const [limit, setLimit] = useState(15)
   const [allAtt, setAllAtt] = useState(false)
+  const [reply, setReply] = useState(null)        // { key, text, sending, error }
+  const [notice, setNotice] = useState('')          // conferma dell'ultima risposta inviata
   const byId = useMemo(() => Object.fromEntries((clients || []).map(c => [c.id, c])), [clients])
   const { unseen, counts, agenda, attention, week, loading, problems, seenTableOk } = inbox
   const now = new Date()
@@ -28,7 +31,16 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
   // se il filtro scelto si svuota (es. ho letto tutto), si torna a "Tutti"
   useEffect(() => { if (filter !== 'all' && !counts[filter]) setFilter('all') }, [filter, counts])
   const list = unseen.filter(i => matches(filter, i))
-  const open = i => { const tab = TAB_OF[i.type]; if (tab) onOpenTab(tab); else { const c = byId[i.clientId]; if (c) onOpenClient(c) } }
+  // Un clic porta direttamente al dato (il check-in giusto, il report giusto...); senza gestione dedicata si apre la scheda generica
+  const open = i => { if (onOpenItem) { onOpenItem(i); return } const tab = TAB_OF[i.type]; if (tab) onOpenTab(tab); else { const c = byId[i.clientId]; if (c) onOpenClient(c) } }
+  const canReply = i => !!onReply && (i.type === 'checkin' || i.type === 'message')
+  async function sendReply(i) {
+    const text = (reply?.text || '').trim(); if (!text || reply?.sending) return
+    setReply(r => ({ ...r, sending: true, error: '' }))
+    let ok = false; try { ok = await onReply(i.clientId, text, i) } catch { ok = false }
+    if (ok) { setNotice(`Risposta inviata a ${i.clientName} ✓`); setTimeout(() => setNotice(''), 4000); setReply(null); inbox.markSeen(i) }
+    else setReply(r => ({ ...r, sending: false, error: 'Non sono riuscito a inviare la risposta. Riprova.' }))
+  }
   const openClient = id => { const c = byId[id]; if (c) onOpenClient(c) }
   const expiring = attention.filter(a => a.flags.some(f => f.code.startsWith('sub'))).length
   const agendaTotal = GROUPS.reduce((n, [k]) => n + agenda[k].length, 0)
@@ -73,18 +85,36 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
           {FILTERS.filter(([id]) => id === 'all' || id === filter || counts[id] > 0).map(([id, label]) => (
             <button key={id} onClick={() => { setFilter(id); setLimit(15) }} style={{ padding: '5px 11px', borderRadius: 16, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: '0.5px solid', background: filter === id ? '#D4570A' : '#161616', color: filter === id ? 'white' : '#DDD', borderColor: filter === id ? '#D4570A' : '#333' }}>{`${label} (${counts[id]})`}</button>))}
         </div>
+        {notice && <div role="status" style={{ background: 'rgba(59,140,90,0.14)', border: '0.5px solid rgba(59,140,90,0.45)', color: '#6FCF97', fontSize: 12, borderRadius: 9, padding: '8px 12px', marginBottom: 8 }}>{notice}</div>}
         {list.length === 0 && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 13, padding: '22px 0' }}>{loading ? 'Carico...' : 'Tutto in ordine: niente da gestire 🎉'}</div>}
         {list.slice(0, limit).map(i => {
           const meta = TYPES[i.type]
           return (
-            <div key={i.key} data-testid="inbox-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '0.5px solid #151515' }}>
+            <div key={i.key} style={{ borderTop: '0.5px solid #151515' }}>
+            <div data-testid="inbox-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0' }}>
               <div style={{ width: 34, height: 34, borderRadius: 10, background: meta.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><i className={`ti ${meta.icon}`} style={{ fontSize: 17, color: meta.color }} /></div>
               <div role="button" tabIndex={0} onClick={() => open(i)} onKeyDown={e => e.key === 'Enter' && open(i)} aria-label={`Apri: ${i.title} di ${i.clientName}`} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
                 <div style={{ fontSize: 13, color: '#F0F0F0' }}><b>{i.clientName}</b> <span style={{ color: '#AAA' }}>· {i.title}</span></div>
                 {i.detail && <div style={{ fontSize: 11, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.detail}</div>}
               </div>
               <div style={{ fontSize: 10, color: '#888', flexShrink: 0 }}>{relTime(i.at, now)}</div>
+              {canReply(i) && <button onClick={() => setReply(r => r?.key === i.key ? null : { key: i.key, text: '', sending: false, error: '' })} aria-label={`Rispondi a ${i.clientName}`} aria-expanded={reply?.key === i.key} title="Rispondi" style={{ ...S.btn, padding: '6px 9px', color: '#F4894A' }}><i className="ti ti-message-reply" style={{ fontSize: 13 }} /></button>}
               <button onClick={() => inbox.markSeen(i)} aria-label={`Segna come letto: ${i.title} di ${i.clientName}`} title="Segna come letto" style={{ ...S.btn, padding: '6px 9px', color: '#6FCF97', borderColor: 'rgba(111,207,151,0.4)' }}><i className="ti ti-check" style={{ fontSize: 13 }} /></button>
+            </div>
+            {reply?.key === i.key && (
+              <div data-testid="reply-box" style={{ padding: '0 0 12px 44px' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                  {QUICK_REPLIES.map(q => <button key={q} type="button" onClick={() => setReply(r => ({ ...r, text: q }))} style={{ ...S.btn, fontSize: 11, textAlign: 'left' }}>{q}</button>)}
+                </div>
+                <textarea aria-label={`Risposta a ${i.clientName}`} value={reply.text} onChange={e => setReply(r => ({ ...r, text: e.target.value }))} placeholder="Scrivi la risposta..." rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '0.5px solid #2A2A2A', borderRadius: 9, fontSize: 13, color: '#F0F0F0', background: '#161616', outline: 'none', fontFamily: 'inherit', resize: 'vertical' }} />
+                {reply.error && <div role="alert" style={{ color: '#F07070', fontSize: 12, marginTop: 6 }}>{reply.error}</div>}
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button onClick={() => sendReply(i)} disabled={!reply.text.trim() || reply.sending} style={{ ...S.btn, background: '#D4570A', color: 'white', borderColor: '#D4570A', opacity: !reply.text.trim() || reply.sending ? 0.55 : 1 }}>{reply.sending ? 'Invio…' : 'Invia risposta'}</button>
+                  <button onClick={() => setReply(null)} style={S.btn}>Annulla</button>
+                </div>
+              </div>
+            )}
             </div>
           )
         })}
@@ -100,7 +130,7 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
             <div key={k} style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '6px 0' }}>{label}</div>
               {agenda[k].slice(0, k === 'later' ? 3 : 20).map(r => (
-                <div key={r.id} data-testid="agenda-row" onClick={() => openClient(r.clientId)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', cursor: 'pointer' }}>
+                <div key={r.id} data-testid="agenda-row" onClick={() => onOpenItem ? onOpenItem({ type: 'booking', id: r.id, clientId: r.clientId, extra: { date: r.date, time: r.time } }) : openClient(r.clientId)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', cursor: 'pointer' }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: '#E8A020', width: 46 }}>{r.time}</div>
                   <div style={{ fontSize: 13, color: '#F0F0F0', flex: 1 }}>{r.clientName}</div>
                   {(k === 'week' || k === 'later') && <div style={{ fontSize: 11, color: '#999' }}>{r.dayLabel}</div>}
