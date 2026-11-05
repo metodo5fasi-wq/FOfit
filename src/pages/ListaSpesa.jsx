@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -83,39 +84,39 @@ export default function ListaSpesa() {
         foodMap[key].quantity_g += food.quantity_g || 0
       })
     })
-    await supabase.from('shopping_list_items').delete().eq('client_id', profile.id)
+    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare')
     const newItems = Object.values(foodMap).map(item => ({
       ...item, client_id: profile.id, plan_id: plan.id, is_checked: false, quantity_g: Math.round(item.quantity_g)
     }))
-    if (newItems.length > 0) await supabase.from('shopping_list_items').insert(newItems)
+    if (newItems.length > 0) await dbSave(supabase.from('shopping_list_items').insert(newItems), 'la lista della spesa', 'salvare')
     fetchItems()
     setGenerating(false)
   }
 
   async function toggleItem(id, checked) {
-    await supabase.from('shopping_list_items').update({ is_checked: !checked }).eq('id', id)
+    await dbSave(supabase.from('shopping_list_items').update({ is_checked: !checked }).eq('id', id), 'la lista della spesa', 'salvare')
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_checked: !checked } : i))
   }
 
   async function clearChecked() {
-    await supabase.from('shopping_list_items').delete().eq('client_id', profile.id).eq('is_checked', true)
+    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id).eq('is_checked', true), 'la lista della spesa', 'eliminare')
     fetchItems()
   }
 
   async function clearAll() {
-    await supabase.from('shopping_list_items').delete().eq('client_id', profile.id)
+    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare')
     setItems([])
   }
 
   async function addManualItem() {
     if (!newItem.trim()) return
-    await supabase.from('shopping_list_items').insert({
+    await dbSave(supabase.from('shopping_list_items').insert({
       client_id: profile.id,
       food_name: newItem.trim(),
       category: getCategory(newItem.trim()),
       is_checked: false,
       quantity_g: null,
-    })
+    }), 'la lista della spesa', 'salvare')
     setNewItem('')
     fetchItems()
   }

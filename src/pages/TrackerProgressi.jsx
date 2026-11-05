@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
@@ -116,7 +117,7 @@ export default function TrackerProgressi() {
   }
 
   async function deleteEntry(id) {
-    await supabase.from('progress_entries').delete().eq('id', id)
+    await dbSave(supabase.from('progress_entries').delete().eq('id', id), 'la misurazione', 'eliminare')
     fetchEntries()
   }
 
@@ -157,7 +158,7 @@ export default function TrackerProgressi() {
   async function deletePhoto(id, photoUrl) {
     const path = photoUrl.split('/progress-photos/')[1]
     if (path) await supabase.storage.from('progress-photos').remove([path])
-    await supabase.from('progress_photos').delete().eq('id', id)
+    await dbSave(supabase.from('progress_photos').delete().eq('id', id), 'la foto', 'eliminare')
     fetchPhotos()
   }
 

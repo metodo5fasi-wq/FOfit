@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -95,13 +96,13 @@ export default function StoricoAllenamento() {
 
   async function saveEdit() {
     setSavingEdit(true)
-    await supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id)
+    await dbSave(supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id), 'la seduta', 'salvare')
     for (const log of editLogs) {
-      await supabase.from('workout_logs').update({
+      await dbSave(supabase.from('workout_logs').update({
         weight_kg: log.weight_kg ? parseFloat(String(log.weight_kg).replace(',', '.')) : null,
         reps_done: log.reps_done ? parseInt(log.reps_done) : null,
         exercise_note: log.exercise_note || null,
-      }).eq('id', log.id)
+      }).eq('id', log.id), "l'allenamento", 'salvare')
     }
     setSavingEdit(false)
     setEditingSession(null)

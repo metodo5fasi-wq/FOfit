@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbMust } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -115,7 +116,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       try {
         const payload = { ...d, client_id: clientId, updated_at: new Date().toISOString() }
         Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null })
-        await supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' })
+        await dbMust(supabase.from('anamnesi').upsert(payload, { onConflict: 'client_id' }), "l'anamnesi", 'salvare')
       } catch(e) { /* silenzioso */ }
     }, 60000)
     return () => { if (autosaveRef.current) clearInterval(autosaveRef.current) }

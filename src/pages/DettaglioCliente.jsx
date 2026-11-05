@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust, dbSave } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -127,28 +128,32 @@ function ClientDetail({ client, navigate }) {
       setData({ measurements:measR.data||[], photos:photoR.data||[], diaryWeek, sessions:sessR.data||[], allCount:sessCountR.count||0, logs:logsR.data||[], checkin:checkinR.data?.[0]||null, adherence:adh.length?{followed:adh.filter(a=>a.followed).length,total:adh.length}:null, mealPlan:bestMeal, workoutPlan:workPlans.find(p=>p.is_active)||workPlans[0]||null, anamnesi:amnR.data||null, unreadMsgs:msgR.count||0 })
       setReports(repR.data||[])
       // Segna report come letti
-      if (repR.data?.length) await supabase.from('workout_reports').update({read_by_coach:true}).eq('client_id',client.id).eq('read_by_coach',false)
+      if (repR.data?.length) await dbMust(supabase.from('workout_reports').update({read_by_coach:true}).eq('client_id',client.id).eq('read_by_coach',false), 'il report', 'salvare')
     } catch(e) { console.error(e) }
     setLoading(false)
   }
 
   async function save() {
     setSaving(true)
-    await supabase.from('profiles').update({ full_name:form.full_name, goal:form.goal, height_cm:form.height_cm?parseInt(form.height_cm):null, phone:form.phone, notes:form.notes, coach_notes:form.coach_notes }).eq('id',client.id)
-    setSaving(false); setEditing(false)
+    const r = await dbSave(supabase.from('profiles').update({ full_name:form.full_name, goal:form.goal, height_cm:form.height_cm?parseInt(form.height_cm):null, phone:form.phone, notes:form.notes, coach_notes:form.coach_notes }).eq('id',client.id), 'i dati del cliente', 'salvare')
+    setSaving(false)
+    if (!r.ok) return                                   // resta in modifica: ciò che hai scritto non va perso
+    setEditing(false)
   }
 
   async function savePlanEdit() {
     if (!data.mealPlan) return
-    await supabase.from('meal_plans').update({ title:planEdit.title, kcal_target:parseInt(planEdit.kcal_target), protein_target_g:parseInt(planEdit.protein_target_g), carbs_target_g:parseInt(planEdit.carbs_target_g), fat_target_g:parseInt(planEdit.fat_target_g), notes:planEdit.notes }).eq('id',data.mealPlan.id)
+    await dbSave(supabase.from('meal_plans').update({ title:planEdit.title, kcal_target:parseInt(planEdit.kcal_target), protein_target_g:parseInt(planEdit.protein_target_g), carbs_target_g:parseInt(planEdit.carbs_target_g), fat_target_g:parseInt(planEdit.fat_target_g), notes:planEdit.notes }).eq('id',data.mealPlan.id), 'il piano alimentare', 'salvare')
     setEditingPlan(false); loadAll()
   }
 
   async function sendQuickMsg() {
     if (!quickMsg.trim()) return
     setSendingMsg(true)
-    await supabase.from('coach_messages').insert({ client_id:client.id, sender_role:'admin', content:quickMsg.trim(), is_read:false })
-    setQuickMsg(''); setSendingMsg(false)
+    const r = await dbSave(supabase.from('coach_messages').insert({ client_id:client.id, sender_role:'admin', content:quickMsg.trim(), is_read:false }), 'il messaggio', 'inviare')
+    setSendingMsg(false)
+    if (!r.ok) return                                   // il testo resta nel campo
+    setQuickMsg('')
     toast('Messaggio inviato!', 'success')
   }
 

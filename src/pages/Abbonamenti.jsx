@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
@@ -63,21 +64,21 @@ export default function Abbonamenti() {
         const { data: ex } = await supabase.from('notifications')
           .select('id').eq('client_id',c.id).eq('type','subscription_expiring')
           .gte('created_at', new Date(Date.now()-86400000).toISOString())
-        if (!ex?.length) await supabase.from('notifications').insert({
+        if (!ex?.length) await dbSave(supabase.from('notifications').insert({
           client_id:c.id, type:'subscription_expiring',
           title:'⚠️ Abbonamento in scadenza',
           body:`Il tuo abbonamento scadrà tra 4 giorni. Contatta il coach per il rinnovo.`
-        })
+        }), 'la notifica', 'salvare', { silent: true })
       }
       if (days !== null && days <= 0) {
         const { data: ex } = await supabase.from('notifications')
           .select('id').eq('client_id',c.id).eq('type','subscription_expired')
           .gte('created_at', new Date(Date.now()-86400000).toISOString())
-        if (!ex?.length) await supabase.from('notifications').insert({
+        if (!ex?.length) await dbSave(supabase.from('notifications').insert({
           client_id:c.id, type:'subscription_expired',
           title:'🔒 Abbonamento scaduto',
           body:`Il tuo abbonamento è scaduto. Contatta il coach per rinnovare l'accesso.`
-        })
+        }), 'la notifica', 'salvare', { silent: true })
       }
     }
   }
@@ -132,7 +133,7 @@ export default function Abbonamenti() {
         ? installments.filter(i=>i.paid_at).length
         : null
 
-      await supabase.from('profiles').update({
+      await dbMust(supabase.from('profiles').update({
         subscription_start: form.subscription_start||null,
         subscription_end: form.subscription_end||null,
         subscription_type: form.subscription_type,
@@ -141,14 +142,14 @@ export default function Abbonamenti() {
         installments: form.payment_type==='rate' ? parseInt(form.installments)||2 : 1,
         installment_amount: form.payment_type==='rate' ? parseFloat(form.installment_amount)||null : null,
         installments_paid: paidCount,
-      }).eq('id', editing)
+      }).eq('id', editing), 'i dati del cliente', 'salvare')
 
       // Salva rate
       if (form.payment_type==='rate' && installments.length > 0) {
-        await supabase.from('subscription_installments').delete().eq('client_id', editing)
-        await supabase.from('subscription_installments').insert(
+        await dbMust(supabase.from('subscription_installments').delete().eq('client_id', editing), 'il pagamento', 'eliminare')
+        await dbMust(supabase.from('subscription_installments').insert(
           installments.map(inst=>({ client_id:editing, amount:inst.amount, due_date:inst.due_date||null, paid_at:inst.paid_at||null }))
-        )
+        ), 'il pagamento', 'salvare')
       }
 
       setEditing(null)
@@ -162,15 +163,15 @@ export default function Abbonamenti() {
     const end = new Date(c.subscription_end)
     const days = {Mensile:30,Trimestrale:90,Semestrale:180,Annuale:365}[c.subscription_type]||30
     end.setDate(end.getDate()+days)
-    await supabase.from('profiles').update({
+    await dbSave(supabase.from('profiles').update({
       subscription_start: c.subscription_end,
       subscription_end: end.toISOString().split('T')[0],
-    }).eq('id',c.id)
-    await supabase.from('notifications').insert({
+    }).eq('id',c.id), 'i dati del cliente', 'salvare')
+    await dbSave(supabase.from('notifications').insert({
       client_id:c.id, type:'subscription_renewed',
       title:'✅ Abbonamento rinnovato',
       body:`Il tuo abbonamento è stato rinnovato fino al ${end.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}.`
-    })
+    }), 'la notifica', 'salvare', { silent: true })
     fetchClients()
   }
 

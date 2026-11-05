@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust, dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -70,16 +71,16 @@ export default function MessaggiProgrammati() {
           scheduled_at: new Date(form.scheduled_at).toISOString(),
           sent: false,
         }))
-        await supabase.from('scheduled_messages').insert(rows)
+        await dbMust(supabase.from('scheduled_messages').insert(rows), 'il messaggio programmato', 'salvare')
         setSaveMsg(`✓ Programmato per ${clients.length} clienti`)
       } else {
-        await supabase.from('scheduled_messages').insert({
+        await dbMust(supabase.from('scheduled_messages').insert({
           coach_id: profile.id,
           client_id: form.client_id,
           message: form.message,
           scheduled_at: new Date(form.scheduled_at).toISOString(),
           sent: false,
-        })
+        }), 'il messaggio programmato', 'salvare')
         setSaveMsg('✓ Messaggio programmato')
       }
       setForm({ client_id:'', message:'', scheduled_at:'' })
@@ -95,13 +96,13 @@ export default function MessaggiProgrammati() {
   async function sendNow(msg) {
     setSending(msg.id)
     // 1. Notifica in-app (centro notifiche)
-    await supabase.from('notifications').insert({
+    await dbSave(supabase.from('notifications').insert({
       client_id: msg.client_id,
       type: 'coach_message',
       title: 'Messaggio dal coach',
       body: msg.message,
       read: false,
-    })
+    }), 'la notifica', 'salvare', { silent: true })
     // 2. Push notification sul telefono (anche con app chiusa)
     await authFetch('/api/push-send', {
       method: 'POST',
@@ -119,13 +120,13 @@ export default function MessaggiProgrammati() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ clientId: msg.client_id, coachId: profile.id, message: msg.message, senderRole: 'coach' })
     })
-    await supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id)
+    await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
     fetchScheduled()
     setSending(null)
   }
 
   async function remove(id) {
-    await supabase.from('scheduled_messages').delete().eq('id', id)
+    await dbSave(supabase.from('scheduled_messages').delete().eq('id', id), 'il messaggio programmato', 'eliminare')
     fetchScheduled()
   }
 
@@ -136,13 +137,13 @@ export default function MessaggiProgrammati() {
       const { data: toSend } = await supabase.from('scheduled_messages')
         .select('*').eq('sent', false).lte('scheduled_at', now)
       for (const msg of toSend||[]) {
-        await supabase.from('notifications').insert({
+        await dbSave(supabase.from('notifications').insert({
           client_id: msg.client_id,
           type: 'coach_message',
           title: 'Messaggio dal coach',
           body: msg.message,
           read: false,
-        })
+        }), 'la notifica', 'salvare', { silent: true })
         await authFetch('/api/push-send', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, title: '💬 Messaggio dal coach', body: msg.message, url: '/notifiche' })
@@ -151,7 +152,7 @@ export default function MessaggiProgrammati() {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, coachId: msg.coach_id, message: msg.message, senderRole: 'coach' })
         })
-        await supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id)
+        await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
       }
       if (toSend?.length) fetchScheduled()
     }

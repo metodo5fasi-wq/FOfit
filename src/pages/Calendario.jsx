@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -111,7 +112,8 @@ export default function Calendario() {
 
   async function cancelBooking(id) {
     if (!confirm('Vuoi annullare questa prenotazione?')) return
-    await supabase.from('call_bookings').delete().eq('id', id)
+    const r = await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare')
+    if (!r.ok) return                                   // la prenotazione è ancora lì: niente "annullata"
     showToast('Prenotazione annullata', '🗑️')
     fetchData()
   }
@@ -134,12 +136,12 @@ export default function Calendario() {
         })
       })
       // Notifica DB
-      await supabase.from('notifications').insert({
+      await dbSave(supabase.from('notifications').insert({
         client_id: adminId,
         type: 'call_booking',
         title: '📅 Nuova prenotazione chiamata',
         body: `${profile.full_name} ha prenotato una chiamata per ${dateLabel} alle ${slot}`,
-      })
+      }), 'la notifica', 'salvare', { silent: true })
     } catch(e) { /* silenzioso */ }
   }
 

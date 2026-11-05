@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { dbMust } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -148,7 +149,7 @@ export default function ImportaPiano() {
     setSaving(true)
     setError('')
     try {
-      await supabase.from('meal_plans').update({ is_active:false }).eq('client_id', selectedClient)
+      await dbMust(supabase.from('meal_plans').update({ is_active:false }).eq('client_id', selectedClient), 'il piano alimentare', 'salvare')
 
       const { data: planData, error: planErr } = await supabase.from('meal_plans').insert({
         client_id: selectedClient, created_by: profile.id, title: planTitle,

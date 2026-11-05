@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -79,7 +80,7 @@ export default function ImportaAllenamento() {
     setSaving(true)
     setError('')
     try {
-      await supabase.from('workout_plans').update({is_active:false}).eq('client_id', selectedClient)
+      await dbMust(supabase.from('workout_plans').update({is_active:false}).eq('client_id', selectedClient), 'la scheda', 'salvare')
       const { data: planData, error: planErr } = await supabase.from('workout_plans').insert({
         client_id: selectedClient,
         created_by: profile.id,

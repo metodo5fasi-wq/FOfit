@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust, dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -87,7 +88,7 @@ export default function ModificaPiano() {
       // Salva su Supabase
       await Promise.all(updates.map(u => {
         const { id, ...data } = u
-        return supabase.from('plan_meal_foods').update(data).eq('id', id)
+        return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
       }))
 
       // Aggiorna stato locale immediatamente
@@ -434,10 +435,10 @@ export default function ModificaPiano() {
 
   // Aggiunge nuovo pasto
   async function addMeal() {
-    const { data: mealData } = await supabase.from('plan_meals').insert({
+    const { data: mealData } = await dbSave(supabase.from('plan_meals').insert({
       plan_id: planId, day_of_week: selectedDay,
       meal_type: newMealType, meal_order: dayMeals.length,
-    }).select().single()
+    }).select().single(), 'il piano', 'salvare')
     if (mealData) {
       setMeals(prev => [...prev, { ...mealData, plan_meal_foods: [] }])
       setShowAddMeal(false)
@@ -480,8 +481,8 @@ export default function ModificaPiano() {
       const deleteMealPromises = (dbMeals || [])
         .filter(dbMeal => !currentMealIds.has(dbMeal.id))
         .map(async dbMeal => {
-          await supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id)
-          await supabase.from('plan_meals').delete().eq('id', dbMeal.id)
+          await dbSave(supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id), 'il piano', 'eliminare')
+          await dbSave(supabase.from('plan_meals').delete().eq('id', dbMeal.id), 'il piano', 'eliminare')
         })
       await Promise.all(deleteMealPromises)
 
@@ -495,7 +496,7 @@ export default function ModificaPiano() {
         for (const dbFood of dbFoods || []) {
           if (!keepFoodIds.has(dbFood.id)) {
             deleteFoodPromises.push(
-              supabase.from('plan_meal_foods').delete().eq('id', dbFood.id)
+              dbMust(supabase.from('plan_meal_foods').delete().eq('id', dbFood.id), 'il piano', 'eliminare')
             )
           }
         }
@@ -508,7 +509,7 @@ export default function ModificaPiano() {
         const batch = toUpdate.slice(i, i + batchSize)
         await Promise.all(batch.map(f => {
           const { id, ...data } = f
-          return supabase.from('plan_meal_foods').update(data).eq('id', id)
+          return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
         }))
       }
 
@@ -537,12 +538,12 @@ export default function ModificaPiano() {
         const firstMealOfDay = meals.find(m => m.day_of_week === parseInt(day))
         if (firstMealOfDay && !firstMealOfDay.id?.startsWith('new')) {
           dayUpdatePromises.push(
-            supabase.from('plan_meals').update({
+            dbMust(supabase.from('plan_meals').update({
               day_kcal_target: Math.round(totals.kcal),
               day_protein_target_g: Math.round(totals.protein),
               day_carbs_target_g: Math.round(totals.carbs),
               day_fat_target_g: Math.round(totals.fat),
-            }).eq('id', firstMealOfDay.id)
+            }).eq('id', firstMealOfDay.id), 'il piano', 'salvare')
           )
         }
       }
@@ -611,12 +612,12 @@ export default function ModificaPiano() {
           <span style={{fontSize:9,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em'}}>Inserito / Target</span>
           {plan && (
             <button onClick={async ()=>{
-              await supabase.from('meal_plans').update({
+              await dbSave(supabase.from('meal_plans').update({
                 kcal_target: plan.kcal_target,
                 protein_target_g: plan.protein_target_g,
                 carbs_target_g: plan.carbs_target_g,
                 fat_target_g: plan.fat_target_g,
-              }).eq('id', planId)
+              }).eq('id', planId), 'il piano alimentare', 'salvare')
               setSavedMsg('✓ Salvato')
               setTimeout(()=>setSavedMsg(''),2000)
             }} style={{padding:'3px 9px',background:savedMsg?'#3B6D11':'#D4570A',color:'white',border:'none',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit',transition:'background 0.2s'}}>

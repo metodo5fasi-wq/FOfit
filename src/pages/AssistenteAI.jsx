@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -175,7 +176,7 @@ export default function AssistenteAI() {
       carbs_g: ing.c,
       fat_g: ing.g,
     }))
-    await supabase.from('diary_entries').insert(entries)
+    await dbSave(supabase.from('diary_entries').insert(entries), 'il diario', 'salvare')
   }
 
   async function sendMessage(text) {
@@ -190,9 +191,9 @@ export default function AssistenteAI() {
     setMessages(newMessages)
     setLoading(true)
 
-    await supabase.from('ai_chat_messages').insert({
+    await dbSave(supabase.from('ai_chat_messages').insert({
       client_id: profile.id, role: 'user', content: userText
-    })
+    }), 'la chat', 'salvare', { silent: true })
 
     try {
       const res = await authFetch('/api/ai-coach', {
@@ -210,9 +211,9 @@ export default function AssistenteAI() {
       const aiMsg = { role: 'assistant', content: reply, id: Date.now().toString() + '_ai', recipe }
       setMessages(prev => [...prev, aiMsg])
 
-      await supabase.from('ai_chat_messages').insert({
+      await dbSave(supabase.from('ai_chat_messages').insert({
         client_id: profile.id, role: 'assistant', content: reply
-      })
+      }), 'la chat', 'salvare', { silent: true })
     } catch(e) {
       setMessages(prev => [...prev, { role:'assistant', content:'Errore di connessione. Riprova.', id:'err' }])
     }
@@ -230,7 +231,7 @@ export default function AssistenteAI() {
   }
 
   async function clearHistory() {
-    await supabase.from('ai_chat_messages').delete().eq('client_id', profile.id)
+    await dbSave(supabase.from('ai_chat_messages').delete().eq('client_id', profile.id), 'la chat', 'eliminare', { silent: true })
     loadHistory()
   }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { searchFoods } from '../lib/foodDatabase'
@@ -91,7 +92,7 @@ export default function DiarioGiornaliero() {
   async function addFood() {
     if (!selectedFood) return
     const ratio = qty / 100
-    await supabase.from('diary_entries').insert({
+    await dbSave(supabase.from('diary_entries').insert({
       client_id: profile.id,
       entry_date: selectedDate,
       meal_type: selectedMeal.toLowerCase(),
@@ -102,7 +103,7 @@ export default function DiarioGiornaliero() {
       protein_g: Math.round(selectedFood.p * ratio),
       carbs_g: Math.round(selectedFood.c * ratio),
       fat_g: Math.round(selectedFood.g * ratio),
-    })
+    }), 'il diario', 'salvare')
     setSelectedFood(null)
     setQty(100)
     if (window.innerWidth < 768) setActiveTab('pasti')
@@ -111,14 +112,14 @@ export default function DiarioGiornaliero() {
   }
 
   async function removeFood(id) {
-    await supabase.from('diary_entries').delete().eq('id', id)
+    await dbSave(supabase.from('diary_entries').delete().eq('id', id), 'il diario', 'eliminare')
     fetchDiary()
   }
 
   async function clearAll() {
     if (!window.confirm('Vuoi azzerare tutto il diario di oggi?')) return
-    await supabase.from('diary_entries').delete()
-      .eq('client_id', profile.id).eq('entry_date', selectedDate)
+    await dbSave(supabase.from('diary_entries').delete()
+      .eq('client_id', profile.id).eq('entry_date', selectedDate), 'il diario', 'eliminare')
     setDiary(Object.fromEntries(MEAL_SLOTS.map(m => [m, []])))
   }
 

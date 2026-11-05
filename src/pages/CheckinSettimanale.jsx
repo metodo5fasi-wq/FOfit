@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Toast } from '../components/Animations'
@@ -70,12 +71,11 @@ export default function CheckinSettimanale() {
   async function save() {
     setSaving(true)
     const payload = { client_id: profile.id, week_date: weekDate, ...form }
-    if (existing) {
-      await supabase.from('weekly_checkins').update(payload).eq('id', existing.id)
-    } else {
-      const { data } = await supabase.from('weekly_checkins').insert(payload).select().single()
-      setExisting(data)
-    }
+    const r = existing
+      ? await dbSave(supabase.from('weekly_checkins').update(payload).eq('id', existing.id), 'il check-in', 'salvare')
+      : await dbSave(supabase.from('weekly_checkins').insert(payload).select().single(), 'il check-in', 'salvare')
+    if (!r.ok) { setSaving(false); return }              // niente "Check-in salvato!" se non è stato salvato
+    if (!existing) setExisting(r.data)
     setHistory(prev => {
       const filtered = prev.filter(c => c.week_date !== weekDate)
       return [{ ...payload, week_date: weekDate }, ...filtered]

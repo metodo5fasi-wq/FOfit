@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -447,7 +448,7 @@ export default function AdminPanel() {
     const dietData = buildPlanFromDiet()
 
     // Disattiva piano precedente del cliente
-    await supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id)
+    await dbSave(supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id), 'il piano alimentare', 'salvare')
 
     // Insert base senza colonne opzionali
     const payload = {
@@ -491,8 +492,8 @@ export default function AdminPanel() {
     if (error) { alert('Errore riattivazione piano: ' + error.message); return }
     fetchAll()
   }
-  async function togglePlan(id, cur) { await supabase.from('meal_plans').update({is_active:!cur}).eq('id',id); fetchAll() }
-  async function deletePlan(id) { if (!confirm('Eliminare?')) return; await supabase.from('meal_plans').delete().eq('id',id); fetchAll() }
+  async function togglePlan(id, cur) { await dbSave(supabase.from('meal_plans').update({is_active:!cur}).eq('id',id), 'il piano alimentare', 'salvare'); fetchAll() }
+  async function deletePlan(id) { if (!confirm('Eliminare?')) return; await dbSave(supabase.from('meal_plans').delete().eq('id',id), 'il piano alimentare', 'eliminare'); fetchAll() }
   const macroKcal = p => (parseInt(p.protein_target_g||0)*4+parseInt(p.carbs_target_g||0)*4+parseInt(p.fat_target_g||0)*9)
   const dcMacroKcal = (prefix) => (parseInt(dietConfig[`${prefix}_protein`]||0)*4+parseInt(dietConfig[`${prefix}_carbs`]||0)*4+parseInt(dietConfig[`${prefix}_fat`]||0)*9)
 
@@ -1088,21 +1089,22 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan, onOpenC
 
   async function savePlanEdit() {
     if (!activeMealPlan) return
-    await supabase.from('meal_plans').update({
+    await dbSave(supabase.from('meal_plans').update({
       title: planEdit.title,
       kcal_target: parseInt(planEdit.kcal_target),
       protein_target_g: parseInt(planEdit.protein_target_g),
       carbs_target_g: parseInt(planEdit.carbs_target_g),
       fat_target_g: parseInt(planEdit.fat_target_g),
       notes: planEdit.notes,
-    }).eq('id', activeMealPlan.id)
+    }).eq('id', activeMealPlan.id), 'il piano alimentare', 'salvare')
     setEditingPlan(false)
     onSaved()
   }
 
   async function deactivatePlan(planId) {
     if (!window.confirm('Disattivare questo piano? Il cliente non lo vedrà più nell\'app.')) return
-    await supabase.from('meal_plans').update({ is_active: false }).eq('id', planId)
+    const r = await dbSave(supabase.from('meal_plans').update({ is_active: false }).eq('id', planId), 'il piano alimentare', 'disattivare')
+    if (!r.ok) return
     setEditingPlan(false)
     onSaved()
   }
@@ -1507,16 +1509,16 @@ function CalendarioAdmin({ focus, clearFocus }) {
 
   async function cancelBooking(id) {
     if (!confirm('Eliminare questa prenotazione?')) return
-    await supabase.from('call_bookings').delete().eq('id', id)
+    await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare')
     fetchBookings()
   }
 
   async function toggleBlock(date, slot) {
     const existing = bookings.find(b => b.booking_date===date && b.time_slot===slot && b.status==='blocked')
     if (existing) {
-      await supabase.from('call_bookings').delete().eq('id', existing.id)
+      await dbSave(supabase.from('call_bookings').delete().eq('id', existing.id), 'la prenotazione', 'eliminare')
     } else {
-      await supabase.from('call_bookings').insert({ client_id:null, booking_date:date, time_slot:slot, status:'blocked' })
+      await dbSave(supabase.from('call_bookings').insert({ client_id:null, booking_date:date, time_slot:slot, status:'blocked' }), 'la prenotazione', 'salvare')
     }
     fetchBookings()
   }
@@ -1928,7 +1930,7 @@ function MessaggiAdmin() {
         })
         // Segna come letto se è del cliente
         if (newMsg.sender_role === 'client') {
-          supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id)
+          dbSave(supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id), 'il messaggio', 'salvare')
           fetchUnread()
         }
       })
@@ -1958,8 +1960,8 @@ function MessaggiAdmin() {
       .select('*').eq('client_id', clientId).order('created_at', {ascending:true})
     setMessages(data||[])
     // Segna come letti i messaggi del cliente
-    await supabase.from('coach_messages').update({is_read:true})
-      .eq('client_id', clientId).eq('sender_role','client').eq('is_read',false)
+    await dbSave(supabase.from('coach_messages').update({is_read:true})
+      .eq('client_id', clientId).eq('sender_role','client').eq('is_read',false), 'il messaggio', 'salvare')
     fetchUnread()
   }
 
@@ -2521,7 +2523,7 @@ function ReportTab({ clients, clientStats, onRefresh, focus, clearFocus }) {
   }
 
   async function markRead(reportId) {
-    await supabase.from('workout_reports').update({ read_by_coach: true }).eq('id', reportId)
+    await dbSave(supabase.from('workout_reports').update({ read_by_coach: true }).eq('id', reportId), 'il report', 'salvare')
     setReports(p => p.map(r => r.id === reportId ? { ...r, read_by_coach: true } : r))
     // Rimuovi badge newReport dalla lista clienti
     const rep = reports.find(r => r.id === reportId)
@@ -3030,7 +3032,7 @@ function AnamnesiTab({ clients, onRefresh, focus, clearFocus }) {
   }
 
   async function markRead(id) {
-    await supabase.from('anamnesi').update({read_by_coach:true}).eq('id',id)
+    await dbSave(supabase.from('anamnesi').update({read_by_coach:true}).eq('id',id), "l'anamnesi", 'salvare')
     setAnamnesi(p=>p.map(a=>a.id===id?{...a,read_by_coach:true}:a))
   }
 

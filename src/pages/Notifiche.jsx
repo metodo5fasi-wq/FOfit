@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -17,8 +18,8 @@ export default function Notifiche() {
     setNotifiche(data || [])
     setLoading(false)
     // Segna tutte come lette
-    await supabase.from('notifications').update({ read: true })
-      .eq('client_id', profile.id).eq('read', false)
+    await dbSave(supabase.from('notifications').update({ read: true })
+      .eq('client_id', profile.id).eq('read', false), 'la notifica', 'salvare', { silent: true })
   }
 
   function timeAgo(ts) {

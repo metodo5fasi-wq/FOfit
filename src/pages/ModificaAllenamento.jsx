@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { dbMust, dbSave } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'
@@ -261,7 +262,7 @@ export default function ModificaAllenamento() {
       const currentIds = new Set(exercises.filter(e=>!e._isNew).map(e=>e.id))
       for (const dbEx of dbExs || []) {
         if (!currentIds.has(dbEx.id)) {
-          await supabase.from('workout_exercises').delete().eq('id', dbEx.id)
+          await dbMust(supabase.from('workout_exercises').delete().eq('id', dbEx.id), 'la scheda', 'eliminare')
         }
       }
 
@@ -283,9 +284,9 @@ export default function ModificaAllenamento() {
           weekly_targets: ex.weekly_targets || [],
         }
         if (ex._isNew) {
-          await supabase.from('workout_exercises').insert(payload)
+          await dbMust(supabase.from('workout_exercises').insert(payload), 'la scheda', 'salvare')
         } else {
-          await supabase.from('workout_exercises').update(payload).eq('id', ex.id)
+          await dbMust(supabase.from('workout_exercises').update(payload).eq('id', ex.id), 'la scheda', 'salvare')
         }
       }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import ReportQuestions from '../components/ReportQuestions'
@@ -104,8 +105,9 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
         peso_inizio: dataRef.current.peso_inizio ? parseFloat(String(dataRef.current.peso_inizio).replace(',','.')) : null,
         peso_fine: dataRef.current.peso_fine ? parseFloat(String(dataRef.current.peso_fine).replace(',','.')) : null,
       }
-      supabase.from('workout_reports').update(payload).eq('id', currentId)
-        .then(() => { setSaved(true); setTimeout(()=>setSaved(false),1500) })
+      // salvataggio automatico: silenzioso (il controllo vero c'è all'invio), "Salvato" solo se è andato a buon fine
+      dbSave(supabase.from('workout_reports').update(payload).eq('id', currentId), 'il report', 'salvare', { silent: true })
+        .then(r => { if (r.ok) { setSaved(true); setTimeout(()=>setSaved(false),1500) } })
     }, 120000)
     return () => { if (autosaveRef.current) clearInterval(autosaveRef.current) }
   }, [clientId, adminView])

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -44,7 +45,7 @@ export default function MessaggiCoach() {
         })
         // Segna come letto se è del coach
         if (newMsg.sender_role === 'coach') {
-          supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id)
+          dbSave(supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id), 'il messaggio', 'salvare')
         }
       })
       .subscribe()
@@ -68,8 +69,8 @@ export default function MessaggiCoach() {
     setLoading(false)
     // Segna come letti solo quando il cliente apre la pagina
     if (markRead) {
-      await supabase.from('coach_messages').update({ is_read: true })
-        .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false)
+      await dbSave(supabase.from('coach_messages').update({ is_read: true })
+        .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false), 'il messaggio', 'salvare')
     }
   }
 
