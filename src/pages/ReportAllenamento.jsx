@@ -314,7 +314,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
         <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 16px',height:52,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>Report allenamento</div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {saved && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ {report?.submitted_at?'Inviato!':'Salvato'}</span>}
+            {saved && <span style={{fontSize:11,color:'#6FCF97',fontWeight:600}}>✓ {report?.submitted_at?'Inviato!':'Salvato'}</span>}
             {saving && <span style={{fontSize:11,color:'#AAA'}}>Salvataggio...</span>}
             <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',fontSize:20}}>✕</button>
           </div>
@@ -326,7 +326,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
 
           {/* STATO INVIATO */}
           {report?.submitted_at && (
-            <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:12,color:'#3B6D11',fontWeight:600}}>
+            <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid #3B6D11',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:12,color:'#6FCF97',fontWeight:600}}>
               ✓ Report inviato il {new Date(report.submitted_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}
             </div>
           )}
@@ -341,9 +341,9 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           {/* DATI AUTO */}
           {!adminView && (adherence||diaryStats) && (
             <div style={{background:'rgba(212,87,10,0.08)',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:12,padding:'14px',marginBottom:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>📊 Dati automatici — ultime 4 settimane</div>
+              <div style={{fontSize:11,fontWeight:700,color:'#F4894A',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>📊 Dati automatici — ultime 4 settimane</div>
               <div style={{display:'flex',gap:16}}>
-                {adherence && <div><div style={{fontSize:20,fontWeight:800,color:adherence.pct>=70?'#3B6D11':'#D4570A'}}>{adherence.pct}%</div><div style={{fontSize:10,color:'#AAA'}}>Aderenza · {adherence.followed}/{adherence.total} pasti</div></div>}
+                {adherence && <div><div style={{fontSize:20,fontWeight:800,color:adherence.pct>=70?'#6FCF97':'#F4894A'}}>{adherence.pct}%</div><div style={{fontSize:10,color:'#AAA'}}>Aderenza · {adherence.followed}/{adherence.total} pasti</div></div>}
                 {diaryStats && <div><div style={{fontSize:20,fontWeight:800,color:'#F0F0F0'}}>{diaryStats.days}/28</div><div style={{fontSize:10,color:'#AAA'}}>Giorni diario · media {diaryStats.avgKcal} kcal</div></div>}
               </div>
             </div>
@@ -399,8 +399,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
                     </div>
                     {diff!==null && (
                       <span style={{fontSize:12,fontWeight:700,
-                        color:parseFloat(diff)>0?'#3B6D11':parseFloat(diff)<0?'#E24B4A':'#888780',
-                        background:parseFloat(diff)>0?'#EAF3DE':parseFloat(diff)<0?'#FEE2E2':'#F5F3EF',
+                        color:parseFloat(diff)>0?'#6FCF97':parseFloat(diff)<0?'#E24B4A':'#888780',
+                        background:parseFloat(diff)>0?'rgba(59,140,90,0.16)':parseFloat(diff)<0?'rgba(226,75,74,0.16)':'#161616',
                         padding:'3px 8px',borderRadius:8}}>
                         {parseFloat(diff)>0?'+':''}{diff}kg
                       </span>

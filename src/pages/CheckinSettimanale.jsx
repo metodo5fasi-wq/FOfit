@@ -30,7 +30,7 @@ function ScaleInput({ field, form, setForm }) {
     <div style={{marginBottom:18}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{meta.emoji} {meta.label}</div>
-        <div style={{fontSize:12,color:'#D4570A',fontWeight:600}}>{meta.desc[form[field]-1]}</div>
+        <div style={{fontSize:12,color:'#F4894A',fontWeight:600}}>{meta.desc[form[field]-1]}</div>
       </div>
       <div style={{display:'flex',gap:8}}>
         {[1,2,3,4,5].map(v => (
@@ -134,7 +134,7 @@ export default function CheckinSettimanale() {
                   {['energy','sleep','stress'].map(f=>(
                     <div key={f} style={{display:'flex',alignItems:'center',gap:4}}>
                       <span style={{fontSize:12}}>{LABELS[f].emoji}</span>
-                      <span style={{fontSize:13,fontWeight:700,color: c[f]>=4?'#3B6D11':c[f]<=2?'#D4570A':'var(--text)'}}>{c[f]}</span>
+                      <span style={{fontSize:13,fontWeight:700,color: c[f]>=4?'#6FCF97':c[f]<=2?'#F4894A':'var(--text)'}}>{c[f]}</span>
                     </div>
                   ))}
                 </div>

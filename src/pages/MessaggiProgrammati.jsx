@@ -246,7 +246,7 @@ export default function MessaggiProgrammati() {
           {[{id:'pending',l:`In attesa (${pending.length})`},{id:'sent',l:`Inviati (${sent.length})`}].map(f=>(
             <button key={f.id} onClick={()=>setFilter(f.id)} style={{
               padding:'6px 14px', borderRadius:18, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit',
-              background:filter===f.id?'#D4570A':'white', color:filter===f.id?'white':'#888780', borderColor:filter===f.id?'#D4570A':'#E0DDD6'
+              background:filter===f.id?'#D4570A':'#0D0D0D', color:filter===f.id?'white':'#888780', borderColor:filter===f.id?'#D4570A':'#2A2A2A'
             }}>{f.l}</button>
           ))}
         </div>
@@ -275,9 +275,9 @@ export default function MessaggiProgrammati() {
                       <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{client?.full_name||msg.profiles?.full_name||'—'}</div>
                       <div style={{display:'flex',gap:6,alignItems:'center'}}>
                         {msg.sent ? (
-                          <span style={{...s.badge,background:'rgba(59,140,90,0.12)',color:'#3B6D11'}}>✓ Inviato {msg.sent_at&&new Date(msg.sent_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                          <span style={{...s.badge,background:'rgba(59,140,90,0.12)',color:'#6FCF97'}}>✓ Inviato {msg.sent_at&&new Date(msg.sent_at).toLocaleDateString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
                         ) : isPast ? (
-                          <span style={{...s.badge,background:'rgba(212,87,10,0.12)',color:'#D4570A'}}>⏰ In invio...</span>
+                          <span style={{...s.badge,background:'rgba(212,87,10,0.12)',color:'#F4894A'}}>⏰ In invio...</span>
                         ) : (
                           <span style={{...s.badge,background:'rgba(74,144,212,0.12)',color:'#4A90D4'}}>
                             📅 {scheduledDate.toLocaleDateString('it-IT',{day:'numeric',month:'short'})} alle {scheduledDate.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}

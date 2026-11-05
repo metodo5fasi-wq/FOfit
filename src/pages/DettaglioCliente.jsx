@@ -8,14 +8,14 @@ import ReportAllenamento from './ReportAllenamento'
 import Anamnesi from './Anamnesi'
 
 const GOAL_LABEL = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', ricomposizione:'Ricomposizione corporea', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza' }
-const GOAL_COLOR = { dimagrimento:'#E24B4A', massa:'#3B6D11', ricomposizione:'#14B8A6', mantenimento:'#E8A020', forza:'#7C3AED', resistenza:'#4A90D4' }
+const GOAL_COLOR = { dimagrimento:'#E24B4A', massa:'#6FCF97', ricomposizione:'#14B8A6', mantenimento:'#E8A020', forza:'#B39DDB', resistenza:'#4A90D4' }
 const initials = n => n ? n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase() : 'U'
 
 const s = {
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'9px 16px', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 },
+  btnSm: { background:'rgba(212,87,10,0.1)', color:'#F4894A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 },
   btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
-  btnGreen: { background:'rgba(59,109,17,0.1)', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnGreen: { background:'rgba(59,109,17,0.1)', color:'#6FCF97', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'14px', marginBottom:12 },
   sectionTitle: { fontSize:10, fontWeight:700, color:'#CCC', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10, display:'flex', alignItems:'center', gap:5 },
   label: { fontSize:11, color:'#CCC', display:'block', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' },
@@ -183,10 +183,10 @@ function ClientDetail({ client, navigate }) {
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
           {unreadMsgs>0 && <div style={{background:'#D4570A',color:'white',borderRadius:10,padding:'2px 7px',fontSize:10,fontWeight:700}}>{unreadMsgs} msg</div>}
-          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background:anamnesi?.completed_at?'#EAF3DE':'#F5F3EF', color:anamnesi?.completed_at?'#3B6D11':'#888780', borderColor:anamnesi?.completed_at?'#3B6D11':'#E0DDD6'}}>
+          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background:anamnesi?.completed_at?'rgba(59,140,90,0.16)':'#161616', color:anamnesi?.completed_at?'#6FCF97':'#888780', borderColor:anamnesi?.completed_at?'#3B6D11':'#2A2A2A'}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:12}}/>
           </button>
-          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background:editing?'#F5F3EF':'#FEF0E7', color:editing?'#888780':'#D4570A', borderColor:editing?'#E0DDD6':'#D4570A'}}>
+          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background:editing?'#161616':'rgba(212,87,10,0.14)', color:editing?'#888780':'#F4894A', borderColor:editing?'#2A2A2A':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:12}}/>
           </button>
         </div>
@@ -195,7 +195,7 @@ function ClientDetail({ client, navigate }) {
       {/* TABS */}
       <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',display:'flex',overflowX:'auto',flexShrink:0}}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,minWidth:60,padding:'10px 4px',border:'none',background:'none',cursor:'pointer',fontFamily:'inherit',borderBottom:tab===t.id?'2px solid #D4570A':'2px solid transparent',color:tab===t.id?'#D4570A':'#888780',transition:'all 0.15s',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,minWidth:60,padding:'10px 4px',border:'none',background:'none',cursor:'pointer',fontFamily:'inherit',borderBottom:tab===t.id?'2px solid #D4570A':'2px solid transparent',color:tab===t.id?'#F4894A':'#888780',transition:'all 0.15s',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <i className={`ti ${t.icon}`} style={{fontSize:16}}/>
             <span style={{fontSize:9,fontWeight:tab===t.id?700:400,textTransform:'uppercase',letterSpacing:'0.05em'}}>{t.label}</span>
           </button>
@@ -208,7 +208,7 @@ function ClientDetail({ client, navigate }) {
         {/* ── FORM MODIFICA ── */}
         {editing && (
           <div style={{...s.card,marginBottom:14,border:'0.5px solid #D4570A'}}>
-            <div style={{...s.sectionTitle,color:'#D4570A'}}>✏️ Modifica profilo</div>
+            <div style={{...s.sectionTitle,color:'#F4894A'}}>✏️ Modifica profilo</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
               <div><label style={s.label}>Nome completo</label><input style={s.input} value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))}/></div>
               <div><label style={s.label}>Obiettivo</label>
@@ -220,7 +220,7 @@ function ClientDetail({ client, navigate }) {
               <div><label style={s.label}>Telefono</label><input style={s.input} value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))}/></div>
             </div>
             <div style={{marginBottom:8}}><label style={s.label}>Note (visibili al cliente)</label><textarea style={{...s.input,minHeight:50,resize:'vertical'}} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/></div>
-            <div style={{marginBottom:10}}><label style={{...s.label,color:'#D4570A'}}>🔒 Note private coach</label><textarea style={{...s.input,minHeight:60,resize:'vertical',borderColor:'#D4570A'}} placeholder="Solo tu puoi vederle..." value={form.coach_notes} onChange={e=>setForm(p=>({...p,coach_notes:e.target.value}))}/></div>
+            <div style={{marginBottom:10}}><label style={{...s.label,color:'#F4894A'}}>🔒 Note private coach</label><textarea style={{...s.input,minHeight:60,resize:'vertical',borderColor:'#D4570A'}} placeholder="Solo tu puoi vederle..." value={form.coach_notes} onChange={e=>setForm(p=>({...p,coach_notes:e.target.value}))}/></div>
             <button onClick={save} disabled={saving} style={{...s.btn,width:'100%',justifyContent:'center'}}>{saving?'Salvo...':'💾 Salva modifiche'}</button>
           </div>
         )}
@@ -233,10 +233,10 @@ function ClientDetail({ client, navigate }) {
           {/* KPI RAPIDI */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:12}}>
             {[
-              {l:'Peso',v:latest?.weight_kg?latest.weight_kg+'kg':'—',sub:weightDiff!==null?(weightDiff>0?'+':'')+weightDiff+'kg':null,c:weightDiff!==null?(weightDiff<0?'#3B6D11':weightDiff>0?'#E24B4A':'#888780'):'#111'},
-              {l:'Sessioni/7gg',v:sessWeek,sub:`Tot: ${data.allCount||0}`,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
-              {l:'Aderenza',v:adherence?Math.round(adherence.followed/adherence.total*100)+'%':'—',sub:adherence?`${adherence.followed}/${adherence.total}`:'7 giorni',c:adherence?(adherence.followed/adherence.total>=0.7?'#3B6D11':'#E8A020'):'#888780'},
-              {l:'Abbonamento',v:daysLeft===null?'—':daysLeft<0?'Scaduto':daysLeft+'gg',sub:client.subscription_type||null,c:daysLeft===null?'#888780':daysLeft<0?'#E24B4A':daysLeft<=7?'#E8A020':'#3B6D11'},
+              {l:'Peso',v:latest?.weight_kg?latest.weight_kg+'kg':'—',sub:weightDiff!==null?(weightDiff>0?'+':'')+weightDiff+'kg':null,c:weightDiff!==null?(weightDiff<0?'#6FCF97':weightDiff>0?'#E24B4A':'#AAA'):'#F0F0F0'},
+              {l:'Sessioni/7gg',v:sessWeek,sub:`Tot: ${data.allCount||0}`,c:sessWeek>=3?'#6FCF97':sessWeek>=1?'#E8A020':'#E24B4A'},
+              {l:'Aderenza',v:adherence?Math.round(adherence.followed/adherence.total*100)+'%':'—',sub:adherence?`${adherence.followed}/${adherence.total}`:'7 giorni',c:adherence?(adherence.followed/adherence.total>=0.7?'#6FCF97':'#E8A020'):'#AAA'},
+              {l:'Abbonamento',v:daysLeft===null?'—':daysLeft<0?'Scaduto':daysLeft+'gg',sub:client.subscription_type||null,c:daysLeft===null?'#AAA':daysLeft<0?'#E24B4A':daysLeft<=7?'#E8A020':'#6FCF97'},
             ].map(st=>(
               <div key={st.l} style={s.statBox(st.c)}>
                 <div style={{fontSize:18,fontWeight:800,color:st.c,lineHeight:1.1}}>{st.v}</div>
@@ -263,8 +263,8 @@ function ClientDetail({ client, navigate }) {
               ))}
             </div>
             {client.coach_notes && (
-              <div style={{marginTop:8,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#7a3508'}}>
-                <div style={{fontSize:9,color:'#D4570A',textTransform:'uppercase',fontWeight:700,marginBottom:3}}>🔒 Note private</div>
+              <div style={{marginTop:8,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:'0 8px 8px 0',padding:'8px 10px',fontSize:12,color:'#F4894A'}}>
+                <div style={{fontSize:9,color:'#F4894A',textTransform:'uppercase',fontWeight:700,marginBottom:3}}>🔒 Note private</div>
                 {client.coach_notes}
               </div>
             )}
@@ -294,9 +294,9 @@ function ClientDetail({ client, navigate }) {
                     <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
                       {hasSess && <div style={{width:6,height:6,borderRadius:'50%',background:'#4A90D4'}} title="Allenamento"/>}
                       {hasDiary && <div style={{width:6,height:6,borderRadius:'50%',background:'#3B6D11'}} title="Diario"/>}
-                      {!hasSess && !hasDiary && <div style={{width:6,height:6,borderRadius:'50%',background:'#E0DDD6'}}/>}
+                      {!hasSess && !hasDiary && <div style={{width:6,height:6,borderRadius:'50%',background:'#2A2A2A'}}/>}
                     </div>
-                    <div style={{fontSize:9,color:isToday?'#D4570A':'#888780',fontWeight:isToday?700:400}}>{dn}</div>
+                    <div style={{fontSize:9,color:isToday?'#F4894A':'#888780',fontWeight:isToday?700:400}}>{dn}</div>
                   </div>
                 )
               })}
@@ -407,9 +407,9 @@ function ClientDetail({ client, navigate }) {
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
                   {[
-                    {l:'BMR',v:bmr,sub:'A riposo',c:'#888780'},
+                    {l:'BMR',v:bmr,sub:'A riposo',c:'#AAA'},
                     {l:'TDEE',v:tdee,sub:`${sessWeekN} sess/sett`,c:'#4A90D4'},
-                    {l:'Mantenimento',v:tdee,sub:'±0 kg',c:'#3B6D11'},
+                    {l:'Mantenimento',v:tdee,sub:'±0 kg',c:'#6FCF97'},
                   ].map(st=>(
                     <div key={st.l} style={{background:'#161616',borderRadius:9,padding:'9px',textAlign:'center'}}>
                       <div style={{fontSize:16,fontWeight:800,color:st.c}}>{st.v}</div>
@@ -425,8 +425,8 @@ function ClientDetail({ client, navigate }) {
                     <div style={{fontSize:8,color:'#AAA'}}>Dimagrimento</div>
                   </div>
                   <div style={{background:'rgba(59,109,17,0.1)',borderRadius:9,padding:'9px',textAlign:'center'}}>
-                    <div style={{fontSize:15,fontWeight:800,color:'#3B6D11'}}>{surplus}</div>
-                    <div style={{fontSize:9,color:'#3B6D11',marginTop:1}}>Surplus +10%</div>
+                    <div style={{fontSize:15,fontWeight:800,color:'#6FCF97'}}>{surplus}</div>
+                    <div style={{fontSize:9,color:'#6FCF97',marginTop:1}}>Surplus +10%</div>
                     <div style={{fontSize:8,color:'#AAA'}}>Massa muscolare</div>
                   </div>
                 </div>
@@ -450,7 +450,7 @@ function ClientDetail({ client, navigate }) {
               <>
                 <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#7a3508'}}>{mealPlan.title}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#F4894A'}}>{mealPlan.title}</div>
                     <span style={s.badge(mealPlan.is_active?'#EAF3DE':'#F5F3EF', mealPlan.is_active?'#3B6D11':'#888780')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
@@ -474,7 +474,7 @@ function ClientDetail({ client, navigate }) {
                       return diff > 10 && macroKcal > 0 ? (
                         <div style={{background:'rgba(232,160,32,0.1)',borderRadius:8,padding:'7px 10px',marginBottom:8,fontSize:11,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                           <span>⚠️ Macro = {macroKcal} kcal (differenza {diff} kcal)</span>
-                          <button onClick={()=>setPlanEdit(p=>({...p,kcal_target:macroKcal}))} style={{fontSize:10,background:'#E8A020',color:'white',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',fontFamily:'inherit'}}>Sincronizza</button>
+                          <button onClick={()=>setPlanEdit(p=>({...p,kcal_target:macroKcal}))} style={{fontSize:10,background:'#E8A020',color:'#161616',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',fontFamily:'inherit'}}>Sincronizza</button>
                         </div>
                       ) : null
                     })()}
@@ -547,16 +547,16 @@ function ClientDetail({ client, navigate }) {
                     <div style={{height:56,width:'100%',background:'#161616',borderRadius:7,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
                       <div style={{width:'100%',height:`${Math.max(pct,d.kcal>0?6:0)}%`,background:d.kcal===0?'transparent':pct>=90?'#3B6D11':pct>=70?'#E8A020':'#D4570A',borderRadius:7}}/>
                     </div>
-                    {d.kcal>0&&<div style={{fontSize:8,color:'#D4570A',fontWeight:600}}>{d.kcal}</div>}
-                    <div style={{fontSize:9,color:isToday?'#D4570A':'#888780',fontWeight:isToday?700:400}}>{dn}</div>
+                    {d.kcal>0&&<div style={{fontSize:8,color:'#F4894A',fontWeight:600}}>{d.kcal}</div>}
+                    <div style={{fontSize:9,color:isToday?'#F4894A':'#888780',fontWeight:isToday?700:400}}>{dn}</div>
                   </div>
                 )
               })}
             </div>
             {adherence && (
-              <div style={{marginTop:10,background:adherence.followed/adherence.total>=0.7?'#EAF3DE':'#FEF0E7',borderRadius:8,padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{marginTop:10,background:adherence.followed/adherence.total>=0.7?'rgba(59,140,90,0.16)':'rgba(212,87,10,0.14)',borderRadius:8,padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontSize:12,color:'#CCC'}}>Aderenza piano</span>
-                <span style={{fontSize:14,fontWeight:700,color:adherence.followed/adherence.total>=0.7?'#3B6D11':'#D4570A'}}>{Math.round(adherence.followed/adherence.total*100)}% · {adherence.followed}/{adherence.total} pasti</span>
+                <span style={{fontSize:14,fontWeight:700,color:adherence.followed/adherence.total>=0.7?'#6FCF97':'#F4894A'}}>{Math.round(adherence.followed/adherence.total*100)}% · {adherence.followed}/{adherence.total} pasti</span>
               </div>
             )}
           </div>
@@ -577,8 +577,8 @@ function ClientDetail({ client, navigate }) {
             </div>
             {workoutPlan ? (
               <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'10px 14px'}}>
-                <div style={{fontSize:13,fontWeight:700,color:'#7a3508'}}>{workoutPlan.name}</div>
-                <div style={{fontSize:11,color:'#D4570A',marginTop:3}}>{workoutPlan.days_per_week} giorni/settimana · {workoutPlan.weeks_duration} settimane</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#F4894A'}}>{workoutPlan.name}</div>
+                <div style={{fontSize:11,color:'#F4894A',marginTop:3}}>{workoutPlan.days_per_week} giorni/settimana · {workoutPlan.weeks_duration} settimane</div>
               </div>
             ) : (
               <div style={{textAlign:'center',padding:16,color:'#CCC',fontSize:12}}>Nessuna scheda caricata</div>
@@ -588,7 +588,7 @@ function ClientDetail({ client, navigate }) {
           {/* STATS ALLENAMENTO */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
             {[
-              {l:'Sessioni 7gg',v:sessWeek,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
+              {l:'Sessioni 7gg',v:sessWeek,c:sessWeek>=3?'#6FCF97':sessWeek>=1?'#E8A020':'#E24B4A'},
               {l:'Totale sessioni',v:data.allCount||0,c:'#4A90D4'},
               {l:'Serie 7gg',v:logs.reduce((s,l)=>s+1,0),c:'#D4570A'},
             ].map(st=>(
@@ -620,7 +620,7 @@ function ClientDetail({ client, navigate }) {
                     {Object.entries(byEx).map(([name,ls],idx)=>(
                       <div key={name} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                         <span style={{color:'#CCC'}}>{name}</span>
-                        <span style={{color:'#D4570A',fontWeight:600}}>{ls.length}×{Math.max(...ls.map(l=>l.weight_kg||0))||'—'}kg</span>
+                        <span style={{color:'#F4894A',fontWeight:600}}>{ls.length}×{Math.max(...ls.map(l=>l.weight_kg||0))||'—'}kg</span>
                       </div>
                     ))}
                     {sess.notes&&<div style={{fontSize:10,color:'#CCC',marginTop:5,fontStyle:'italic'}}>{sess.notes}</div>}
@@ -682,7 +682,7 @@ function ClientDetail({ client, navigate }) {
             <div style={s.card}>
               <div style={s.sectionTitle}><i className="ti ti-ruler-measure" style={{fontSize:12}}/>Ultime misurazioni</div>
               {measurements.slice(0,5).map((m,i)=>(
-                <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
+                <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid #1C1C1C'}}>
                   <div>
                     <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{m.weight_kg}kg</div>
                     <div style={{fontSize:10,color:'#CCC'}}>{new Date(m.entry_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>
@@ -712,7 +712,7 @@ function ClientDetail({ client, navigate }) {
               {/* CONFRONTO FOTO */}
               {comparePair.length===2 && (
                 <div style={{marginBottom:12,background:'#161616',borderRadius:10,padding:10}}>
-                  <div style={{fontSize:10,color:'#D4570A',fontWeight:700,textTransform:'uppercase',marginBottom:8}}>Confronto</div>
+                  <div style={{fontSize:10,color:'#F4894A',fontWeight:700,textTransform:'uppercase',marginBottom:8}}>Confronto</div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     {comparePair.map(p=>(
                       <div key={p.id} style={{borderRadius:9,overflow:'hidden',aspectRatio:'3/4',position:'relative'}}>

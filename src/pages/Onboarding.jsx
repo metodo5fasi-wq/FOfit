@@ -6,7 +6,7 @@ import { useAuth } from '../App'
 const STEPS = [
   {
     icon: 'ti-bolt',
-    color: '#D4570A',
+    color: '#F4894A',
     bg: 'linear-gradient(135deg, #1a0800, #2d1400)',
     title: 'Benvenuto in FOfit!',
     sub: null,
@@ -15,7 +15,7 @@ const STEPS = [
   },
   {
     icon: 'ti-clipboard-list',
-    color: '#D4570A',
+    color: '#F4894A',
     bg: '#FEF0E7',
     title: 'Il tuo piano alimentare',
     sub: 'Sempre con te',
@@ -85,7 +85,7 @@ export default function Onboarding() {
 
       {/* HERO */}
       <div style={{
-        background: isFirst ? current.bg : 'white',
+        background: isFirst ? current.bg : '#0D0D0D',
         padding:'40px 28px 32px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
         flex: isFirst ? 1.2 : 0,
@@ -122,7 +122,7 @@ export default function Onboarding() {
           <div style={{
             fontSize: isFirst ? 26 : 22,
             fontWeight:700,
-            color: isFirst ? 'white' : '#111',
+            color: isFirst ? 'white' : '#F0F0F0',
             letterSpacing:-0.5, lineHeight:1.2, marginBottom: isFirst ? 0 : 4
           }}>
             {isFirst ? `Ciao, ${firstName}! 👋` : current.title}
@@ -147,7 +147,7 @@ export default function Onboarding() {
             {STEPS.map((_, i) => (
               <div key={i} style={{
                 height:6, borderRadius:3, transition:'all 0.3s',
-                background: i === step ? '#D4570A' : '#E0DDD6',
+                background: i === step ? '#D4570A' : '#2A2A2A',
                 width: i === step ? 20 : 6,
               }}/>
             ))}

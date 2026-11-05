@@ -32,8 +32,8 @@ export default function Notifiche() {
 
   const iconColor = type => {
     if (type.includes('expired')) return { bg:'#FEE2E2', color:'#E24B4A', icon:'ti-lock' }
-    if (type.includes('expiring')) return { bg:'#FEF0E7', color:'#D4570A', icon:'ti-alert-triangle' }
-    if (type.includes('renewed')) return { bg:'#EAF3DE', color:'#3B6D11', icon:'ti-check' }
+    if (type.includes('expiring')) return { bg:'#FEF0E7', color:'#F4894A', icon:'ti-alert-triangle' }
+    if (type.includes('renewed')) return { bg:'#EAF3DE', color:'#6FCF97', icon:'ti-check' }
     return { bg:'#EBF3FD', color:'#4A90D4', icon:'ti-bell' }
   }
 

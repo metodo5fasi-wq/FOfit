@@ -16,7 +16,7 @@ const s = {
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'11px 20px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
   btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:9, padding:'11px 20px', fontSize:13, cursor:'pointer', fontFamily:'inherit' },
   chip: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)', transition:'all 0.15s' }),
-  chipCheck: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#EAF3DE':'var(--bg-card)', color:active?'#3B6D11':'var(--text-muted)', borderColor:active?'#3B6D11':'var(--border)', transition:'all 0.15s' }),
+  chipCheck: (active) => ({ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'rgba(59,140,90,0.16)':'var(--bg-card)', color:active?'#6FCF97':'var(--text-muted)', borderColor:active?'#3B6D11':'var(--border)', transition:'all 0.15s' }),
   scale: (active) => ({ width:36, height:36, borderRadius:9, fontSize:12, fontWeight:700, cursor:'pointer', border:'0.5px solid', fontFamily:'inherit', background:active?'#D4570A':'var(--bg-card)', color:active?'white':'var(--text-muted)', borderColor:active?'#D4570A':'var(--border)' }),
   sectionTitle: { fontSize:18, fontWeight:800, color:'#F0F0F0', marginBottom:4 },
   sectionSub: { fontSize:13, color:'#CCC', marginBottom:18, lineHeight:1.5 },
@@ -196,7 +196,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           <div style={{fontSize:11,color:'#CCC',marginTop:1}}>Sezione {current} di 12</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          {saved && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ Salvato</span>}
+          {saved && <span style={{fontSize:11,color:'#6FCF97',fontWeight:600}}>✓ Salvato</span>}
           {saving && <span style={{fontSize:11,color:'#CCC'}}>Salvataggio...</span>}
           {isAdmin && <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',fontSize:20,padding:4}}>✕</button>}
         </div>
@@ -220,7 +220,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           <button key={s2.n} onClick={()=>saveSection(s2.n)} style={{
             flexShrink:0,padding:'5px 10px',borderRadius:16,fontSize:11,fontWeight:600,cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
             background:current===s2.n?'#D4570A':'var(--bg-card)',
-            color:current===s2.n?'white':(data.current_section>=s2.n||data.completed_at)?'#3B6D11':'var(--text-muted)',
+            color:current===s2.n?'white':(data.current_section>=s2.n||data.completed_at)?'#6FCF97':'var(--text-muted)',
             borderColor:current===s2.n?'#D4570A':(data.current_section>=s2.n||data.completed_at)?'#3B6D11':'var(--border)',
           }}>{s2.icon}</button>
         ))}
@@ -771,7 +771,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                   <div key={ex} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                     <span style={{flex:1,fontSize:12,color:'#F0F0F0',fontWeight:500}}>{ex}</span>
                     {['👍','😐','👎'].map(emoji=>(
-                      <button key={emoji} onClick={()=>set('esercizi_feeling',{...(data.esercizi_feeling||{}),[ex]:feeling===emoji?null:emoji})} style={{width:34,height:28,borderRadius:7,border:'0.5px solid',cursor:'pointer',fontSize:14,background:feeling===emoji?'#FEF0E7':'var(--bg-card)',borderColor:feeling===emoji?'#D4570A':'var(--border)'}}>{emoji}</button>
+                      <button key={emoji} onClick={()=>set('esercizi_feeling',{...(data.esercizi_feeling||{}),[ex]:feeling===emoji?null:emoji})} style={{width:34,height:28,borderRadius:7,border:'0.5px solid',cursor:'pointer',fontSize:14,background:feeling===emoji?'rgba(212,87,10,0.14)':'var(--bg-card)',borderColor:feeling===emoji?'#D4570A':'var(--border)'}}>{emoji}</button>
                     ))}
                   </div>
                 )

@@ -113,7 +113,7 @@ export default function Obiettivi() {
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Ora</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#3B6D11' }}>{data.targetWeight}kg</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#6FCF97' }}>{data.targetWeight}kg</div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Target</div>
                 </div>
               </div>
@@ -126,7 +126,7 @@ export default function Obiettivi() {
                 {weightToGo !== null && weightToGo > 0 && (
                   <span style={{ color: '#F4894A', fontWeight: 600 }}>ancora {weightToGo}kg</span>
                 )}
-                {progressPct >= 100 && <span style={{ color: '#3B6D11', fontWeight: 700 }}>🏆 Obiettivo raggiunto!</span>}
+                {progressPct >= 100 && <span style={{ color: '#6FCF97', fontWeight: 700 }}>🏆 Obiettivo raggiunto!</span>}
               </div>
             </div>
           )}
@@ -140,12 +140,12 @@ export default function Obiettivi() {
               const reached = isMilestoneReached(m)
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < milestones.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: reached ? 'linear-gradient(135deg,#D4570A,#F4894A)' : '#F5F3EF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, boxShadow: reached ? '0 2px 8px rgba(212,87,10,0.3)' : 'none' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: reached ? 'linear-gradient(135deg,#D4570A,#F4894A)' : '#161616', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, boxShadow: reached ? '0 2px 8px rgba(212,87,10,0.3)' : 'none' }}>
                     {reached ? m.icon : <span style={{ fontSize: 16, opacity: 0.3 }}>🔒</span>}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: reached ? 'var(--text)' : '#888780' }}>{m.label}</div>
-                    {reached && <div style={{ fontSize: 10, color: '#3B6D11', fontWeight: 600, marginTop: 2 }}>✓ Raggiunto!</div>}
+                    {reached && <div style={{ fontSize: 10, color: '#6FCF97', fontWeight: 600, marginTop: 2 }}>✓ Raggiunto!</div>}
                   </div>
                   {reached && <div style={{ fontSize: 20 }}>✅</div>}
                 </div>
@@ -160,12 +160,12 @@ export default function Obiettivi() {
             </div>
             {HABIT_GOALS.map((g, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < HABIT_GOALS.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: g.reached ? '#EAF3DE' : '#F5F3EF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: g.reached ? 'rgba(59,140,90,0.16)' : '#161616', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
                   {g.reached ? '✅' : '⬜'}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: g.reached ? 'var(--text)' : '#888780' }}>{g.label}</div>
-                  <div style={{ fontSize: 10, color: g.reached ? '#3B6D11' : '#B0ADA8', marginTop: 1 }}>{g.sub}</div>
+                  <div style={{ fontSize: 10, color: g.reached ? '#6FCF97' : '#B0ADA8', marginTop: 1 }}>{g.sub}</div>
                 </div>
               </div>
             ))}

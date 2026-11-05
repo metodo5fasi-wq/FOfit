@@ -282,9 +282,9 @@ export default function StoricoAllenamento() {
             <div key={ws} style={s.card}>
               {/* HEADER SETTIMANA */}
               <div onClick={() => setExpandedWeek(isExpanded ? null : ws)}
-                style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: isExpanded ? '#FEF0E7' : 'var(--bg-card)' }}>
+                style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: isExpanded ? 'rgba(212,87,10,0.14)' : 'var(--bg-card)' }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: isExpanded ? '#D4570A' : 'var(--text)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isExpanded ? '#F4894A' : 'var(--text)' }}>
                     {getWeekLabel(ws)}
                   </div>
                   <div style={{ fontSize: 11, color: '#AAA', marginTop: 2, display: 'flex', gap: 10 }}>
@@ -326,8 +326,8 @@ export default function StoricoAllenamento() {
                     <div onClick={() => setExpandedSession(isExpSess ? null : sess.id)}
                       style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                       {/* Indicatore completamento */}
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: pct >= 100 ? '#EAF3DE' : pct >= 50 ? '#FEF0E7' : 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <i className={`ti ${pct >= 100 ? 'ti-check' : 'ti-barbell'}`} style={{ fontSize: 16, color: pct >= 100 ? '#3B6D11' : '#D4570A' }} />
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: pct >= 100 ? 'rgba(59,140,90,0.16)' : pct >= 50 ? 'rgba(212,87,10,0.14)' : 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`ti ${pct >= 100 ? 'ti-check' : 'ti-barbell'}`} style={{ fontSize: 16, color: pct >= 100 ? '#6FCF97' : '#D4570A' }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F0F0' }}>
@@ -337,7 +337,7 @@ export default function StoricoAllenamento() {
                           <span>{new Date(sess.session_date + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
                           <span>·</span>
                           <span>{sess.sets_completed}/{sess.sets_total} serie</span>
-                          {pct > 0 && <span style={{ color: pct >= 100 ? '#3B6D11' : '#E8A020', fontWeight: 600 }}>{pct}%</span>}
+                          {pct > 0 && <span style={{ color: pct >= 100 ? '#6FCF97' : '#E8A020', fontWeight: 600 }}>{pct}%</span>}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -372,10 +372,10 @@ export default function StoricoAllenamento() {
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F0F0', display: 'flex', alignItems: 'center', gap: 6 }}>
                                   {exName}
-                                  {isPR && maxKg > 0 && <span style={{ fontSize: 10, background: 'rgba(212,87,10,0.1)', color: '#D4570A', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>🏆 PR</span>}
+                                  {isPR && maxKg > 0 && <span style={{ fontSize: 10, background: 'rgba(212,87,10,0.1)', color: '#F4894A', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>🏆 PR</span>}
                                 </div>
                                 {diff !== null && (
-                                  <span style={{ fontSize: 11, fontWeight: 700, color: diff > 0 ? '#3B6D11' : diff < 0 ? '#E24B4A' : '#888780' }}>
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: diff > 0 ? '#6FCF97' : diff < 0 ? '#E24B4A' : '#888780' }}>
                                     {diff > 0 ? `+${diff}kg` : diff < 0 ? `${diff}kg` : '= stallo'}
                                   </span>
                                 )}
@@ -438,7 +438,7 @@ export default function StoricoAllenamento() {
                   </div>
                   {exLogs.map(log => (
                     <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '36px 1fr 1fr 1fr', gap: 6, marginBottom: 5, alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#D4570A', textAlign: 'center' }}>S{log.set_number}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#F4894A', textAlign: 'center' }}>S{log.set_number}</div>
                       <input type="text" inputMode="decimal" value={log.weight_kg || ''} onChange={e => updateLog(log.id, 'weight_kg', e.target.value)} placeholder="kg" style={s.inp} />
                       <input type="number" value={log.reps_done || ''} onChange={e => updateLog(log.id, 'reps_done', e.target.value)} placeholder="reps" style={s.inp} />
                       <input type="text" value={log.exercise_note || ''} onChange={e => updateLog(log.id, 'exercise_note', e.target.value)} placeholder="nota" style={{ ...s.inp, textAlign: 'left' }} />

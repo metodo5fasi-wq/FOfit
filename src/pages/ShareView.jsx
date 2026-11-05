@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const ORANGE = '#D4570A'
-const DARK = '#111'
-const GRAY = '#888780'
-const BG = '#F5F3EF'
-const CARD = '#FFFFFF'
+// Palette scura (come il resto dell'app). DARK è il colore del testo principale.
+const DARK = '#F0F0F0'
+const GRAY = '#AAA'
+const BG = '#080808'
+const CARD = '#0D0D0D'
+const CHIP = '#161616'
+const LINE = '#1C1C1C'
 
 export default function ShareView() {
   const navigate = useNavigate()
@@ -81,7 +84,7 @@ export default function ShareView() {
   return (
     <div style={{minHeight:'100dvh',background:BG,fontFamily:'system-ui',WebkitFontSmoothing:'antialiased'}}>
       {/* HEADER */}
-      <div style={{background:DARK,padding:'calc(env(safe-area-inset-top) + 14px) 20px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <div style={{background:'#050505',padding:'calc(env(safe-area-inset-top) + 14px) 20px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         {window.self === window.top ? (
           <button onClick={()=>{
             if (window.history.length > 1) window.history.back()
@@ -129,7 +132,7 @@ export default function ShareView() {
         {data.type === 'progress_period' && <ProgressPeriodView entries={data.entries} photos={data.photos} period={data.period}/>}
 
         {/* FOOTER */}
-        <div style={{textAlign:'center',marginTop:24,padding:'16px 0',borderTop:`1px solid #E0DDD6`}}>
+        <div style={{textAlign:'center',marginTop:24,padding:'16px 0',borderTop:`1px solid #2A2A2A`}}>
           <div style={{fontSize:12,color:GRAY,marginBottom:6}}>Allenati con il metodo FOfit</div>
           <div style={{fontSize:13,fontWeight:700,color:ORANGE}}>fofit.fit</div>
         </div>
@@ -170,27 +173,27 @@ function SessionView({ session, logs }) {
       {session.notes && (
         <div style={{background:'rgba(212,87,10,0.12)',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
           <div style={{fontSize:10,color:ORANGE,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Note sessione</div>
-          <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{session.notes}</div>
+          <div style={{fontSize:13,color:'#F4894A',lineHeight:1.6}}>{session.notes}</div>
         </div>
       )}
 
       {/* ESERCIZI */}
       <div style={{background:CARD,borderRadius:14,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-        <div style={{padding:'14px 16px',borderBottom:`1px solid ${BG}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>
+        <div style={{padding:'14px 16px',borderBottom:`1px solid ${LINE}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>
           {session.day_label}
         </div>
         {exercises.map(([name, sets], i) => {
           const maxWeight = Math.max(...sets.map(s=>s.weight_kg||0))
           const totalVol = sets.reduce((s,l)=>s+((l.weight_kg||0)*(l.reps_done||0)),0)
           return (
-            <div key={i} style={{padding:'12px 16px',borderBottom:i<exercises.length-1?`1px solid ${BG}`:'none'}}>
+            <div key={i} style={{padding:'12px 16px',borderBottom:i<exercises.length-1?`1px solid ${LINE}`:'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
                 <div style={{fontSize:14,fontWeight:600,color:DARK}}>{name}</div>
                 {maxWeight > 0 && <div style={{fontSize:12,color:ORANGE,fontWeight:700}}>{maxWeight}kg</div>}
               </div>
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {sets.map((s,si)=>(
-                  <div key={si} style={{background:BG,borderRadius:8,padding:'4px 10px',fontSize:11,color:GRAY}}>
+                  <div key={si} style={{background:CHIP,borderRadius:8,padding:'4px 10px',fontSize:11,color:GRAY}}>
                     {si+1}ª {s.weight_kg?`${s.weight_kg}kg`:'BW'}{s.reps_done?` × ${s.reps_done}reps`:''}
                   </div>
                 ))}
@@ -242,7 +245,7 @@ function PeriodView({ sessions, logs, period }) {
         <div style={{background:CARD,borderRadius:14,padding:'14px 16px',marginBottom:14,boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
           <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>🏆 Pesi massimi del periodo</div>
           {records.map(([name, weight], i) => (
-            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:i<records.length-1?`1px solid ${BG}`:'none'}}>
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:i<records.length-1?`1px solid ${LINE}`:'none'}}>
               <div style={{fontSize:13,color:DARK}}>{name}</div>
               <div style={{fontSize:14,fontWeight:700,color:ORANGE}}>{weight}kg</div>
             </div>
@@ -252,7 +255,7 @@ function PeriodView({ sessions, logs, period }) {
 
       {/* LISTA SESSIONI */}
       <div style={{background:CARD,borderRadius:14,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-        <div style={{padding:'14px 16px',borderBottom:`1px solid ${BG}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>
+        <div style={{padding:'14px 16px',borderBottom:`1px solid ${LINE}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>
           Sessioni del periodo
         </div>
         {sessions.length === 0 ? (
@@ -260,14 +263,14 @@ function PeriodView({ sessions, logs, period }) {
         ) : sessions.map((sess, i) => {
           const pct = sess.sets_total > 0 ? Math.round(sess.sets_completed/sess.sets_total*100) : 0
           return (
-            <div key={i} style={{padding:'12px 16px',borderBottom:i<sessions.length-1?`1px solid ${BG}`:'none'}}>
+            <div key={i} style={{padding:'12px 16px',borderBottom:i<sessions.length-1?`1px solid ${LINE}`:'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:sess.notes?6:0}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:DARK}}>{sess.day_label}</div>
                   <div style={{fontSize:11,color:GRAY,marginTop:2}}>{new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
                 </div>
                 <div style={{textAlign:'right'}}>
-                  <div style={{fontSize:14,fontWeight:700,color:pct>=100?'#3B6D11':ORANGE}}>{pct}%</div>
+                  <div style={{fontSize:14,fontWeight:700,color:pct>=100?'#6FCF97':ORANGE}}>{pct}%</div>
                   <div style={{fontSize:10,color:GRAY}}>{sess.sets_completed}/{sess.sets_total} serie</div>
                 </div>
               </div>
@@ -302,7 +305,7 @@ function ProgressView({ entry, photos }) {
           <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:12}}>📏 Misurazioni</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
             {filledMeasures.map(m => (
-              <div key={m.key} style={{background:BG,borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+              <div key={m.key} style={{background:CHIP,borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
                 <div style={{fontSize:18,fontWeight:800,color:ORANGE}}>{entry[m.key]}<span style={{fontSize:11,color:GRAY}}>{m.unit}</span></div>
                 <div style={{fontSize:10,color:GRAY,marginTop:4}}>{m.label}</div>
               </div>
@@ -315,7 +318,7 @@ function ProgressView({ entry, photos }) {
       {entry.notes && (
         <div style={{background:'rgba(212,87,10,0.12)',borderRadius:12,padding:'12px 16px',marginBottom:14,borderLeft:`3px solid ${ORANGE}`}}>
           <div style={{fontSize:10,color:ORANGE,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Note</div>
-          <div style={{fontSize:13,color:'#7a3508',lineHeight:1.6}}>{entry.notes}</div>
+          <div style={{fontSize:13,color:'#F4894A',lineHeight:1.6}}>{entry.notes}</div>
         </div>
       )}
 
@@ -326,7 +329,7 @@ function ProgressView({ entry, photos }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {photos.map((p,i) => (
               <div key={i} style={{position:'relative'}}>
-                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:520,objectFit:'contain',borderRadius:12,display:'block',background:BG}}/>
+                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:520,objectFit:'contain',borderRadius:12,display:'block',background:CHIP}}/>
                 <div style={{position:'absolute',bottom:10,left:10,background:'rgba(0,0,0,0.65)',color:'white',fontSize:12,padding:'4px 10px',borderRadius:8,fontWeight:600}}>{p.label}</div>
               </div>
             ))}
@@ -355,13 +358,13 @@ function ProgressPeriodView({ entries, photos, period }) {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
           {weightDiff !== null && (
             <div style={{background:CARD,borderRadius:12,padding:'14px',textAlign:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-              <div style={{fontSize:22,fontWeight:800,color:parseFloat(weightDiff)<=0?'#3B6D11':ORANGE}}>{parseFloat(weightDiff)>0?'+':''}{weightDiff}kg</div>
+              <div style={{fontSize:22,fontWeight:800,color:parseFloat(weightDiff)<=0?'#6FCF97':ORANGE}}>{parseFloat(weightDiff)>0?'+':''}{weightDiff}kg</div>
               <div style={{fontSize:10,color:GRAY,textTransform:'uppercase',letterSpacing:'0.06em',marginTop:4}}>Variazione peso</div>
             </div>
           )}
           {waistDiff !== null && (
             <div style={{background:CARD,borderRadius:12,padding:'14px',textAlign:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-              <div style={{fontSize:22,fontWeight:800,color:parseFloat(waistDiff)<=0?'#3B6D11':ORANGE}}>{parseFloat(waistDiff)>0?'+':''}{waistDiff}cm</div>
+              <div style={{fontSize:22,fontWeight:800,color:parseFloat(waistDiff)<=0?'#6FCF97':ORANGE}}>{parseFloat(waistDiff)>0?'+':''}{waistDiff}cm</div>
               <div style={{fontSize:10,color:GRAY,textTransform:'uppercase',letterSpacing:'0.06em',marginTop:4}}>Variazione vita</div>
             </div>
           )}
@@ -383,7 +386,7 @@ function ProgressPeriodView({ entries, photos, period }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {photos.map((p,i)=>(
               <div key={i} style={{position:'relative'}}>
-                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:480,objectFit:'contain',borderRadius:12,display:'block',background:BG}}/>
+                <img src={p.photo_url} alt={p.label} style={{width:'100%',maxHeight:480,objectFit:'contain',borderRadius:12,display:'block',background:CHIP}}/>
                 <div style={{position:'absolute',bottom:10,left:10,background:'rgba(0,0,0,0.65)',color:'white',fontSize:11,padding:'4px 9px',borderRadius:8,fontWeight:600}}>
                   {p.label} · {new Date(p.photo_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}
                 </div>
@@ -395,15 +398,15 @@ function ProgressPeriodView({ entries, photos, period }) {
 
       {/* LISTA MISURAZIONI */}
       <div style={{background:CARD,borderRadius:14,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-        <div style={{padding:'14px 16px',borderBottom:`1px solid ${BG}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>Misurazioni del periodo</div>
+        <div style={{padding:'14px 16px',borderBottom:`1px solid ${LINE}`,fontSize:12,fontWeight:700,color:DARK,textTransform:'uppercase',letterSpacing:'0.06em'}}>Misurazioni del periodo</div>
         {entries.length === 0 ? (
           <div style={{padding:'24px',textAlign:'center',fontSize:13,color:GRAY}}>Nessuna misurazione trovata</div>
         ) : entries.map((e,i) => (
-          <div key={i} style={{padding:'12px 16px',borderBottom:i<entries.length-1?`1px solid ${BG}`:'none'}}>
+          <div key={i} style={{padding:'12px 16px',borderBottom:i<entries.length-1?`1px solid ${LINE}`:'none'}}>
             <div style={{fontSize:12,color:GRAY,marginBottom:5}}>{new Date(e.entry_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {MISURE_LABELS.filter(m=>e[m.key]).map(m=>(
-                <span key={m.key} style={{fontSize:11,color:DARK,background:BG,padding:'3px 9px',borderRadius:10}}>{m.label}: <strong>{e[m.key]}{m.unit}</strong></span>
+                <span key={m.key} style={{fontSize:11,color:DARK,background:CHIP,padding:'3px 9px',borderRadius:10}}>{m.label}: <strong>{e[m.key]}{m.unit}</strong></span>
               ))}
             </div>
           </div>

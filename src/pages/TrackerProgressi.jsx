@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 
 const MISURE = [
-  { key:'weight_kg', label:'Peso', unit:'kg', color:'#D4570A' },
+  { key:'weight_kg', label:'Peso', unit:'kg', color:'#F4894A' },
   { key:'waist_cm', label:'Vita', unit:'cm', color:'#F4894A' },
   { key:'hips_cm', label:'Fianchi', unit:'cm', color:'#F4894A' },
   { key:'chest_cm', label:'Petto', unit:'cm', color:'#FAC775' },
@@ -306,7 +306,7 @@ export default function TrackerProgressi() {
                   <div style={{flex:1}}>
                     <div style={{fontSize:13, fontWeight:600, color:'#F0F0F0', marginBottom:4}}>
                       {new Date(e.entry_date + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short', year:'numeric'})}
-                      {i === 0 && <span style={{marginLeft:8, fontSize:10, background:'rgba(212,87,10,0.1)', color:'#D4570A', padding:'2px 8px', borderRadius:10, fontWeight:600}}>Ultima</span>}
+                      {i === 0 && <span style={{marginLeft:8, fontSize:10, background:'rgba(212,87,10,0.1)', color:'#F4894A', padding:'2px 8px', borderRadius:10, fontWeight:600}}>Ultima</span>}
                     </div>
                     <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
                       {MISURE.filter(m => e[m.key]).map(m => (

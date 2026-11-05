@@ -120,7 +120,7 @@ export default function MessaggiCoach() {
         </div>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:15, fontWeight:600, color:'#F0F0F0', lineHeight:1.2 }}>Federico Obinu</div>
-          <div style={{ fontSize:11, color:'#3B6D11', display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
+          <div style={{ fontSize:11, color:'#6FCF97', display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#3B6D11' }}/>
             Il tuo coach personale
           </div>

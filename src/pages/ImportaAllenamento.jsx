@@ -16,8 +16,8 @@ const s = {
   step: { display:'flex', alignItems:'flex-start', gap:12, marginBottom:16 },
   stepNum: { width:28, height:28, borderRadius:'50%', background:'#D4570A', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:500, color:'white', flexShrink:0 },
   dayCard: { border:'0.5px solid #1C1C1C', borderRadius:10, overflow:'hidden', marginBottom:10 },
-  dayHeader: { background:'rgba(212,87,10,0.1)', padding:'10px 14px', fontWeight:600, fontSize:13, color:'#D4570A' },
-  exRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 14px', borderBottom:'0.5px solid #F5F3EF' },
+  dayHeader: { background:'rgba(212,87,10,0.1)', padding:'10px 14px', fontWeight:600, fontSize:13, color:'#F4894A' },
+  exRow: { display:'flex', alignItems:'center', gap:10, padding:'9px 14px', borderBottom:'0.5px solid #1C1C1C' },
   tag: { fontSize:10, padding:'2px 8px', borderRadius:10, fontWeight:500, background:'#161616', color:'#AAA' },
 }
 
@@ -153,7 +153,7 @@ export default function ImportaAllenamento() {
         {step === 2 && parsedWorkout && (
           <>
             <div style={{...s.card, background:'rgba(59,140,90,0.1)', border:'0.5px solid #3B6D11'}}>
-              <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:4}}>
+              <div style={{fontSize:13,fontWeight:600,color:'#6FCF97',marginBottom:4}}>
                 ✓ Scheda elaborata — {parsedWorkout.days.length} giorni, {totalExercises} esercizi
               </div>
               <div style={s.grid2}>
@@ -169,7 +169,7 @@ export default function ImportaAllenamento() {
                   <input style={s.input} value={planTitle} onChange={e=>setPlanTitle(e.target.value)}/>
                 </div>
               </div>
-              <div style={{fontSize:11,color:'#3B6D11',marginTop:8}}>
+              <div style={{fontSize:11,color:'#6FCF97',marginTop:8}}>
                 <i className="ti ti-info-circle" style={{fontSize:12,marginRight:4}}/>
                 Salvando, questa scheda diventerà l'unica attiva per il cliente (le precedenti verranno disattivate).
               </div>
@@ -189,7 +189,7 @@ export default function ImportaAllenamento() {
                     <span style={s.tag}>{ex.rest_seconds}s</span>
                     {ex.tut && <span style={{...s.tag, background:'rgba(74,144,212,0.1)', color:'#4A90D4'}}>TUT {ex.tut}</span>}
                     {ex.progression_type==='linear' && ex.progression_start_kg && (
-                      <span style={{...s.tag, background:'rgba(212,87,10,0.1)', color:'#D4570A'}}>
+                      <span style={{...s.tag, background:'rgba(212,87,10,0.1)', color:'#F4894A'}}>
                         📈 {ex.progression_start_kg}kg +{ex.progression_increment_kg||2.5}kg/sett × {ex.progression_weeks||4}w
                       </span>
                     )}
@@ -212,7 +212,7 @@ export default function ImportaAllenamento() {
 
         {step === 3 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
-            <i className="ti ti-circle-check" style={{fontSize:48,color:'#3B6D11',display:'block',marginBottom:16}}/>
+            <i className="ti ti-circle-check" style={{fontSize:48,color:'#6FCF97',display:'block',marginBottom:16}}/>
             <div style={{fontSize:16,fontWeight:600,color:'#F0F0F0',marginBottom:8}}>Scheda salvata!</div>
             <div style={{fontSize:13,color:'#AAA',marginBottom:20}}>Il cliente la troverà nella sezione Allenamento.</div>
             <button onClick={reset} style={{...s.btn, margin:'0 auto'}}>

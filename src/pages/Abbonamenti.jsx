@@ -10,9 +10,9 @@ const s = {
   input: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   select: { width:'100%', padding:'9px 12px', border:'0.5px solid #1C1C1C', borderRadius:8, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'10px 18px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:6 },
-  btnSm: { background:'rgba(212,87,10,0.12)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.12)', color:'#F4894A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:11, cursor:'pointer', fontFamily:'inherit' },
-  btnGreen: { background:'rgba(59,140,90,0.12)', color:'#3B6D11', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnGreen: { background:'rgba(59,140,90,0.12)', color:'#6FCF97', border:'0.5px solid #3B6D11', borderRadius:7, padding:'5px 10px', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   grid2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   badge: { fontSize:10, padding:'3px 8px', borderRadius:10, fontWeight:600 },
 }
@@ -29,9 +29,9 @@ function StatusBadge({ days }) {
   if (days === null) return <span style={{...s.badge, background:'#161616', color:'#CCC'}}>Non impostato</span>
   if (days < 0) return <span style={{...s.badge, background:'rgba(226,75,74,0.12)', color:'#E24B4A'}}>Scaduto {Math.abs(days)}gg fa</span>
   if (days <= 4) return <span style={{...s.badge, background:'rgba(226,75,74,0.12)', color:'#E24B4A'}}>⚠ Scade in {days}gg</span>
-  if (days <= 7) return <span style={{...s.badge, background:'rgba(212,87,10,0.12)', color:'#D4570A'}}>⚠ Scade in {days}gg</span>
+  if (days <= 7) return <span style={{...s.badge, background:'rgba(212,87,10,0.12)', color:'#F4894A'}}>⚠ Scade in {days}gg</span>
   if (days <= 30) return <span style={{...s.badge, background:'rgba(232,160,32,0.1)', color:'#E8A020'}}>Scade in {days}gg</span>
-  return <span style={{...s.badge, background:'rgba(59,140,90,0.12)', color:'#3B6D11'}}>✓ Attivo ({days}gg)</span>
+  return <span style={{...s.badge, background:'rgba(59,140,90,0.12)', color:'#6FCF97'}}>✓ Attivo ({days}gg)</span>
 }
 
 export default function Abbonamenti() {
@@ -192,7 +192,7 @@ export default function Abbonamenti() {
         {/* ALERT */}
         {(scaduti.length>0||inScadenza.length>0) && (
           <div style={{background:'rgba(212,87,10,0.12)',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px',marginBottom:14}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#F4894A',marginBottom:8}}>
               {scaduti.length>0&&`${scaduti.length} scadut${scaduti.length>1?'i':'o'}`}
               {scaduti.length>0&&inScadenza.length>0&&' · '}
               {inScadenza.length>0&&`${inScadenza.length} in scadenza entro 7 giorni`}
@@ -212,7 +212,7 @@ export default function Abbonamenti() {
         {/* STATS */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
           {[
-            {l:'Attivi',v:attivi.length,c:'#3B6D11'},
+            {l:'Attivi',v:attivi.length,c:'#6FCF97'},
             {l:'In scadenza',v:inScadenza.length,c:'#E8A020'},
             {l:'Scaduti',v:scaduti.length,c:'#E24B4A'},
           ].map(st=>(
@@ -234,10 +234,10 @@ export default function Abbonamenti() {
             const hasUnpaidRate = c.payment_type==='rate' && paidInst < totalInst
 
             return (
-              <div key={c.id} style={{...s.card, borderColor: isBlocked?'#E24B4A': hasUnpaidRate?'#E8A020':'#E0DDD6'}}>
+              <div key={c.id} style={{...s.card, borderColor: isBlocked?'#E24B4A': hasUnpaidRate?'#E8A020':'#2A2A2A'}}>
                 {/* HEADER */}
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:isEditing?12:0}}>
-                  <div style={{width:38,height:38,borderRadius:'50%',background:isBlocked?'#FEE2E2':'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:isBlocked?'#E24B4A':'white',flexShrink:0}}>
+                  <div style={{width:38,height:38,borderRadius:'50%',background:isBlocked?'rgba(226,75,74,0.16)':'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:isBlocked?'#E24B4A':'white',flexShrink:0}}>
                     {initials(c.full_name)}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
@@ -265,7 +265,7 @@ export default function Abbonamenti() {
 
                 {/* FORM MODIFICA */}
                 {isEditing && (
-                  <div style={{borderTop:'0.5px solid #F0EDE8',paddingTop:14}}>
+                  <div style={{borderTop:'0.5px solid #1C1C1C',paddingTop:14}}>
 
                     {/* TIPO ABBONAMENTO + DATE */}
                     <div style={s.grid2}>
@@ -319,7 +319,7 @@ export default function Abbonamenti() {
                             </div>
                             {/* RIGHE */}
                             {installments.map((inst,idx)=>(
-                              <div key={idx} style={{display:'grid',gridTemplateColumns:'40px 1fr 70px 90px',gap:8,padding:'8px 10px',background:inst.paid_at?'#EAF3DE':idx%2===0?'white':'#FAFAF9',alignItems:'center',borderBottom:'0.5px solid #F0EDE8'}}>
+                              <div key={idx} style={{display:'grid',gridTemplateColumns:'40px 1fr 70px 90px',gap:8,padding:'8px 10px',background:inst.paid_at?'rgba(59,140,90,0.16)':idx%2===0?'#0D0D0D':'#161616',alignItems:'center',borderBottom:'0.5px solid #1C1C1C'}}>
                                 <div style={{fontSize:11,fontWeight:700,color:'#E8A020'}}>R{idx+1}</div>
                                 <div style={{fontSize:11,color:'#F0F0F0'}}>
                                   {inst.due_date ? new Date(inst.due_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'}) : '—'}
@@ -328,7 +328,7 @@ export default function Abbonamenti() {
                                 <div>
                                   {inst.paid_at
                                     ? <div style={{display:'flex',alignItems:'center',gap:4}}>
-                                        <span style={{fontSize:10,color:'#3B6D11',fontWeight:700}}>✓ Pagata</span>
+                                        <span style={{fontSize:10,color:'#6FCF97',fontWeight:700}}>✓ Pagata</span>
                                         <button onClick={()=>unmarkPaid(idx)} style={{background:'none',border:'none',cursor:'pointer',fontSize:10,color:'#CCC'}}>✕</button>
                                       </div>
                                     : <button onClick={()=>markPaid(idx)} style={{...s.btnGreen,padding:'3px 8px',fontSize:10}}>Segna ✓</button>
@@ -339,7 +339,7 @@ export default function Abbonamenti() {
                             {/* TOTALE */}
                             <div style={{padding:'7px 10px',fontSize:11,fontWeight:600,color:'#F0F0F0',background:'#161616',display:'flex',justifyContent:'space-between'}}>
                               <span>Totale: €{(installments[0]?.amount||0)*installments.length}</span>
-                              <span style={{color:'#3B6D11'}}>Pagato: €{installments.filter(i=>i.paid_at).length*(installments[0]?.amount||0)}</span>
+                              <span style={{color:'#6FCF97'}}>Pagato: €{installments.filter(i=>i.paid_at).length*(installments[0]?.amount||0)}</span>
                             </div>
                           </div>
                         )}

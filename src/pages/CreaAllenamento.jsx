@@ -76,7 +76,7 @@ function ExerciseCard({ ex, first, last, selectMode, isSel, isOpen, onSel, onOpe
       <button onClick={onOpen} style={{ ...S.btnGray, marginTop: 8, fontSize: 11, padding: '5px 9px', color: '#BBB' }}>
         <i className={`ti ti-chevron-${isOpen ? 'up' : 'down'}`} style={{ fontSize: 12 }} />
         {isOpen ? 'Nascondi dettagli' : 'Note, video, progressione'}
-        {!isOpen && (ex.description || ex.video_url || parseInt(ex.prog_weeks) > 0) && <span style={{ color: '#D4570A' }}>•</span>}
+        {!isOpen && (ex.description || ex.video_url || parseInt(ex.prog_weeks) > 0) && <span style={{ color: '#F4894A' }}>•</span>}
       </button>
       {isOpen && (
         <div style={{ marginTop: 8 }}>
@@ -344,7 +344,7 @@ export default function CreaAllenamento() {
                 </div>
               )
             })}
-            <div style={{ fontSize: 10, color: '#777', marginTop: 4 }}>Indicativo: 10-20 serie a settimana per gruppo (verde). Giallo = poco, rosso = molto.</div>
+            <div style={{ fontSize: 10, color: '#AAA', marginTop: 4 }}>Indicativo: 10-20 serie a settimana per gruppo (verde). Giallo = poco, rosso = molto.</div>
           </div>
         )}
 
@@ -381,7 +381,7 @@ export default function CreaAllenamento() {
             onOpen={() => setOpenEx(s => { const n = new Set(s); n.has(ex.uid) ? n.delete(ex.uid) : n.add(ex.uid); return n })}
             onChange={patch => patchEx(ex.uid, patch)} onMove={dir => moveEx(i, dir)} onDup={() => dupEx(i)} onRemove={() => removeEx(ex.uid)} />
         ))}
-        {!day.exercises.length && <div style={{ textAlign: 'center', color: '#777', fontSize: 12, padding: '18px 0' }}>Nessun esercizio in questo giorno. Aggiungine uno o usa l'AI.</div>}
+        {!day.exercises.length && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 12, padding: '18px 0' }}>Nessun esercizio in questo giorno. Aggiungine uno o usa l'AI.</div>}
 
         <button onClick={() => { setPicker(true); setPAdded(0); setPSearch(''); setPCustom('') }} style={{ ...S.btn, width: '100%', justifyContent: 'center', padding: 13 }}><i className="ti ti-plus" style={{ fontSize: 15 }} />Aggiungi esercizio — Giorno {letter(dayIdx)}</button>
       </div>
@@ -404,7 +404,7 @@ export default function CreaAllenamento() {
                   <i className="ti ti-plus" style={{ color: '#D4570A', fontSize: 16 }} />
                 </div>
               ))}
-              {!pickerList.length && <div style={{ padding: 24, textAlign: 'center', color: '#777', fontSize: 12 }}>{pSearch.trim().length >= 2 ? 'Nessun risultato' : 'Scegli un gruppo muscolare o cerca per nome'}</div>}
+              {!pickerList.length && <div style={{ padding: 24, textAlign: 'center', color: '#AAA', fontSize: 12 }}>{pSearch.trim().length >= 2 ? 'Nessun risultato' : 'Scegli un gruppo muscolare o cerca per nome'}</div>}
             </div>
             <div style={{ padding: '10px 18px', borderTop: '0.5px solid #1A1A1A', flexShrink: 0, display: 'flex', gap: 8 }}>
               <input value={pCustom} onChange={e => setPCustom(e.target.value)} placeholder="Esercizio personalizzato..." style={S.input} aria-label="Esercizio personalizzato" />
@@ -425,14 +425,14 @@ export default function CreaAllenamento() {
                 <div style={{ display: 'flex', gap: 6 }}><input value={tplName} onChange={e => setTplName(e.target.value)} placeholder="es. Push classico" style={S.input} aria-label="Nome template" /><button onClick={saveTemplate} style={S.btn}>Salva</button></div>
               </div>
             )}
-            {!templates.length && <div style={{ textAlign: 'center', color: '#777', fontSize: 12, padding: 16 }}>Nessun template salvato.</div>}
+            {!templates.length && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 12, padding: 16 }}>Nessun template salvato.</div>}
             {templates.map(t => (
               <div key={t.id} style={{ background: '#161616', borderRadius: 10, padding: 12, marginBottom: 8, border: '0.5px solid #222' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div><div style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</div><div style={{ fontSize: 10, color: '#999' }}>{t.exercises.length} esercizi</div></div>
                   <div style={{ display: 'flex', gap: 5 }}><button onClick={() => useTemplate(t)} style={S.btn}>Usa</button><button onClick={() => deleteTemplate(t.id)} style={S.btnDanger}>✕</button></div>
                 </div>
-                <div style={{ fontSize: 10, color: '#777', marginTop: 4 }}>{t.exercises.slice(0, 3).map(e => e.exercise_name).join(', ')}{t.exercises.length > 3 ? '...' : ''}</div>
+                <div style={{ fontSize: 10, color: '#AAA', marginTop: 4 }}>{t.exercises.slice(0, 3).map(e => e.exercise_name).join(', ')}{t.exercises.length > 3 ? '...' : ''}</div>
               </div>
             ))}
           </div>
@@ -444,7 +444,7 @@ export default function CreaAllenamento() {
         <div style={S.modal}><div style={S.modalBox}>
           <div style={S.mHead}><div><div style={{ fontWeight: 700, fontSize: 14 }}>Copia scheda da altro cliente</div><div style={{ fontSize: 10, color: '#888' }}>Verrà usata come base: potrai modificarla liberamente</div></div><button onClick={() => setShowImport(false)} style={{ ...S.btnGray, padding: '3px 9px' }}>✕</button></div>
           <div style={S.mBody}>
-            {!otherPlans.length && <div style={{ textAlign: 'center', color: '#777', fontSize: 12, padding: 16 }}>Nessuna scheda attiva di altri clienti.</div>}
+            {!otherPlans.length && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 12, padding: 16 }}>Nessuna scheda attiva di altri clienti.</div>}
             {otherPlans.map(p => (
               <div key={p.id} style={{ background: '#161616', borderRadius: 10, padding: 12, marginBottom: 8, border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div><div style={{ fontSize: 13, fontWeight: 600 }}>{p.title}</div><div style={{ fontSize: 10, color: '#999' }}>{p.clientName}</div></div>
@@ -467,7 +467,7 @@ export default function CreaAllenamento() {
                   <div style={{ fontSize: 10, color: '#999' }}>{d.exercises.length} es. · {totalSets(d.exercises)} serie · ~{estimateMinutes(d.exercises)} min</div>
                 </div>
                 {d.exercises.map(e => <div key={e.uid} style={{ fontSize: 11, color: '#CCC', padding: '2px 0' }}>{e.exercise_name || '(senza nome)'} <span style={{ color: '#888' }}>— {e.sets}×{e.reps} · {e.rest_seconds}s{parseInt(e.prog_weeks) > 0 ? ` · progressione ${e.prog_weeks} sett.` : ''}</span></div>)}
-                {!d.exercises.length && <div style={{ fontSize: 11, color: '#666' }}>Giorno vuoto: non verrà salvato</div>}
+                {!d.exercises.length && <div style={{ fontSize: 11, color: '#AAA' }}>Giorno vuoto: non verrà salvato</div>}
               </div>
             ))}
           </div>

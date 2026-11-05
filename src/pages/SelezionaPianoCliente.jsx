@@ -37,14 +37,14 @@ export default function SelezionaPianoCliente() {
         {loading && <div style={{textAlign:'center',padding:'40px 0',color:'#CCC',fontSize:13}}>Caricamento...</div>}
         {!loading && clients.map(c => (
           <div key={c.id} onClick={() => c.plan ? navigate(`/modifica-piano/${c.plan.id}`) : null}
-            style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${c.plan?'#E0DDD6':'#F0EDEA'}`,padding:'14px 16px',marginBottom:10,cursor:c.plan?'pointer':'default',display:'flex',alignItems:'center',gap:12,opacity:c.plan?1:0.6}}>
+            style={{background:'#0D0D0D',borderRadius:12,border:`0.5px solid ${c.plan?'#2A2A2A':'#1C1C1C'}`,padding:'14px 16px',marginBottom:10,cursor:c.plan?'pointer':'default',display:'flex',alignItems:'center',gap:12,opacity:c.plan?1:0.6}}>
             <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',flexShrink:0}}>
               {initials(c.full_name)}
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{c.full_name}</div>
               {c.plan
-                ? <div style={{fontSize:12,color:'#3B6D11',marginTop:2}}>✓ {c.plan.title} · {c.plan.kcal_target} kcal</div>
+                ? <div style={{fontSize:12,color:'#6FCF97',marginTop:2}}>✓ {c.plan.title} · {c.plan.kcal_target} kcal</div>
                 : <div style={{fontSize:12,color:'#CCC',marginTop:2}}>Nessun piano attivo</div>
               }
             </div>

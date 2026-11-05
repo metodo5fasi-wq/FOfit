@@ -408,18 +408,18 @@ export default function Allenamento() {
           </div>
           {weekStreak > 0 && (
             <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'6px 12px',textAlign:'center',flexShrink:0}}>
-              <div style={{fontSize:16,fontWeight:800,color:'#D4570A'}}>{weekStreak}🔥</div>
-              <div style={{fontSize:9,color:'#D4570A',fontWeight:600}}>SETTIMANE</div>
+              <div style={{fontSize:16,fontWeight:800,color:'#F4894A'}}>{weekStreak}🔥</div>
+              <div style={{fontSize:9,color:'#F4894A',fontWeight:600}}>SETTIMANE</div>
             </div>
           )}
         </div>
 
         {/* RECORD PERSONALI ODIERNI */}
         {newPRs.length > 0 && (
-          <div style={{background:'linear-gradient(135deg,#FEF0E7,#FAC9A8)',borderRadius:12,padding:'14px 16px',marginBottom:12,border:'0.5px solid #F4894A'}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8}}>🏆 Nuovi record personali oggi!</div>
+          <div style={{background:'linear-gradient(135deg,rgba(212,87,10,0.14),rgba(212,87,10,0.22))',borderRadius:12,padding:'14px 16px',marginBottom:12,border:'0.5px solid #F4894A'}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#F4894A',marginBottom:8}}>🏆 Nuovi record personali oggi!</div>
             {newPRs.map((pr,i) => (
-              <div key={i} style={{fontSize:13,color:'#7a3508',fontWeight:600}}>
+              <div key={i} style={{fontSize:13,color:'#F4894A',fontWeight:600}}>
                 {pr.exercise} — {pr.weight}kg
               </div>
             ))}
@@ -458,8 +458,8 @@ export default function Allenamento() {
                     </div>
                   )
                   return (
-                    <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:done?'#EAF3DE':'var(--bg-input)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      <i className={done?'ti ti-check':'ti ti-barbell'} style={{fontSize:17,color:done?'#3B6D11':'#D4570A'}}/>
+                    <div style={{width:38,height:38,borderRadius:10,flexShrink:0,background:done?'rgba(59,140,90,0.16)':'var(--bg-input)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <i className={done?'ti ti-check':'ti ti-barbell'} style={{fontSize:17,color:done?'#6FCF97':'#F4894A'}}/>
                     </div>
                   )
                 })()}
@@ -472,7 +472,7 @@ export default function Allenamento() {
                       if (prog) return `S${prog.week}/${prog.maxWeeks} · ${prog.targetSets||ex.sets}×${prog.targetReps||ex.reps} · ${prog.targetKg}kg`
                       return `${ex.sets}×${ex.reps}`
                     })()} · {completedSets}/{progressionTracking[ex.id]?.targetSets||ex.sets} serie
-                    {lastWeight && <span style={{color:'#D4570A',fontWeight:600}}> · ult: {lastWeight}kg</span>}
+                    {lastWeight && <span style={{color:'#F4894A',fontWeight:600}}> · ult: {lastWeight}kg</span>}
                   </div>
                 </div>
 
@@ -498,7 +498,7 @@ export default function Allenamento() {
                     {(() => {
                       const prog = progressionTracking[ex.id]
                       if (prog) return <>
-                        <span style={{background:'rgba(212,87,10,0.1)',color:'#D4570A',padding:'3px 10px',borderRadius:16,fontWeight:700,fontSize:12}}>
+                        <span style={{background:'rgba(212,87,10,0.1)',color:'#F4894A',padding:'3px 10px',borderRadius:16,fontWeight:700,fontSize:12}}>
                           📅 Settimana {prog.week}/{prog.maxWeeks}{prog.weekNote ? ` — ${prog.weekNote}` : ''}
                         </span>
                         <span><i className="ti ti-repeat" style={{fontSize:12,marginRight:3}}/><strong>{prog.targetSets||ex.sets}</strong> serie x <strong>{prog.targetReps||ex.reps}</strong> reps</span>
@@ -523,7 +523,7 @@ export default function Allenamento() {
                         <div key={setNum} style={{display:'flex',alignItems:'center',gap:8,background:'#111',borderRadius:10,padding:'8px 10px',border: log ? '0.5px solid rgba(59,140,90,0.3)' : '0.5px solid #1A1A1A'}}>
                           {/* Numero serie */}
                           <div style={{width:22,height:22,borderRadius:6,background:log?'#3B8C5A':'#1C1C1C',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                            <span style={{fontSize:11,fontWeight:800,color:log?'white':'#555'}}>{setNum}</span>
+                            <span style={{fontSize:11,fontWeight:800,color:log?'white':'#AAA'}}>{setNum}</span>
                           </div>
                           {/* KG: parte intera e decimale a scorrimento (es. 6,2 — 10,5) */}
                           <KgPicker
@@ -554,7 +554,7 @@ export default function Allenamento() {
                             border:'none',
                             display:'flex',alignItems:'center',justifyContent:'center',
                           }}>
-                            <i className={log?'ti ti-check':'ti ti-circle'} style={{fontSize:17,color:log?'white':'#333'}}/>
+                            <i className={log?'ti ti-check':'ti ti-circle'} style={{fontSize:17,color:log?'white':'#AAA'}}/>
                           </button>
                         </div>
                       )
@@ -633,12 +633,12 @@ export default function Allenamento() {
                 ].map(f=>(
                   <button key={f.val} onClick={()=>setSessionFeeling(f.val)}
                     style={{flex:1,padding:'8px 4px',borderRadius:10,border:'0.5px solid',cursor:'pointer',fontFamily:'inherit',textAlign:'center',
-                      background:sessionFeeling===f.val?'#FEF0E7':'var(--bg-input)',
+                      background:sessionFeeling===f.val?'rgba(212,87,10,0.14)':'var(--bg-input)',
                       borderColor:sessionFeeling===f.val?'#D4570A':'var(--border)',
                       transition:'all 0.15s',
                     }}>
                     <div style={{fontSize:22}}>{f.emoji}</div>
-                    <div style={{fontSize:9,color:sessionFeeling===f.val?'#D4570A':'var(--text-muted)',marginTop:2,fontWeight:600}}>{f.label}</div>
+                    <div style={{fontSize:9,color:sessionFeeling===f.val?'#F4894A':'var(--text-muted)',marginTop:2,fontWeight:600}}>{f.label}</div>
                   </button>
                 ))}
               </div>
@@ -666,7 +666,7 @@ export default function Allenamento() {
                           <div>
                             <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{ex.exercise_name}</div>
                             <div style={{fontSize:11,color:'#AAA',marginTop:1}}>
-                              Settimana {prog.week}/{prog.maxWeeks} · Obiettivo: <strong style={{color:'#D4570A'}}>{prog.targetKg}kg</strong>
+                              Settimana {prog.week}/{prog.maxWeeks} · Obiettivo: <strong style={{color:'#F4894A'}}>{prog.targetKg}kg</strong>
                             </div>
                           </div>
                           {/* Mini storico puntini */}
@@ -699,7 +699,7 @@ export default function Allenamento() {
                         </div>
                         {/* Feedback dinamico */}
                         {status===true && (
-                          <div style={{marginTop:8,fontSize:11,color:'#3B6D11',background:'rgba(59,140,90,0.1)',borderRadius:7,padding:'6px 10px'}}>
+                          <div style={{marginTop:8,fontSize:11,color:'#6FCF97',background:'rgba(59,140,90,0.1)',borderRadius:7,padding:'6px 10px'}}>
                             ✓ Ottimo! La prossima settimana: <strong>{Math.round((prog.targetKg + prog.increment)*4)/4}kg</strong>
                             {prog.week >= prog.maxWeeks && ' — Progressione completata! 🏆'}
                           </div>

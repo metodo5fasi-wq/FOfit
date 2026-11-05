@@ -12,7 +12,7 @@ export default function Documenti() {
         <button onClick={()=>setTab('anamnesi')} style={{
           flex:1, padding:'14px 10px', border:'none', background:'transparent', cursor:'pointer',
           fontFamily:'inherit', fontSize:13, fontWeight:tab==='anamnesi'?700:500,
-          color:tab==='anamnesi'?'#D4570A':'var(--text-muted)',
+          color:tab==='anamnesi'?'#F4894A':'var(--text-muted)',
           borderBottom:tab==='anamnesi'?'2.5px solid #D4570A':'2.5px solid transparent',
           display:'flex', alignItems:'center', justifyContent:'center', gap:6, transition:'all 0.15s'
         }}>

@@ -10,7 +10,7 @@ const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 16px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', marginBottom:10, overflow:'hidden' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 },
-  btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.1)', color:'#F4894A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   btnDanger: { background:'rgba(226,75,74,0.1)', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 8px', fontSize:11, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:3 },
   input: { padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:7, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', width:'100%', boxSizing:'border-box' },
@@ -50,7 +50,7 @@ function WeeklyTargetsTable({ ex, onChange }) {
   return (
     <div style={{gridColumn:'1/-1',marginTop:4}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-        <label style={{fontSize:11,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.07em'}}>
+        <label style={{fontSize:11,fontWeight:700,color:'#F4894A',textTransform:'uppercase',letterSpacing:'0.07em'}}>
           📅 Progressione settimanale
         </label>
         <button onClick={addWeek} style={{background:'#D4570A',color:'white',border:'none',borderRadius:7,padding:'5px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:4}}>
@@ -70,8 +70,8 @@ function WeeklyTargetsTable({ ex, onChange }) {
             ))}
           </div>
           {targets.map((t,i)=>(
-            <div key={t.week} style={{display:'grid',gridTemplateColumns:'44px 1fr 52px 72px 68px 28px',gap:6,padding:'6px 8px',background:i%2===0?'white':'#FAFAF9',alignItems:'center',borderBottom:'0.5px solid #F0EDE8'}}>
-              <div style={{fontSize:13,fontWeight:800,color:'#D4570A',textAlign:'center'}}>S{t.week}</div>
+            <div key={t.week} style={{display:'grid',gridTemplateColumns:'44px 1fr 52px 72px 68px 28px',gap:6,padding:'6px 8px',background:i%2===0?'#0D0D0D':'#161616',alignItems:'center',borderBottom:'0.5px solid #1C1C1C'}}>
+              <div style={{fontSize:13,fontWeight:800,color:'#F4894A',textAlign:'center'}}>S{t.week}</div>
               <input style={{...inp,textAlign:'left',fontSize:11}} value={t.note||''} onChange={e=>updateRow(t.week,'note',e.target.value)} placeholder="es. Pesante, Deload..."/>
               <input style={inp} type="number" min={1} max={10} value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||'')}/>
               <input style={inp} value={t.reps||''} onChange={e=>updateRow(t.week,'reps',e.target.value)} placeholder="8-10"/>
@@ -323,7 +323,7 @@ export default function ModificaAllenamento() {
           {!saving && dirty && (
             <button onClick={saveAll} style={{...s.btn,minWidth:80}}>💾 Salva</button>
           )}
-          {!dirty && <span style={{fontSize:11,color:'#3B6D11',fontWeight:600}}>✓ Salvato</span>}
+          {!dirty && <span style={{fontSize:11,color:'#6FCF97',fontWeight:600}}>✓ Salvato</span>}
         </div>
       </div>
 
@@ -333,17 +333,17 @@ export default function ModificaAllenamento() {
         {/* SIDEBAR GIORNI (PC) */}
         {!isMobile && (
           <div style={{width:140,flexShrink:0,background:'#0D0D0D',borderRight:'0.5px solid #1A1A1A',overflowY:'auto'}}>
-            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
+            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #1C1C1C',fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
             {days.map(day => {
               const dayExs = exercises.filter(e=>e.day_label===day)
               return (
                 <div key={day} onClick={()=>setSelectedDay(day)} style={{
                   padding:'10px 12px',cursor:'pointer',
-                  background:selectedDay===day?'#FEF0E7':'transparent',
+                  background:selectedDay===day?'rgba(212,87,10,0.14)':'transparent',
                   borderLeft:selectedDay===day?'3px solid #D4570A':'3px solid transparent',
                   transition:'all 0.1s',
                 }}>
-                  <div style={{fontSize:12,fontWeight:selectedDay===day?700:500,color:selectedDay===day?'#D4570A':'#111'}}>{day}</div>
+                  <div style={{fontSize:12,fontWeight:selectedDay===day?700:500,color:selectedDay===day?'#F4894A':'#F0F0F0'}}>{day}</div>
                   <div style={{fontSize:10,color:'#AAA',marginTop:1}}>{dayExs.length} esercizi</div>
                 </div>
               )
@@ -366,12 +366,12 @@ export default function ModificaAllenamento() {
                 <button key={day} onClick={()=>setSelectedDay(day)} style={{
                   flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:600,
                   cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-                  background:selectedDay===day?'#D4570A':'white',
+                  background:selectedDay===day?'#D4570A':'#0D0D0D',
                   color:selectedDay===day?'white':'#888780',
-                  borderColor:selectedDay===day?'#D4570A':'#E0DDD6',
+                  borderColor:selectedDay===day?'#D4570A':'#2A2A2A',
                 }}>{day}</button>
               ))}
-              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #E0DDD6',background:'transparent',color:'#AAA',fontFamily:'inherit'}}>+ Giorno</button>
+              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #2A2A2A',background:'transparent',color:'#AAA',fontFamily:'inherit'}}>+ Giorno</button>
             </div>
           )}
 
@@ -404,7 +404,7 @@ export default function ModificaAllenamento() {
                   onDragEnd={handleDragEnd}
                   style={{...s.card,
                     opacity:dragId===ex.id?0.4:1,
-                    border:dragOverId===ex.id?'1.5px solid #D4570A':'0.5px solid #E0DDD6',
+                    border:dragOverId===ex.id?'1.5px solid #D4570A':'0.5px solid #2A2A2A',
                     transition:'border 0.1s',
                   }}>
                   {/* HEADER ESERCIZIO */}
@@ -412,7 +412,7 @@ export default function ModificaAllenamento() {
                     onClick={()=>{if(expandedEx==='all'){setAllExpanded(false);setExpandedEx(ex.id)}else setExpandedEx(isExpanded?null:ex.id)}}>
                     <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#CCC',flexShrink:0}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:15}}/>
-                      <span style={{fontSize:9,fontWeight:700,color:'#D4570A',marginTop:-2}}>{ei+1}</span>
+                      <span style={{fontSize:9,fontWeight:700,color:'#F4894A',marginTop:-2}}>{ei+1}</span>
                     </div>
                     <div style={{width:30,height:30,borderRadius:8,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                       <i className="ti ti-barbell" style={{fontSize:14,color:'#D4570A'}}/>
@@ -435,11 +435,11 @@ export default function ModificaAllenamento() {
 
                   {/* COPIA SU ALTRO GIORNO */}
                   {showCopyModal===ex.id && (
-                    <div style={{padding:'7px 12px 9px',borderTop:'0.5px solid #F5F3EF',background:'rgba(212,87,10,0.1)'}}>
-                      <div style={{fontSize:11,fontWeight:600,color:'#D4570A',marginBottom:5}}>Copia su giorno:</div>
+                    <div style={{padding:'7px 12px 9px',borderTop:'0.5px solid #1C1C1C',background:'rgba(212,87,10,0.1)'}}>
+                      <div style={{fontSize:11,fontWeight:600,color:'#F4894A',marginBottom:5}}>Copia su giorno:</div>
                       <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
                         {days.filter(d=>d!==selectedDay).map(d=>(
-                          <button key={d} onClick={()=>copyExToDay(ex.id,d)} style={{...s.btnGray,padding:'4px 10px',fontSize:11,fontWeight:600,background:'#0D0D0D',color:'#D4570A',borderColor:'#D4570A'}}>{d}</button>
+                          <button key={d} onClick={()=>copyExToDay(ex.id,d)} style={{...s.btnGray,padding:'4px 10px',fontSize:11,fontWeight:600,background:'#0D0D0D',color:'#F4894A',borderColor:'#D4570A'}}>{d}</button>
                         ))}
                       </div>
                     </div>
@@ -447,7 +447,7 @@ export default function ModificaAllenamento() {
 
                   {/* DETTAGLIO ESERCIZIO */}
                   {isExpanded && (
-                    <div style={{borderTop:'0.5px solid #F5F3EF',padding:'12px'}}>
+                    <div style={{borderTop:'0.5px solid #1C1C1C',padding:'12px'}}>
                       <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr 1fr':'repeat(4,1fr)',gap:8,marginBottom:8}}>
                         <div><label style={s.label}>Nome esercizio</label>
                           <input style={s.input} value={ex.exercise_name} onChange={e=>updateEx(ex.id,'exercise_name',e.target.value)} placeholder="Es. Panca piana"/>
@@ -486,7 +486,7 @@ export default function ModificaAllenamento() {
             {/* AGGIUNGI ESERCIZIO */}
             {showAddExercise ? (
               <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #D4570A',padding:'14px',marginBottom:10}}>
-                <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:12}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#F4894A',marginBottom:12}}>
                   <i className="ti ti-plus" style={{fontSize:13}}/> Aggiungi esercizio
                 </div>
 
@@ -543,8 +543,8 @@ export default function ModificaAllenamento() {
                 {newEx.video_url ? (
                   <div style={{background:'rgba(59,140,90,0.1)',borderRadius:8,padding:'8px 12px',marginBottom:10,display:'flex',alignItems:'center',gap:8}}>
                     <i className="ti ti-brand-youtube" style={{fontSize:16,color:'#E24B4A',flexShrink:0}}/>
-                    <span style={{fontSize:11,color:'#3B6D11',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Video YouTube trovato ✓</span>
-                    <a href={newEx.video_url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#3B6D11',fontWeight:700}}>Apri →</a>
+                    <span style={{fontSize:11,color:'#6FCF97',fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Video YouTube trovato ✓</span>
+                    <a href={newEx.video_url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#6FCF97',fontWeight:700}}>Apri →</a>
                     <button onClick={()=>setNewEx(p=>({...p,video_url:''}))} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',fontSize:13}}>✕</button>
                   </div>
                 ) : (
@@ -581,8 +581,8 @@ export default function ModificaAllenamento() {
               <button onClick={()=>setShowAddExercise(true)} style={{
                 width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
                 padding:'12px',marginBottom:10,borderRadius:10,
-                border:'1.5px dashed #D4570A',background:'#FEF8F5',
-                color:'#D4570A',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',
+                border:'1.5px dashed #D4570A',background:'rgba(212,87,10,0.10)',
+                color:'#F4894A',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',
               }}>
                 <i className="ti ti-plus" style={{fontSize:16}}/>Aggiungi esercizio
               </button>

@@ -17,7 +17,7 @@ const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
   topbar: { background:'#080808', borderBottom:'0.5px solid #111', padding:'0 20px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:9, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'inherit' },
-  btnSm: { background:'rgba(212,87,10,0.12)', color:'#D4570A', border:'0.5px solid rgba(212,87,10,0.25)', borderRadius:7, padding:'5px 12px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.12)', color:'#F4894A', border:'0.5px solid rgba(212,87,10,0.25)', borderRadius:7, padding:'5px 12px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   btnGray: { background:'#161616', color:'#CCC', border:'0.5px solid #222', borderRadius:7, padding:'5px 12px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   tabs: { display:'flex', gap:5, marginBottom:16, flexWrap:'wrap' },
   tab: { padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:600, cursor:'pointer', border:'0.5px solid #222', background:'#0D0D0D', color:'#CCC' },
@@ -42,7 +42,7 @@ const s = {
 
 const goalLabel = { dimagrimento:'Dimagrimento', massa:'Massa muscolare', mantenimento:'Mantenimento', forza:'Forza', resistenza:'Resistenza', ricomposizione:'Ricomposizione corporea' }
 const goalColor = { dimagrimento:'#FEE2E2', massa:'#EAF3DE', mantenimento:'#FEF0E7', forza:'#EDE9FE', resistenza:'#E0F2FE', ricomposizione:'#E0F2FE' }
-const goalTextColor = { dimagrimento:'#9B1C1C', massa:'#3B6D11', mantenimento:'#7a3508', forza:'#4C1D95', resistenza:'#075985', ricomposizione:'#075985' }
+const goalTextColor = { dimagrimento:'#F07070', massa:'#6FCF97', mantenimento:'#F4894A', forza:'#4C1D95', resistenza:'#075985', ricomposizione:'#075985' }
 const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'U'
 const today = new Date().toISOString().split('T')[0]
 
@@ -565,7 +565,7 @@ export default function AdminPanel() {
           {/* BRAND */}
           <div style={{padding:'20px 18px 16px',borderBottom:'0.5px solid rgba(255,255,255,0.07)'}}>
             <div style={{fontSize:20,fontWeight:900,color:'white',letterSpacing:-0.5}}>
-              FO<span style={{color:'#D4570A'}}>fit</span>
+              FO<span style={{color:'#F4894A'}}>fit</span>
             </div>
             <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',marginTop:2}}>Dashboard Coach</div>
           </div>
@@ -643,7 +643,7 @@ export default function AdminPanel() {
         <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 20px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             {isMobile && (
-              <div style={{fontSize:16,fontWeight:900,color:'#F0F0F0'}}>FO<span style={{color:'#D4570A'}}>fit</span></div>
+              <div style={{fontSize:16,fontWeight:900,color:'#F0F0F0'}}>FO<span style={{color:'#F4894A'}}>fit</span></div>
             )}
             <div>
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>
@@ -673,7 +673,7 @@ export default function AdminPanel() {
 
           {/* CONTENUTO PRINCIPALE */}
           <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'16px'}}>
-            {msg && <div style={{background:'rgba(59,109,17,0.1)',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#3B6D11',marginBottom:14}}>{msg}</div>}
+            {msg && <div style={{background:'rgba(59,109,17,0.1)',border:'0.5px solid #3B6D11',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#6FCF97',marginBottom:14}}>{msg}</div>}
 
             {/* TAB MOBILE */}
             {isMobile && (
@@ -684,7 +684,7 @@ export default function AdminPanel() {
                     border:'0.5px solid',fontFamily:'inherit',
                     background:tab===t.id?'#D4570A':'#161616',
                     color:tab===t.id?'white':'#AAA',
-                    borderColor:tab===t.id?'#D4570A':'#E0DDD6',
+                    borderColor:tab===t.id?'#D4570A':'#2A2A2A',
                   }}>{t.label}{t.badge > 0 && <span style={{marginLeft:6,background:tab===t.id?'rgba(255,255,255,0.25)':'#D4570A',color:'white',fontSize:10,fontWeight:800,padding:'1px 6px',borderRadius:10}}>{t.badge}</span>}</button>
                 ))}
               </div>
@@ -701,7 +701,7 @@ export default function AdminPanel() {
             {tab==='clienti' && (
               <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C',overflow:'hidden'}}>
                 {/* FILTRI */}
-                <div style={{padding:'12px 16px',borderBottom:'0.5px solid #F0EDE8',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                <div style={{padding:'12px 16px',borderBottom:'0.5px solid #1C1C1C',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
                   <div style={{position:'relative',flex:1,minWidth:180}}>
                     <i className="ti ti-search" style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#CCC'}}/>
                     <input style={{...s.input,paddingLeft:32,fontSize:13,height:34}} placeholder="Cerca cliente..." value={search} onChange={e=>setSearch(e.target.value)}/>
@@ -718,7 +718,7 @@ export default function AdminPanel() {
                         cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
                         background:filter===f.id?'#D4570A':'#161616',
                         color:filter===f.id?'white':'#AAA',
-                        borderColor:filter===f.id?'#D4570A':'#E0DDD6',
+                        borderColor:filter===f.id?'#D4570A':'#2A2A2A',
                       }}>{f.label}</button>
                     ))}
                   </div>
@@ -762,15 +762,15 @@ export default function AdminPanel() {
                               background: isSelected ? '#D4570A' : 'rgba(212,87,10,0.15)',
                               display:'flex',alignItems:'center',justifyContent:'center',
                               fontSize:12,fontWeight:800,
-                              color: isSelected ? 'white' : '#D4570A',
+                              color: isSelected ? 'white' : '#F4894A',
                             }}>{initials(c.full_name)}</div>
 
                             <div style={{flex:1,minWidth:0}}>
                               <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.full_name}</div>
                               <div style={{fontSize:10,color:'#CCC',marginTop:1,display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
                                 <span>{goalLabel[c.goal]||'—'}</span>{st.inactivePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#F5B041',fontWeight:700}}>Piano non attivo</span></>}
-                                {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#D4570A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
-                                {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'rgba(226,75,74,0.15)':days<=7?'rgba(212,87,10,0.15)':'rgba(59,140,90,0.15)',color:days<0?'#E24B4A':days<=7?'#D4570A':'#3B8C5A'}}>{days<0?'Scaduto':`${days}gg`}</span>}
+                                {st.activePlan && <><span style={{color:'#D0CFC9'}}>·</span><span style={{color:'#F4894A',fontWeight:600}}>{st.activePlan.kcal_target} kcal</span></>}
+                                {days!==null && <span style={{padding:'1px 5px',borderRadius:5,fontSize:9,fontWeight:600,background:days<0?'rgba(226,75,74,0.15)':days<=7?'rgba(212,87,10,0.15)':'rgba(59,140,90,0.15)',color:days<0?'#E24B4A':days<=7?'#F4894A':'#3B8C5A'}}>{days<0?'Scaduto':`${days}gg`}</span>}
                               </div>
                             </div>
 
@@ -784,10 +784,10 @@ export default function AdminPanel() {
                           {/* RIGA 2: Stats */}
                           <div onClick={()=>setSelectedClient(isSelected?null:c)} style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:5,marginBottom:9,cursor:'pointer'}}>
                             {[
-                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:st.latestMeasure?.weight_kg?'#F0F0F0':'#444'},
-                              {l:'Diario',v:st.diaryToday?'✓':'✗',c:st.diaryToday?'#3B6D11':'#E24B4A'},
-                              {l:'Sessioni',v:sessWeek,c:sessWeek>=3?'#3B6D11':sessWeek>=1?'#E8A020':'#E24B4A'},
-                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct!==null?(adherencePct>=70?'#3B8C5A':adherencePct>=50?'#E8A020':'#E24B4A'):'#444'},
+                              {l:'Peso',v:st.latestMeasure?.weight_kg?`${st.latestMeasure.weight_kg}kg`:'—',c:st.latestMeasure?.weight_kg?'#F0F0F0':'#AAA'},
+                              {l:'Diario',v:st.diaryToday?'✓':'✗',c:st.diaryToday?'#6FCF97':'#E24B4A'},
+                              {l:'Sessioni',v:sessWeek,c:sessWeek>=3?'#6FCF97':sessWeek>=1?'#E8A020':'#E24B4A'},
+                              {l:'Aderenza',v:adherencePct!==null?`${adherencePct}%`:'—',c:adherencePct!==null?(adherencePct>=70?'#3B8C5A':adherencePct>=50?'#E8A020':'#E24B4A'):'#AAA'},
                             ].map(stat=>(
                               <div key={stat.l} style={{background:'#1A1A1A',borderRadius:7,padding:'5px 3px',textAlign:'center'}}>
                                 <div style={{fontSize:13,fontWeight:700,color:stat.c,lineHeight:1.1}}>{stat.v}</div>
@@ -800,7 +800,7 @@ export default function AdminPanel() {
                           <div style={{display:'flex',gap:5}} onClick={e=>e.stopPropagation()}>
                             {st.activePlan ? (
                               <a href={`/modifica-piano/${st.activePlan.id}`} onClick={e=>{e.preventDefault();window.location.href=`/modifica-piano/${st.activePlan.id}`}}
-                                style={{flex:1,padding:'6px 4px',background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #F4C9A8',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
+                                style={{flex:1,padding:'6px 4px',background:'rgba(212,87,10,0.1)',color:'#F4894A',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:7,fontSize:10,fontWeight:600,textDecoration:'none',textAlign:'center'}}>
                                 🥗 Piano
                               </a>
                             ) : st.inactivePlan ? (
@@ -892,7 +892,7 @@ export default function AdminPanel() {
               </select>
             </div>
             <div style={s.formGroup}><label style={s.label}>Note</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))}/></div>
-            {msg && <div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
+            {msg && <div style={{fontSize:12,color:'#F4894A',marginBottom:10}}>{msg}</div>}
             <button style={s.saveBtn} onClick={createClient} disabled={saving}>{saving?'Creazione...':'Crea cliente'}</button>
             <button style={s.cancelBtn} onClick={()=>setShowNewClient(false)}>Annulla</button>
           </div>
@@ -925,17 +925,17 @@ export default function AdminPanel() {
                   <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
-                  <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'rgba(59,109,17,0.1)',borderRadius:8,fontSize:13,color:'#3B6D11',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
+                  <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'rgba(59,109,17,0.1)',borderRadius:8,fontSize:13,color:'#6FCF97',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
                 </div>
               </>
             )}
             {dietType!=='lineare' && (
               <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px',marginBottom:12}}>
-                <div style={{fontSize:12,color:'#D4570A',fontWeight:600}}>Per i piani avanzati (ON/OFF, Ad onde, ecc.) usa la sezione Importa piano.</div>
+                <div style={{fontSize:12,color:'#F4894A',fontWeight:600}}>Per i piani avanzati (ON/OFF, Ad onde, ecc.) usa la sezione Importa piano.</div>
               </div>
             )}
             <div style={s.formGroup}><label style={s.label}>Note per il cliente</label><textarea style={{...s.input,height:60,resize:'vertical'}} value={newPlan.notes} onChange={e=>setNewPlan(p=>({...p,notes:e.target.value}))}/></div>
-            {msg && <div style={{fontSize:12,color:'#D4570A',marginBottom:10}}>{msg}</div>}
+            {msg && <div style={{fontSize:12,color:'#F4894A',marginBottom:10}}>{msg}</div>}
             <button style={s.saveBtn} onClick={createPlan} disabled={saving}>{saving?'Creazione...':'Crea piano'}</button>
             <button style={s.cancelBtn} onClick={()=>setShowNewPlan(false)}>Annulla</button>
           </div>
@@ -1091,10 +1091,10 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             )}
             <div style={{fontSize:12,color:'#CCC',marginTop:2}}>Iscritto il {new Date(client.created_at).toLocaleDateString('it-IT')}</div>
           </div>
-          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#161616':'rgba(212,87,10,0.12)', color: editing?'#AAA':'#D4570A', borderColor: editing?'#333':'#D4570A'}}>
+          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background: editing?'#161616':'rgba(212,87,10,0.12)', color: editing?'#AAA':'#F4894A', borderColor: editing?'#333':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:13,marginRight:4}}/>{editing?'Annulla':'Modifica'}
           </button>
-          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'rgba(59,140,90,0.12)':'#161616', color: anamnesi?.completed_at?'#3B6D11':'#AAA', borderColor: anamnesi?.completed_at?'#3B6D11':'#333', display:'flex', alignItems:'center', gap:4}}>
+          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background: anamnesi?.completed_at?'rgba(59,140,90,0.12)':'#161616', color: anamnesi?.completed_at?'#6FCF97':'#AAA', borderColor: anamnesi?.completed_at?'#3B6D11':'#333', display:'flex', alignItems:'center', gap:4}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:13}}/>
             {anamnesi?.completed_at ? 'Anamnesi ✓' : anamnesi ? 'Anamnesi (incompleta)' : 'Anamnesi'}
           </button>
@@ -1143,7 +1143,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
               </div>
             )}
             {client.coach_notes&&(
-              <div style={{marginBottom:14,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#7a3508'}}>
+              <div style={{marginBottom:14,background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#F4894A'}}>
                 <div style={{fontSize:10,color:'#D4570A',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.06em',display:'flex',alignItems:'center',gap:4}}><i className="ti ti-lock" style={{fontSize:10}}/>Note private coach</div>
                 {client.coach_notes}
               </div>
@@ -1152,7 +1152,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         )}
 
         {/* ── SEZIONE ALIMENTAZIONE ── */}
-        <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid #FEF0E7',paddingBottom:8}}>
+        <div style={{fontSize:12,fontWeight:700,color:'#F4894A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid rgba(212,87,10,0.3)',paddingBottom:8}}>
           <i className="ti ti-clipboard-list" style={{fontSize:14}}/>Alimentazione
         </div>
 
@@ -1161,17 +1161,17 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
           <div style={{fontSize:11,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Piano alimentare</div>
           {activeMealPlan ? (
             <div>
-              <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid #F4C9A8',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#7a3508'}}>{activeMealPlan.title}</div>
-                  <div style={{fontSize:11,color:'#D4570A',marginTop:2}}>{activeMealPlan.kcal_target} kcal · P{activeMealPlan.protein_target_g}g C{activeMealPlan.carbs_target_g}g G{activeMealPlan.fat_target_g}g</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#F4894A'}}>{activeMealPlan.title}</div>
+                  <div style={{fontSize:11,color:'#F4894A',marginTop:2}}>{activeMealPlan.kcal_target} kcal · P{activeMealPlan.protein_target_g}g C{activeMealPlan.carbs_target_g}g G{activeMealPlan.fat_target_g}g</div>
                 </div>
                 <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
                   <span style={{...s.badge,background:'#3B6D11',color:'white'}}>Attivo</span>
                   <a href={`/modifica-piano/${activeMealPlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
                     <i className="ti ti-tools-kitchen-2" style={{fontSize:12}}/>Modifica pasti
                   </a>
-                  <button onClick={()=>setEditingPlan(!editingPlan)} style={{...s.btnSm,background:editingPlan?'#D4570A':'#F5F3EF',color:editingPlan?'white':'#888780'}}>
+                  <button onClick={()=>setEditingPlan(!editingPlan)} style={{...s.btnSm,background:editingPlan?'#D4570A':'#161616',color:editingPlan?'white':'#888780'}}>
                     {editingPlan?'Chiudi':'✏️ Target'}
                   </button>
                 </div>
@@ -1236,20 +1236,20 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         {/* INDICATORI RAPIDI */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
           {/* Messaggi non letti */}
-          <div style={{background: unreadCount>0?'#FEF0E7':'#F5F3EF',borderRadius:9,padding:'10px 12px',textAlign:'center',border: unreadCount>0?'0.5px solid #D4570A':'0.5px solid #E0DDD6'}}>
-            <div style={{fontSize:18,fontWeight:800,color:unreadCount>0?'#D4570A':'#888780'}}>{unreadCount}</div>
-            <div style={{fontSize:9,color:unreadCount>0?'#D4570A':'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Msg non letti</div>
+          <div style={{background: unreadCount>0?'rgba(212,87,10,0.14)':'#161616',borderRadius:9,padding:'10px 12px',textAlign:'center',border: unreadCount>0?'0.5px solid #D4570A':'0.5px solid #2A2A2A'}}>
+            <div style={{fontSize:18,fontWeight:800,color:unreadCount>0?'#F4894A':'#888780'}}>{unreadCount}</div>
+            <div style={{fontSize:9,color:unreadCount>0?'#F4894A':'#888780',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Msg non letti</div>
           </div>
           {/* Aderenza piano */}
           <div style={{background:'#161616',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #1C1C1C'}}>
-            <div style={{fontSize:18,fontWeight:800,color: adherenceWeek ? (adherenceWeek.followed/adherenceWeek.total>=0.7?'#3B6D11':'#D4570A') : '#888780'}}>
+            <div style={{fontSize:18,fontWeight:800,color: adherenceWeek ? (adherenceWeek.followed/adherenceWeek.total>=0.7?'#6FCF97':'#F4894A') : '#888780'}}>
               {adherenceWeek ? `${Math.round(adherenceWeek.followed/adherenceWeek.total*100)}%` : '—'}
             </div>
             <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Aderenza pasti</div>
           </div>
           {/* Allenamenti settimana */}
           <div style={{background:'#161616',borderRadius:9,padding:'10px 12px',textAlign:'center',border:'0.5px solid #1C1C1C'}}>
-            <div style={{fontSize:18,fontWeight:800,color:'#D4570A'}}>{workoutSessions.filter(s=>{const d=new Date(s.session_date);return(new Date()-d)<7*24*60*60*1000}).length}</div>
+            <div style={{fontSize:18,fontWeight:800,color:'#F4894A'}}>{workoutSessions.filter(s=>{const d=new Date(s.session_date);return(new Date()-d)<7*24*60*60*1000}).length}</div>
             <div style={{fontSize:9,color:'#CCC',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:2}}>Allenamenti/7gg</div>
           </div>
         </div>
@@ -1263,7 +1263,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
             <div style={{display:'flex',gap:16}}>
               {[{l:'⚡ Energia',v:lastCheckin.energy},{l:'😴 Sonno',v:lastCheckin.sleep},{l:'🧘 Stress',v:lastCheckin.stress}].map(item=>(
                 <div key={item.l} style={{flex:1,textAlign:'center'}}>
-                  <div style={{fontSize:20,fontWeight:800,color:item.v>=4?'#3B6D11':item.v<=2?'#D4570A':'#111'}}>{item.v}<span style={{fontSize:10,color:'#CCC'}}>/5</span></div>
+                  <div style={{fontSize:20,fontWeight:800,color:item.v>=4?'#6FCF97':item.v<=2?'#F4894A':'#F0F0F0'}}>{item.v}<span style={{fontSize:10,color:'#CCC'}}>/5</span></div>
                   <div style={{fontSize:9,color:'#CCC',marginTop:2}}>{item.l}</div>
                 </div>
               ))}
@@ -1273,7 +1273,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
         )}
 
         {/* ── SEZIONE ALLENAMENTO ── */}
-        <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,marginTop:8,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #FEF0E7',paddingBottom:8}}>
+        <div style={{fontSize:12,fontWeight:700,color:'#F4894A',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:10,marginTop:8,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(212,87,10,0.3)',paddingBottom:8}}>
           <span style={{display:'flex',alignItems:'center',gap:6}}><i className="ti ti-barbell" style={{fontSize:14}}/>Allenamento</span>
           {activeWorkoutPlan && (
             <a href={`/modifica-allenamento/${activeWorkoutPlan.id}`} style={{...s.btnSm,textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:11}}>
@@ -1307,7 +1307,7 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                   </a>
                 )}
                 {!showAllSessions && allSessionsCount > workoutSessions.length && (
-                  <button onClick={loadAllSessions} style={{background:'none',border:'none',color:'#D4570A',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                  <button onClick={loadAllSessions} style={{background:'none',border:'none',color:'#F4894A',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
                     Vedi tutto ({allSessionsCount}) →
                   </button>
                 )}
@@ -1324,14 +1324,14 @@ function ClientDetailModal({ client, plans, onClose, onSaved, onNewPlan }) {
                   <div key={sess.id} style={{background:'#161616',borderRadius:8,padding:'10px 12px',marginBottom:6,fontSize:12,color:'#CCC',lineHeight:1.5}}>
                     <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#CCC',marginBottom:6,fontWeight:600}}>
                       <span>{sess.day_label} · {new Date(sess.session_date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
-                      <span style={{color: pct>=100?'#3B6D11':'#D4570A'}}>{sess.sets_completed}/{sess.sets_total} ({pct}%)</span>
+                      <span style={{color: pct>=100?'#6FCF97':'#F4894A'}}>{sess.sets_completed}/{sess.sets_total} ({pct}%)</span>
                     </div>
                     {Object.entries(byEx).map(([exName, logs]) => {
                       const maxW = Math.max(...logs.map(l=>l.weight_kg||0))
                       return (
                         <div key={exName} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'3px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                           <span style={{color:'#F0F0F0',fontWeight:500}}>{exName}</span>
-                          <span style={{color:'#D4570A',fontWeight:700}}>{logs.length} serie {maxW>0?`· max ${maxW}kg`:''}</span>
+                          <span style={{color:'#F4894A',fontWeight:700}}>{logs.length} serie {maxW>0?`· max ${maxW}kg`:''}</span>
                         </div>
                       )
                     })}
@@ -1401,16 +1401,16 @@ function ClientProgress({ client }) {
           <div style={{fontSize:11,color:'#CCC'}}>{goalLabel[client.goal] || client.goal || 'Obiettivo non impostato'}</div>
         </div>
         <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:diaryToday?'#EAF3DE':'#FEE2E2',color:diaryToday?'#3B6D11':'#E24B4A'}}>
+          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:diaryToday?'rgba(59,140,90,0.16)':'rgba(226,75,74,0.16)',color:diaryToday?'#6FCF97':'#E24B4A'}}>
             {diaryToday ? '✓ Diario' : '✗ Diario'}
           </div>
-          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:activePlan?'#FEF0E7':'#F5F3EF',color:activePlan?'#D4570A':'#888780'}}>
+          <div style={{fontSize:10,fontWeight:500,padding:'3px 8px',borderRadius:20,background:activePlan?'rgba(212,87,10,0.14)':'#161616',color:activePlan?'#F4894A':'#888780'}}>
             {activePlan ? '📋 Piano attivo' : 'Nessun piano'}
           </div>
         </div>
       </div>
       {latest ? (
-        <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid #F5F3EF',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid #1C1C1C',flexWrap:'wrap'}}>
           {[
             {l:'Peso',v:latest.weight_kg?`${latest.weight_kg}kg`:'—'},
             {l:'Vita',v:latest.waist_cm?`${latest.waist_cm}cm`:'—'},
@@ -1427,7 +1427,7 @@ function ClientProgress({ client }) {
           </div>
         </div>
       ) : (
-        <div style={{fontSize:11,color:'#CCC',paddingTop:8,borderTop:'0.5px solid #F5F3EF'}}>
+        <div style={{fontSize:11,color:'#CCC',paddingTop:8,borderTop:'0.5px solid #1C1C1C'}}>
           Nessuna misurazione ancora registrata
         </div>
       )}
@@ -1524,7 +1524,7 @@ function CalendarioAdmin() {
             <div key={dateKey} style={{marginBottom:8}}>
               <button
                 onClick={()=>setSelectedDate(isSelected?null:dateKey)}
-                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:8,border:'0.5px solid #1C1C1C',background:isSelected?'#D4570A':'#F5F3EF',color:isSelected?'white':'#111',fontFamily:'inherit',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+                style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderRadius:8,border:'0.5px solid #1C1C1C',background:isSelected?'#D4570A':'#161616',color:isSelected?'white':'#F0F0F0',fontFamily:'inherit',fontSize:13,fontWeight:500,cursor:'pointer'}}>
                 <span>{DAY_NAMES_ADMIN[date.getDay()]} {date.getDate()}/{date.getMonth()+1}</span>
                 <span style={{fontSize:11}}>{isSelected?'▲':'▼'}</span>
               </button>
@@ -1543,8 +1543,8 @@ function CalendarioAdmin() {
                           padding:'8px',borderRadius:7,border:'0.5px solid',fontSize:12,fontWeight:600,fontFamily:'inherit',
                           cursor:booked?'not-allowed':'pointer',
                           background: booked?'rgba(212,87,10,0.15)':blocked?'rgba(226,75,74,0.12)':'rgba(59,140,90,0.12)',
-                          color: booked?'#D4570A':blocked?'#888780':'#3B6D11',
-                          borderColor: booked?'#D4570A':blocked?'#E0DDD6':'#3B6D11',
+                          color: booked?'#F4894A':blocked?'#888780':'#6FCF97',
+                          borderColor: booked?'#D4570A':blocked?'#2A2A2A':'#3B6D11',
                         }}>
                         {slot}{booked?' 📞':blocked?' 🚫':''}
                       </button>
@@ -1629,7 +1629,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
       {/* ALERT ABBONAMENTI */}
       {(scaduti.length > 0 || inScadenza.length > 0) && (
         <div style={{background:'rgba(212,87,10,0.1)',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#D4570A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#F4894A',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
             <i className="ti ti-credit-card" style={{fontSize:14}}/>
             {scaduti.length>0&&`${scaduti.length} abbonamento${scaduti.length>1?'i':''} scaduto${scaduti.length>1?'i':''}`}
             {scaduti.length>0&&inScadenza.length>0&&' · '}
@@ -1639,7 +1639,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
             {[...scaduti,...inScadenza].map(c=>(
               <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:'#0D0D0D',borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:600,color:'#F0F0F0',cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
                 {c.full_name?.split(' ')[0]}
-                <span style={{fontSize:10,color:'#D4570A'}}>{c.subscription_end&&Math.ceil((new Date(c.subscription_end)-new Date())/(1000*60*60*24))<0?'Scaduto':'⚠'}</span>
+                <span style={{fontSize:10,color:'#F4894A'}}>{c.subscription_end&&Math.ceil((new Date(c.subscription_end)-new Date())/(1000*60*60*24))<0?'Scaduto':'⚠'}</span>
               </div>
             ))}
           </div>
@@ -1648,20 +1648,20 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
 
       {/* NUOVI REPORT ALLENAMENTO */}
       {newReports.length > 0 && (
-        <div style={{background:'#EDE9FE',border:'0.5px solid #7C3AED',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#7C3AED',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+        <div style={{background:'rgba(155,89,182,0.16)',border:'0.5px solid #7C3AED',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#B39DDB',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
             <i className="ti ti-clipboard-list" style={{fontSize:14}}/>
             {newReports.length} nuovo{newReports.length>1?'i':''} report allenamento
           </div>
           {newReports.map(c=>(
             <div key={c.id} onClick={()=>onOpenReport(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #C4B5FD'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid rgba(155,89,182,0.4)'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'#7C3AED',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
               <div style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{c.full_name}</div>
               <span style={{fontSize:10,background:'#7C3AED',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
-              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#7C3AED'}}/>
+              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#B39DDB'}}/>
             </div>
           ))}
         </div>
@@ -1670,19 +1670,19 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
       {/* NUOVE ANAMNESI */}
       {newAnamnesi.length > 0 && (
         <div style={{background:'rgba(59,109,17,0.1)',border:'0.5px solid #3B6D11',borderRadius:12,padding:'12px 14px',marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#3B6D11',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#6FCF97',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:14}}/>
             {newAnamnesi.length} nuova{newAnamnesi.length>1?'e':''} anamnesi compilata{newAnamnesi.length>1?'e':''}
           </div>
           {newAnamnesi.map(c=>(
             <div key={c.id} onClick={()=>onOpenAnamnesi(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #A7D9A0'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid rgba(59,140,90,0.4)'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'#3B6D11',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
               <div style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{c.full_name}</div>
               <span style={{fontSize:10,background:'#3B6D11',color:'white',padding:'2px 8px',borderRadius:8,fontWeight:600}}>Apri</span>
-              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#3B6D11'}}/>
+              <i className="ti ti-chevron-right" style={{fontSize:13,color:'#6FCF97'}}/>
             </div>
           ))}
         </div>
@@ -1697,7 +1697,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
           </div>
           {clients.filter(c=>clientStats[c.id]?.unreadMessages>0).map(c=>(
             <div key={c.id} onClick={()=>onOpenClient(c)}
-              style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid #F4C9A8'}}>
+              style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'#0D0D0D',borderRadius:9,marginBottom:6,cursor:'pointer',border:'0.5px solid rgba(212,87,10,0.35)'}}>
               <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0}}>
                 {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
               </div>
@@ -1722,7 +1722,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
             {inactiveToday.map(c=>(
               <div key={c.id} onClick={()=>onOpenClient(c)}
                 style={{display:'flex',alignItems:'center',gap:6,background:'#161616',borderRadius:20,padding:'5px 12px 5px 6px',cursor:'pointer'}}>
-                <div style={{width:22,height:22,borderRadius:'50%',background:'#E0DDD6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#CCC'}}>
+                <div style={{width:22,height:22,borderRadius:'50%',background:'#2A2A2A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#CCC'}}>
                   {c.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
                 </div>
                 <span style={{fontSize:12,color:'#CCC',fontWeight:500}}>{c.full_name?.split(' ')[0]}</span>
@@ -1767,7 +1767,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
             <div style={{display:'flex',gap:5,alignItems:'center',flexShrink:0}}>
               {/* Diario */}
               <div title={st.diaryToday?'Diario compilato':'Diario non fatto'}
-                style={{width:28,height:28,borderRadius:8,background:st.diaryToday?'#EAF3DE':'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                style={{width:28,height:28,borderRadius:8,background:st.diaryToday?'rgba(59,140,90,0.16)':'rgba(226,75,74,0.16)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <i className="ti ti-pencil" style={{fontSize:13,color:st.diaryToday?OK:'#E24B4A'}}/>
               </div>
               {/* Allenamento */}
@@ -1778,7 +1778,7 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
               {/* Aderenza */}
               {pct !== null && (
                 <div title={`Aderenza piano: ${pct}%`}
-                  style={{height:28,minWidth:28,borderRadius:8,background:pct>=70?'#EAF3DE':'#FEF0E7',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 6px'}}>
+                  style={{height:28,minWidth:28,borderRadius:8,background:pct>=70?'rgba(59,140,90,0.16)':'rgba(212,87,10,0.14)',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 6px'}}>
                   <span style={{fontSize:11,fontWeight:700,color:pct>=70?OK:ALERT}}>{pct}%</span>
                 </div>
               )}
@@ -1790,8 +1790,8 @@ function DashboardCoach({ clients, clientStats, plans, onOpenClient, onOpenRepor
               )}
               {/* Nuovo report */}
               {st.newReport && (
-                <div title="Nuovo report allenamento" style={{width:28,height:28,borderRadius:8,background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <i className="ti ti-clipboard-list" style={{fontSize:12,color:'#7C3AED'}}/>
+                <div title="Nuovo report allenamento" style={{width:28,height:28,borderRadius:8,background:'rgba(155,89,182,0.16)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <i className="ti ti-clipboard-list" style={{fontSize:12,color:'#B39DDB'}}/>
                 </div>
               )}
               {/* Check-in energia */}
@@ -1971,7 +1971,7 @@ function MessaggiAdmin() {
         <button onClick={generateAllReports} disabled={generatingAll || clients.length === 0} style={{
           width:'100%', padding:'9px 10px', marginBottom:12,
           background: generatingAll ? '#161616' : 'rgba(212,87,10,0.12)',
-          color: generatingAll ? '#888780' : '#D4570A',
+          color: generatingAll ? '#888780' : '#F4894A',
           border:'0.5px solid #D4570A', borderRadius:9,
           fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
           display:'flex', alignItems:'center', justifyContent:'center', gap:5
@@ -1984,7 +1984,7 @@ function MessaggiAdmin() {
 
         {/* RISULTATO GENERAZIONE */}
         {allReportResult && (
-          <div style={{background:'rgba(59,109,17,0.1)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#3B6D11',lineHeight:1.6}}>
+          <div style={{background:'rgba(59,109,17,0.1)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#6FCF97',lineHeight:1.6}}>
             ✓ {allReportResult.success} generati
             {allReportResult.skipped > 0 && ` · ${allReportResult.skipped} saltati`}
             {allReportResult.errors > 0 && ` · ${allReportResult.errors} errori`}
@@ -2018,7 +2018,7 @@ function MessaggiAdmin() {
             {/* Header chat */}
             <div style={{padding:'12px 16px',borderBottom:'0.5px solid #1A1A1A',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#0D0D0D'}}>
               <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0'}}>{selectedClient.full_name}</div>
-              <button onClick={generateReport} disabled={generatingReport} style={{padding:'6px 12px',background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #D4570A',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
+              <button onClick={generateReport} disabled={generatingReport} style={{padding:'6px 12px',background:'rgba(212,87,10,0.1)',color:'#F4894A',border:'0.5px solid #D4570A',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:5}}>
                 <i className="ti ti-sparkles" style={{fontSize:13}}/>{generatingReport?'Generando...':'+Report AI'}
               </button>
             </div>
@@ -2037,8 +2037,8 @@ function MessaggiAdmin() {
                         <div style={{
                           maxWidth:'70%',padding:'9px 13px',
                           borderRadius:isCoach?'16px 16px 4px 16px':'16px 16px 16px 4px',
-                          background:isCoach?'#D4570A':'#F5F3EF',
-                          color:isCoach?'white':'#111',
+                          background:isCoach?'#D4570A':'#161616',
+                          color:isCoach?'white':'#F0F0F0',
                         }}>
                           <div style={{fontSize:12,lineHeight:1.5,whiteSpace:'pre-wrap'}}>{m.message}</div>
                           <div style={{fontSize:10,marginTop:3,textAlign:'right',opacity:0.7}}>
@@ -2060,7 +2060,7 @@ function MessaggiAdmin() {
                 onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
                 placeholder="Scrivi un messaggio..." rows={1}
                 style={{flex:1,padding:'9px 14px',border:'0.5px solid #1C1C1C',borderRadius:20,fontSize:13,color:'#F0F0F0',background:'#161616',outline:'none',fontFamily:'inherit',resize:'none',maxHeight:80,overflowY:'auto'}}/>
-              <button onClick={send} disabled={!text.trim()||sending} style={{width:38,height:38,borderRadius:'50%',background:text.trim()?'#D4570A':'#E0DDD6',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <button onClick={send} disabled={!text.trim()||sending} style={{width:38,height:38,borderRadius:'50%',background:text.trim()?'#D4570A':'#2A2A2A',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <i className="ti ti-send" style={{fontSize:16,color:'white'}}/>
               </button>
             </div>
@@ -2181,7 +2181,7 @@ function CheckinAdmin() {
             {latest?.weight_kg && (
               <div style={{textAlign:'right'}}>
                 <div style={{fontSize:20,fontWeight:900,color:'#F4894A'}}>{latest.weight_kg}kg</div>
-                {weightDiff!==null && <div style={{fontSize:11,color:weightDiff<0?'#3B6D11':'#E24B4A',fontWeight:600}}>{weightDiff>0?'+':''}{weightDiff}kg</div>}
+                {weightDiff!==null && <div style={{fontSize:11,color:weightDiff<0?'#6FCF97':'#E24B4A',fontWeight:600}}>{weightDiff>0?'+':''}{weightDiff}kg</div>}
               </div>
             )}
           </div>
@@ -2189,7 +2189,7 @@ function CheckinAdmin() {
           {/* KPI RAPIDI */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
             {[
-              {l:'Peso',v:latest?.weight_kg?`${latest.weight_kg}kg`:'—',c:latest?.weight_kg?'#111':'#C0BDB8'},
+              {l:'Peso',v:latest?.weight_kg?`${latest.weight_kg}kg`:'—',c:latest?.weight_kg?'#F0F0F0':'#C0BDB8'},
               {l:'Check-in',v:checkins.length,c:'#4A90D4'},
               {l:'Sessioni',v:sessions.length,c:'#D4570A'},
               {l:'Foto',v:photos.length,c:'#9B59B6'},
@@ -2214,8 +2214,8 @@ function CheckinAdmin() {
                   const isLast = i===arr.length-1
                   return (
                     <div key={m.id} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-                      <div style={{width:'100%',background:isLast?'#D4570A':'#E0DDD6',borderRadius:'3px 3px 0 0',height:`${pct}%`,minHeight:4,transition:'height 0.3s'}}/>
-                      <div style={{fontSize:7,color:isLast?'#D4570A':'#B0ADA8',fontWeight:isLast?700:400}}>{m.weight_kg}</div>
+                      <div style={{width:'100%',background:isLast?'#D4570A':'#2A2A2A',borderRadius:'3px 3px 0 0',height:`${pct}%`,minHeight:4,transition:'height 0.3s'}}/>
+                      <div style={{fontSize:7,color:isLast?'#F4894A':'#B0ADA8',fontWeight:isLast?700:400}}>{m.weight_kg}</div>
                     </div>
                   )
                 })}
@@ -2268,7 +2268,7 @@ function CheckinAdmin() {
                           {ck.sleep_quality!=null&&<span>😴{ck.sleep_quality}/5</span>}
                           {ck.stress_level!=null&&<span>🧠{ck.stress_level}/5</span>}
                           {ck.motivation_level!=null&&<span>🔥{ck.motivation_level}/5</span>}
-                          {ck.weight_kg&&<span style={{color:'#D4570A',fontWeight:600}}>⚖️{ck.weight_kg}kg</span>}
+                          {ck.weight_kg&&<span style={{color:'#F4894A',fontWeight:600}}>⚖️{ck.weight_kg}kg</span>}
                         </div>
                       </div>
                       <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#CCC',flexShrink:0}}/>
@@ -2276,7 +2276,7 @@ function CheckinAdmin() {
 
                     {/* DETTAGLIO */}
                     {isExp && (
-                      <div style={{padding:'12px',borderTop:'0.5px solid #F0EDE8',background:'#FAFAF9'}}>
+                      <div style={{padding:'12px',borderTop:'0.5px solid #1C1C1C',background:'#161616'}}>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:ck.notes?10:0}}>
                           {[
                             {l:'⚡ Energia',v:ck.energy_level,max:5},
@@ -2296,7 +2296,7 @@ function CheckinAdmin() {
                         {ck.weight_kg && (
                           <div style={{background:'rgba(212,87,10,0.1)',borderRadius:8,padding:'8px 12px',fontSize:12,marginBottom:ck.notes?8:0}}>
                             <span style={{color:'#CCC'}}>Peso dichiarato: </span>
-                            <span style={{fontWeight:700,color:'#D4570A'}}>{ck.weight_kg}kg</span>
+                            <span style={{fontWeight:700,color:'#F4894A'}}>{ck.weight_kg}kg</span>
                           </div>
                         )}
                         {ck.notes && (
@@ -2336,14 +2336,14 @@ function CheckinAdmin() {
                         <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sess.day_label||'Allenamento'}</div>
                         <div style={{fontSize:10,color:'#CCC',marginTop:1,display:'flex',gap:8,alignItems:'center'}}>
                           <span>{dateLabel}</span>
-                          {sess.total_volume_kg&&<span style={{color:'#D4570A',fontWeight:600}}>{Math.round(sess.total_volume_kg)}kg vol.</span>}
+                          {sess.total_volume_kg&&<span style={{color:'#F4894A',fontWeight:600}}>{Math.round(sess.total_volume_kg)}kg vol.</span>}
                           {sess.feeling && <span>{['','😓','😐','🙂','😊','🔥'][sess.feeling]}</span>}
                         </div>
                       </div>
                       <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
                         <span style={{fontSize:10,padding:'2px 7px',borderRadius:8,fontWeight:600,
-                          background:pct>=80?'#EAF3DE':pct>=50?'#FEF0E7':'#FEE2E2',
-                          color:pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A'}}>
+                          background:pct>=80?'rgba(59,140,90,0.16)':pct>=50?'rgba(212,87,10,0.14)':'rgba(226,75,74,0.16)',
+                          color:pct>=80?'#6FCF97':pct>=50?'#F4894A':'#E24B4A'}}>
                           {pct}%
                         </span>
                         <i className={`ti ti-chevron-${isExp?'up':'down'}`} style={{fontSize:13,color:'#CCC'}}/>
@@ -2352,19 +2352,19 @@ function CheckinAdmin() {
 
                     {/* DETTAGLIO ESERCIZI */}
                     {isExp && (
-                      <div style={{borderTop:'0.5px solid #F0EDE8',background:'#FAFAF9'}}>
+                      <div style={{borderTop:'0.5px solid #1C1C1C',background:'#161616'}}>
                         {Object.keys(byEx).length > 0 ? (
                           <div style={{padding:'10px 12px'}}>
                             {Object.entries(byEx).map(([name,ls])=>{
                               const maxKg = Math.max(...ls.map(l=>parseFloat(l.weight_kg)||0))
                               const maxReps = Math.max(...ls.map(l=>parseInt(l.reps_done)||0))
                               return (
-                                <div key={name} style={{padding:'7px 0',borderBottom:'0.5px solid #F0EDE8',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                                <div key={name} style={{padding:'7px 0',borderBottom:'0.5px solid #1C1C1C',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                                   <div>
                                     <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{name}</div>
                                     <div style={{fontSize:10,color:'#CCC',marginTop:1}}>{ls.length} serie{maxReps>0?` · ${maxReps} reps`:''}</div>
                                   </div>
-                                  {maxKg>0 && <span style={{fontSize:13,fontWeight:700,color:'#D4570A'}}>{maxKg}kg</span>}
+                                  {maxKg>0 && <span style={{fontSize:13,fontWeight:700,color:'#F4894A'}}>{maxKg}kg</span>}
                                 </div>
                               )
                             })}
@@ -2455,7 +2455,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 13, color: '#AAA' }}>
-          {nonLetti.length > 0 && <span style={{ fontWeight: 700, color: '#7C3AED' }}>{nonLetti.length} non letto{nonLetti.length > 1 ? 'i' : ''} · </span>}
+          {nonLetti.length > 0 && <span style={{ fontWeight: 700, color: '#B39DDB' }}>{nonLetti.length} non letto{nonLetti.length > 1 ? 'i' : ''} · </span>}
           {tutti.length} report totali
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -2465,7 +2465,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
               border: '0.5px solid', fontFamily: 'inherit',
               background: filter === f.id ? '#7C3AED' : '#161616',
               color: filter === f.id ? 'white' : '#CCC',
-              borderColor: filter === f.id ? '#7C3AED' : '#E0DDD6'
+              borderColor: filter === f.id ? '#7C3AED' : '#2A2A2A'
             }}>{f.l}</button>
           ))}
         </div>
@@ -2486,7 +2486,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
         const isNew = !r.read_by_coach
 
         return (
-          <div key={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? '#C4B5FD' : '#E0DDD6'}`, marginBottom: 10, overflow: 'hidden' }}>
+          <div key={r.id} style={{ background: '#0D0D0D', borderRadius: 12, border: `0.5px solid ${isNew ? 'rgba(155,89,182,0.4)' : '#2A2A2A'}`, marginBottom: 10, overflow: 'hidden' }}>
             {/* HEADER REPORT */}
             <div onClick={() => { setExpanded(isExpanded ? null : r.id); if (isNew) markRead(r.id) }}
               style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: isNew ? '#140d1a' : '#0D0D0D' }}>
@@ -2506,13 +2506,13 @@ function ReportTab({ clients, clientStats, onRefresh }) {
               </div>
               {/* MINI STATS */}
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                {r.benessere_generale && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.benessere_generale >= 7 ? '#3B6D11' : r.benessere_generale >= 5 ? '#E8A020' : '#E24B4A' }}>{r.benessere_generale}</div><div style={{ fontSize: 9, color: '#AAA' }}>😊</div></div>}
-                {r.energia_allenamento && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.energia_allenamento >= 7 ? '#3B6D11' : r.energia_allenamento >= 5 ? '#E8A020' : '#E24B4A' }}>{r.energia_allenamento}</div><div style={{ fontSize: 9, color: '#AAA' }}>⚡</div></div>}
-                {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#3B6D11' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#AAA' }}>🧠</div></div>}
+                {r.benessere_generale && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.benessere_generale >= 7 ? '#6FCF97' : r.benessere_generale >= 5 ? '#E8A020' : '#E24B4A' }}>{r.benessere_generale}</div><div style={{ fontSize: 9, color: '#AAA' }}>😊</div></div>}
+                {r.energia_allenamento && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.energia_allenamento >= 7 ? '#6FCF97' : r.energia_allenamento >= 5 ? '#E8A020' : '#E24B4A' }}>{r.energia_allenamento}</div><div style={{ fontSize: 9, color: '#AAA' }}>⚡</div></div>}
+                {r.stress_periodo && <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 700, color: r.stress_periodo <= 4 ? '#6FCF97' : r.stress_periodo <= 7 ? '#E8A020' : '#E24B4A' }}>{r.stress_periodo}</div><div style={{ fontSize: 9, color: '#AAA' }}>🧠</div></div>}
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button onClick={(e)=>{e.stopPropagation();generateReportPDF(r,clientName,goalOf(r.client_id))}} style={{
-                  background:'#EDE9FE',color:'#7C3AED',border:'0.5px solid #7C3AED',
+                  background:'rgba(155,89,182,0.16)',color:'#B39DDB',border:'0.5px solid #7C3AED',
                   borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
                   display:'flex',alignItems:'center',gap:4
                 }}>
@@ -2524,7 +2524,7 @@ function ReportTab({ clients, clientStats, onRefresh }) {
 
             {/* CONTENUTO ESPANSO */}
             {isExpanded && (
-              <div style={{ borderTop: '0.5px solid #F5F3EF', padding: '14px', maxHeight: 500, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ borderTop: '0.5px solid #1C1C1C', padding: '14px', maxHeight: 500, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
                 {/* SEGNALI PER AGGIORNARE I PIANI */}
                 <ReportSignals r={r} goal={goalOf(r.client_id)} />
@@ -2532,18 +2532,18 @@ function ReportTab({ clients, clientStats, onRefresh }) {
                 {/* PROGRESSI ESERCIZI */}
                 {r.progressi_esercizi?.length > 0 && (
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#D4570A', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>🏋️ Progressi di carico</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#F4894A', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>🏋️ Progressi di carico</div>
                     {r.progressi_esercizi.map((ex, i) => {
                       const diff = ex.carico_fine && ex.carico_inizio ? (parseFloat(ex.carico_fine) - parseFloat(ex.carico_inizio)).toFixed(1) : null
                       return (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '0.5px solid #F5F3EF' }}>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '0.5px solid #1C1C1C' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F0F0' }}>{ex.exercise_name}</div>
                             <div style={{ fontSize: 11, color: '#AAA' }}>{ex.carico_inizio}kg → {ex.carico_fine}kg</div>
                             {ex.note && <div style={{ fontSize: 11, color: '#AAA', fontStyle: 'italic', marginTop: 2 }}>"{ex.note}"</div>}
                           </div>
                           {diff !== null && (
-                            <span style={{ fontSize: 12, fontWeight: 700, color: parseFloat(diff) > 0 ? '#3B6D11' : parseFloat(diff) < 0 ? '#E24B4A' : '#888780', background: parseFloat(diff) > 0 ? '#EAF3DE' : parseFloat(diff) < 0 ? '#FEE2E2' : '#F5F3EF', padding: '2px 8px', borderRadius: 7, marginLeft: 8, flexShrink: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: parseFloat(diff) > 0 ? '#6FCF97' : parseFloat(diff) < 0 ? '#E24B4A' : '#888780', background: parseFloat(diff) > 0 ? 'rgba(59,140,90,0.16)' : parseFloat(diff) < 0 ? 'rgba(226,75,74,0.16)' : '#161616', padding: '2px 8px', borderRadius: 7, marginLeft: 8, flexShrink: 0 }}>
                               {parseFloat(diff) > 0 ? '+' : ''}{diff}kg
                             </span>
                           )}
@@ -2971,7 +2971,7 @@ function AnamnesiTab({ clients, onRefresh }) {
 
       {!loading&&displayed.length===0&&(
         <div style={{textAlign:'center',padding:'60px 20px',background:'#0D0D0D',borderRadius:12,border:'0.5px solid #1C1C1C'}}>
-          <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#444',display:'block',marginBottom:10}}/>
+          <i className="ti ti-clipboard-heart" style={{fontSize:40,color:'#AAA',display:'block',marginBottom:10}}/>
           <div style={{fontSize:13,color:'#CCC'}}>Nessuna anamnesi {filter==='nuove'?'non letta':'compilata'}.</div>
         </div>
       )}

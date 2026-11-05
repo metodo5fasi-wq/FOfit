@@ -37,7 +37,7 @@ function RecipeCard({ recipe, onAdd }) {
   }
 
   return (
-    <div style={{background:'linear-gradient(135deg,#FEF0E7,#FEF8F4)',border:'0.5px solid #F4C9A8',borderRadius:12,padding:'14px',marginTop:8}}>
+    <div style={{background:'linear-gradient(135deg,rgba(212,87,10,0.14),rgba(212,87,10,0.10))',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:12,padding:'14px',marginTop:8}}>
       {/* Header ricetta */}
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
         <div style={{width:36,height:36,borderRadius:10,background:'#D4570A',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -56,7 +56,7 @@ function RecipeCard({ recipe, onAdd }) {
             <span style={{fontSize:12,color:'#F0F0F0'}}>{ing.nome}</span>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
               <span style={{fontSize:11,color:'#AAA'}}>{ing.quantita_g}g</span>
-              <span style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{ing.kcal} kcal</span>
+              <span style={{fontSize:11,color:'#F4894A',fontWeight:500}}>{ing.kcal} kcal</span>
             </div>
           </div>
         ))}
@@ -68,7 +68,7 @@ function RecipeCard({ recipe, onAdd }) {
           <select
             value={selectedMeal}
             onChange={e=>setSelectedMeal(e.target.value)}
-            style={{flex:1,padding:'8px 10px',border:'0.5px solid #F4C9A8',borderRadius:8,fontSize:12,color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}>
+            style={{flex:1,padding:'8px 10px',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:8,fontSize:12,color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}>
             {MEAL_SLOTS.map(m => (
               <option key={m} value={m}>{MEAL_LABELS[m]}</option>
             ))}
@@ -294,7 +294,7 @@ export default function AssistenteAI() {
         <div style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:10,marginBottom:10}}>
           {SUGGERIMENTI.map((sg, i) => (
             <button key={i} onClick={()=>sendMessage(sg.text)} style={{
-              background:'rgba(212,87,10,0.1)',color:'#D4570A',border:'0.5px solid #F4894A',
+              background:'rgba(212,87,10,0.1)',color:'#F4894A',border:'0.5px solid #F4894A',
               borderRadius:20,padding:'6px 12px',fontSize:12,fontWeight:500,
               cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'
             }}>{sg.label}</button>

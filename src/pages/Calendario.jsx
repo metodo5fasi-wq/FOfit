@@ -225,8 +225,8 @@ export default function Calendario() {
                           disabled={booking || monthFull}
                           style={{
                             padding:'10px',borderRadius:8,border:'0.5px solid #D4570A',
-                            background: monthFull ? 'var(--bg-input)' : '#FEF0E7',
-                            color: monthFull ? 'var(--text-muted)' : '#D4570A',
+                            background: monthFull ? 'var(--bg-input)' : 'rgba(212,87,10,0.14)',
+                            color: monthFull ? 'var(--text-muted)' : '#F4894A',
                             fontFamily:'inherit',fontSize:13,fontWeight:600,
                             cursor: monthFull ? 'not-allowed' : 'pointer'
                           }}>

@@ -13,7 +13,7 @@ const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 16px', height:56, display:'flex', alignItems:'center', gap:12, flexShrink:0 },
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', marginBottom:12, overflow:'hidden' },
   btn: { background:'#D4570A', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 },
-  btnSm: { background:'rgba(212,87,10,0.1)', color:'#D4570A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
+  btnSm: { background:'rgba(212,87,10,0.1)', color:'#F4894A', border:'0.5px solid #D4570A', borderRadius:7, padding:'5px 10px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' },
   btnGray: { background:'#161616', color:'#AAA', border:'0.5px solid #1C1C1C', borderRadius:7, padding:'5px 10px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   btnDanger: { background:'rgba(226,75,74,0.1)', color:'#E24B4A', border:'0.5px solid #E24B4A', borderRadius:7, padding:'5px 10px', fontSize:12, cursor:'pointer', fontFamily:'inherit' },
   input: { padding:'7px 10px', border:'0.5px solid #1C1C1C', borderRadius:7, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', width:'100%', boxSizing:'border-box' },
@@ -677,7 +677,7 @@ export default function ModificaPiano() {
           return diff>20&&mk>0?(
             <div style={{marginTop:6,background:'rgba(232,160,32,0.08)',borderRadius:6,padding:'5px 9px',fontSize:10,color:'#E8A020',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span>⚠️ Macro = {mk} kcal (diff {diff})</span>
-              <button onClick={()=>{setPlan(p=>({...p,kcal_target:mk}));setDirty(true)}} style={{fontSize:9,background:'#E8A020',color:'white',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontFamily:'inherit'}}>Allinea</button>
+              <button onClick={()=>{setPlan(p=>({...p,kcal_target:mk}));setDirty(true)}} style={{fontSize:9,background:'#E8A020',color:'#161616',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontFamily:'inherit'}}>Allinea</button>
             </div>
           ):null
         })()}
@@ -696,7 +696,7 @@ export default function ModificaPiano() {
         {showCopyDay && (
           <div style={{marginTop:6,display:'flex',gap:6,flexWrap:'wrap'}}>
             {DAY_NAMES.filter((_,i)=>i+1!==selectedDay).map((dn,i)=>(
-              <button key={dn} onClick={()=>copyDayTo(i+1<selectedDay?i+1:i+2)} style={{fontSize:11,fontWeight:600,background:'#0D0D0D',border:'0.5px solid #D4570A',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontFamily:'inherit',color:'#D4570A'}}>{dn}</button>
+              <button key={dn} onClick={()=>copyDayTo(i+1<selectedDay?i+1:i+2)} style={{fontSize:11,fontWeight:600,background:'#0D0D0D',border:'0.5px solid #D4570A',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontFamily:'inherit',color:'#F4894A'}}>{dn}</button>
             ))}
           </div>
         )}
@@ -708,7 +708,7 @@ export default function ModificaPiano() {
                 <div key={m.id} style={{display:'flex',alignItems:'center',gap:4}}>
                   <span style={{fontSize:10,color:'#4A90D4',textTransform:'capitalize'}}>{m.meal_type}</span>
                   <input type="number" min="0" max="100" value={mealTargets[m.id]||''} onChange={e=>setMealTargets(p=>({...p,[m.id]:e.target.value}))}
-                    style={{width:44,padding:'3px 5px',border:'0.5px solid #BCD8F5',borderRadius:5,fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
+                    style={{width:44,padding:'3px 5px',border:'0.5px solid rgba(74,144,212,0.4)',borderRadius:5,fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
                   <span style={{fontSize:9,color:'#4A90D4'}}>%</span>
                 </div>
               ))}
@@ -731,16 +731,16 @@ export default function ModificaPiano() {
                 <button key={dayN} onClick={()=>setSelectedDay(dayN)} style={{
                   flexShrink:0,padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:600,
                   cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
-                  background:selectedDay===dayN?'#D4570A':'white',
-                  color:selectedDay===dayN?'white':hasFood?'#111':'#888780',
-                  borderColor:selectedDay===dayN?'#D4570A':hasFood?'#E0DDD6':'#F0EDE8',
+                  background:selectedDay===dayN?'#D4570A':'#0D0D0D',
+                  color:selectedDay===dayN?'white':hasFood?'#F0F0F0':'#AAA',
+                  borderColor:selectedDay===dayN?'#D4570A':hasFood?'#2A2A2A':'#1C1C1C',
                 }}>{dn.slice(0,3)}</button>
               )
             })}
           </div>
         ) : (
           <div style={{width:160,flexShrink:0,background:'#0D0D0D',borderRight:'0.5px solid #1A1A1A',overflowY:'auto'}}>
-            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EDE8',fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
+            <div style={{padding:'10px 12px',borderBottom:'0.5px solid #1C1C1C',fontSize:10,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.08em'}}>Giorni</div>
             {DAY_NAMES.map((dn,i) => {
               const dayN = i+1
               const dayM = meals.filter(m=>m.day_of_week===dayN)
@@ -750,16 +750,16 @@ export default function ModificaPiano() {
               return (
                 <div key={dayN} onClick={()=>setSelectedDay(dayN)} style={{
                   padding:'10px 12px',cursor:'pointer',
-                  background:selectedDay===dayN?'#FEF0E7':'transparent',
+                  background:selectedDay===dayN?'rgba(212,87,10,0.14)':'transparent',
                   borderLeft:selectedDay===dayN?'3px solid #D4570A':'3px solid transparent',
                   transition:'all 0.1s',
                 }}>
-                  <div style={{fontSize:12,fontWeight:selectedDay===dayN?700:500,color:selectedDay===dayN?'#D4570A':'#111'}}>{dn}</div>
+                  <div style={{fontSize:12,fontWeight:selectedDay===dayN?700:500,color:selectedDay===dayN?'#F4894A':'#F0F0F0'}}>{dn}</div>
                   {hasFood && (
                     <>
                       <div style={{fontSize:10,color:'#AAA',marginTop:1}}>{Math.round(dayKcal)} kcal</div>
                       <div style={{height:3,background:'#141414',borderRadius:2,marginTop:3,overflow:'hidden'}}>
-                        <div style={{height:3,background:selectedDay===dayN?'#D4570A':'#E0DDD6',width:`${pct}%`,borderRadius:2}}/>
+                        <div style={{height:3,background:selectedDay===dayN?'#D4570A':'#2A2A2A',width:`${pct}%`,borderRadius:2}}/>
                       </div>
                     </>
                   )}
@@ -781,14 +781,14 @@ export default function ModificaPiano() {
             return (
               <div key={meal.id} style={s.card}>
                 {/* HEADER PASTO */}
-                <div style={{background:'rgba(212,87,10,0.1)',borderBottom:'0.5px solid #F4C9A8'}}>
+                <div style={{background:'rgba(212,87,10,0.1)',borderBottom:'0.5px solid rgba(212,87,10,0.35)'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px'}}>
                     <i className={`ti ${MEAL_ICONS[meal.meal_type]||'ti-circle'}`} style={{fontSize:14,color:'#D4570A'}}/>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:12,fontWeight:700,color:'#D4570A',textTransform:'capitalize'}}>{meal.meal_type}</div>
-                      <div style={{fontSize:10,color:'#7a3508'}}>{mealKcal} kcal · P{mealProt}g C{mealCarbs}g G{mealFat}g
+                      <div style={{fontSize:12,fontWeight:700,color:'#F4894A',textTransform:'capitalize'}}>{meal.meal_type}</div>
+                      <div style={{fontSize:10,color:'#F4894A'}}>{mealKcal} kcal · P{mealProt}g C{mealCarbs}g G{mealFat}g
                         {mealTargets[meal.id] && plan?.kcal_target && (
-                          <span style={{color:Math.abs(mealKcal - Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)) < 50 ? '#3B6D11':'#E24B4A',fontWeight:700}}>
+                          <span style={{color:Math.abs(mealKcal - Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)) < 50 ? '#6FCF97':'#E24B4A',fontWeight:700}}>
                             {' '}· target {Math.round(plan.kcal_target*parseInt(mealTargets[meal.id]||0)/100)} kcal
                           </span>
                         )}
@@ -801,13 +801,13 @@ export default function ModificaPiano() {
                     </div>
                   </div>
                   {showSaveTemplate===meal.id && (
-                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid #F4C9A8',display:'flex',gap:6}}>
-                      <input value={templateName} onChange={e=>setTemplateName(e.target.value)} placeholder="Nome template..." style={{flex:1,padding:'4px 8px',border:'0.5px solid #F4C9A8',borderRadius:6,fontSize:11,fontFamily:'inherit'}}/>
+                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid rgba(212,87,10,0.35)',display:'flex',gap:6}}>
+                      <input value={templateName} onChange={e=>setTemplateName(e.target.value)} placeholder="Nome template..." style={{flex:1,padding:'4px 8px',border:'0.5px solid rgba(212,87,10,0.35)',borderRadius:6,fontSize:11,fontFamily:'inherit'}}/>
                       <button onClick={()=>saveTemplate(meal.id)} style={{...s.btn,padding:'4px 10px',fontSize:11}}>Salva</button>
                     </div>
                   )}
                   {showTemplates===meal.id && (
-                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid #F4C9A8'}}>
+                    <div style={{padding:'6px 12px 8px',borderTop:'0.5px solid rgba(212,87,10,0.35)'}}>
                       {savedTemplates.length===0 ? <div style={{fontSize:11,color:'#AAA'}}>Nessun template salvato</div> :
                         savedTemplates.map(t=>(
                           <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0'}}>
@@ -827,9 +827,9 @@ export default function ModificaPiano() {
                     draggable onDragStart={()=>handleFoodDragStart(meal.id,food.id)}
                     onDragOver={e=>handleFoodDragOver(e,food.id)} onDrop={()=>handleFoodDrop(meal.id,food.id)}
                     onDragEnd={handleFoodDragEnd}
-                    style={{padding:'7px 12px',borderBottom:'0.5px solid #F5F3EF',
+                    style={{padding:'7px 12px',borderBottom:'0.5px solid #1C1C1C',
                       opacity:dragFoodId===food.id?0.4:1,
-                      background:dragOverFoodId===food.id?'#FEF0E7':'transparent'}}>
+                      background:dragOverFoodId===food.id?'rgba(212,87,10,0.14)':'transparent'}}>
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC',cursor:'grab',flexShrink:0}}/>
                       <span style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.food_name}</span>
@@ -900,14 +900,14 @@ export default function ModificaPiano() {
                           {foodResults.map((food,i)=>(
                             <div key={i}
                               onMouseDown={e=>{e.preventDefault();selectFoodFromSearch(food)}}
-                              style={{padding:'8px 12px',borderBottom:'0.5px solid #F5F3EF',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
+                              style={{padding:'8px 12px',borderBottom:'0.5px solid #1C1C1C',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
                               onMouseEnter={e=>e.currentTarget.style.background='#FEF0E7'}
                               onMouseLeave={e=>e.currentTarget.style.background='white'}>
                               <div>
                                 <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.name||food.food_name}</div>
                                 {food.brand&&<div style={{fontSize:10,color:'#AAA'}}>{food.brand}</div>}
                               </div>
-                              <div style={{fontSize:10,color:'#D4570A',fontWeight:600,textAlign:'right',flexShrink:0}}>
+                              <div style={{fontSize:10,color:'#F4894A',fontWeight:600,textAlign:'right',flexShrink:0}}>
                                 <div>{Math.round(food.kcal_100??food.kcal??0)} kcal/100g</div>
                                 <div style={{color:'#AAA'}}>P{food.protein_100??food.protein_g??0}g</div>
                               </div>
@@ -919,18 +919,18 @@ export default function ModificaPiano() {
                     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginBottom:7}}>
                       <div>
                         <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>Grammi</div>
-                        <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:700,color:'#D4570A',background:'rgba(212,87,10,0.1)',borderColor:'#F4C9A8'}} type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
+                        <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:700,color:'#F4894A',background:'rgba(212,87,10,0.1)',borderColor:'rgba(212,87,10,0.35)'}} type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
                       </div>
                       {[{k:'kcal',l:'Kcal'},{k:'protein_g',l:'Prot'},{k:'carbs_g',l:'Carbo'},{k:'fat_g',l:'Grassi'}].map(f=>(
                         <div key={f.k}>
                           <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>{f.l}</div>
-                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',background:newFood._k100!=null?'#EAF3DE':'#F5F3EF'}} type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
+                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',background:newFood._k100!=null?'rgba(59,140,90,0.16)':'#161616'}} type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
                         </div>
                       ))}
                     </div>
                     {newFood.kcal>0 && (
                       <div style={{background:'#0D0D0D',borderRadius:6,padding:'5px 8px',marginBottom:6,display:'flex',gap:8,fontSize:10}}>
-                        <span style={{fontWeight:700,color:'#D4570A'}}>{Math.round(newFood.kcal)} kcal</span>
+                        <span style={{fontWeight:700,color:'#F4894A'}}>{Math.round(newFood.kcal)} kcal</span>
                         <span style={{color:'#4A90D4'}}>P {newFood.protein_g}g</span>
                         <span style={{color:'#E8A020'}}>C {newFood.carbs_g}g</span>
                         <span style={{color:'#3B8C5A'}}>G {newFood.fat_g}g</span>
@@ -963,9 +963,9 @@ export default function ModificaPiano() {
                   <button key={t} onClick={()=>setNewMealType(t)} style={{
                     padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:600,cursor:'pointer',
                     border:'0.5px solid',fontFamily:'inherit',textTransform:'capitalize',
-                    background:newMealType===t?'#D4570A':'white',
+                    background:newMealType===t?'#D4570A':'#0D0D0D',
                     color:newMealType===t?'white':'#888780',
-                    borderColor:newMealType===t?'#D4570A':'#E0DDD6',
+                    borderColor:newMealType===t?'#D4570A':'#2A2A2A',
                   }}>{t}</button>
                 ))}
               </div>

@@ -27,7 +27,7 @@ export default function Login() {
           </div>
           <div>
             <div style={{ fontSize:22, fontWeight:500, color:'#F0F0F0', letterSpacing:-0.5 }}>
-              FO<span style={{ color:'#D4570A' }}>fit</span>
+              FO<span style={{ color:'#F4894A' }}>fit</span>
             </div>
             <div style={{ fontSize:10, color:'#CCC', letterSpacing:'0.08em' }}>FOFIT.FIT</div>
           </div>
@@ -44,7 +44,7 @@ export default function Login() {
             <input
               type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="marco@email.com" required
-              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
+              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
               onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
             />
@@ -54,20 +54,20 @@ export default function Login() {
             <input
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required
-              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#E0DDD6'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
+              style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
               onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
             />
           </div>
 
           {error && (
-            <div style={{ background:'rgba(226,75,74,0.12)', border:'0.5px solid #E24B4A', borderRadius:8, padding:'9px 12px', fontSize:12, color:'#9B1C1C', marginBottom:12 }}>
+            <div style={{ background:'rgba(226,75,74,0.12)', border:'0.5px solid #E24B4A', borderRadius:8, padding:'9px 12px', fontSize:12, color:'#F07070', marginBottom:12 }}>
               {error}
             </div>
           )}
 
           <button type="submit" disabled={loading}
-            style={{ width:'100%', padding:12, background: loading ? '#E0DDD6' : '#D4570A', color:'white', border:'none', borderRadius:9, fontSize:14, fontWeight:500, letterSpacing:'0.02em', transition:'background 0.15s' }}>
+            style={{ width:'100%', padding:12, background: loading ? '#2A2A2A' : '#D4570A', color:'white', border:'none', borderRadius:9, fontSize:14, fontWeight:500, letterSpacing:'0.02em', transition:'background 0.15s' }}>
             {loading ? 'Accesso in corso...' : 'Accedi a FOfit'}
           </button>
         </form>
@@ -75,7 +75,7 @@ export default function Login() {
         <div style={{ fontSize:11, color:'#CCC', textAlign:'center', marginTop:20, lineHeight:1.6 }}>
           Problemi di accesso? Contatta il tuo coach.<br />
           <a href="https://instagram.com/federicoobinu_coach" target="_blank" rel="noreferrer"
-            style={{ color:'#D4570A', textDecoration:'none' }}>@federicoobinu_coach</a> su Instagram
+            style={{ color:'#F4894A', textDecoration:'none' }}>@federicoobinu_coach</a> su Instagram
         </div>
       </div>
     </div>

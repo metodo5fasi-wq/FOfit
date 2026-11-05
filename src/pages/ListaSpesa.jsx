@@ -19,9 +19,9 @@ const CAT_META = {
   'Frutta': { icon:'ti-apple', color:'var(--green)' },
   'Verdure': { icon:'ti-leaf', color:'var(--green)' },
   'Cereali e pasta': { icon:'ti-bowl', color:'#F4894A' },
-  'Legumi': { icon:'ti-circle', color:'#D4570A' },
+  'Legumi': { icon:'ti-circle', color:'#F4894A' },
   'Condimenti e grassi': { icon:'ti-droplet', color:'#AAA' },
-  'Integratori': { icon:'ti-pill', color:'#D4570A' },
+  'Integratori': { icon:'ti-pill', color:'#F4894A' },
   'Bevande': { icon:'ti-glass', color:'#4A90D4' },
   'Snack e dolci': { icon:'ti-cookie', color:'#F4894A' },
   'Altro': { icon:'ti-shopping-cart', color:'#AAA' },
@@ -157,7 +157,7 @@ export default function ListaSpesa() {
           <div style={{...s.card, marginBottom:14}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
               <span style={{fontSize:13,fontWeight:500,color:'#F0F0F0'}}>Completato</span>
-              <span style={{fontSize:13,color:'#D4570A',fontWeight:500}}>{pct}%</span>
+              <span style={{fontSize:13,color:'#F4894A',fontWeight:500}}>{pct}%</span>
             </div>
             <div style={{height:8,background:'#161616',borderRadius:4}}>
               <div style={{height:8,borderRadius:4,background:pct===100?'#3B6D11':'#D4570A',width:`${pct}%`,transition:'width 0.3s'}}/>
@@ -198,8 +198,8 @@ export default function ListaSpesa() {
                 <div key={item.id} style={{...s.item, opacity: item.is_checked ? 0.5 : 1}}
                   onClick={() => toggleItem(item.id, item.is_checked)}>
                   <div style={{
-                    width:22, height:22, borderRadius:6, border:`2px solid ${item.is_checked?'#D4570A':'#E0DDD6'}`,
-                    background: item.is_checked?'#D4570A':'white', display:'flex', alignItems:'center',
+                    width:22, height:22, borderRadius:6, border:`2px solid ${item.is_checked?'#D4570A':'#2A2A2A'}`,
+                    background: item.is_checked?'#D4570A':'#0D0D0D', display:'flex', alignItems:'center',
                     justifyContent:'center', flexShrink:0, transition:'all 0.15s'
                   }}>
                     {item.is_checked && <i className="ti ti-check" style={{fontSize:12,color:'white'}}/>}

@@ -307,7 +307,7 @@ export default function ImportaPiano() {
       </div>
 
       {/* PROGRESS BAR */}
-      <div style={{height:3,background:'#E0DDD6',flexShrink:0}}>
+      <div style={{height:3,background:'#2A2A2A',flexShrink:0}}>
         <div style={{height:3,background:'#D4570A',width:step===1?'50%':'100%',transition:'width 0.3s'}}/>
       </div>
 
@@ -342,9 +342,9 @@ export default function ImportaPiano() {
             <div style={{marginBottom:10,background:'#0D0D0D',borderRadius:10,padding:'12px',border:'0.5px solid #1C1C1C'}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#AAA',marginBottom:6}}>
                 <span>📅 {progress.label}</span>
-                <span style={{fontWeight:600,color:'#D4570A'}}>{progress.current}/{progress.total}</span>
+                <span style={{fontWeight:600,color:'#F4894A'}}>{progress.current}/{progress.total}</span>
               </div>
-              <div style={{height:6,background:'#E0DDD6',borderRadius:4}}>
+              <div style={{height:6,background:'#2A2A2A',borderRadius:4}}>
                 <div style={{height:6,background:'#D4570A',borderRadius:4,width:`${progress.total>0?Math.round(progress.current/progress.total*100):0}%`,transition:'width 0.4s'}}/>
               </div>
             </div>
@@ -365,10 +365,10 @@ export default function ImportaPiano() {
         {step === 2 && parsedPlan && <>
           {/* CONFERMA ELABORAZIONE */}
           <div style={{background:'rgba(59,140,90,0.1)',border:'0.5px solid #3B6D11',borderRadius:12,padding:'14px',marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#3B6D11',marginBottom:4}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#6FCF97',marginBottom:4}}>
               ✓ Piano elaborato — {parsedPlan.varianti?.length} giorni · {parsedPlan.varianti?.reduce((s,v)=>s+(v.pasti?.length||0),0)} pasti totali
             </div>
-            <div style={{display:'flex',gap:12,fontSize:12,color:'#3B6D11'}}>
+            <div style={{display:'flex',gap:12,fontSize:12,color:'#6FCF97'}}>
               <span>{Math.round(parsedPlan.kcal_totali||0)} kcal</span>
               <span>P {Math.round(parsedPlan.proteine_g||0)}g</span>
               <span>C {Math.round(parsedPlan.carboidrati_g||0)}g</span>
@@ -413,13 +413,13 @@ export default function ImportaPiano() {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
                 <div style={{fontSize:13,fontWeight:700,color:'#F0F0F0'}}>{v.nome}</div>
                 <div style={{display:'flex',gap:6}}>
-                  {v.kcal && <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#D4570A'}}>{Math.round(v.kcal)} kcal</span>}
+                  {v.kcal && <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>{Math.round(v.kcal)} kcal</span>}
                   {v.proteine_g && <span style={{...s.tag,background:'rgba(74,144,212,0.1)',color:'#4A90D4'}}>P{Math.round(v.proteine_g)}g</span>}
                 </div>
               </div>
               {(v.pasti||[]).map((p2, pi) => (
-                <div key={pi} style={{padding:'8px 0',borderBottom:'0.5px solid #F0EDE8'}}>
-                  <div style={{fontSize:12,fontWeight:600,color:'#D4570A',marginBottom:4}}>{p2.nome}</div>
+                <div key={pi} style={{padding:'8px 0',borderBottom:'0.5px solid #1C1C1C'}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'#F4894A',marginBottom:4}}>{p2.nome}</div>
                   {(p2.alimenti||[]).map((a, ai) => (
                     <div key={ai} style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#AAA',padding:'2px 0'}}>
                       <span>{a.nome} <span style={{color:'#BBB8B0'}}>{a.quantita_g}g</span></span>

@@ -7,7 +7,7 @@ import { requestNotificationPermission, checkNotificationStatus, sendTestNotific
 import { GraficoPeso, GraficoKcal } from '../components/GraficiProgressi'
 
 const QUICK_LINKS = [
-  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#D4570A', bg:'#FEF0E7' },
+  { to:'/piano', icon:'ti-clipboard-list', label:'Piano alimentare', sub:'I tuoi pasti della settimana', color:'#F4894A', bg:'#FEF0E7' },
   { to:'/diario', icon:'ti-pencil', label:'Diario di oggi', sub:'Registra quello che mangi', color:'#E8803A', bg:'#FEF3EC' },
   { to:'/progressi', icon:'ti-chart-line', label:'Progressi', sub:'Peso e misurazioni', color:'#3B8C5A', bg:'#EAF3DE' },
   { to:'/spesa', icon:'ti-shopping-cart', label:'Lista spesa', sub:'Generata dal tuo piano', color:'#4A90D4', bg:'#EBF3FD' },
@@ -275,7 +275,7 @@ export default function Dashboard() {
               <div style={{fontSize:22,fontWeight:800,color:'#F4894A',lineHeight:1}}>
                 <AnimatedNumber value={streak} duration={400}/>
               </div>
-              <div style={{fontSize:9,color:'#D4570A',fontWeight:700,marginTop:2}}>giorni 🔥</div>
+              <div style={{fontSize:9,color:'#F4894A',fontWeight:700,marginTop:2}}>giorni 🔥</div>
             </div>
           )}
         </div>
@@ -365,7 +365,7 @@ export default function Dashboard() {
                       {nextWorkoutExercises.length} es.
                     </div>
                   )}
-                  <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333'}}/>
+                  <i className="ti ti-chevron-right" style={{fontSize:14,color:'#AAA'}}/>
                 </div>
               </div>
               {nextWorkoutExercises.length > 0 && (
@@ -374,16 +374,16 @@ export default function Dashboard() {
                     <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
                       <div style={{width:5,height:5,borderRadius:'50%',background:'#3B8C5A',flexShrink:0}}/>
                       <span style={{fontSize:12,color:'#DDD',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex.exercise_name}</span>
-                      <span style={{fontSize:10,color:'#555',flexShrink:0}}>{ex.sets}×{ex.reps}</span>
+                      <span style={{fontSize:10,color:'#AAA',flexShrink:0}}>{ex.sets}×{ex.reps}</span>
                     </div>
                   ))}
                   {nextWorkoutExercises.length > 4 && (
-                    <div style={{fontSize:10,color:'#555',marginLeft:13}}>+{nextWorkoutExercises.length-4} altri esercizi</div>
+                    <div style={{fontSize:10,color:'#AAA',marginLeft:13}}>+{nextWorkoutExercises.length-4} altri esercizi</div>
                   )}
                 </div>
               )}
               {nextWorkoutExercises.length === 0 && (
-                <div style={{padding:'0 14px 12px',fontSize:12,color:'#555'}}>Nessun esercizio per oggi — giorno di riposo 😌</div>
+                <div style={{padding:'0 14px 12px',fontSize:12,color:'#AAA'}}>Nessun esercizio per oggi — giorno di riposo 😌</div>
               )}
             </div>
           </Link>
@@ -423,7 +423,7 @@ export default function Dashboard() {
               }}>
                 <i className="ti ti-bell" style={{
                   fontSize:18,
-                  color: unreadNotifs > 0 ? '#F4894A' : '#333',
+                  color: unreadNotifs > 0 ? '#F4894A' : '#AAA',
                 }}/>
               </div>
               {unreadNotifs > 0 && (
@@ -443,17 +443,17 @@ export default function Dashboard() {
             <div style={{flex:1}}>
               <div style={{
                 fontSize:13,fontWeight:700,
-                color: unreadNotifs > 0 ? '#F0F0F0' : '#555',
+                color: unreadNotifs > 0 ? '#F0F0F0' : '#AAA',
               }}>
                 {unreadNotifs > 0
                   ? `${unreadNotifs} nuova${unreadNotifs > 1 ? ' notifiche' : ' notifica'}`
                   : 'Nessuna nuova notifica'}
               </div>
-              <div style={{fontSize:10,color:'#444',marginTop:2}}>
+              <div style={{fontSize:10,color:'#AAA',marginTop:2}}>
                 {unreadNotifs > 0 ? 'Tocca per vedere' : ''}
               </div>
             </div>
-            <i className="ti ti-chevron-right" style={{fontSize:14,color:'#333',flexShrink:0}}/>
+            <i className="ti ti-chevron-right" style={{fontSize:14,color:'#AAA',flexShrink:0}}/>
           </div>
         </Link>
         </FadeIn>
@@ -533,7 +533,7 @@ export default function Dashboard() {
           <div style={{background:'#0D0D0D',borderRadius:14,padding:'14px 16px',border:'0.5px solid #161616',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
               <div style={{fontSize:9,fontWeight:700,color:'#F0F0F0',textTransform:'uppercase',letterSpacing:'0.1em'}}>Andamento peso</div>
-              <Link to="/progressi" style={{fontSize:10,color:'#D4570A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
+              <Link to="/progressi" style={{fontSize:10,color:'#F4894A',fontWeight:700,textDecoration:'none'}}>Vedi tutto →</Link>
             </div>
             <GraficoPeso compact={true}/>
           </div>
@@ -543,7 +543,7 @@ export default function Dashboard() {
         {/* NOTE COACH */}
         {plan?.notes && (
           <div style={{background:'#120800',borderRadius:14,padding:'14px 16px',border:'0.5px solid rgba(212,87,10,0.2)',marginBottom:12}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#D4570A',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:8,display:'flex',alignItems:'center',gap:5}}>
+            <div style={{fontSize:9,fontWeight:700,color:'#F4894A',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:8,display:'flex',alignItems:'center',gap:5}}>
               <i className="ti ti-message-circle" style={{fontSize:12}}/> Note del coach
             </div>
             <div style={{fontSize:13,color:'#C5783A',lineHeight:1.6}}>{plan.notes}</div>

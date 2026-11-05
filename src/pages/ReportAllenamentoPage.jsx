@@ -70,12 +70,12 @@ export default function ReportAllenamentoPage() {
           <div style={{ background: 'rgba(212,87,10,0.12)', border: '0.5px solid #D4570A', borderRadius: 12, padding: '14px', marginBottom: 14, cursor: 'pointer' }} onClick={() => setSelectedReport(draft)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#D4570A' }}>📝 Bozza in corso</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#F4894A' }}>📝 Bozza in corso</div>
                 <div style={{ fontSize: 11, color: '#CCC', marginTop: 2 }}>
                   Ultima modifica: {new Date(draft.updated_at || draft.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#D4570A', background: '#0D0D0D', padding: '4px 10px', borderRadius: 8 }}>Continua →</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#F4894A', background: '#0D0D0D', padding: '4px 10px', borderRadius: 8 }}>Continua →</span>
             </div>
           </div>
         )}
@@ -89,8 +89,8 @@ export default function ReportAllenamentoPage() {
             {submitted.map(r => (
               <div key={r.id} onClick={() => setSelectedReport(r)}
                 style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '14px', marginBottom: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className="ti ti-clipboard-check" style={{ fontSize: 18, color: '#7C3AED' }} />
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(155,89,182,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className="ti ti-clipboard-check" style={{ fontSize: 18, color: '#B39DDB' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F0F0' }}>

@@ -9,7 +9,7 @@ const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
   page: { flex:1, overflowY:'auto', padding:'18px 22px' },
   card: { background:'#0D0D0D', borderRadius:10, border:'0.5px solid #1C1C1C', padding:'14px 16px', marginBottom:14 },
-  badge: { background:'rgba(212,87,10,0.1)', color:'#D4570A', fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
+  badge: { background:'rgba(212,87,10,0.1)', color:'#F4894A', fontSize:11, padding:'3px 10px', borderRadius:20, fontWeight:500 },
   dayTab: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #1C1C1C', background:'#0D0D0D', color:'#AAA', flexShrink:0 },
   dayTabActive: { padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid #D4570A', background:'#D4570A', color:'white', flexShrink:0 },
   mealBlock: { border:'0.5px solid #1C1C1C', borderRadius:10, overflow:'hidden', marginBottom:10 },
@@ -111,8 +111,8 @@ export default function PianoAlimentare() {
 
         {/* Nota coach */}
         {plan?.notes && (
-          <div style={{background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:8,padding:'11px 14px',marginBottom:14,fontSize:13,color:'#7a3508',lineHeight:1.5}}>
-            <div style={{fontSize:11,fontWeight:500,color:'#D4570A',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>
+          <div style={{background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:8,padding:'11px 14px',marginBottom:14,fontSize:13,color:'#F4894A',lineHeight:1.5}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#F4894A',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>
               <i className="ti ti-message-circle" style={{fontSize:12,verticalAlign:-1,marginRight:4}}/>Note del coach
             </div>
             {plan.notes}
@@ -184,7 +184,7 @@ export default function PianoAlimentare() {
                         </div>
                         <div style={{fontSize:12,color:'#AAA',marginRight:8}}>{food.quantity_g}g</div>
                         <div style={{display:'flex',gap:4}}>
-                          <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#D4570A'}}>P {food.protein_g}g</span>
+                          <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>P {food.protein_g}g</span>
                           <span style={{...s.tag,background:'rgba(212,87,10,0.1)',color:'#F4894A'}}>C {food.carbs_g}g</span>
                           <span style={{...s.tag,background:'#161616',color:'#AAA'}}>G {food.fat_g}g</span>
                         </div>
@@ -193,7 +193,7 @@ export default function PianoAlimentare() {
                     {foods.length > 0 && (
                       <div style={{display:'flex',gap:16,padding:'10px 0',borderTop:'0.5px solid #1A1A1A'}}>
                         <span style={{fontSize:11,color:'#AAA'}}>Totale pasto:</span>
-                        <span style={{fontSize:11,color:'#D4570A',fontWeight:500}}>{mealKcal} kcal</span>
+                        <span style={{fontSize:11,color:'#F4894A',fontWeight:500}}>{mealKcal} kcal</span>
                         <span style={{fontSize:11,color:'#AAA'}}>P {mealP}g · C {mealC}g · G {mealG}g</span>
                       </div>
                     )}
@@ -217,7 +217,7 @@ function AlternativeSection({ alternatives }) {
   const [openAlt, setOpenAlt] = React.useState(null)
   if (!alternatives || alternatives.length === 0) return null
   return (
-    <div style={{marginTop:8,paddingTop:8,borderTop:'0.5px dashed #E0DDD6'}}>
+    <div style={{marginTop:8,paddingTop:8,borderTop:'0.5px dashed #2A2A2A'}}>
       <div style={{fontSize:11,color:'#AAA',fontWeight:500,marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
         <i className="ti ti-refresh" style={{fontSize:12,color:'#F4894A'}}/>
         Alternative disponibili
@@ -226,14 +226,14 @@ function AlternativeSection({ alternatives }) {
         <div key={ai} style={{marginBottom:6}}>
           <button onClick={()=>setOpenAlt(openAlt===ai?null:ai)} style={{
             width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',
-            padding:'8px 10px',borderRadius:8,border:'0.5px solid #F4C9A8',
-            background:openAlt===ai?'#FEF0E7':'#FEF8F4',cursor:'pointer',fontFamily:'inherit'
+            padding:'8px 10px',borderRadius:8,border:'0.5px solid rgba(212,87,10,0.35)',
+            background:openAlt===ai?'rgba(212,87,10,0.14)':'rgba(212,87,10,0.10)',cursor:'pointer',fontFamily:'inherit'
           }}>
-            <span style={{fontSize:12,fontWeight:500,color:'#D4570A'}}>{alt.nome || `Alternativa ${ai+1}`}</span>
+            <span style={{fontSize:12,fontWeight:500,color:'#F4894A'}}>{alt.nome || `Alternativa ${ai+1}`}</span>
             <i className={`ti ti-chevron-${openAlt===ai?'up':'down'}`} style={{fontSize:12,color:'#F4894A'}}/>
           </button>
           {openAlt === ai && (
-            <div style={{padding:'8px 10px',background:'#FEF8F4',borderRadius:'0 0 8px 8px',border:'0.5px solid #F4C9A8',borderTop:'none'}}>
+            <div style={{padding:'8px 10px',background:'rgba(212,87,10,0.10)',borderRadius:'0 0 8px 8px',border:'0.5px solid rgba(212,87,10,0.35)',borderTop:'none'}}>
               {(alt.alimenti || []).map((a, fi) => (
                 <div key={fi} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.08)'}}>
                   <div style={{width:5,height:5,borderRadius:'50%',background:'#F4894A',flexShrink:0}}/>
@@ -243,7 +243,7 @@ function AlternativeSection({ alternatives }) {
                   </div>
                   <div style={{fontSize:11,color:'#AAA'}}>{a.quantita_g}g</div>
                   <div style={{display:'flex',gap:3}}>
-                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'rgba(212,87,10,0.1)',color:'#D4570A',fontWeight:500}}>P{a.proteine_g}g</span>
+                    <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'rgba(212,87,10,0.1)',color:'#F4894A',fontWeight:500}}>P{a.proteine_g}g</span>
                     <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'rgba(212,87,10,0.1)',color:'#F4894A',fontWeight:500}}>C{a.carboidrati_g}g</span>
                     <span style={{fontSize:9,padding:'1px 5px',borderRadius:6,background:'#161616',color:'#AAA',fontWeight:500}}>G{a.grassi_g}g</span>
                   </div>
