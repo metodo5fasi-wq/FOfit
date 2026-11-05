@@ -1,9 +1,9 @@
+import { applyCors, guard, isUuid } from '../server/auth.js'
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  const auth = await guard(req, res, { roles: ['admin'], limit: 30 }); if (!auth) return
 
   const SUPABASE_URL = 'https://hdgiwrwcxfbojqfeyrxn.supabase.co'
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   try {
     const { clientId } = req.body
     if (!clientId) return res.status(400).json({ error: 'clientId mancante' })
+    if (!isUuid(clientId)) return res.status(400).json({ error: 'clientId non valido' })
 
     const periodEnd = new Date().toISOString().split('T')[0]
     const periodStart = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0]

@@ -1,3 +1,4 @@
+import { applyCors, guard } from '../server/auth.js'
 // Legge UN giorno di piano alimentare e lo trasforma in pasti/alimenti.
 // Cambi rispetto alla versione precedente: il testo del giorno non viene più tagliato a 2500 caratteri, la risposta può essere lunga (4096 token invece di 1500),
 // l'AI non deve inventare kcal/macro né contare le alternative come alimenti, e se la risposta viene comunque troncata si recuperano i pasti completi e si avvisa (truncated).
@@ -40,11 +41,10 @@ TESTO:
 ${String(dayText).substring(0, MAX_TEXT)}`
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).end()
+  const auth = await guard(req, res, { roles: ['admin'], limit: 60 }); if (!auth) return
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return res.status(500).json({ error: 'API key mancante' })

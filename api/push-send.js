@@ -1,3 +1,4 @@
+import { applyCors, guard, isAdmin, isUuid, roleOf } from '../server/auth.js'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://hdgiwrwcxfbojqfeyrxn.supabase.co'
@@ -109,12 +110,15 @@ async function encryptPayload(subscription, payload) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  const auth = await guard(req, res, { limit: 60 }); if (!auth) return
 
-  const { clientId, title, body, url } = req.body
+  const { clientId, title, body, url } = req.body || {}
+  if (!isUuid(clientId)) return res.status(400).json({ error: 'clientId non valido' })
+  // il coach può notificare chiunque; un cliente solo il coach (es. prenotazione di una chiamata)
+  if (!isAdmin(auth) && (await roleOf(clientId)) !== 'admin') return res.status(403).json({ error: 'Operazione non consentita' })
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 
   // Prendi subscription del cliente

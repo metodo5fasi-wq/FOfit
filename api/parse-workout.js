@@ -1,3 +1,4 @@
+import { applyCors, guard } from '../server/auth.js'
 function extractJSON(text) {
   const clean = text.replace(/```json|```/g, '').trim()
   try { return JSON.parse(clean) } catch(e) {}
@@ -34,11 +35,10 @@ const SYSTEM = 'Sei un parser di schede di allenamento. Rispondi ESCLUSIVAMENTE 
 const SCHEMA = `{"days":[{"day_label":"Giorno A - Petto e Tricipiti","exercises":[{"exercise_name":"Panca piana","muscle_group":"Petto","video_url":"https://youtube.com/...","description":"Scendi controllato, spingi senza bloccare i gomiti","sets":4,"reps":"8-10","rest_seconds":90}]}]}`
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  const auth = await guard(req, res, { roles: ['admin'], limit: 30 }); if (!auth) return
 
   try {
     const { text } = req.body

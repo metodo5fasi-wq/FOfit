@@ -1,10 +1,12 @@
+import { applyCors, guard, isAdmin, isUuid } from '../server/auth.js'
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
 
-  const { subscription, clientId } = req.body
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  const auth = await guard(req, res, { limit: 30 }); if (!auth) return
+  const { subscription, clientId } = req.body || {}
+  if (!isUuid(clientId) || (!isAdmin(auth) && auth.id !== clientId)) return res.status(403).json({ error: 'Operazione non consentita' })
   if (!subscription || !clientId) return res.status(400).json({ error: 'Dati mancanti' })
 
   const r = await fetch('https://hdgiwrwcxfbojqfeyrxn.supabase.co/rest/v1/push_subscriptions', {

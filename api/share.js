@@ -1,7 +1,6 @@
+import { applyCors, guard, isAdmin, isUuid } from '../server/auth.js'
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res, { methods: 'GET, POST, OPTIONS' })
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   const SUPABASE_URL = 'https://hdgiwrwcxfbojqfeyrxn.supabase.co'
@@ -15,10 +14,12 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
   }
 
-  // POST — crea un token di condivisione
+  // POST — crea un token di condivisione (serve essere il coach o il proprietario dei dati)
   if (req.method === 'POST') {
-    const { clientId, shareType, sessionId, periodStart, periodEnd, progressEntryId } = req.body
+    const auth = await guard(req, res, { limit: 30 }); if (!auth) return
+    const { clientId, shareType, sessionId, periodStart, periodEnd, progressEntryId } = req.body || {}
     if (!clientId || !shareType) return res.status(400).json({ error: 'Dati mancanti' })
+    if (!isUuid(clientId) || (!isAdmin(auth) && auth.id !== clientId)) return res.status(403).json({ error: 'Operazione non consentita' })
 
     const body = {
       client_id: clientId,
@@ -42,6 +43,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { token } = req.query
     if (!token) return res.status(400).json({ error: 'Token mancante' })
+    if (!/^[A-Za-z0-9_-]{8,128}$/.test(String(token))) return res.status(400).json({ error: 'Token non valido' })
 
     // Trova il token
     const tokenRes = await fetch(`${SUPABASE_URL}/rest/v1/share_tokens?token=eq.${token}&select=*`, { headers })

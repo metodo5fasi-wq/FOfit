@@ -1,6 +1,9 @@
+import { applyCors, guard } from '../server/auth.js'
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  applyCors(req, res, { methods: 'GET, OPTIONS' })
+  if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).end()
+  const auth = await guard(req, res, { roles: ['admin'], limit: 120 }); if (!auth) return
 
   const q = (req.query.q || '').trim()
   const limit = parseInt(req.query.limit) || 10
