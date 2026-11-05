@@ -22,6 +22,7 @@
   ],
   "functions": {
     "api/parse-plan.js": { "maxDuration": 60 },
+    "api/parse-day.js": { "maxDuration": 60 },
     "api/create-user.js": { "maxDuration": 30 },
     "api/ai-coach.js": { "maxDuration": 60 },
     "api/push-send.js": { "maxDuration": 30 },
