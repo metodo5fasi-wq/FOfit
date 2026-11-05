@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { clearCache } from '../lib/offline'
 import { useAuth, useTheme } from '../App'
 
 const NAV_CLIENT = [
@@ -222,7 +223,7 @@ export default function Layout() {
   }, [])
 
   async function handleLogout() {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut(); clearCache()
     navigate('/login')
   }
 
@@ -245,7 +246,7 @@ export default function Layout() {
           <div style={{fontSize:12,color:'#CCC',marginBottom:4}}>Per assistenza contatta</div>
           <div style={{fontSize:14,fontWeight:700,color:'#F4894A'}}>Federico Obinu — FOfit Coach</div>
         </div>
-        <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+        <button onClick={async()=>{ await supabase.auth.signOut(); clearCache(); window.location.href='/login' }}
           style={{background:'#161616',color:'#CCC',border:'0.5px solid #222',borderRadius:9,padding:'10px 20px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
           Esci dall'account
         </button>
