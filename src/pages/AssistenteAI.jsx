@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { useNavigate } from 'react-router-dom'
@@ -194,7 +195,7 @@ export default function AssistenteAI() {
     })
 
     try {
-      const res = await fetch('/api/ai-coach', {
+      const res = await authFetch('/api/ai-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

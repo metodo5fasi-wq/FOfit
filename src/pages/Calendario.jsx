@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Toast } from '../components/Animations'
@@ -122,7 +123,7 @@ export default function Calendario() {
       const dateLabel = date.toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' })
       const adminId = admins[0].id
       // Notifica push
-      await fetch('/api/push-send', {
+      await authFetch('/api/push-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

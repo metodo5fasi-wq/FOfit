@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -237,7 +238,7 @@ export default function CreaAllenamento() {
     let cur = 5
     const timer = setInterval(() => { cur = Math.min(cur + 1.2, 88); setAiProgress(Math.round(cur)); setAiStatus(msgs[Math.min(Math.floor((cur - 5) / (83 / msgs.length)), msgs.length - 1)]) }, 400)
     try {
-      const res = await fetch('/api/generate-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'workout', formData: form, structure, library: LIB, avoid }) })
+      const res = await authFetch('/api/generate-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'workout', formData: form, structure, library: LIB, avoid }) })
       clearInterval(timer); setAiProgress(95); setAiStatus('Costruzione scheda...')
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Errore generazione')

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -54,7 +55,7 @@ export default function ImportaAllenamento() {
     setLoading(true)
     setError('')
     try {
-      const response = await fetch('/api/parse-workout', {
+      const response = await authFetch('/api/parse-workout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: rawText })

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlanPdfButton from '../components/PlanPdfButton'
@@ -262,7 +263,7 @@ export default function ModificaPiano() {
 
         // Poi prova API come fallback
         try {
-          const r = await fetch(`/api/search-food?q=${encodeURIComponent(query)}&limit=10`)
+          const r = await authFetch(`/api/search-food?q=${encodeURIComponent(query)}&limit=10`)
           const data = await r.json()
           const apiResults = data.foods || []
           const combined = [...localResults]

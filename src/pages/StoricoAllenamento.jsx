@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link, useNavigate } from 'react-router-dom'
@@ -111,7 +112,7 @@ export default function StoricoAllenamento() {
   async function shareSession(session) {
     setSharingId(session.id)
     try {
-      const r = await fetch('/api/share', {
+      const r = await authFetch('/api/share', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: profile.id, shareType: 'session', sessionId: session.id })
       })
@@ -128,7 +129,7 @@ export default function StoricoAllenamento() {
   async function sharePeriod() {
     setSharingId('period')
     try {
-      const r = await fetch('/api/share', {
+      const r = await authFetch('/api/share', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: profile.id, shareType: 'period', periodStart, periodEnd })
       })

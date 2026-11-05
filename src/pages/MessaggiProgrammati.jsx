@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -102,7 +103,7 @@ export default function MessaggiProgrammati() {
       read: false,
     })
     // 2. Push notification sul telefono (anche con app chiusa)
-    await fetch('/api/push-send', {
+    await authFetch('/api/push-send', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -113,7 +114,7 @@ export default function MessaggiProgrammati() {
       })
     }).catch(() => {}) // ignora se non ha subscription
     // 3. Messaggio chat
-    await fetch('/api/messages', {
+    await authFetch('/api/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ clientId: msg.client_id, coachId: profile.id, message: msg.message, senderRole: 'coach' })
@@ -142,11 +143,11 @@ export default function MessaggiProgrammati() {
           body: msg.message,
           read: false,
         })
-        await fetch('/api/push-send', {
+        await authFetch('/api/push-send', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, title: '💬 Messaggio dal coach', body: msg.message, url: '/notifiche' })
         }).catch(()=>{})
-        await fetch('/api/messages', {
+        await authFetch('/api/messages', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ clientId: msg.client_id, coachId: msg.coach_id, message: msg.message, senderRole: 'coach' })
         })

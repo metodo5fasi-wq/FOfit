@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -259,7 +260,7 @@ export default function CreaPiano(){
     let cur=5
     const timer=setInterval(()=>{cur=Math.min(cur+1.5,88);const di=Math.floor((cur-5)/12);setAiProgress(Math.round(cur));setAiStatus(msgs[Math.min(di,msgs.length-1)])},400)
     try{
-      const res=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
+      const res=await authFetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({formData,kcalTarget,protTarget,carbsTarget,fatTarget,dietType:selectedDiet,dayCalories})})
       clearInterval(timer);setAiProgress(95);setAiStatus('Applicando modifiche...')
       const data=await res.json()
@@ -279,7 +280,7 @@ export default function CreaPiano(){
     const formData=lastFormData||buildFormDataFromDOM()
     setRegenDay(di)
     try{
-      const res=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
+      const res=await authFetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({formData,kcalTarget,protTarget,carbsTarget,fatTarget,dietType:selectedDiet,dayCalories})})
       const data=await res.json()
       if(!res.ok||data.error) throw new Error(data.error)
@@ -340,7 +341,7 @@ export default function CreaPiano(){
     },400)
 
     try{
-      const res=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
+      const res=await authFetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({formData,kcalTarget,protTarget,carbsTarget,fatTarget,dietType:selectedDiet,dayCalories})})
       clearInterval(timer)
       setAiProgress(95);setAiStatus('Costruzione piano...')

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -84,7 +85,7 @@ export default function MessaggiCoach() {
       sender_role: 'client', created_at: new Date().toISOString(), is_read: false
     }])
 
-    await fetch('/api/messages', {
+    await authFetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clientId: profile.id, message: text, senderRole: 'client' })

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { authFetch } from '../lib/authFetch'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -44,7 +45,7 @@ export default function ImportaPiano() {
   // Legge UN giorno con l'AI (con un secondo tentativo per l'avvio a freddo del servizio)
   async function readDay(db) {
     const call = async () => {
-      const r = await fetch('/api/parse-day', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dayText: db.body, macros: db.macros }) })
+      const r = await authFetch('/api/parse-day', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dayText: db.body, macros: db.macros }) })
       const txt = await r.text(); let parsed = null; try { parsed = JSON.parse(txt) } catch (e) {}
       return parsed?.pasti?.length ? parsed : null
     }
@@ -76,7 +77,7 @@ export default function ImportaPiano() {
       if (dayBlocks.length === 0) {
         // Nessun giorno trovato — piano giornaliero singolo, usa parse-day
         setProgress({ current: 0, total: 1, label: 'Elaborazione piano...' })
-        const r = await fetch('/api/parse-day', {
+        const r = await authFetch('/api/parse-day', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dayText: rawText, macros: null })
