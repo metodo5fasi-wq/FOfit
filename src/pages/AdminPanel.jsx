@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { dbSave } from '../lib/db'
+import { sendToClient } from '../lib/notify'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -39,8 +40,9 @@ export default function AdminPanel() {
     else { const c = clients.find(c => c.id === i.clientId); if (c) setSelectedClient(c) }       // messaggi: si apre il cliente
   }
   async function replyToClient(clientId, text) {
-    const { error } = await supabase.from('coach_messages').insert({ client_id: clientId, sender_role: 'admin', content: text, is_read: false })
-    return !error
+    // stesso percorso dei messaggi programmati: il cliente la vede in Home e nelle Notifiche (e può rispondere ancora)
+    const r = await sendToClient({ clientId, coachId: profile?.id, title: 'Risposta del coach', body: text })
+    return r.ok
   }
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')

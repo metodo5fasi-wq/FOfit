@@ -14,7 +14,7 @@ const STEPS = [
   {
     icon: 'ti-clipboard-list',
     color: '#F4894A',
-    bg: '#FEF0E7',
+    bg: 'rgba(212,87,10,0.16)',
     title: 'Il tuo piano alimentare',
     sub: 'Sempre con te',
     desc: 'Il tuo coach prepara un piano alimentare personalizzato per te. Trovi ogni pasto della settimana, con tutti gli ingredienti e le calorie già calcolate.',
@@ -23,7 +23,7 @@ const STEPS = [
   {
     icon: 'ti-pencil',
     color: '#E8803A',
-    bg: '#FEF3EC',
+    bg: 'rgba(212,87,10,0.16)',
     title: 'Diario giornaliero',
     sub: 'Traccia ogni pasto',
     desc: 'Registra quello che mangi ogni giorno. Cerca tra centinaia di alimenti italiani, aggiungi le grammature e tieni tutto sotto controllo.',
@@ -32,7 +32,7 @@ const STEPS = [
   {
     icon: 'ti-chart-line',
     color: '#3B8C5A',
-    bg: '#EAF3DE',
+    bg: 'rgba(59,140,90,0.18)',
     title: 'Tracker progressi',
     sub: 'Vedi i tuoi risultati',
     desc: 'Registra peso, misurazioni e foto. Vedi graficamente come stai progredendo settimana dopo settimana. I risultati ti motivano!',
@@ -41,7 +41,7 @@ const STEPS = [
   {
     icon: 'ti-robot',
     color: '#9B59B6',
-    bg: '#F5EEF8',
+    bg: 'rgba(155,89,182,0.18)',
     title: 'FO Coach AI',
     sub: 'Il tuo assistente personale',
     desc: 'Chiedi sostituzioni creative, ricevi ricette sfiziose calibrate sui tuoi macro e aggiungile direttamente al diario con un click.',
@@ -50,7 +50,7 @@ const STEPS = [
   {
     icon: 'ti-circle-check',
     color: '#3B8C5A',
-    bg: '#EAF3DE',
+    bg: 'rgba(59,140,90,0.18)',
     title: 'Tutto pronto!',
     sub: null,
     desc: 'Il tuo coach ha già preparato tutto per te. Inizia esplorando il tuo piano alimentare.',

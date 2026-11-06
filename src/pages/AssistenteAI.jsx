@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
@@ -103,7 +104,7 @@ export default function AssistenteAI() {
   const [clientContext, setClientContext] = useState({})
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateStr()
 
   useEffect(() => { if (profile) { loadContext(); loadHistory() } }, [profile])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])

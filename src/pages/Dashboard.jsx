@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { localDateStr } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
@@ -17,7 +18,7 @@ function useHomeData(profile) {
   const [data, setData] = useState(null)
   const load = useCallback(async () => {
     if (!uid) return
-    const today = new Date().toISOString().split('T')[0], weekDate = weekDateOf()
+    const today = localDateStr(), weekDate = weekDateOf()
     const L = (name, fetcher, opt) => loadWithCache(uid, name, fetcher, opt)
     const wplanR = await L('wk_plan', () => supabase.from('workout_plans').select('*').eq('client_id', uid).eq('is_active', true).limit(1))
     const wplan = wplanR.data?.[0] || null

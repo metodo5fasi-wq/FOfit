@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 
@@ -173,7 +174,7 @@ export default function Abbonamenti() {
     fetchClients()
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateStr()
   const scaduti = clients.filter(c=>c.subscription_end && c.subscription_end < today)
   const inScadenza = clients.filter(c=>{ const d=daysLeft(c.subscription_end); return d!==null&&d>=0&&d<=7 })
   const attivi = clients.filter(c=>{ const d=daysLeft(c.subscription_end); return d!==null&&d>7 })

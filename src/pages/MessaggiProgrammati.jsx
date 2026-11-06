@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { dbMust, dbSave } from '../lib/db'
-import { authFetch } from '../lib/authFetch'
+import { sendToClient } from '../lib/notify'
+import { dbMust, dbSave, notify } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -95,31 +95,9 @@ export default function MessaggiProgrammati() {
 
   async function sendNow(msg) {
     setSending(msg.id)
-    // 1. Notifica in-app (centro notifiche)
-    await dbSave(supabase.from('notifications').insert({
-      client_id: msg.client_id,
-      type: 'coach_message',
-      title: 'Messaggio dal coach',
-      body: msg.message,
-      read: false,
-    }), 'la notifica', 'salvare', { silent: true })
-    // 2. Push notification sul telefono (anche con app chiusa)
-    await authFetch('/api/push-send', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        clientId: msg.client_id,
-        title: '💬 Messaggio dal coach',
-        body: msg.message,
-        url: '/notifiche',
-      })
-    }).catch(() => {}) // ignora se non ha subscription
-    // 3. Messaggio chat
-    await authFetch('/api/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ clientId: msg.client_id, coachId: profile.id, message: msg.message, senderRole: 'coach' })
-    })
+    // notifica nell'app + push + messaggio in conversazione (un solo percorso, condiviso con la campanella)
+    const r = await sendToClient({ clientId: msg.client_id, coachId: profile.id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
+    if (!r.ok) { setSending(null); notify('Non sono riuscito a inviare il messaggio. Riprova.', 'error'); return }      // resta "da inviare"
     await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
     fetchScheduled()
     setSending(null)
@@ -137,21 +115,8 @@ export default function MessaggiProgrammati() {
       const { data: toSend } = await supabase.from('scheduled_messages')
         .select('*').eq('sent', false).lte('scheduled_at', now)
       for (const msg of toSend||[]) {
-        await dbSave(supabase.from('notifications').insert({
-          client_id: msg.client_id,
-          type: 'coach_message',
-          title: 'Messaggio dal coach',
-          body: msg.message,
-          read: false,
-        }), 'la notifica', 'salvare', { silent: true })
-        await authFetch('/api/push-send', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ clientId: msg.client_id, title: '💬 Messaggio dal coach', body: msg.message, url: '/notifiche' })
-        }).catch(()=>{})
-        await authFetch('/api/messages', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ clientId: msg.client_id, coachId: msg.coach_id, message: msg.message, senderRole: 'coach' })
-        })
+        const r = await sendToClient({ clientId: msg.client_id, coachId: msg.coach_id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
+        if (!r.ok) continue            // non inviato: riprova al prossimo controllo (nessun duplicato, la notifica non è stata creata)
         await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
       }
       if (toSend?.length) fetchScheduled()

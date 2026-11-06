@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -22,7 +23,7 @@ function getWeekDate() {
   const dow = d.getDay()
   const diff = dow === 0 ? -6 : 1 - dow
   d.setDate(d.getDate() + diff)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 function ScaleInput({ field, form, setForm }) {

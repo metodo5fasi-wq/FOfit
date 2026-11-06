@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 function formatDateLabel(dateStr) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateStr()
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
   if (dateStr === today) return 'Oggi'
   if (dateStr === yesterday) return 'Ieri'

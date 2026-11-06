@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 
 const s = {
@@ -51,7 +52,7 @@ export default function ReportPDF() {
     setLoading(true)
     const days = period==='settimana'?7:period==='bisettimanale'?14:30
     const from = new Date(Date.now()-days*86400000).toISOString().split('T')[0]
-    const to = new Date().toISOString().split('T')[0]
+    const to = localDateStr()
     const client = clients.find(c=>c.id===selectedClient)
 
     const [diaryRes, sessionsRes, measRes, checkinRes, adherenceRes, reportRes, profileRes] = await Promise.all([

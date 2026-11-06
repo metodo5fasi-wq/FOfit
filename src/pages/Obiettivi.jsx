@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
@@ -50,7 +51,7 @@ export default function Obiettivi() {
     // Calcola streak
     let streak = 0
     const days = [...new Set((diaryR.data || []).map(d => d.entry_date))].sort().reverse()
-    let cur = new Date().toISOString().split('T')[0]
+    let cur = localDateStr()
     for (const day of days) {
       const diff = Math.round((new Date(cur) - new Date(day + 'T12:00')) / 86400000)
       if (diff <= 1) { streak++; cur = day } else break

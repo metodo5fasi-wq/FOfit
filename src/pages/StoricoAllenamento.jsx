@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
@@ -43,7 +44,7 @@ export default function StoricoAllenamento() {
   const [periodStart, setPeriodStart] = useState(() => {
     const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]
   })
-  const [periodEnd, setPeriodEnd] = useState(new Date().toISOString().split('T')[0])
+  const [periodEnd, setPeriodEnd] = useState(localDateStr())
   const [prs, setPrs] = useState({}) // { exercise_name: maxKg }
 
   useEffect(() => { if (profile) fetchAll() }, [profile])

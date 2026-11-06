@@ -892,8 +892,8 @@ export default function ModificaPiano() {
                             <div key={i}
                               onMouseDown={e=>{e.preventDefault();selectFoodFromSearch(food)}}
                               style={{padding:'8px 12px',borderBottom:'0.5px solid #1C1C1C',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}
-                              onMouseEnter={e=>e.currentTarget.style.background='#FEF0E7'}
-                              onMouseLeave={e=>e.currentTarget.style.background='white'}>
+                              onMouseEnter={e=>e.currentTarget.style.background='rgba(212,87,10,0.14)'}
+                              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                               <div>
                                 <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.name||food.food_name}</div>
                                 {food.brand&&<div style={{fontSize:10,color:'#AAA'}}>{food.brand}</div>}

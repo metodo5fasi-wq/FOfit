@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
@@ -52,7 +53,7 @@ export default function Calendario() {
 
   async function fetchData() {
     setLoading(true)
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = localDateStr()
     const { data } = await supabase.from('call_bookings')
       .select('*, profiles(full_name)')
       .gte('booking_date', todayStr)

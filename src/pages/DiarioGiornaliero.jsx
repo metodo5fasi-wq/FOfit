@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { localDateStr, addDaysStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -27,12 +28,12 @@ export default function DiarioGiornaliero() {
   const [qty, setQty] = useState(100)
   const [selectedMeal, setSelectedMeal] = useState('Colazione')
   const [loading, setLoading] = useState(true)
-  const [water, setWater] = useState(0)
+  const [water, setWater] = useState(0)          // bicchieri (250 ml) del giorno selezionato; si salvano sul telefono
   const [waterGoal, setWaterGoal] = useState(() => parseInt(localStorage.getItem('fofit_water_goal')) || 8)
   const [editingWaterGoal, setEditingWaterGoal] = useState(false)
   const [waterGoalInput, setWaterGoalInput] = useState(waterGoal)
   const [activeTab, setActiveTab] = useState('pasti')
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(localDateStr())
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
 
   function showToast(message, emoji) {
@@ -47,8 +48,26 @@ export default function DiarioGiornaliero() {
     setEditingWaterGoal(false)
   }
   const searchTimeout = useRef(null)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateStr()
   const isToday = selectedDate === today
+
+  // Acqua: salvata sul telefono per giorno (prima si azzerava a ogni ricarica). Si tengono 45 giorni.
+  const waterKey = profile ? `fofit_water_${profile.id}_${selectedDate}` : null
+  useEffect(() => {
+    if (!waterKey) return
+    try { setWater(parseInt(localStorage.getItem(waterKey)) || 0) } catch { setWater(0) }
+  }, [waterKey])
+  useEffect(() => {
+    if (!profile) return
+    try {
+      const limit = addDaysStr(localDateStr(), -45), pre = `fofit_water_${profile.id}_`
+      Object.keys(localStorage).filter(k => k.startsWith(pre) && k.slice(pre.length) < limit).forEach(k => localStorage.removeItem(k))
+    } catch {}
+  }, [profile?.id])
+  function setWaterSaved(n) {
+    setWater(n)
+    try { if (n > 0) localStorage.setItem(waterKey, String(n)); else localStorage.removeItem(waterKey) } catch {}
+  }
 
   useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
   useEffect(() => { if (profile) fetchDiary() }, [selectedDate])
@@ -144,9 +163,7 @@ export default function DiarioGiornaliero() {
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           {/* Navigazione date */}
           <button onClick={()=>{
-            const d = new Date(selectedDate)
-            d.setDate(d.getDate()-1)
-            setSelectedDate(d.toISOString().split('T')[0])
+            setSelectedDate(addDaysStr(selectedDate, -1))
           }} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',padding:4,display:'flex',alignItems:'center'}}>
             <i className="ti ti-chevron-left" style={{fontSize:18}}/>
           </button>
@@ -162,12 +179,10 @@ export default function DiarioGiornaliero() {
             )}
           </div>
           <button onClick={()=>{
-            const d = new Date(selectedDate)
-            d.setDate(d.getDate()+1)
-            const next = d.toISOString().split('T')[0]
+            const next = addDaysStr(selectedDate, 1)
             if (next <= today) setSelectedDate(next)
           }} style={{background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',
-            color: selectedDate >= today ? '#E0DDD6' : '#888780'}}>
+            color: selectedDate >= today ? '#444' : '#AAA'}}>
             <i className="ti ti-chevron-right" style={{fontSize:18}}/>
           </button>
         </div>
@@ -370,7 +385,7 @@ export default function DiarioGiornaliero() {
 
                 <div style={{display:'flex',gap:3,marginBottom:5}}>
                   {Array.from({length:waterGoal}).map((_,i)=>(
-                    <div key={i} onClick={()=>setWater(i < water ? i : i+1)}
+                    <div key={i} role="button" aria-label={`Bicchiere ${i+1}`} aria-pressed={i < water} data-testid={`glass-${i}`} onClick={()=>setWaterSaved(i < water ? i : i+1)}
                       style={{flex:1,height:8,borderRadius:2,cursor:'pointer',
                         background:i<water?'#D4570A':'#161616',
                         transition:'background 0.15s'}}/>
@@ -379,7 +394,7 @@ export default function DiarioGiornaliero() {
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <div style={{fontSize:10,color:'#AAA'}}>{water}/{waterGoal} bicchieri</div>
                   {water > 0 && (
-                    <button onClick={()=>setWater(0)} style={{fontSize:10,color:'#AAA',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
+                    <button onClick={()=>setWaterSaved(0)} style={{fontSize:10,color:'#AAA',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>reset</button>
                   )}
                 </div>
               </div>

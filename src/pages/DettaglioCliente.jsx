@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbMust, dbSave } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import PlanPdfButton from '../components/PlanPdfButton'
+import { sendToClient } from '../lib/notify'
 import PhotoCompare from '../components/PhotoCompare'
 import GraficoPeso from '../components/GraficoPeso'
 import ProgressioneEsercizi from '../components/ProgressioneEsercizi'
@@ -149,9 +151,10 @@ function ClientDetail({ client, navigate }) {
   async function sendQuickMsg() {
     if (!quickMsg.trim()) return
     setSendingMsg(true)
-    const r = await dbSave(supabase.from('coach_messages').insert({ client_id:client.id, sender_role:'admin', content:quickMsg.trim(), is_read:false }), 'il messaggio', 'inviare')
+    // stesso percorso dei messaggi programmati: il cliente lo vede in Home e nelle Notifiche e può rispondere
+    const r = await sendToClient({ clientId: client.id, title: 'Messaggio dal coach', body: quickMsg })
     setSendingMsg(false)
-    if (!r.ok) return                                   // il testo resta nel campo
+    if (!r.ok) { toast('Non sono riuscito a inviare il messaggio. Riprova.', 'error'); return }       // il testo resta nel campo
     setQuickMsg('')
     toast('Messaggio inviato!', 'success')
   }
@@ -290,7 +293,7 @@ function ClientDetail({ client, navigate }) {
                 const hasDiary = d.kcal>0
                 const hasSess = sessions.some(s=>s.session_date===d.date)
                 const dn = new Date(d.date+'T12:00').toLocaleDateString('it-IT',{weekday:'short'}).slice(0,1).toUpperCase()
-                const isToday = d.date===new Date().toISOString().split('T')[0]
+                const isToday = d.date===localDateStr()
                 const target = mealPlan?.kcal_target||2000
                 const pct = Math.min(100,Math.round(d.kcal/target*100))
                 return (
@@ -369,7 +372,7 @@ function ClientDetail({ client, navigate }) {
 
           {/* MESSAGGIO RAPIDO */}
           <div style={s.card}>
-            <div style={s.sectionTitle}><i className="ti ti-message-2" style={{fontSize:12}}/>Messaggio rapido{unreadMsgs>0&&<span style={{...s.badge('#FEE2E2','#E24B4A'),marginLeft:4}}>{unreadMsgs} non letti</span>}</div>
+            <div style={s.sectionTitle}><i className="ti ti-message-2" style={{fontSize:12}}/>Messaggio rapido{unreadMsgs>0&&<span style={{...s.badge('rgba(226,75,74,0.16)','#F07070'),marginLeft:4}}>{unreadMsgs} non letti</span>}</div>
             <div style={{display:'flex',gap:8}}>
               <textarea value={quickMsg} onChange={e=>setQuickMsg(e.target.value)} placeholder="Scrivi un messaggio al cliente..."
                 style={{...s.input,minHeight:60,resize:'vertical',flex:1}}/>
@@ -454,7 +457,7 @@ function ClientDetail({ client, navigate }) {
                 <div style={{background:'rgba(212,87,10,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#F4894A'}}>{mealPlan.title}</div>
-                    <div style={{display:'flex',gap:6,alignItems:'center'}}><PlanPdfButton planId={mealPlan.id} style={{padding:'4px 9px',fontSize:11}}/><span style={s.badge(mealPlan.is_active?'#EAF3DE':'#F5F3EF', mealPlan.is_active?'#3B6D11':'#888780')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span></div>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}><PlanPdfButton planId={mealPlan.id} style={{padding:'4px 9px',fontSize:11}}/><span style={s.badge(mealPlan.is_active?'rgba(59,140,90,0.16)':'#161616', mealPlan.is_active?'#6FCF97':'#AAA')}>{mealPlan.is_active?'Attivo':'Non attivo'}</span></div>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                     {[{l:'Kcal',v:mealPlan.kcal_target,c:'#D4570A'},{l:'Prot',v:mealPlan.protein_target_g+'g',c:'#4A90D4'},{l:'Carbo',v:mealPlan.carbs_target_g+'g',c:'#E8A020'},{l:'Grassi',v:mealPlan.fat_target_g+'g',c:'#3B8C5A'}].map(m=>(
@@ -544,7 +547,7 @@ function ClientDetail({ client, navigate }) {
                 const target = mealPlan?.kcal_target||2000
                 const pct = Math.min(100,Math.round(d.kcal/target*100))
                 const dn = new Date(d.date+'T12:00').toLocaleDateString('it-IT',{weekday:'short'}).slice(0,1).toUpperCase()
-                const isToday = d.date===new Date().toISOString().split('T')[0]
+                const isToday = d.date===localDateStr()
                 return (
                   <div key={d.date} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                     <div style={{height:56,width:'100%',background:'#161616',borderRadius:7,display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
@@ -617,7 +620,7 @@ function ClientDetail({ client, navigate }) {
                       <div style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>{sess.day_label}</div>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <span style={{fontSize:11,color:'#CCC'}}>{new Date(sess.session_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</span>
-                        <span style={{...s.badge(pct>=80?'#EAF3DE':pct>=50?'#FEF0E7':'#FEE2E2', pct>=80?'#3B6D11':pct>=50?'#D4570A':'#E24B4A')}}>{pct}%</span>
+                        <span style={{...s.badge(pct>=80?'rgba(59,140,90,0.16)':pct>=50?'rgba(212,87,10,0.16)':'rgba(226,75,74,0.16)', pct>=80?'#6FCF97':pct>=50?'#F4894A':'#F07070')}}>{pct}%</span>
                       </div>
                     </div>
                     {Object.entries(byEx).map(([name,ls],idx)=>(
@@ -692,8 +695,8 @@ function ClientDetail({ client, navigate }) {
                   </div>
                   {i>0 && measurements[i-1] && (
                     <span style={s.badge(
-                      (m.weight_kg-measurements[i-1].weight_kg)<0?'#EAF3DE':'#FEE2E2',
-                      (m.weight_kg-measurements[i-1].weight_kg)<0?'#3B6D11':'#E24B4A'
+                      (m.weight_kg-measurements[i-1].weight_kg)<0?'rgba(59,140,90,0.16)':'rgba(226,75,74,0.16)',
+                      (m.weight_kg-measurements[i-1].weight_kg)<0?'#6FCF97':'#F07070'
                     )}>
                       {(m.weight_kg-measurements[i-1].weight_kg)>0?'+':''}{Math.round((m.weight_kg-measurements[i-1].weight_kg)*10)/10}kg
                     </span>
@@ -777,8 +780,8 @@ function ClientDetail({ client, navigate }) {
             </div>
             {anamnesi ? (
               <div style={{fontSize:12,color:'#CCC',lineHeight:1.6}}>
-                {anamnesi.completed_at && <div style={{...s.badge('#EAF3DE','#3B6D11'),display:'inline-flex',marginBottom:8}}>✓ Completata {new Date(anamnesi.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>}
-                {anamnesi.submitted_at && <div style={{...s.badge('#EBF3FD','#4A90D4'),display:'inline-flex',marginBottom:8,marginLeft:4}}>📨 Inviata al coach</div>}
+                {anamnesi.completed_at && <div style={{...s.badge('rgba(59,140,90,0.16)','#6FCF97'),display:'inline-flex',marginBottom:8}}>✓ Completata {new Date(anamnesi.completed_at).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</div>}
+                {anamnesi.submitted_at && <div style={{...s.badge('rgba(74,144,212,0.16)','#8CC2F5'),display:'inline-flex',marginBottom:8,marginLeft:4}}>📨 Inviata al coach</div>}
                 {anamnesi.motivazione && <div style={{background:'#161616',borderRadius:7,padding:'8px 10px',marginBottom:6,fontStyle:'italic'}}>"{anamnesi.motivazione}"</div>}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
                   {[

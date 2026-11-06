@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { fetchAllRows } from '../lib/pagedQuery'
+import { localDateStr } from '../lib/dates'
 document.title = 'FOfit — Allenamento'
 document.title = 'FOfit — Allenamento'
 // Titolo pagina per iOS back button
@@ -18,9 +20,9 @@ const s = {
   input: { width:'100%', padding:'8px 10px', border:'0.5px solid #1C1C1C', borderRadius:7, fontSize:13, color:'#F0F0F0', background:'#161616', outline:'none', fontFamily:'inherit', boxSizing:'border-box' },
 }
 
-const today = new Date().toISOString().split('T')[0]
 
 export default function Allenamento() {
+  const today = localDateStr()       // calcolato a ogni apertura (non una sola volta all'avvio dell'app)
   const { profile } = useAuth()
   const [plan, setPlan] = useState(null)
   const [exercises, setExercises] = useState([])
@@ -70,8 +72,9 @@ export default function Allenamento() {
     }
     const todayR = await loadWithCache(uid, 'wk_today_' + today, () => supabase.from('workout_logs')
       .select('*').eq('client_id', uid).eq('log_date', today))
-    const allR = await loadWithCache(uid, 'wk_all', () => supabase.from('workout_logs')
-      .select('*').eq('client_id', uid).order('log_date', {ascending:true}), { cacheMap: d => (d || []).slice(-1500) })
+    // tutto lo storico (il database ne dà al massimo 1000 per volta): serve ai record personali e alla progressione
+    const allR = await loadWithCache(uid, 'wk_all', () => fetchAllRows(() => supabase.from('workout_logs')
+      .select('*').eq('client_id', uid).order('log_date', {ascending:true}).order('id', {ascending:true})), { cacheMap: d => (d || []).slice(-1500) })
     const sessR = await loadWithCache(uid, 'wk_sessions', () => supabase.from('workout_sessions')
       .select('*').eq('client_id', uid).order('session_date', {ascending:false}), { cacheMap: d => (d || []).slice(0, 200) })
     fromCache = fromCache || allR.fromCache || sessR.fromCache

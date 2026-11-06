@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbMust } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { useNavigate } from 'react-router-dom'
@@ -24,7 +25,7 @@ export default function ImportaPiano() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [parsedPlan, setParsedPlan] = useState(null)
-  const [planStartDate, setPlanStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [planStartDate, setPlanStartDate] = useState(localDateStr())
   const [weeklyTargets, setWeeklyTargets] = useState([])
   const [selectedClient, setSelectedClient] = useState('')
   const [planTitle, setPlanTitle] = useState('')

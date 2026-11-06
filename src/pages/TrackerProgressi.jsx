@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -83,7 +84,7 @@ export default function TrackerProgressi() {
   const [lightbox, setLightbox] = useState(null)
   const fileRef = useRef(null)
   const [form, setForm] = useState({
-    entry_date: new Date().toISOString().split('T')[0],
+    entry_date: localDateStr(),
     weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:''
   })
 
@@ -110,7 +111,7 @@ export default function TrackerProgressi() {
     const { error } = await supabase.from('progress_entries').insert(payload)
     if (!error) {
       setShowForm(false)
-      setForm({ entry_date: new Date().toISOString().split('T')[0], weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:'' })
+      setForm({ entry_date: localDateStr(), weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:'' })
       fetchEntries()
     }
     setSaving(false)
@@ -138,7 +139,7 @@ export default function TrackerProgressi() {
       
       const { error: dbErr } = await supabase.from('progress_photos').insert({
         client_id: profile.id,
-        photo_date: new Date().toISOString().split('T')[0],
+        photo_date: localDateStr(),
         photo_url: publicUrl,
         label: selectedLabel,
         notes: photoNotes || null,

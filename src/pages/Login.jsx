@@ -46,7 +46,7 @@ export default function Login() {
               placeholder="marco@email.com" required
               style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
-              onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
+              onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#2A2A2A'}
             />
           </div>
           <div style={{ marginBottom:14 }}>
@@ -56,7 +56,7 @@ export default function Login() {
               placeholder="••••••••" required
               style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
               onFocus={e => e.target.style.borderColor='#D4570A'}
-              onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#E0DDD6'}
+              onBlur={e => e.target.style.borderColor=error?'#E24B4A':'#2A2A2A'}
             />
           </div>
 
