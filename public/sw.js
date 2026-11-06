@@ -80,10 +80,17 @@ self.addEventListener('message', e => {
         if (res && (res.ok || res.type === 'opaque') && !(isAsset(x) && isHtml(res))) await cache.put(u, res)
       } catch {}
     }
+    // Le pagine caricate a richiesta (coach, grafici...) si salvano al primo uso e NON vanno cancellate a ogni apertura.
+    // Si ripulisce solo quando cambia la versione dell'app (cambia il file principale index-*.js): allora si tolgono i file della versione precedente.
     const live = urls.filter(u => { try { return isAsset(new URL(u, self.location.origin)) } catch { return false } })
-    if (live.length) {                                          // toglie i file di versioni precedenti dell'app
-      const keepPaths = new Set(live.map(u => new URL(u, self.location.origin).pathname))
-      for (const req of await cache.keys()) { const x = new URL(req.url); if (isAsset(x) && !keepPaths.has(x.pathname)) await cache.delete(req) }
+    const main = live.map(u => new URL(u, self.location.origin).pathname).find(p => /\/assets\/index-[\w-]+\.js$/.test(p))
+    if (main) {
+      const meta = await caches.open(SHELL), prev = await meta.match(self.location.origin + '/__main'), prevMain = prev ? await prev.text() : null
+      if (prevMain !== main) {
+        const keepPaths = new Set(live.map(u => new URL(u, self.location.origin).pathname))
+        for (const req of await cache.keys()) { const x = new URL(req.url); if (isAsset(x) && !keepPaths.has(x.pathname)) await cache.delete(req) }
+        await meta.put(self.location.origin + '/__main', new Response(main))
+      }
     }
   })())
 })
