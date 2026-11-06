@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import RouteBoundary from './RouteBoundary'
 import { supabase } from '../lib/supabase'
 import { clearCache } from '../lib/offline'
 import { useAuth, useTheme } from '../App'
@@ -357,7 +358,7 @@ export default function Layout() {
             </div>
           )}
 
-          <Outlet/>
+          <RouteBoundary><Outlet/></RouteBoundary>
         </div>
 
         {/* BOTTOM NAV MOBILE — solo per clienti */}
