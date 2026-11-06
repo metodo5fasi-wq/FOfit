@@ -10,17 +10,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-supabase': ['@supabase/supabase-js'],
-          'pages-admin': [
-            './src/pages/AdminPanel.jsx',
-            './src/pages/DettaglioCliente.jsx',
-            './src/pages/ReportPDF.jsx',
-          ],
-          'pages-import': [
-            './src/pages/ImportaPiano.jsx',
-            './src/pages/ImportaAllenamento.jsx',
-            './src/pages/ModificaPiano.jsx',
-            './src/pages/ModificaAllenamento.jsx',
-          ],
+          'vendor-charts': ['recharts'],
         }
       }
     },
