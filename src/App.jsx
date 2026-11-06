@@ -8,35 +8,38 @@ import Dashboard from './pages/Dashboard'
 import PianoAlimentare from './pages/PianoAlimentare'
 import DiarioGiornaliero from './pages/DiarioGiornaliero'
 import TrackerProgressi from './pages/TrackerProgressi'
-import ListaSpesa from './pages/ListaSpesa'
-import AssistenteAI from './pages/AssistenteAI'
 import Calendario from './pages/Calendario'
 import Allenamento from './pages/Allenamento'
-import StoricoAllenamento from './pages/StoricoAllenamento'
 import ShareView from './pages/ShareView'
-import ImportaAllenamento from './pages/ImportaAllenamento'
-import ReportMensile from './pages/ReportMensile'
 import CheckinSettimanale from './pages/CheckinSettimanale'
-import ModificaPiano from './pages/ModificaPiano'
-import ModificaAllenamento from './pages/ModificaAllenamento'
-import SelezionaPianoCliente from './pages/SelezionaPianoCliente'
-import SelezionaAllenamentoCliente from './pages/SelezionaAllenamentoCliente'
-import Anamnesi from './pages/Anamnesi'
-import Documenti from './pages/Documenti'
-import ReportAllenamentoPage from './pages/ReportAllenamentoPage'
-import Abbonamenti from './pages/Abbonamenti'
-import MessaggiProgrammati from './pages/MessaggiProgrammati'
-import ReportPDF from './pages/ReportPDF'
-import AdminPanel from './pages/AdminPanel'
-import ImportaPiano from './pages/ImportaPiano'
-import CreaPiano from './pages/CreaPiano'
-import CreaAllenamento from './pages/CreaAllenamento'
 import Onboarding from './pages/Onboarding'
-import DettaglioCliente from './pages/DettaglioCliente'
 import Notifiche from './pages/Notifiche'
-import GraficiProgressi from './components/GraficiProgressi'
 import Layout from './components/Layout'
 import { saveLastProfile, loadLastProfile, clearCache, resolveOfflineSession, startAutoSync, subscribe as subscribeSync, snapshot as syncSnapshot, isNetworkError } from './lib/offline'
+
+// Pagine caricate solo quando servono: i clienti non scaricano più gli strumenti del coach
+import { lazyPage } from './lib/lazyPage'
+const GraficiProgressi = lazyPage(() => import('./components/GraficiProgressi'))
+const AdminPanel = lazyPage(() => import('./pages/AdminPanel'))
+const DettaglioCliente = lazyPage(() => import('./pages/DettaglioCliente'))
+const ImportaPiano = lazyPage(() => import('./pages/ImportaPiano'))
+const ImportaAllenamento = lazyPage(() => import('./pages/ImportaAllenamento'))
+const CreaPiano = lazyPage(() => import('./pages/CreaPiano'))
+const CreaAllenamento = lazyPage(() => import('./pages/CreaAllenamento'))
+const ModificaPiano = lazyPage(() => import('./pages/ModificaPiano'))
+const ModificaAllenamento = lazyPage(() => import('./pages/ModificaAllenamento'))
+const SelezionaPianoCliente = lazyPage(() => import('./pages/SelezionaPianoCliente'))
+const SelezionaAllenamentoCliente = lazyPage(() => import('./pages/SelezionaAllenamentoCliente'))
+const Abbonamenti = lazyPage(() => import('./pages/Abbonamenti'))
+const MessaggiProgrammati = lazyPage(() => import('./pages/MessaggiProgrammati'))
+const ReportPDF = lazyPage(() => import('./pages/ReportPDF'))
+const ListaSpesa = lazyPage(() => import('./pages/ListaSpesa'))
+const AssistenteAI = lazyPage(() => import('./pages/AssistenteAI'))
+const Documenti = lazyPage(() => import('./pages/Documenti'))
+const StoricoAllenamento = lazyPage(() => import('./pages/StoricoAllenamento'))
+const ReportMensile = lazyPage(() => import('./pages/ReportMensile'))
+const Anamnesi = lazyPage(() => import('./pages/Anamnesi'))
+const ReportAllenamentoPage = lazyPage(() => import('./pages/ReportAllenamentoPage'))
 
 // ─────────────────────────────────────────────────────────
 // ERROR BOUNDARY — mostra l'errore invece di una pagina bianca
