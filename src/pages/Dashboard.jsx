@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber, FadeIn } from '../components/Animations'
-import { GraficoPeso } from '../components/GraficiProgressi'
+import GraficoPeso from '../components/LazyGraficoPeso'
 import { loadWithCache, applyPending } from '../lib/offline'
 import { buildToday, weekDateOf, streakOf, weeklyStats, planDays } from '../lib/homeToday'
 
