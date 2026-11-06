@@ -37,23 +37,6 @@ const ADMIN_NAV_MODIFICA = [
 
 function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme }) {
   const isAdmin = profile?.role === 'admin'
-  const [unreadMessages, setUnreadMessages] = useState(0)
-
-  useEffect(() => {
-    if (!profile || isAdmin) return
-    async function fetchUnread() {
-      const { count } = await supabase
-        .from('coach_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('client_id', profile.id)
-        .eq('sender_role', 'coach')
-        .eq('is_read', false)
-      setUnreadMessages(count || 0)
-    }
-    fetchUnread()
-    const interval = setInterval(fetchUnread, 15000)
-    return () => clearInterval(interval)
-  }, [profile])
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
