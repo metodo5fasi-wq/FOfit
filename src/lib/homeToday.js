@@ -4,10 +4,12 @@
 //   status: 'done' (fatto) · 'progress' (iniziato) · 'todo' (da fare) · 'info' (solo informazione)
 // ─────────────────────────────────────────────────────────────
 
+import { localDateStr } from './dates'
+
 // Lunedì della settimana corrente (stessa regola del Check-in settimanale, così i due coincidono)
 export function weekDateOf(d = new Date()) {
   const x = new Date(d); const dow = x.getDay(); x.setDate(x.getDate() + (dow === 0 ? -6 : 1 - dow))
-  return x.toISOString().split('T')[0]
+  return localDateStr(x)
 }
 const DAY = 86400000
 export const daysBetween = (fromStr, toStr) => Math.round((new Date(toStr + 'T12:00') - new Date(fromStr + 'T12:00')) / DAY)
