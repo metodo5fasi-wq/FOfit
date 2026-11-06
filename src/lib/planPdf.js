@@ -10,7 +10,6 @@ const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0 }
 const fmt = (n, d = 0) => Number(n).toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d })
 const initials = n => n ? n.split(' ').filter(Boolean).map(x => x[0]).join('').slice(0, 2).toUpperCase() : '?'
-const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 
 // ── calcoli ──────────────────────────────────────────────────
 export function foodTotals(foods = []) {

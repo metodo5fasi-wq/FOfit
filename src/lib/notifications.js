@@ -1,5 +1,4 @@
 // FOfit — Notifiche push via OneSignal
-const ONESIGNAL_APP_ID = '68eb6585-0eeb-44b0-bb18-0d15f2446e6c'
 
 // Collega l'utente FOfit a OneSignal (usa client_id come external user id)
 export async function requestNotificationPermission(clientId) {
