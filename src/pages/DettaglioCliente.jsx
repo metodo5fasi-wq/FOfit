@@ -37,7 +37,6 @@ const TABS = [
 ]
 
 export default function DettaglioCliente() {
-  const toast = useToast()
   const { clientId } = useParams()
   const navigate = useNavigate()
   const [client, setClient] = useState(null)
@@ -399,10 +398,6 @@ function ClientDetail({ client, navigate }) {
             if (!weight || !height) return null
             // Mifflin-St Jeor
             const bmr = Math.round(10 * weight + 6.25 * height - 5 * (age || 30) + 5) // M
-            const activityMap = {
-              'Sedentario': 1.2, '1-2 volte/sett': 1.375, '3-4 volte/sett': 1.55,
-              '5+ volte/sett': 1.725, 'Atleta': 1.9
-            }
             const sessWeekN = data.sessions?.filter(s => new Date(s.session_date) > new Date(Date.now()-7*86400000)).length || 0
             const actFactor = sessWeekN >= 5 ? 1.725 : sessWeekN >= 3 ? 1.55 : sessWeekN >= 1 ? 1.375 : 1.2
             const tdee = Math.round(bmr * actFactor)

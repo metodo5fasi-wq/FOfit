@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 document.title = 'FOfit — Allenamento'
 document.title = 'FOfit — Allenamento'
 // Titolo pagina per iOS back button
@@ -228,7 +228,6 @@ export default function Allenamento() {
     )
   }
 
-  const SESSION_STORAGE_KEY = `fofit_session_${typeof profile !== 'undefined' ? profile?.id : 'anon'}`
   const [inputValues, setInputValues] = useState(() => {
     try {
       const saved = localStorage.getItem('fofit_input_values')
@@ -245,7 +244,6 @@ export default function Allenamento() {
   }
 
   // Salva stato sessione su localStorage ogni volta che cambia
-  const SESSION_KEY = `fofit_session_${profile?.id}`
 
   function getYtThumb(url) {
     if (!url) return null
@@ -382,7 +380,6 @@ export default function Allenamento() {
   const days = [...new Set(exercises.map(e=>e.day_label))]
   const dayExercises = exercises.filter(e=>e.day_label===activeDay)
   const completedToday = logs.length
-  const totalSetsToday = dayExercises.reduce((sum,e)=>sum+(e.sets||0),0)
 
   return (
     <>
@@ -760,26 +757,3 @@ export default function Allenamento() {
   )
 }
 
-function ProgressionChart({ data }) {
-  const weights = data.map(d=>d.weight)
-  const min = Math.min(...weights) - 2
-  const max = Math.max(...weights) + 2
-  const W = 300, H = 70
-  const pts = data.map((d,i) => {
-    const x = data.length>1 ? (i/(data.length-1))*(W-20)+10 : W/2
-    const y = H - ((d.weight-min)/(max-min))*(H-20) - 10
-    return `${x},${y}`
-  }).join(' ')
-  return (
-    <div style={{overflowX:'auto'}}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',maxWidth:W,display:'block'}}>
-        <polyline points={pts} fill="none" stroke="#D4570A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        {data.map((d,i)=>{
-          const x = data.length>1 ? (i/(data.length-1))*(W-20)+10 : W/2
-          const y = H - ((d.weight-min)/(max-min))*(H-20) - 10
-          return <g key={i}><circle cx={x} cy={y} r={3} fill="#D4570A"/><text x={x} y={y-8} textAnchor="middle" fontSize={9} fill="#888780">{d.weight}</text></g>
-        })}
-      </svg>
-    </div>
-  )
-}

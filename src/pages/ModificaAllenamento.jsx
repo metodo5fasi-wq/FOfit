@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { dbMust, dbSave } from '../lib/db'
+import { dbMust } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'

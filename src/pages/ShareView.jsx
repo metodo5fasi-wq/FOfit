@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 const ORANGE = '#D4570A'
 // Palette scura (come il resto dell'app). DARK è il colore del testo principale.
@@ -11,7 +11,6 @@ const CHIP = '#161616'
 const LINE = '#1C1C1C'
 
 export default function ShareView() {
-  const navigate = useNavigate()
   const { token } = useParams()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)

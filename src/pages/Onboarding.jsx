@@ -1,6 +1,4 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 
 const STEPS = [
@@ -62,7 +60,6 @@ const STEPS = [
 
 export default function Onboarding() {
   const { profile } = useAuth()
-  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const current = STEPS[step]
   const isLast = step === STEPS.length - 1

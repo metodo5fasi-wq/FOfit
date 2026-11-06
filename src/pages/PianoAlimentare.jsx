@@ -71,7 +71,6 @@ export default function PianoAlimentare() {
   }
 
   const dayMeals = meals[selectedDay + 1] || []
-  const dayKcal = dayMeals.reduce((s, m) => s + (m.plan_meal_foods || []).reduce((ss, f) => ss + (f.kcal || 0), 0), 0)
 
   if (loading) return (
     <>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { dbMust, dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlanPdfButton from '../components/PlanPdfButton'
 import { useToast } from '../components/Toast'
@@ -206,19 +206,6 @@ export default function ModificaPiano() {
   }, { kcal:0, protein:0, carbs:0, fat:0 })
 
   // Modifica grammatura di un alimento
-  function updateFoodQty(mealId, foodId, newQty) {
-    setMeals(prev => prev.map(m => {
-      if (m.id !== mealId) return m
-      return {
-        ...m,
-        plan_meal_foods: m.plan_meal_foods.map(f => {
-          if (f.id !== foodId) return f
-          return { ...f, ...recalc(f, newQty), quantity_g: newQty } // mantieni stringa per input
-        })
-      }
-    }))
-    setDirty(true)
-  }
 
   // Rimuovi alimento
   function removeFood(mealId, foodId) {

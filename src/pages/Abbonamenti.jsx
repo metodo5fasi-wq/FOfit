@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
-import { useToast } from '../components/Toast'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -36,7 +35,6 @@ function StatusBadge({ days }) {
 }
 
 export default function Abbonamenti() {
-  const toast = useToast()
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
