@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { localDateStr } from '../../lib/dates'
 import { supabase } from '../../lib/supabase'
 import { dbSave } from '../../lib/db'
 import { AVAILABILITY, generateSlots } from '../../lib/callAvailability.js'
@@ -28,7 +29,7 @@ export default function CalendarioAdmin({ focus, clearFocus }) {
 
   async function fetchBookings() {
     setLoading(true)
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = localDateStr()
     const { data } = await supabase.from('call_bookings')
       .select('*, profiles(full_name)')
       .gte('booking_date', todayStr)

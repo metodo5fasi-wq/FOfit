@@ -1,3 +1,4 @@
+import { localDateStr } from '../../lib/dates'
 
 export const s = {
   page: { flex:1, overflowY:'auto', padding:'16px 18px', background:'#080808' },
@@ -30,7 +31,7 @@ export const goalLabel = { dimagrimento:'Dimagrimento', massa:'Massa muscolare',
 
 export const initials = name => name ? name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'U'
 
-export const today = new Date().toISOString().split('T')[0]
+export const today = localDateStr()
 
 // Porta in vista un elemento e lo evidenzia per un momento (usato quando si arriva a un dato dalla dashboard)
 export function flashEl(selector) {
