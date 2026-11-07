@@ -1,6 +1,6 @@
 import { ToastProvider } from './components/Toast'
 import PdfViewerHost from './components/PdfViewer'
-import React, { useState, useEffect, createContext, useContext } from 'react'
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { getTheme, isDark, toggleTheme, DARK, LIGHT } from './lib/theme'
@@ -132,6 +132,10 @@ export default function App() {
   const [theme, setTheme] = useState(getTheme())
   const [darkMode, setDarkMode] = useState(isDark())
   const [onboardedVersion, setOnboardedVersion] = useState(0)
+  // La schermata di caricamento si toglie appena si sa cosa mostrare. Resta almeno 350 ms solo per non lampeggiare
+  // (prima restava SEMPRE altri 1,5 secondi dopo l'arrivo del profilo: ogni avvio durava "rete + 1,5 s").
+  const startedAt = useRef(Date.now())
+  const finishLoading = () => { const wait = Math.max(0, 350 - (Date.now() - startedAt.current)); setTimeout(() => setLoading(false), wait) }
 
   function markOnboarded() {
     setOnboardedVersion(v => v + 1)
@@ -164,16 +168,20 @@ export default function App() {
 
   useEffect(() => {
     // Senza rete non si può ricontrollare l'accesso: se su questo telefono si è già entrati, si continua con l'ultimo profilo salvato
-    const goOffline = s => { setSession(s); const p = loadLastProfile(); if (p) setProfile(p); setTimeout(() => setLoading(false), 300) }
+    const goOffline = s => { setSession(s); const p = loadLastProfile(); if (p) setProfile(p); finishLoading() }
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       const off = !session ? resolveOfflineSession({ session, error, cachedProfile: loadLastProfile() }) : null
       if (off) { goOffline(off); return }
       setSession(session)
-      if (session) fetchProfile(session.user.id)
-      else setTimeout(() => setLoading(false), 1500)
+      if (session) {
+        // Su questo telefono si è già entrati: si apre subito con l'ultimo profilo salvato e lo si rilegge in sottofondo
+        const cached = loadLastProfile()
+        if (cached && cached.id === session.user.id) { setProfile(cached); finishLoading() }
+        fetchProfile(session.user.id)
+      } else finishLoading()
     }).catch(() => {
       const off = resolveOfflineSession({ session: null, error: { message: 'Failed to fetch' }, cachedProfile: loadLastProfile() })
-      if (off) goOffline(off); else setTimeout(() => setLoading(false), 1500)
+      if (off) goOffline(off); else finishLoading()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -184,7 +192,7 @@ export default function App() {
       if (event === 'SIGNED_OUT') clearCache()
       setSession(session)
       if (session) fetchProfile(session.user.id)
-      else { setProfile(null); setTimeout(() => setLoading(false), 1500) }
+      else { setProfile(null); finishLoading() }
     })
 
     // quando torna la rete si rinnova l'accesso
@@ -218,7 +226,7 @@ export default function App() {
       const p = loadLastProfile()   // senza rete: ultimo profilo salvato
       if (p?.id === userId) setProfile(p)
     }
-    setTimeout(() => setLoading(false), 1500)
+    finishLoading()
   }
 
   if (loading) return (
@@ -268,7 +276,7 @@ export default function App() {
             display:'flex', alignItems:'center', justifyContent:'center',
           }}>
             <img
-              src="/logo-dark.png"
+              src="/logo-mark.png"
               alt="FOfit"
               style={{height:36, objectFit:'contain'}}
               onError={e => {
