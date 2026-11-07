@@ -1,3 +1,4 @@
+import { done } from './toast'
 // ─────────────────────────────────────────────────────────────
 // PDF del piano alimentare — stessa grafica di anamnesi e report (intestazione scura, titoli arancioni, piè di pagina FOfit)
 // Pagina 1: profilo, obiettivi, riepilogo settimanale e note · una pagina per ogni giorno · ultima pagina: alimenti della settimana
@@ -135,8 +136,8 @@ export async function loadPlanForPdf(supabase, planId) {
 export function openPrintWindow(html) {
   let win = null
   try { win = window.open('', '_blank') } catch {}
-  if (win) { win.document.write(html); win.document.close(); win.focus(); setTimeout(() => { try { win.print() } catch {} }, 600); return true }
-  try { const url = URL.createObjectURL(new Blob([html + '<script>setTimeout(function(){window.print()},600)</script>'], { type: 'text/html' })); window.location.href = url; return true } catch { return false }
+  if (win) { win.document.write(html); win.document.close(); win.focus(); setTimeout(() => { try { win.print() } catch {} }, 600); done('PDF pronto: stampa o salva'); return true }
+  try { const url = URL.createObjectURL(new Blob([html + '<script>setTimeout(function(){window.print()},600)</script>'], { type: 'text/html' })); window.location.href = url; done('PDF pronto: stampa o salva'); return true } catch { return false }
 }
 export async function exportPlanPdf(supabase, planId) {
   const data = await loadPlanForPdf(supabase, planId)

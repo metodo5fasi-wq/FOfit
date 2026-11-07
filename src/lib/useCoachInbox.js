@@ -2,6 +2,7 @@
 // Stato "letto": messaggi, report e anamnesi usano i loro campi già esistenti; check-in, chiamate, foto e misure
 // si ricordano nella tabella coach_inbox_seen (se non c'è ancora, si usa questo dispositivo e si avvisa).
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { done } from './toast'
 import { supabase } from './supabase'
 import { buildInbox, buildAgenda, buildAttention, buildWeek, dayKey, DAY } from './coachInbox.js'
 
@@ -81,6 +82,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
     if (viaKeys.length) jobs.push(safe(supabase.from('coach_inbox_seen').upsert(viaKeys.map(i => ({ coach_id: coachId, item_key: i.key })), { onConflict: 'coach_id,item_key' })).then(r => { if (r.error && alive.current) setSeenTableOk(false); return { ...r, soft: true } }))
     const res = await Promise.all(jobs)
     if (res.some(r => r && r.error && !r.soft)) { setProblems(p => [...new Set([...p, 'segna come letto'])]); load() }   // un aggiornamento non è andato a buon fine: ricarico lo stato vero
+    else done(list.length > 1 ? 'Segnati come letti' : 'Segnato come letto')
     if (native.length) onChanged && onChanged()
   }, [coachId, load, onChanged])
 
