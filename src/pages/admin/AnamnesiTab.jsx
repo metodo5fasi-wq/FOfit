@@ -33,7 +33,7 @@ export default function AnamnesiTab({ clients, onRefresh, focus, clearFocus }) {
   }
 
   async function markRead(id) {
-    await dbSave(supabase.from('anamnesi').update({read_by_coach:true}).eq('id',id), "l'anamnesi", 'salvare')
+    await dbSave(supabase.from('anamnesi').update({read_by_coach:true}).eq('id',id), "l'anamnesi", 'salvare', { quiet: true })
     setAnamnesi(p=>p.map(a=>a.id===id?{...a,read_by_coach:true}:a))
   }
 

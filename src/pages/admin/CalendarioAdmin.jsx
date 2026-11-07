@@ -40,16 +40,16 @@ export default function CalendarioAdmin({ focus, clearFocus }) {
 
   async function cancelBooking(id) {
     if (!confirm('Eliminare questa prenotazione?')) return
-    await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare')
+    await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare', { done: 'Prenotazione annullata' })
     fetchBookings()
   }
 
   async function toggleBlock(date, slot) {
     const existing = bookings.find(b => b.booking_date===date && b.time_slot===slot && b.status==='blocked')
     if (existing) {
-      await dbSave(supabase.from('call_bookings').delete().eq('id', existing.id), 'la prenotazione', 'eliminare')
+      await dbSave(supabase.from('call_bookings').delete().eq('id', existing.id), 'la prenotazione', 'eliminare', { done: 'Slot sbloccato' })
     } else {
-      await dbSave(supabase.from('call_bookings').insert({ client_id:null, booking_date:date, time_slot:slot, status:'blocked' }), 'la prenotazione', 'salvare')
+      await dbSave(supabase.from('call_bookings').insert({ client_id:null, booking_date:date, time_slot:slot, status:'blocked' }), 'la prenotazione', 'salvare', { done: 'Slot bloccato' })
     }
     fetchBookings()
   }

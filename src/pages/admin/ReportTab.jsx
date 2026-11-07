@@ -35,7 +35,7 @@ export default function ReportTab({ clients, clientStats, onRefresh, focus, clea
   }
 
   async function markRead(reportId) {
-    await dbSave(supabase.from('workout_reports').update({ read_by_coach: true }).eq('id', reportId), 'il report', 'salvare')
+    await dbSave(supabase.from('workout_reports').update({ read_by_coach: true }).eq('id', reportId), 'il report', 'salvare', { quiet: true })
     setReports(p => p.map(r => r.id === reportId ? { ...r, read_by_coach: true } : r))
     // Rimuovi badge newReport dalla lista clienti
     // badge rimosso automaticamente al refresh

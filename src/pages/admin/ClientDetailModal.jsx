@@ -95,16 +95,16 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
 
   async function save() {
     setSaving(true)
-    const { error } = await supabase.from('profiles').update({
+    const r = await dbSave(supabase.from('profiles').update({
       full_name: form.full_name,
       goal: form.goal,
       height_cm: form.height_cm ? parseInt(form.height_cm) : null,
       phone: form.phone,
       notes: form.notes,
       coach_notes: form.coach_notes,
-    }).eq('id', client.id)
+    }).eq('id', client.id), 'i dati del cliente', 'salvare', { done: 'Dati cliente salvati' })
     setSaving(false)
-    if (!error) {
+    if (r.ok) {
       setEditing(false)
       onSaved()
     }
@@ -122,14 +122,14 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
       carbs_target_g: parseInt(planEdit.carbs_target_g),
       fat_target_g: parseInt(planEdit.fat_target_g),
       notes: planEdit.notes,
-    }).eq('id', activeMealPlan.id), 'il piano alimentare', 'salvare')
+    }).eq('id', activeMealPlan.id), 'il piano alimentare', 'salvare', { done: 'Piano aggiornato' })
     setEditingPlan(false)
     onSaved()
   }
 
   async function deactivatePlan(planId) {
     if (!window.confirm('Disattivare questo piano? Il cliente non lo vedrà più nell\'app.')) return
-    const r = await dbSave(supabase.from('meal_plans').update({ is_active: false }).eq('id', planId), 'il piano alimentare', 'disattivare')
+    const r = await dbSave(supabase.from('meal_plans').update({ is_active: false }).eq('id', planId), 'il piano alimentare', 'disattivare', { done: 'Piano disattivato' })
     if (!r.ok) return
     setEditingPlan(false)
     onSaved()

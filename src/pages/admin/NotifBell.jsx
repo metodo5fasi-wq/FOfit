@@ -1,4 +1,5 @@
 import React from 'react'
+import { done } from '../../lib/toast'
 import { useAuth } from '../../App'
 import { sendToClients } from '../../lib/notify'
 
@@ -39,6 +40,7 @@ export default function NotifBell({ clients }) {
     setSending(false)
     const names = failed.map(id => list.find(c => c.id === id)?.full_name || 'cliente').join(', ')
     if (!failed.length) {
+      done(sent.length === 1 ? 'Notifica inviata' : `Notifica inviata a ${sent.length} clienti`)
       setResult({ type: 'ok', text: sent.length === 1 ? `✓ Inviata a ${list.find(c => c.id === sent[0])?.full_name || 'cliente'}` : `✓ Inviata a ${sent.length} clienti` })
       setTitle(''); setBody('')
       setTimeout(() => { setResult(null); setOpen(false) }, 2200)

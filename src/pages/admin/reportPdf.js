@@ -1,4 +1,5 @@
 import React from 'react'
+import { done, notify } from '../../lib/toast'
 import { reportExtraHtml } from '../../lib/reportQuestions.js'
 import { _initials } from './shared'
 
@@ -84,8 +85,10 @@ export function generateReportPDF(r, clientName, goal) {
   html += '</body></html>'
 
   var win = window.open('','_blank')
+  if (!win) { notify('Il browser ha bloccato la finestra del PDF: consenti i popup e riprova', 'error'); return }
   win.document.write(html)
   win.document.close()
   win.focus()
   setTimeout(function(){win.print()},600)
+  done('PDF pronto: stampa o salva')
 }
