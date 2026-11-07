@@ -787,7 +787,7 @@ export default function ModificaPiano() {
                     </div>
                     <div style={{display:'flex',gap:4}}>
                       <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
-                      <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark-filled" style={{fontSize:11}}/></button>
+                      <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
                       <button onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                     </div>
                   </div>

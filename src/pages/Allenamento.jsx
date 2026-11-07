@@ -632,7 +632,7 @@ export default function Allenamento() {
           <div style={{background:'#0D0D0D',borderRadius:16,padding:24,width:'100%',maxWidth:440}}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
               <div style={{width:40,height:40,borderRadius:10,background:'rgba(212,87,10,0.1)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <i className="ti ti-flag-filled" style={{fontSize:19,color:'#D4570A'}}/>
+                <i className="ti ti-flag" style={{fontSize:19,color:'#D4570A'}}/>
               </div>
               <div>
                 <div style={{fontSize:15,fontWeight:700,color:'#F0F0F0'}}>Termina {activeDay}</div>

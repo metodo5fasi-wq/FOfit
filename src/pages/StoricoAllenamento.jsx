@@ -229,7 +229,7 @@ export default function StoricoAllenamento() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 16 }}>
           {[
             { icon: 'ti-calendar-check', label: 'Questo mese', value: sessionsThisMonth.length, unit: 'sess.' },
-            { icon: 'ti-layers', label: 'Serie (90gg)', value: totalSeries, unit: '' },
+            { icon: 'ti-stack', label: 'Serie (90gg)', value: totalSeries, unit: '' },
             { icon: 'ti-barbell', label: 'Tonnellaggio', value: tonnellaggio >= 1000 ? (tonnellaggio / 1000).toFixed(1) + 't' : Math.round(tonnellaggio) + 'kg', unit: '' },
           ].map(stat => (
             <div key={stat.label} style={{ background: 'var(--bg-card)', borderRadius: 12, border: '0.5px solid var(--border)', padding: '12px 10px', textAlign: 'center' }}>
