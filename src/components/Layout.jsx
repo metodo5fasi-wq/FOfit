@@ -56,7 +56,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
 
       {/* LOGO */}
       <div style={{padding:'28px 20px 20px',borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
-        <img src="/logo-dark.png" alt="FOfit" style={{height:34,objectFit:'contain',display:'block'}}/>
+        <img src="/logo-mark.png" alt="FOfit" style={{height:34,objectFit:'contain',display:'block'}}/>
         <div style={{background:'rgba(212,87,10,0.15)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:20,padding:'3px 9px',fontSize:9,fontWeight:800,color:'#F4894A',letterSpacing:'0.08em',marginBottom:2}}>
           {isAdmin ? 'ADMIN' : 'PRO'}
         </div>
@@ -289,7 +289,7 @@ export default function Layout() {
             }}>
               <i className="ti ti-menu-2" style={{fontSize:17,pointerEvents:'none'}}/>
             </button>
-            <img src="/logo-dark.png" alt="FOfit" style={{height:30,objectFit:'contain'}}/>
+            <img src="/logo-mark.png" alt="FOfit" style={{height:30,objectFit:'contain'}}/>
             <div style={{width:36,display:'flex',justifyContent:'flex-end'}}>
               <div style={{width:8,height:8,background:'#3B8C5A',borderRadius:'50%'}}/>
             </div>
