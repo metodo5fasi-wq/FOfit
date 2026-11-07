@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { done, notify } from '../lib/toast'
+import { openPdf } from '../lib/pdfViewer'
 import { localDateStr } from '../lib/dates'
 import { supabase } from '../lib/supabase'
 
@@ -404,13 +404,7 @@ export default function ReportPDF() {
 </body>
 </html>`
 
-    const win = window.open('', '_blank')
-    if (!win) { notify('Il browser ha bloccato la finestra del PDF: consenti i popup e riprova', 'error'); return }
-    win.document.write(html)
-    win.document.close()
-    win.focus()
-    setTimeout(() => win.print(), 800)
-    done('PDF pronto: stampa o salva')
+    openPdf(html, 'Report allenamento')
   }
 
   return (
