@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done, notify } from '../lib/toast'
 import { localDateStr } from '../lib/dates'
 import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
@@ -153,7 +154,8 @@ export default function Abbonamenti() {
 
       setEditing(null)
       fetchClients()
-    } catch(e) { alert('Errore: '+e.message) }
+      done('Abbonamento salvato')
+    } catch(e) { notify(e.message || 'Salvataggio non riuscito. Riprova.', 'error') }
     setSaving(false)
   }
 
@@ -165,7 +167,7 @@ export default function Abbonamenti() {
     await dbSave(supabase.from('profiles').update({
       subscription_start: c.subscription_end,
       subscription_end: end.toISOString().split('T')[0],
-    }).eq('id',c.id), 'i dati del cliente', 'salvare')
+    }).eq('id',c.id), 'i dati del cliente', 'salvare', { done: 'Abbonamento rinnovato' })
     await dbSave(supabase.from('notifications').insert({
       client_id:c.id, type:'subscription_renewed',
       title:'✅ Abbonamento rinnovato',

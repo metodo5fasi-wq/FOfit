@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { done } from '../lib/toast'
 import { dbMust } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -135,7 +136,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
   function set(field, val) { setData(p => ({...p, [field]:val})) }
   function setArr(field, val) { setData(p => ({...p, [field]:val})) }
 
-  async function saveSection(goTo) {
+  async function saveSection(goTo, quiet) {
     if (!clientId) { setSaveError('Sessione scaduta — ricarica la pagina'); return false }
     setSaving(true)
     setSaveError('')
@@ -147,6 +148,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       if (error) throw error
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+      if (!quiet) done('Sezione salvata')
       if (goTo) setCurrent(Math.min(goTo, 14))
     } catch(e) {
       setSaveError('Errore salvataggio: ' + e.message)
@@ -167,7 +169,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
     setSaveError('')
     try {
       const wasSent = !!data.submitted_at
-      const ok = await saveSection(14)
+      const ok = await saveSection(14, true)
       if (!ok) {
         setSaveError(e => (e || 'Errore salvataggio') + " — l'anamnesi NON è stata inviata, riprova")
         setSubmitting(false)
@@ -180,6 +182,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
       if (error) throw error
       setSaved(true)
       setData(p => ({...p, submitted_at: now, read_by_coach: false}))
+      done(isAdmin ? 'Anamnesi salvata' : wasSent ? 'Anamnesi aggiornata e inviata' : 'Anamnesi inviata al coach')
       if (!isAdmin) setConfirm({ update: wasSent })
     } catch(e) { setSaveError('Errore invio: ' + e.message) }
     setSubmitting(false)

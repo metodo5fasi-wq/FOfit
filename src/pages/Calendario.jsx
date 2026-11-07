@@ -113,7 +113,7 @@ export default function Calendario() {
 
   async function cancelBooking(id) {
     if (!confirm('Vuoi annullare questa prenotazione?')) return
-    const r = await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare')
+    const r = await dbSave(supabase.from('call_bookings').delete().eq('id', id), 'la prenotazione', 'eliminare', { quiet: true })
     if (!r.ok) return                                   // la prenotazione è ancora lì: niente "annullata"
     showToast('Prenotazione annullata', '🗑️')
     fetchData()

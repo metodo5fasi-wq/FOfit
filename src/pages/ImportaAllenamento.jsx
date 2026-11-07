@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { dbMust } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { supabase } from '../lib/supabase'
@@ -69,6 +70,7 @@ export default function ImportaAllenamento() {
       if (!result.workout) throw new Error('Nessuna scheda ricevuta. Riprova.')
       setParsedWorkout(result.workout)
       setStep(2)
+            done('Scheda letta: controlla gli esercizi')
     } catch(e) {
       setError('Errore: ' + e.message)
     }
@@ -113,6 +115,7 @@ export default function ImportaAllenamento() {
           if (exErr) throw exErr
         }
       }
+      done('Scheda salvata')
       setStep(3)
     } catch(e) {
       setError('Errore: ' + e.message)

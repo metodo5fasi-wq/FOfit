@@ -108,8 +108,8 @@ export default function TrackerProgressi() {
     setSaving(true)
     const payload = { client_id: profile.id, entry_date: form.entry_date, notes: form.notes || null }
     MISURE.forEach(m => { payload[m.key] = form[m.key] ? parseFloat(form[m.key]) : null })
-    const { error } = await supabase.from('progress_entries').insert(payload)
-    if (!error) {
+    const r = await dbSave(supabase.from('progress_entries').insert(payload), 'la misurazione', 'salvare', { done: 'Misurazione salvata' })
+    if (r.ok) {
       setShowForm(false)
       setForm({ entry_date: localDateStr(), weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:'' })
       fetchEntries()
@@ -118,7 +118,7 @@ export default function TrackerProgressi() {
   }
 
   async function deleteEntry(id) {
-    await dbSave(supabase.from('progress_entries').delete().eq('id', id), 'la misurazione', 'eliminare')
+    await dbSave(supabase.from('progress_entries').delete().eq('id', id), 'la misurazione', 'eliminare', { done: 'Misurazione eliminata' })
     fetchEntries()
   }
 
@@ -133,7 +133,7 @@ export default function TrackerProgressi() {
       const { error: upErr } = await supabase.storage
         .from('progress-photos')
         .upload(fileName, file, { cacheControl: '3600', upsert: false })
-      if (upErr) { alert('Errore storage: ' + upErr.message); setUploading(false); return }
+      if (upErr) { toast('Non sono riuscito a caricare la foto. Riprova.', 'error'); setUploading(false); e.target.value = ''; return }
 
       const publicUrl = `https://hdgiwrwcxfbojqfeyrxn.supabase.co/storage/v1/object/public/progress-photos/${fileName}`
       
@@ -144,7 +144,11 @@ export default function TrackerProgressi() {
         label: selectedLabel,
         notes: photoNotes || null,
       })
-      if (dbErr) { alert('Errore database: ' + dbErr.message); setUploading(false); return }
+      if (dbErr) {
+        toast('Non sono riuscito a salvare la foto. Riprova.', 'error'); setUploading(false); e.target.value = ''
+        try { await supabase.storage.from('progress-photos').remove([fileName]) } catch {}          // niente file orfano nell'archivio
+        return
+      }
 
       setPhotoNotes('')
       await fetchPhotos()
@@ -159,7 +163,7 @@ export default function TrackerProgressi() {
   async function deletePhoto(id, photoUrl) {
     const path = photoUrl.split('/progress-photos/')[1]
     if (path) await supabase.storage.from('progress-photos').remove([path])
-    await dbSave(supabase.from('progress_photos').delete().eq('id', id), 'la foto', 'eliminare')
+    await dbSave(supabase.from('progress_photos').delete().eq('id', id), 'la foto', 'eliminare', { done: 'Foto eliminata' })
     fetchPhotos()
   }
 
@@ -320,7 +324,7 @@ export default function TrackerProgressi() {
                     </div>
                     {e.notes && <div style={{fontSize:11, color:'#AAA', marginTop:4, fontStyle:'italic'}}>{e.notes}</div>}
                   </div>
-                  <button onClick={() => deleteEntry(e.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#E0DDD6', fontSize:16, padding:'0 0 0 12px', flexShrink:0}}>
+                  <button onClick={() => deleteEntry(e.id)} aria-label="Elimina misurazione" style={{background:'none', border:'none', cursor:'pointer', color:'#E0DDD6', fontSize:16, padding:'0 0 0 12px', flexShrink:0}}>
                     <i className="ti ti-trash"/>
                   </button>
                 </div>

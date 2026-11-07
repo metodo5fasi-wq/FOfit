@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { dbSave } from '../lib/db'
 import { sendToClient } from '../lib/notify'
 import { authFetch } from '../lib/authFetch'
@@ -232,6 +233,7 @@ export default function AdminPanel() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Errore creazione')
       setMsg('Cliente creato! Comunicagli email e password.')
+      done('Cliente creato')
       setShowNewClient(false)
       setNewClient({ email:'', password:'', full_name:'', goal:'dimagrimento', phone:'', height_cm:'', notes:'' })
       setTimeout(() => { setMsg(''); fetchAll() }, 2000)
@@ -247,7 +249,7 @@ export default function AdminPanel() {
     const dietData = buildPlanFromDiet()
 
     // Disattiva piano precedente del cliente
-    await dbSave(supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id), 'il piano alimentare', 'salvare')
+    await dbSave(supabase.from('meal_plans').update({is_active:false}).eq('client_id', newPlan.client_id), 'il piano alimentare', 'salvare', { quiet: true })
 
     // Insert base senza colonne opzionali
     const payload = {
@@ -279,6 +281,7 @@ export default function AdminPanel() {
     }
 
     setMsg('✓ Piano creato e assegnato al cliente!')
+      done('Piano creato e assegnato')
     setShowNewPlan(false)
     setDietType('lineare')
     setNewPlan({ client_id:'', title:'Piano alimentare', week_number:1, kcal_target:2000, protein_target_g:150, carbs_target_g:200, fat_target_g:65, notes:'' })
@@ -287,8 +290,8 @@ export default function AdminPanel() {
   }
 
   async function reactivatePlan(planId) {
-    const { error } = await supabase.from('meal_plans').update({ is_active: true }).eq('id', planId)
-    if (error) { alert('Errore riattivazione piano: ' + error.message); return }
+    const r = await dbSave(supabase.from('meal_plans').update({ is_active: true }).eq('id', planId), 'il piano alimentare', 'riattivare', { done: 'Piano riattivato' })
+    if (!r.ok) return
     fetchAll()
   }
   const macroKcal = p => (parseInt(p.protein_target_g||0)*4+parseInt(p.carbs_target_g||0)*4+parseInt(p.fat_target_g||0)*9)

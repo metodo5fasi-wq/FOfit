@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { fetchAllRows } from '../lib/pagedQuery'
 import { localDateStr } from '../lib/dates'
 document.title = 'FOfit — Allenamento'
@@ -283,6 +284,7 @@ export default function Allenamento() {
     if (existing) {
       setLogs(prev => prev.filter(l => l.id !== existing.id))
       enqueue({ userId: uid, table: 'workout_logs', kind: 'delete', rowId: existing.id })
+      done('Serie tolta')
     } else {
       const weightVal = inputValues[`${ex.id}-${setNumber}-weight_kg`] || inputValues[`${ex.exercise_name}-${setNumber}-weight_kg`]
       const repsVal = inputValues[`${ex.id}-${setNumber}-reps_done`] || inputValues[`${ex.exercise_name}-${setNumber}-reps_done`]
@@ -302,6 +304,7 @@ export default function Allenamento() {
       }
       setLogs(prev => [...prev, row])
       enqueue({ userId: uid, table: 'workout_logs', kind: 'upsert', row })
+      done(navigator.onLine === false ? 'Serie salvata sul telefono' : 'Serie salvata')
     }
   }
 

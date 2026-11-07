@@ -73,8 +73,8 @@ export default function CheckinSettimanale() {
     setSaving(true)
     const payload = { client_id: profile.id, week_date: weekDate, ...form }
     const r = existing
-      ? await dbSave(supabase.from('weekly_checkins').update(payload).eq('id', existing.id), 'il check-in', 'salvare')
-      : await dbSave(supabase.from('weekly_checkins').insert(payload).select().single(), 'il check-in', 'salvare')
+      ? await dbSave(supabase.from('weekly_checkins').update(payload).eq('id', existing.id), 'il check-in', 'salvare', { quiet: true })
+      : await dbSave(supabase.from('weekly_checkins').insert(payload).select().single(), 'il check-in', 'salvare', { quiet: true })
     if (!r.ok) { setSaving(false); return }              // niente "Check-in salvato!" se non è stato salvato
     if (!existing) setExisting(r.data)
     setHistory(prev => {

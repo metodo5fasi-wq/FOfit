@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { dbMust } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -292,6 +293,7 @@ export default function ModificaAllenamento() {
 
       setDirty(false)
       setSavedMsg('✓ Scheda salvata!')
+      done('Scheda salvata')
       setTimeout(() => setSavedMsg(''), 3000)
       fetchPlan()
     } catch(e) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { done } from '../lib/toast'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -242,7 +243,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
   function setEx(idx, field, val) { setProgressi(p=>p.map((e,i)=>i===idx?{...e,[field]:val}:e)) }
 
   // SALVA BOZZA
-  async function saveDraft() {
+  async function saveDraft(opts) {
     if (!clientId) { setError('Sessione scaduta, ricarica la pagina'); return null }
     setSaving(true)
     setError('')
@@ -262,6 +263,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       }
       setSaved(true)
       setTimeout(()=>setSaved(false), 2500)
+            if (!(opts && opts.quiet)) done('Bozza salvata')
       setSaving(false)
       return savedId
     } catch(e) {
@@ -278,7 +280,7 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
     setError('')
     try {
       // 1. Salva prima i dati
-      const savedId = await saveDraft()
+      const savedId = await saveDraft({ quiet: true })
       if (!savedId) throw new Error('Salvataggio fallito — riprova')
 
       // 2. Imposta submitted_at usando l'ID restituito direttamente
@@ -289,7 +291,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
 
       setSubmitting(false)
       setSaved(true)
-      setConfirm(true)   // si chiude col tasto "Perfetto" (poi si torna all'elenco dei report)
+      setConfirm(true)
+            done('Report inviato al coach')   // si chiude col tasto "Perfetto" (poi si torna all'elenco dei report)
     } catch(e) {
       setSubmitting(false)
       setError('Errore invio: ' + e.message + ' — i tuoi dati sono stati salvati come bozza')

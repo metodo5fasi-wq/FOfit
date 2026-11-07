@@ -88,7 +88,7 @@ export default function ModificaPiano() {
       // Salva su Supabase
       await Promise.all(updates.map(u => {
         const { id, ...data } = u
-        return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
+        return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare', { quiet: true })
       }))
 
       // Aggiorna stato locale immediatamente
@@ -425,7 +425,7 @@ export default function ModificaPiano() {
     const { data: mealData } = await dbSave(supabase.from('plan_meals').insert({
       plan_id: planId, day_of_week: selectedDay,
       meal_type: newMealType, meal_order: dayMeals.length,
-    }).select().single(), 'il piano', 'salvare')
+    }).select().single(), 'il piano', 'salvare', { done: 'Pasto aggiunto' })
     if (mealData) {
       setMeals(prev => [...prev, { ...mealData, plan_meal_foods: [] }])
       setShowAddMeal(false)
@@ -468,8 +468,8 @@ export default function ModificaPiano() {
       const deleteMealPromises = (dbMeals || [])
         .filter(dbMeal => !currentMealIds.has(dbMeal.id))
         .map(async dbMeal => {
-          await dbSave(supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id), 'il piano', 'eliminare')
-          await dbSave(supabase.from('plan_meals').delete().eq('id', dbMeal.id), 'il piano', 'eliminare')
+          await dbMust(supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id), 'il piano', 'eliminare')
+          await dbMust(supabase.from('plan_meals').delete().eq('id', dbMeal.id), 'il piano', 'eliminare')
         })
       await Promise.all(deleteMealPromises)
 
@@ -496,7 +496,7 @@ export default function ModificaPiano() {
         const batch = toUpdate.slice(i, i + batchSize)
         await Promise.all(batch.map(f => {
           const { id, ...data } = f
-          return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
+          return dbMust(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
         }))
       }
 
@@ -604,7 +604,7 @@ export default function ModificaPiano() {
                 protein_target_g: plan.protein_target_g,
                 carbs_target_g: plan.carbs_target_g,
                 fat_target_g: plan.fat_target_g,
-              }).eq('id', planId), 'il piano alimentare', 'salvare')
+              }).eq('id', planId), 'il piano alimentare', 'salvare', { done: 'Target salvati' })
               setSavedMsg('✓ Salvato')
               setTimeout(()=>setSavedMsg(''),2000)
             }} style={{padding:'3px 9px',background:savedMsg?'#3B6D11':'#D4570A',color:'white',border:'none',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit',transition:'background 0.2s'}}>

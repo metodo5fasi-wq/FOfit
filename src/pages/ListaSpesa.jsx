@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { notify } from '../lib/toast'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
@@ -73,7 +74,7 @@ export default function ListaSpesa() {
     const { data: meals } = await supabase
       .from('plan_meals').select('*, plan_meal_foods(*)')
       .eq('plan_id', plan.id)
-    if (!meals || meals.length === 0) { setGenerating(false); return }
+    if (!meals || meals.length === 0) { setGenerating(false); notify('Il piano non ha ancora pasti: non c\'è nulla da aggiungere', 'info'); return }
     const foodMap = {}
     meals.forEach(meal => {
       ;(meal.plan_meal_foods || []).forEach(food => {
@@ -84,27 +85,29 @@ export default function ListaSpesa() {
         foodMap[key].quantity_g += food.quantity_g || 0
       })
     })
-    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare')
+    const del = await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare', { quiet: true })
+    if (!del.ok) { setGenerating(false); return }               // lista vecchia ancora lì: niente doppioni
     const newItems = Object.values(foodMap).map(item => ({
       ...item, client_id: profile.id, plan_id: plan.id, is_checked: false, quantity_g: Math.round(item.quantity_g)
     }))
-    if (newItems.length > 0) await dbSave(supabase.from('shopping_list_items').insert(newItems), 'la lista della spesa', 'salvare')
+    if (newItems.length > 0) await dbSave(supabase.from('shopping_list_items').insert(newItems), 'la lista della spesa', 'salvare', { done: 'Lista della spesa creata' })
+    else notify('Il piano non ha alimenti: la lista è vuota', 'info')
     fetchItems()
     setGenerating(false)
   }
 
   async function toggleItem(id, checked) {
-    await dbSave(supabase.from('shopping_list_items').update({ is_checked: !checked }).eq('id', id), 'la lista della spesa', 'salvare')
+    await dbSave(supabase.from('shopping_list_items').update({ is_checked: !checked }).eq('id', id), 'la lista della spesa', 'salvare', { done: 'Aggiornato' })
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_checked: !checked } : i))
   }
 
   async function clearChecked() {
-    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id).eq('is_checked', true), 'la lista della spesa', 'eliminare')
+    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id).eq('is_checked', true), 'la lista della spesa', 'eliminare', { done: 'Voci spuntate tolte' })
     fetchItems()
   }
 
   async function clearAll() {
-    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare')
+    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare', { done: 'Lista svuotata' })
     setItems([])
   }
 
@@ -116,7 +119,7 @@ export default function ListaSpesa() {
       category: getCategory(newItem.trim()),
       is_checked: false,
       quantity_g: null,
-    }), 'la lista della spesa', 'salvare')
+    }), 'la lista della spesa', 'salvare', { done: 'Voce aggiunta' })
     setNewItem('')
     fetchItems()
   }
@@ -237,7 +240,7 @@ export default function ListaSpesa() {
               onChange={e=>setNewItem(e.target.value)}
               onKeyDown={e=>e.key==='Enter'&&addManualItem()}
             />
-            <button style={s.btn} onClick={addManualItem} disabled={!newItem.trim()}>
+            <button style={s.btn} onClick={addManualItem} disabled={!newItem.trim()} aria-label="Aggiungi alla lista">
               <i className="ti ti-plus" style={{fontSize:14}}/>
             </button>
           </div>

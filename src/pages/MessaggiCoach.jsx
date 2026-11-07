@@ -46,7 +46,7 @@ export default function MessaggiCoach() {
         })
         // Segna come letto se è del coach
         if (newMsg.sender_role === 'coach') {
-          dbSave(supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id), 'il messaggio', 'salvare')
+          dbSave(supabase.from('coach_messages').update({ is_read: true }).eq('id', newMsg.id), 'il messaggio', 'salvare', { quiet: true })
         }
       })
       .subscribe()
@@ -71,7 +71,7 @@ export default function MessaggiCoach() {
     // Segna come letti solo quando il cliente apre la pagina
     if (markRead) {
       await dbSave(supabase.from('coach_messages').update({ is_read: true })
-        .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false), 'il messaggio', 'salvare')
+        .eq('client_id', profile.id).eq('sender_role', 'coach').eq('is_read', false), 'il messaggio', 'salvare', { quiet: true })
     }
   }
 

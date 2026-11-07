@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { done } from '../lib/toast'
 import { localDateStr } from '../lib/dates'
 import { dbMust } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
@@ -138,6 +139,7 @@ export default function ImportaPiano() {
       setTargets(t0 => ({ kcal_target: plan.kcal_totali || t0.kcal_target, protein_target_g: plan.proteine_g || t0.protein_target_g, carbs_target_g: plan.carboidrati_g || t0.carbs_target_g, fat_target_g: plan.grassi_g || t0.fat_target_g }))
       setProgress({ current: dayBlocks.length, total: dayBlocks.length, label: 'Completato!' })
       setStep(2)
+            done('Piano letto: controlla i giorni')
 
     } catch(e) { setError(e.message) }
     setLoading(false)
@@ -212,6 +214,8 @@ export default function ImportaPiano() {
           }
         }
       }
+
+      done('Piano importato e assegnato')
 
       navigate('/admin')
     } catch(e) {

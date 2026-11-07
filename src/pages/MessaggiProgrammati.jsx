@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { sendToClient } from '../lib/notify'
 import { dbMust, dbSave, notify } from '../lib/db'
 import { supabase } from '../lib/supabase'
@@ -84,6 +85,7 @@ export default function MessaggiProgrammati() {
         setSaveMsg('✓ Messaggio programmato')
       }
       setForm({ client_id:'', message:'', scheduled_at:'' })
+      done('Messaggio programmato')
       setShowForm(false)
       fetchScheduled()
       setTimeout(() => setSaveMsg(''), 3000)
@@ -98,13 +100,13 @@ export default function MessaggiProgrammati() {
     // notifica nell'app + push + messaggio in conversazione (un solo percorso, condiviso con la campanella)
     const r = await sendToClient({ clientId: msg.client_id, coachId: profile.id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
     if (!r.ok) { setSending(null); notify('Non sono riuscito a inviare il messaggio. Riprova.', 'error'); return }      // resta "da inviare"
-    await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
+    await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id), 'il messaggio programmato', 'salvare', { done: 'Messaggio inviato' })
     fetchScheduled()
     setSending(null)
   }
 
   async function remove(id) {
-    await dbSave(supabase.from('scheduled_messages').delete().eq('id', id), 'il messaggio programmato', 'eliminare')
+    await dbSave(supabase.from('scheduled_messages').delete().eq('id', id), 'il messaggio programmato', 'eliminare', { done: 'Messaggio eliminato' })
     fetchScheduled()
   }
 
@@ -117,7 +119,7 @@ export default function MessaggiProgrammati() {
       for (const msg of toSend||[]) {
         const r = await sendToClient({ clientId: msg.client_id, coachId: msg.coach_id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
         if (!r.ok) continue            // non inviato: riprova al prossimo controllo (nessun duplicato, la notifica non è stata creata)
-        await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id), 'il messaggio programmato', 'salvare')
+        await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id), 'il messaggio programmato', 'salvare', { quiet: true })
       }
       if (toSend?.length) fetchScheduled()
     }

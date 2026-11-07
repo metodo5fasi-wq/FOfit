@@ -177,7 +177,7 @@ export default function AssistenteAI() {
       carbs_g: ing.c,
       fat_g: ing.g,
     }))
-    await dbSave(supabase.from('diary_entries').insert(entries), 'il diario', 'salvare')
+    await dbSave(supabase.from('diary_entries').insert(entries), 'il diario', 'salvare', { done: 'Ricetta aggiunta al diario' })
   }
 
   async function sendMessage(text) {
@@ -232,7 +232,7 @@ export default function AssistenteAI() {
   }
 
   async function clearHistory() {
-    await dbSave(supabase.from('ai_chat_messages').delete().eq('client_id', profile.id), 'la chat', 'eliminare', { silent: true })
+    await dbSave(supabase.from('ai_chat_messages').delete().eq('client_id', profile.id), 'la chat', 'eliminare', { done: 'Chat cancellata' })
     loadHistory()
   }
 

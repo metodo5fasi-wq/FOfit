@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { done, notify } from '../lib/toast'
 import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
@@ -95,15 +96,18 @@ export default function StoricoAllenamento() {
 
   async function saveEdit() {
     setSavingEdit(true)
-    await dbSave(supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id), 'la seduta', 'salvare')
+    let allOk = (await dbSave(supabase.from('workout_sessions').update({ notes: editNotes }).eq('id', editingSession.id), 'la seduta', 'salvare', { quiet: true })).ok
     for (const log of editLogs) {
-      await dbSave(supabase.from('workout_logs').update({
+      const r = await dbSave(supabase.from('workout_logs').update({
         weight_kg: log.weight_kg ? parseFloat(String(log.weight_kg).replace(',', '.')) : null,
         reps_done: log.reps_done ? parseInt(log.reps_done) : null,
         exercise_note: log.exercise_note || null,
-      }).eq('id', log.id), "l'allenamento", 'salvare')
+      }).eq('id', log.id), "l'allenamento", 'salvare', { quiet: true })
+      allOk = allOk && r.ok
     }
     setSavingEdit(false)
+    if (!allOk) return                                  // l'errore è già mostrato: la finestra resta aperta per riprovare
+    done('Allenamento aggiornato')
     setEditingSession(null)
     setEditLogs([])
     fetchAll()
@@ -121,8 +125,9 @@ export default function StoricoAllenamento() {
         setGeneratedLink(`${window.location.origin}/share/${data.token}`)
         setCopiedId(session.id)
         setTimeout(() => setCopiedId(null), 3000)
-      }
-    } catch (e) { }
+        done('Link creato')
+      } else notify('Non sono riuscito a creare il link. Riprova.', 'error')
+    } catch (e) { notify('Non sono riuscito a creare il link. Riprova.', 'error') }
     setSharingId(null)
   }
 
@@ -137,8 +142,9 @@ export default function StoricoAllenamento() {
       if (data.token) {
         setGeneratedLink(`${window.location.origin}/share/${data.token}`)
         setShowPeriodModal(false)
-      }
-    } catch (e) { }
+        done('Link creato')
+      } else notify('Non sono riuscito a creare il link. Riprova.', 'error')
+    } catch (e) { notify('Non sono riuscito a creare il link. Riprova.', 'error') }
     setSharingId(null)
   }
 

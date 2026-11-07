@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { done } from '../lib/toast'
 import { localDateStr, addDaysStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
@@ -46,6 +47,7 @@ export default function DiarioGiornaliero() {
     setWaterGoal(val)
     localStorage.setItem('fofit_water_goal', val)
     setEditingWaterGoal(false)
+    done('Obiettivo acqua salvato')
   }
   const searchTimeout = useRef(null)
   const today = localDateStr()
@@ -67,6 +69,7 @@ export default function DiarioGiornaliero() {
   function setWaterSaved(n) {
     setWater(n)
     try { if (n > 0) localStorage.setItem(waterKey, String(n)); else localStorage.removeItem(waterKey) } catch {}
+    done(n > 0 ? `💧 ${n}/${waterGoal} bicchieri` : 'Acqua azzerata')
   }
 
   useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
@@ -122,7 +125,7 @@ export default function DiarioGiornaliero() {
       protein_g: Math.round(selectedFood.p * ratio),
       carbs_g: Math.round(selectedFood.c * ratio),
       fat_g: Math.round(selectedFood.g * ratio),
-    }), 'il diario', 'salvare')
+    }), 'il diario', 'salvare', { quiet: true })
     setSelectedFood(null)
     setQty(100)
     if (window.innerWidth < 768) setActiveTab('pasti')
@@ -131,14 +134,15 @@ export default function DiarioGiornaliero() {
   }
 
   async function removeFood(id) {
-    await dbSave(supabase.from('diary_entries').delete().eq('id', id), 'il diario', 'eliminare')
+    await dbSave(supabase.from('diary_entries').delete().eq('id', id), 'il diario', 'eliminare', { done: 'Alimento rimosso' })
     fetchDiary()
   }
 
   async function clearAll() {
     if (!window.confirm('Vuoi azzerare tutto il diario di oggi?')) return
-    await dbSave(supabase.from('diary_entries').delete()
-      .eq('client_id', profile.id).eq('entry_date', selectedDate), 'il diario', 'eliminare')
+    const r = await dbSave(supabase.from('diary_entries').delete()
+      .eq('client_id', profile.id).eq('entry_date', selectedDate), 'il diario', 'eliminare', { done: 'Giorno svuotato' })
+    if (!r.ok) return                                   // il diario è ancora lì: non si svuota la schermata
     setDiary(Object.fromEntries(MEAL_SLOTS.map(m => [m, []])))
   }
 
@@ -269,7 +273,7 @@ export default function DiarioGiornaliero() {
                         <div style={{fontSize:10,color:'#AAA'}}>{f.quantity_g}g · P{f.protein_g} C{f.carbs_g} G{f.fat_g}</div>
                       </div>
                       <div style={{fontSize:11,color:'#F4894A',fontWeight:600,flexShrink:0}}>{f.kcal}</div>
-                      <button onClick={()=>removeFood(f.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:14,padding:0,flexShrink:0}}>✕</button>
+                      <button onClick={()=>removeFood(f.id)} aria-label="Rimuovi alimento" style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:14,padding:0,flexShrink:0}}>✕</button>
                     </div>
                   ))}
                 </div>

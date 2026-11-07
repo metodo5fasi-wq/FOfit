@@ -136,7 +136,7 @@ function ClientDetail({ client, navigate }) {
 
   async function save() {
     setSaving(true)
-    const r = await dbSave(supabase.from('profiles').update({ full_name:form.full_name, goal:form.goal, height_cm:form.height_cm?parseInt(form.height_cm):null, phone:form.phone, notes:form.notes, coach_notes:form.coach_notes }).eq('id',client.id), 'i dati del cliente', 'salvare')
+    const r = await dbSave(supabase.from('profiles').update({ full_name:form.full_name, goal:form.goal, height_cm:form.height_cm?parseInt(form.height_cm):null, phone:form.phone, notes:form.notes, coach_notes:form.coach_notes }).eq('id',client.id), 'i dati del cliente', 'salvare', { done: 'Dati cliente salvati' })
     setSaving(false)
     if (!r.ok) return                                   // resta in modifica: ciò che hai scritto non va perso
     setEditing(false)
@@ -144,7 +144,7 @@ function ClientDetail({ client, navigate }) {
 
   async function savePlanEdit() {
     if (!data.mealPlan) return
-    await dbSave(supabase.from('meal_plans').update({ title:planEdit.title, kcal_target:parseInt(planEdit.kcal_target), protein_target_g:parseInt(planEdit.protein_target_g), carbs_target_g:parseInt(planEdit.carbs_target_g), fat_target_g:parseInt(planEdit.fat_target_g), notes:planEdit.notes }).eq('id',data.mealPlan.id), 'il piano alimentare', 'salvare')
+    await dbSave(supabase.from('meal_plans').update({ title:planEdit.title, kcal_target:parseInt(planEdit.kcal_target), protein_target_g:parseInt(planEdit.protein_target_g), carbs_target_g:parseInt(planEdit.carbs_target_g), fat_target_g:parseInt(planEdit.fat_target_g), notes:planEdit.notes }).eq('id',data.mealPlan.id), 'il piano alimentare', 'salvare', { done: 'Piano aggiornato' })
     setEditingPlan(false); loadAll()
   }
 
