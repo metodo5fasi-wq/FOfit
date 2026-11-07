@@ -13,7 +13,7 @@ export default function PlanPdfButton({ planId, confirmMessage = null, style = {
     if (navigator.onLine === false) { toast?.('Per creare il PDF serve la connessione', 'error'); return }
     if (confirmMessage && !window.confirm(confirmMessage)) return
     setBusy(true)
-    try { const ok = await exportPlanPdf(supabase, planId); if (!ok) toast?.('Impossibile aprire il PDF: consenti le finestre popup', 'error') }
+    try { const ok = await exportPlanPdf(supabase, planId); if (!ok) toast?.('Impossibile aprire il PDF. Riprova.', 'error') }
     catch (err) { toast?.('Errore nella creazione del PDF: ' + (err?.message || 'riprova'), 'error') }
     setBusy(false)
   }
