@@ -4,8 +4,8 @@
   "description": "Il tuo piano alimentare personalizzato",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a0800",
-  "theme_color": "#D4570A",
+  "background_color": "#080808",
+  "theme_color": "#080808",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-96.png",  "sizes": "96x96",   "type": "image/png" },
