@@ -1,4 +1,5 @@
 import { ToastProvider } from './components/Toast'
+import PdfViewerHost from './components/PdfViewer'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -370,6 +371,7 @@ export default function App() {
         </ErrorBoundary>
         </div>
       </BrowserRouter>
+      <PdfViewerHost />
     </AuthContext.Provider>
     </ToastProvider>
     </ThemeContext.Provider>
