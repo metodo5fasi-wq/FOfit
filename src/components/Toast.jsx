@@ -9,15 +9,16 @@ export function useToast() {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
-  const show = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Date.now() + Math.random()
-    setToasts(prev => [...prev.slice(-2), { id, message, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration)
+  // Conferme (success): brevi (2 s) e una sola alla volta — una nuova sostituisce la precedente, così le azioni ripetute non si accumulano a pila.
+  const show = useCallback((message, type = 'info', duration) => {
+    const id = Date.now() + Math.random(), ms = duration || (type === 'success' ? 2200 : type === 'error' ? 4500 : 3000)
+    setToasts(prev => [...(type === 'success' ? prev.filter(t => t.type !== 'success') : prev).slice(-2), { id, message, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), ms)
   }, [])
 
   // Messaggi da qualunque punto dell'app (anche fuori dai componenti): window.dispatchEvent(new CustomEvent('fofit:toast', { detail: { message, type } }))
   useEffect(() => {
-    const h = e => { if (e?.detail?.message) show(e.detail.message, e.detail.type || 'error', e.detail.duration || 4500) }
+    const h = e => { if (e?.detail?.message) show(e.detail.message, e.detail.type || 'error', e.detail.duration) }
     window.addEventListener('fofit:toast', h)
     return () => window.removeEventListener('fofit:toast', h)
   }, [show])
@@ -33,14 +34,15 @@ export function ToastProvider({ children }) {
         {toasts.map(t => (
           <div key={t.id} role={t.type === 'error' ? 'alert' : 'status'} style={{
             background: bgs[t.type], border: `0.5px solid ${colors[t.type]}`,
-            borderRadius: 12, padding: '11px 14px',
+            borderRadius: t.type === 'success' ? 20 : 12, padding: t.type === 'success' ? '7px 14px' : '11px 14px',
+            alignSelf: t.type === 'success' ? 'center' : 'stretch', maxWidth: '100%',
             display: 'flex', alignItems: 'center', gap: 10,
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
             animation: 'fadeInUp 0.2s ease-out',
             pointerEvents: 'auto',
           }}>
-            <i className={`ti ${icons[t.type]}`} style={{ fontSize: 18, color: colors[t.type], flexShrink: 0 }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: colors[t.type], lineHeight: 1.4 }}>{t.message}</span>
+            <i className={`ti ${icons[t.type]}`} style={{ fontSize: t.type === 'success' ? 15 : 18, color: colors[t.type], flexShrink: 0 }} />
+            <span style={{ fontSize: t.type === 'success' ? 12.5 : 13, fontWeight: 600, color: colors[t.type], lineHeight: 1.4 }}>{t.message}</span>
           </div>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { done } from '../lib/toast'
 import { TYPES, relTime } from '../lib/coachInbox.js'
 
 const FILTERS = [['all', 'Tutti'], ['checkin', 'Check-in'], ['message', 'Messaggi'], ['report', 'Report'], ['anamnesi', 'Anamnesi'], ['booking', 'Chiamate'], ['media', 'Foto e misure']]
@@ -38,7 +39,7 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
     const text = (reply?.text || '').trim(); if (!text || reply?.sending) return
     setReply(r => ({ ...r, sending: true, error: '' }))
     let ok = false; try { ok = await onReply(i.clientId, text, i) } catch { ok = false }
-    if (ok) { setNotice(`Risposta inviata a ${i.clientName} ✓`); setTimeout(() => setNotice(''), 4000); setReply(null); inbox.markSeen(i) }
+    if (ok) { setNotice(`Risposta inviata a ${i.clientName} ✓`); done('Risposta inviata'); setTimeout(() => setNotice(''), 4000); setReply(null); inbox.markSeen(i) }
     else setReply(r => ({ ...r, sending: false, error: 'Non sono riuscito a inviare la risposta. Riprova.' }))
   }
   const openClient = id => { const c = byId[id]; if (c) onOpenClient(c) }
