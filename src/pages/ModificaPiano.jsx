@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { dbMust, dbSave } from '../lib/db'
 import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -218,7 +219,7 @@ export default function ModificaPiano() {
 
   // Rimuovi pasto intero
   async function removeMeal(mealId) {
-    if (!window.confirm('Rimuovere questo pasto e tutti i suoi alimenti?')) return
+    if (!(await askConfirm('Rimuovere questo pasto e tutti i suoi alimenti?', { confirmLabel: 'Rimuovi', danger: true }))) return
     setMeals(prev => prev.filter(m => m.id !== mealId))
     setDirty(true)
   }
@@ -562,7 +563,7 @@ export default function ModificaPiano() {
 
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button onClick={async ()=>{
+        <button className="tap" aria-label="Indietro" onClick={async ()=>{
   if (dirty) {
     await saveAll()
   }
@@ -634,7 +635,7 @@ export default function ModificaPiano() {
                   <div style={{height:5,borderRadius:3,background:barColor,width:`${Math.min(pct,100)}%`,transition:'width 0.3s'}}/>
                 </div>
                 {/* Target editabile */}
-                <input type="number"
+                <input inputMode="numeric" type="number"
                   value={plan?.[item.k]||''}
                   placeholder="target kcal"
                   onChange={e=>{
@@ -698,7 +699,7 @@ export default function ModificaPiano() {
               {dayMeals.map(m=>(
                 <div key={m.id} style={{display:'flex',alignItems:'center',gap:4}}>
                   <span style={{fontSize:10,color:'#4A90D4',textTransform:'capitalize'}}>{m.meal_type}</span>
-                  <input type="number" min="0" max="100" value={mealTargets[m.id]||''} onChange={e=>setMealTargets(p=>({...p,[m.id]:e.target.value}))}
+                  <input inputMode="decimal" type="number" min="0" max="100" value={mealTargets[m.id]||''} onChange={e=>setMealTargets(p=>({...p,[m.id]:e.target.value}))}
                     style={{width:44,padding:'3px 5px',border:'0.5px solid rgba(74,144,212,0.4)',borderRadius:5,fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
                   <span style={{fontSize:9,color:'#4A90D4'}}>%</span>
                 </div>
@@ -788,7 +789,7 @@ export default function ModificaPiano() {
                     <div style={{display:'flex',gap:4}}>
                       <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
                       <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
-                      <button onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+                      <button aria-label="Elimina il pasto" onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                     </div>
                   </div>
                   {showSaveTemplate===meal.id && (
@@ -804,7 +805,7 @@ export default function ModificaPiano() {
                           <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0'}}>
                             <div style={{flex:1,fontSize:11,fontWeight:600,color:'#F0F0F0'}}>{t.name} <span style={{color:'#AAA',fontWeight:400}}>· {t.foods?.reduce((s,f)=>s+(f.kcal||0),0)} kcal</span></div>
                             <button onClick={()=>applyTemplate(meal.id,t)} style={{...s.btn,padding:'3px 8px',fontSize:10}}>Usa</button>
-                            <button onClick={()=>deleteTemplate(t.id)} style={{...s.btnDanger,padding:'3px 5px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:10}}/></button>
+                            <button aria-label="Elimina il template" onClick={()=>deleteTemplate(t.id)} style={{...s.btnDanger,padding:'3px 5px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:10}}/></button>
                           </div>
                         ))
                       }
@@ -824,13 +825,13 @@ export default function ModificaPiano() {
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC',cursor:'grab',flexShrink:0}}/>
                       <span style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.food_name}</span>
-                      <button onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
+                      <button aria-label="Rimuovi l'alimento" onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
                     </div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginLeft:19}}>
                       {[{k:'quantity_g',l:'g',bold:true},{k:'kcal',l:'kcal'},{k:'protein_g',l:'P'},{k:'carbs_g',l:'C'},{k:'fat_g',l:'G'}].map(f=>(
                         <div key={f.k}>
                           <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>{f.l}</div>
-                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'rgba(212,87,10,0.12)':'#161616',borderColor:f.bold?'rgba(212,87,10,0.3)':'#222'}}
+                          <input inputMode="decimal" style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'rgba(212,87,10,0.12)':'#161616',borderColor:f.bold?'rgba(212,87,10,0.3)':'#222'}}
                             type="number" value={food[f.k]||0}
                             onChange={e=>{
                               const val = parseFloat(e.target.value)||0
@@ -910,12 +911,12 @@ export default function ModificaPiano() {
                     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginBottom:7}}>
                       <div>
                         <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>Grammi</div>
-                        <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:700,color:'#F4894A',background:'rgba(212,87,10,0.1)',borderColor:'rgba(212,87,10,0.35)'}} type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
+                        <input inputMode="decimal" style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:700,color:'#F4894A',background:'rgba(212,87,10,0.1)',borderColor:'rgba(212,87,10,0.35)'}} type="number" value={newFood.quantity_g} onChange={e=>updateNewFoodQty(e.target.value)}/>
                       </div>
                       {[{k:'kcal',l:'Kcal'},{k:'protein_g',l:'Prot'},{k:'carbs_g',l:'Carbo'},{k:'fat_g',l:'Grassi'}].map(f=>(
                         <div key={f.k}>
                           <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>{f.l}</div>
-                          <input style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',background:newFood._k100!=null?'rgba(59,140,90,0.16)':'#161616'}} type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
+                          <input inputMode="decimal" style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',background:newFood._k100!=null?'rgba(59,140,90,0.16)':'#161616'}} type="number" value={newFood[f.k]} onChange={e=>setNewFood(p=>({...p,[f.k]:e.target.value}))}/>
                         </div>
                       ))}
                     </div>

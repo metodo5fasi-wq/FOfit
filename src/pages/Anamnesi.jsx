@@ -303,9 +303,9 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             </div>
             <div style={s.card}>
               <div style={s.grid3}>
-                <div><label style={s.label}>Peso attuale (kg)</label><input style={s.input} type="number" step="0.1" value={data.peso_attuale||''} onChange={e=>set('peso_attuale',e.target.value)}/></div>
-                <div><label style={s.label}>Peso desiderato (kg)</label><input style={s.input} type="number" step="0.1" value={data.peso_desiderato||''} onChange={e=>set('peso_desiderato',e.target.value)}/></div>
-                <div><label style={s.label}>Altezza (cm)</label><input style={s.input} type="number" value={data.altezza||''} onChange={e=>set('altezza',e.target.value)}/></div>
+                <div><label style={s.label}>Peso attuale (kg)</label><input inputMode="decimal" style={s.input} type="number" step="0.1" value={data.peso_attuale||''} onChange={e=>set('peso_attuale',e.target.value)}/></div>
+                <div><label style={s.label}>Peso desiderato (kg)</label><input inputMode="decimal" style={s.input} type="number" step="0.1" value={data.peso_desiderato||''} onChange={e=>set('peso_desiderato',e.target.value)}/></div>
+                <div><label style={s.label}>Altezza (cm)</label><input inputMode="decimal" style={s.input} type="number" value={data.altezza||''} onChange={e=>set('altezza',e.target.value)}/></div>
               </div>
             </div>
             <div style={s.card}>
@@ -538,7 +538,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                 <div>
                   <label style={s.label}>Fumo</label>
                   <Chips options={['No','Sì']} value={data.fumo===true?'Sì':data.fumo===false?'No':null} onChange={v=>set('fumo',v==='Sì')}/>
-                  {data.fumo && <div style={{marginTop:8}}><input style={s.input} type="number" placeholder="Sigarette/die" value={data.sigarette_die||''} onChange={e=>set('sigarette_die',parseInt(e.target.value))}/></div>}
+                  {data.fumo && <div style={{marginTop:8}}><input inputMode="numeric" style={s.input} type="number" placeholder="Sigarette/die" value={data.sigarette_die||''} onChange={e=>set('sigarette_die',parseInt(e.target.value))}/></div>}
                 </div>
                 <div>
                   <label style={s.label}>Alcol</label>
@@ -617,7 +617,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
             <div style={s.card}>
               <label style={s.label}>Antibiotici negli ultimi 12 mesi?</label>
               <Chips options={['No','Sì']} value={data.antibiotici_12mesi===true?'Sì':data.antibiotici_12mesi===false?'No':null} onChange={v=>set('antibiotici_12mesi',v==='Sì')}/>
-              {data.antibiotici_12mesi && <div style={{marginTop:8}}><input style={s.input} type="number" placeholder="Quante volte?" value={data.antibiotici_quante||''} onChange={e=>set('antibiotici_quante',parseInt(e.target.value))}/></div>}
+              {data.antibiotici_12mesi && <div style={{marginTop:8}}><input inputMode="numeric" style={s.input} type="number" placeholder="Quante volte?" value={data.antibiotici_quante||''} onChange={e=>set('antibiotici_quante',parseInt(e.target.value))}/></div>}
             </div>
           </>}
 
@@ -625,8 +625,8 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
           {current===10 && <>
             <div style={s.card}>
               <div style={s.grid2}>
-                <div><label style={s.label}>Peso minimo (5 anni)</label><input style={s.input} type="number" step="0.1" value={data.peso_minimo||''} onChange={e=>set('peso_minimo',e.target.value)}/></div>
-                <div><label style={s.label}>Peso massimo (5 anni)</label><input style={s.input} type="number" step="0.1" value={data.peso_massimo||''} onChange={e=>set('peso_massimo',e.target.value)}/></div>
+                <div><label style={s.label}>Peso minimo (5 anni)</label><input inputMode="decimal" style={s.input} type="number" step="0.1" value={data.peso_minimo||''} onChange={e=>set('peso_minimo',e.target.value)}/></div>
+                <div><label style={s.label}>Peso massimo (5 anni)</label><input inputMode="decimal" style={s.input} type="number" step="0.1" value={data.peso_massimo||''} onChange={e=>set('peso_massimo',e.target.value)}/></div>
               </div>
             </div>
             <div style={s.card}>
@@ -775,7 +775,7 @@ export default function Anamnesi({ clientId: propClientId, onClose, hideTopbar=f
                   <div key={ex} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                     <span style={{flex:1,fontSize:12,color:'#F0F0F0',fontWeight:500}}>{ex}</span>
                     {['👍','😐','👎'].map(emoji=>(
-                      <button key={emoji} onClick={()=>set('esercizi_feeling',{...(data.esercizi_feeling||{}),[ex]:feeling===emoji?null:emoji})} style={{width:34,height:28,borderRadius:7,border:'0.5px solid',cursor:'pointer',fontSize:14,background:feeling===emoji?'rgba(212,87,10,0.14)':'var(--bg-card)',borderColor:feeling===emoji?'#D4570A':'var(--border)'}}>{emoji}</button>
+                      <button className="tap tap-xl" key={emoji} onClick={()=>set('esercizi_feeling',{...(data.esercizi_feeling||{}),[ex]:feeling===emoji?null:emoji})} style={{width:34,height:28,borderRadius:7,border:'0.5px solid',cursor:'pointer',fontSize:14,background:feeling===emoji?'rgba(212,87,10,0.14)':'var(--bg-card)',borderColor:feeling===emoji?'#D4570A':'var(--border)'}}>{emoji}</button>
                     ))}
                   </div>
                 )

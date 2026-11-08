@@ -52,7 +52,7 @@ export default function DettaglioCliente() {
   if (loading) return (
     <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#161616'}}>
       <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',height:56,display:'flex',alignItems:'center',padding:'0 16px',gap:12,flexShrink:0}}>
-        <button onClick={()=>navigate(-1)} style={{...s.btnGray,padding:'5px 10px'}}><i className="ti ti-arrow-left" style={{fontSize:14}}/></button>
+        <button aria-label="Indietro" onClick={()=>navigate(-1)} style={{...s.btnGray,padding:'5px 10px'}}><i className="ti ti-arrow-left" style={{fontSize:14}}/></button>
         <div style={{fontSize:15,fontWeight:600}}>Caricamento...</div>
       </div>
     </div>
@@ -179,7 +179,7 @@ function ClientDetail({ client, navigate }) {
 
       {/* TOPBAR */}
       <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+        <button className="tap" aria-label="Indietro" onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:15,color:'#F0F0F0'}}/>
         </button>
         <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
@@ -193,10 +193,10 @@ function ClientDetail({ client, navigate }) {
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
           {unreadMsgs>0 && <div style={{background:'#D4570A',color:'white',borderRadius:10,padding:'2px 7px',fontSize:10,fontWeight:700}}>{unreadMsgs} msg</div>}
-          <button onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background:anamnesi?.completed_at?'rgba(59,140,90,0.16)':'#161616', color:anamnesi?.completed_at?'#6FCF97':'#888780', borderColor:anamnesi?.completed_at?'#3B6D11':'#2A2A2A'}}>
+          <button aria-label="Apri l'anamnesi" onClick={()=>setShowAnamnesi(true)} style={{...s.btnSm, background:anamnesi?.completed_at?'rgba(59,140,90,0.16)':'#161616', color:anamnesi?.completed_at?'#6FCF97':'#888780', borderColor:anamnesi?.completed_at?'#3B6D11':'#2A2A2A'}}>
             <i className="ti ti-clipboard-heart" style={{fontSize:12}}/>
           </button>
-          <button onClick={()=>setEditing(!editing)} style={{...s.btnSm, background:editing?'#161616':'rgba(212,87,10,0.14)', color:editing?'#888780':'#F4894A', borderColor:editing?'#2A2A2A':'#D4570A'}}>
+          <button aria-label={editing ? 'Annulla la modifica' : 'Modifica i dati'} onClick={()=>setEditing(!editing)} style={{...s.btnSm, background:editing?'#161616':'rgba(212,87,10,0.14)', color:editing?'#888780':'#F4894A', borderColor:editing?'#2A2A2A':'#D4570A'}}>
             <i className={`ti ${editing?'ti-x':'ti-pencil'}`} style={{fontSize:12}}/>
           </button>
         </div>
@@ -226,7 +226,7 @@ function ClientDetail({ client, navigate }) {
                   {Object.entries(GOAL_LABEL).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
-              <div><label style={s.label}>Altezza (cm)</label><input style={s.input} type="number" value={form.height_cm} onChange={e=>setForm(p=>({...p,height_cm:e.target.value}))}/></div>
+              <div><label style={s.label}>Altezza (cm)</label><input inputMode="decimal" style={s.input} type="number" value={form.height_cm} onChange={e=>setForm(p=>({...p,height_cm:e.target.value}))}/></div>
               <div><label style={s.label}>Telefono</label><input style={s.input} value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))}/></div>
             </div>
             <div style={{marginBottom:8}}><label style={s.label}>Note (visibili al cliente)</label><textarea style={{...s.input,minHeight:50,resize:'vertical'}} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))}/></div>
@@ -381,7 +381,7 @@ function ClientDetail({ client, navigate }) {
               <button onClick={sendQuickMsg} disabled={!quickMsg.trim()||sendingMsg} style={{...s.btn,flex:1,justifyContent:'center',opacity:!quickMsg.trim()?0.5:1}}>
                 <i className="ti ti-send" style={{fontSize:13}}/>{sendingMsg?'Invio...':'Invia'}
               </button>
-              <button onClick={()=>navigate(`/messaggi-coach?client=${client.id}`)} style={{...s.btnGray,padding:'9px 14px'}}>
+              <button aria-label="Apri la chat con il cliente" onClick={()=>navigate(`/messaggi-coach?client=${client.id}`)} style={{...s.btnGray,padding:'9px 14px'}}>
                 <i className="ti ti-external-link" style={{fontSize:13}}/>
               </button>
             </div>
@@ -486,7 +486,7 @@ function ClientDetail({ client, navigate }) {
                     })()}
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
                       <div><label style={s.label}>Kcal target</label>
-                        <input style={s.input} type="number" value={planEdit.kcal_target}
+                        <input inputMode="numeric" style={s.input} type="number" value={planEdit.kcal_target}
                           onChange={e=>{
                             const kcal = parseInt(e.target.value)||0
                             // Mantieni ratio macro proporzionali
@@ -505,7 +505,7 @@ function ClientDetail({ client, navigate }) {
                           }}/>
                       </div>
                       <div><label style={s.label}>Proteine (g) <span style={{fontSize:9,color:'#CCC'}}>×4 kcal</span></label>
-                        <input style={s.input} type="number" value={planEdit.protein_target_g}
+                        <input inputMode="numeric" style={s.input} type="number" value={planEdit.protein_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
                             const newKcal = Math.round(v*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
@@ -513,7 +513,7 @@ function ClientDetail({ client, navigate }) {
                           }}/>
                       </div>
                       <div><label style={s.label}>Carboidrati (g) <span style={{fontSize:9,color:'#CCC'}}>×4 kcal</span></label>
-                        <input style={s.input} type="number" value={planEdit.carbs_target_g}
+                        <input inputMode="numeric" style={s.input} type="number" value={planEdit.carbs_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
                             const newKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + v*4 + (parseFloat(planEdit.fat_target_g)||0)*9)
@@ -521,7 +521,7 @@ function ClientDetail({ client, navigate }) {
                           }}/>
                       </div>
                       <div><label style={s.label}>Grassi (g) <span style={{fontSize:9,color:'#CCC'}}>×9 kcal</span></label>
-                        <input style={s.input} type="number" value={planEdit.fat_target_g}
+                        <input inputMode="numeric" style={s.input} type="number" value={planEdit.fat_target_g}
                           onChange={e=>{
                             const v = parseInt(e.target.value)||0
                             const newKcal = Math.round((parseFloat(planEdit.protein_target_g)||0)*4 + (parseFloat(planEdit.carbs_target_g)||0)*4 + v*9)
@@ -830,7 +830,7 @@ function ClientDetail({ client, navigate }) {
       {/* ── LIGHTBOX ── */}
       {lightbox && (
         <div onClick={()=>setLightbox(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.95)',zIndex:9999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
-          <button onClick={()=>setLightbox(null)} style={{position:'absolute',top:16,right:16,width:38,height:38,borderRadius:'50%',background:'rgba(255,255,255,0.15)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <button className="tap" aria-label="Chiudi la foto" onClick={()=>setLightbox(null)} style={{position:'absolute',top:16,right:16,width:38,height:38,borderRadius:'50%',background:'rgba(255,255,255,0.15)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
             <i className="ti ti-x" style={{fontSize:18,color:'white'}}/>
           </button>
           <img loading="lazy" src={lightbox.url} alt={lightbox.label} onClick={e=>e.stopPropagation()}

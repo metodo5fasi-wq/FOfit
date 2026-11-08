@@ -3,6 +3,9 @@ import { dbSave, notify } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { authFetch } from '../lib/authFetch'
 import { useAuth } from '../App'
+import { loadSWR, hasCache, cachePatch } from '../lib/offline'
+import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 
 const PREFIX = /^↩️ In risposta a «[^»]*»: /           // contesto aggiunto alle risposte, perché il coach capisca a cosa si risponde
 const snippet = (s, n = 60) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t }
@@ -31,24 +34,34 @@ export default function Notifiche() {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState(false)
+  const [stale, setStale] = useState(false)
 
-  useEffect(() => { if (profile) fetchNotifiche() }, [profile])
+  useEffect(() => { if (profile) fetchNotifiche({ instant: true }) }, [profile])
+  // una notifica nuova del coach compare tornando all'app, senza chiuderla e riaprirla
+  useRefreshOnReturn(() => { if (profile) fetchNotifiche() })
 
-  async function fetchNotifiche() {
-    setLoading(true)
-    const { data } = await supabase.from('notifications')
-      .select('*').eq('client_id', profile.id)
-      .order('created_at', { ascending: false }).limit(50)
-    setNotifiche(data || [])
-    // le risposte già inviate (si rivedono sotto la notifica a cui appartengono)
-    const { data: rep } = await supabase.from('coach_messages')
-      .select('id,message,created_at').eq('client_id', profile.id).eq('sender_role', 'client')
-      .order('created_at', { ascending: true }).limit(300)
-    setReplies(rep || [])
+  // Dalla seconda visita le notifiche compaiono SUBITO (ultima copia salvata) e si aggiornano da sole.
+  async function fetchNotifiche({ instant = false } = {}) {
+    if (instant && !hasCache(profile.id, 'notifiche_list')) setLoading(true)
+    const [r, rr] = await Promise.all([
+      loadSWR(profile.id, 'notifiche_list', () => supabase.from('notifications')
+        .select('*').eq('client_id', profile.id).order('created_at', { ascending: false }).limit(50),
+        { onData: d => { setNotifiche(d || []); setLoading(false) }, cacheFirst: instant }),
+      // le risposte già inviate (si rivedono sotto la notifica a cui appartengono)
+      loadSWR(profile.id, 'notifiche_replies', () => supabase.from('coach_messages')
+        .select('id,message,created_at').eq('client_id', profile.id).eq('sender_role', 'client')
+        .order('created_at', { ascending: true }).limit(300),
+        { onData: d => setReplies(d || []), cacheFirst: instant }),
+    ])
     setLoading(false)
-    // Segna tutte come lette
-    await dbSave(supabase.from('notifications').update({ read: true })
+    setLoadError(!!r.error && r.data == null)                      // prima: "Nessuna notifica" anche quando era la rete a mancare
+    setStale(!!r.error || !!r.fromCache)
+    if (r.error) return
+    // Segna tutte come lette (e la copia salvata e il contatore della Home lo ricordano)
+    const m = await dbSave(supabase.from('notifications').update({ read: true })
       .eq('client_id', profile.id).eq('read', false), 'la notifica', 'salvare', { silent: true })
+    if (m.ok) { cachePatch(profile.id, 'notifiche_list', l => (l || []).map(n => ({ ...n, read: true }))); cachePatch(profile.id, 'home_unread', () => 0) }
   }
 
   async function sendReply(n) {
@@ -59,7 +72,9 @@ export default function Notifiche() {
     try { ok = (await authFetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId: profile.id, message, senderRole: 'client' }) })).ok } catch {}
     setSending(false)
     if (!ok) { setError(navigator.onLine === false ? 'Nessuna connessione: la risposta non è stata inviata. Riprova quando torna la rete.' : 'Non sono riuscito a inviare la risposta. Riprova.'); return }      // il testo resta nel campo
-    setReplies(r => [...r, { id: 'local-' + Date.now(), message, created_at: new Date().toISOString() }])
+    const mine = { id: 'local-' + Date.now(), message, created_at: new Date().toISOString() }
+    setReplies(r => [...r, mine])
+    cachePatch(profile.id, 'notifiche_replies', l => [...(l || []), mine])
     setComposing(null); setText('')
     notify('Risposta inviata al coach', 'success')
   }
@@ -87,8 +102,11 @@ export default function Notifiche() {
         <div style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>Notifiche</div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px' }}>
+        {stale && !loadError && <StaleNotice onRetry={() => fetchNotifiche()} />}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#AAA' }}>Caricamento...</div>
+          <Skeleton rows={4} height={76} style={{ padding: 0 }} />
+        ) : loadError ? (
+          <LoadError text="Non riesco a caricare le notifiche." onRetry={() => fetchNotifiche({ instant: true })} />
         ) : notifiche.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#AAA' }}>
             <i className="ti ti-bell-off" style={{ fontSize: 40, display: 'block', marginBottom: 10, opacity: 0.3 }} />

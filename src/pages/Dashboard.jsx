@@ -5,7 +5,9 @@ import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Confetti, Toast, AnimatedNumber } from '../components/Animations'
 import GraficoPeso from '../components/LazyGraficoPeso'
-import { loadWithCache, applyPending } from '../lib/offline'
+import { loadWithCache, applyPending, hasCache, cacheGet, isNetworkError } from '../lib/offline'
+import { Skeleton, LoadError } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { buildToday, weekDateOf, streakOf, weeklyStats, planDays } from '../lib/homeToday'
 
 const DOT = { done: '#3B8C5A', progress: '#D4570A', todo: '#777', info: '#4A90D4' }
@@ -16,10 +18,9 @@ const card = { background: '#0D0D0D', borderRadius: 14, border: '0.5px solid #1C
 function useHomeData(profile) {
   const uid = profile?.id
   const [data, setData] = useState(null)
-  const load = useCallback(async () => {
-    if (!uid) return
+  // Costruisce i dati della Home usando L per leggere ogni voce: dalla sola copia salvata (subito) oppure dalla rete (poi)
+  const build = useCallback(async L => {
     const today = localDateStr(), weekDate = weekDateOf()
-    const L = (name, fetcher, opt) => loadWithCache(uid, name, fetcher, opt)
     const wplanR = await L('wk_plan', () => supabase.from('workout_plans').select('*').eq('client_id', uid).eq('is_active', true).limit(1))
     const wplan = wplanR.data?.[0] || null
     const [exR, sessR, logsR, mealR, dayR, rowsR, measR, chkR, anamR, bookR, unreadR] = await Promise.all([
@@ -39,18 +40,34 @@ function useHomeData(profile) {
     const todayLogs = applyPending(logsR.data || [], 'workout_logs', uid).filter(l => l.log_date === today)
     const diaryRows = rowsR.data || [], day = dayR.data || []
     const sum = k => day.reduce((s, r) => s + (Number(r[k]) || 0), 0)
-    setData({
+    return { wplanR, data: {
       today, fromCache: [wplanR, exR, sessR, logsR, mealR, dayR, rowsR, measR].some(r => r.fromCache),
       mealPlan: mealR.data?.[0] || null, hasWorkoutPlan: !!wplan, exercises: exR.data || [], sessions, todayLogs,
       kcal: sum('kcal'), p: sum('protein_g'), c: sum('carbs_g'), g: sum('fat_g'),
       measurement: measR.data?.[0] || null, checkin: chkR.data?.[0] || null,
       anamnesi: anamR.error ? undefined : (anamR.data?.[0] || null), nextBooking: bookR.data?.[0] || null,
       unread: Number(unreadR.data) || 0, streak: streakOf(diaryRows.map(r => r.entry_date), today), stats: weeklyStats({ sessions, diaryRows, todayStr: today }),
-    })
+    } }
   }, [uid])
+  const first = useRef(true)
+  const load = useCallback(async () => {
+    if (!uid) return
+    const isFirst = first.current; first.current = false
+    // Se il telefono ha già i dati principali, la Home si disegna SUBITO con quelli (e si aggiorna da sola appena arrivano i dati veri)
+    if (isFirst && hasCache(uid, 'wk_plan') && hasCache(uid, 'home_mealplan')) {
+      const c = await build(name => { const v = cacheGet(uid, name); return Promise.resolve(v === null ? { data: null, error: { message: 'nessuna copia' } } : { data: v, fromCache: false }) })
+      setData(p => p || { ...c.data, instant: true })
+    }
+    const f = await build((name, fetcher, opt) => loadWithCache(uid, name, fetcher, opt))
+    // La rete c'è ma la lettura fallisce (errore del server) e non c'è nessuna copia: lo si dice. Senza rete, invece, si mostrano comunque
+    // le attività base (scelta già fatta per l'uso offline), senza errori.
+    if (f.wplanR.error && f.wplanR.data == null && !isNetworkError(f.wplanR.error)) { setData(p => p || { loadError: true }); return }
+    setData(f.data)
+  }, [uid, build])
   useEffect(() => { load() }, [load])
   useEffect(() => { window.addEventListener('online', load); return () => window.removeEventListener('online', load) }, [load])
-  return data
+  useRefreshOnReturn(load)        // tornando all'app dopo un po': notifiche e dati nuovi senza chiuderla
+  return { data, reload: load }
 }
 
 function StatusDot({ status, icon }) {
@@ -78,7 +95,9 @@ function TaskRow({ t }) {
 
 export default function Dashboard() {
   const { profile } = useAuth()
-  const d = useHomeData(profile)
+  const { data: raw, reload } = useHomeData(profile)
+  const failed = !!raw?.loadError
+  const d = failed ? null : raw
   const [confetti, setConfetti] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', emoji: '' })
   const prevKcalRef = useRef(null)
@@ -98,6 +117,7 @@ export default function Dashboard() {
   function showToast(message, emoji) { setToast({ visible: true, message, emoji }); setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500) }
   useEffect(() => {      // festa quando si raggiunge il target (solo se cambia durante la visita, non all'apertura)
     if (!d) return
+    if (d.instant) { prevKcalRef.current = null; return }      // il disegno dalla copia salvata non conta: altrimenti i coriandoli partirebbero a ogni apertura
     const prev = prevKcalRef.current; prevKcalRef.current = d.kcal
     if (prev === null) return
     if (prev < kcalTarget * 0.95 && d.kcal >= kcalTarget * 0.95 && d.kcal <= kcalTarget * 1.05) { setConfetti(true); showToast('Target calorico raggiunto!', '🎉') }
@@ -163,7 +183,8 @@ export default function Dashboard() {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px 24px' }}>
-        {!d && <div style={{ textAlign: 'center', color: '#AAA', fontSize: 13, padding: '40px 0' }}>Caricamento…</div>}
+        {!d && !failed && <Skeleton rows={3} height={84} style={{ padding: '10px 0' }} />}
+        {failed && <LoadError text="Non riesco a caricare la Home." onRetry={reload} />}
 
         {tasks?.alert && (
           <Link to="/notifiche" data-testid="unread-alert" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, background: '#0D0D0D', border: '0.5px solid rgba(212,87,10,0.4)', borderRadius: 14, padding: '12px 14px', margin: '14px 0 0' }}>

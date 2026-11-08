@@ -130,15 +130,19 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
     setLoading(true)
     try {
       let rep = null
-      if (reportId) {
-        const { data: r } = await supabase.from('workout_reports').select('*').eq('id', reportId).single()
-        rep = r
-      } else if (clientId) {
-        const { data: r } = await supabase.from('workout_reports').select('*')
-          .eq('client_id', clientId).is('submitted_at', null)
-          .order('created_at',{ascending:false}).limit(1)
-        rep = r?.[0]
-      }
+      const from4w = new Date(Date.now()-28*24*60*60*1000).toISOString().split('T')[0]
+      const client = !adminView && clientId
+      // Passo 1 — tutto ciò che dipende solo dal cliente, INSIEME (prima: report, poi scheda, poi esercizi, poi serie, poi aderenza… una alla volta)
+      const repP = reportId ? supabase.from('workout_reports').select('*').eq('id', reportId).single()
+        : clientId ? supabase.from('workout_reports').select('*').eq('client_id', clientId).is('submitted_at', null).order('created_at',{ascending:false}).limit(1) : null
+      // la scheda in uso; se non ce n'è una attiva, l'ultima creata (una sola richiesta: le attive vengono per prime)
+      const planP = client ? supabase.from('workout_plans').select('id').eq('client_id', clientId).order('is_active',{ascending:false}).order('created_at',{ascending:false}).limit(1) : null
+      const statsP = client ? Promise.all([
+        supabase.from('meal_adherence').select('followed').eq('client_id', clientId).gte('adherence_date', from4w),
+        supabase.from('diary_entries').select('entry_date,kcal').eq('client_id', clientId).gte('entry_date', from4w),
+      ]) : null
+      const [repRes, planRes] = await Promise.all([repP, planP])
+      rep = reportId ? repRes?.data : repRes?.data?.[0]
 
       if (rep) {
         setReport(rep)
@@ -171,29 +175,22 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
       }
 
       if (!adminView && clientId) {
-        // Carica scheda allenamento
-        let wpId = null
-        const { data: wp } = await supabase.from('workout_plans').select('id')
-          .eq('client_id', clientId).eq('is_active', true).limit(1)
-        if (wp?.[0]) { wpId = wp[0].id }
-        else {
-          const { data: wpAny } = await supabase.from('workout_plans').select('id')
-            .eq('client_id', clientId).order('created_at',{ascending:false}).limit(1)
-          if (wpAny?.[0]) wpId = wpAny[0].id
-        }
-
+        const wpId = planRes?.data?.[0]?.id || null
         if (wpId) {
-          const { data: exs } = await supabase.from('workout_exercises')
-            .select('exercise_name,day_label').eq('plan_id', wpId).order('order_index')
+          // Passo 2 — esercizi e storico delle serie INSIEME
+          const from = new Date(Date.now()-56*24*60*60*1000).toISOString().split('T')[0]
+          const [exRes, logsRes] = await Promise.all([
+            supabase.from('workout_exercises').select('exercise_name,day_label').eq('plan_id', wpId).order('order_index'),
+            rep?.progressi_esercizi ? Promise.resolve({ data: null }) : supabase.from('workout_logs')
+              .select('exercise_name,weight_kg,reps_done,sets_done,log_date,notes')
+              .eq('client_id', clientId).gte('log_date', from).order('log_date'),
+          ])
+          const exs = exRes.data
           const uniqueEx = [...new Map((exs||[]).map(e=>[e.exercise_name,e])).values()]
           setExercises(uniqueEx)
 
           if (!rep?.progressi_esercizi) {
-            const from = new Date(Date.now()-56*24*60*60*1000).toISOString().split('T')[0]
-            const { data: logs } = await supabase.from('workout_logs')
-              .select('exercise_name,weight_kg,reps_done,sets_done,log_date,notes')
-              .eq('client_id', clientId).gte('log_date', from).order('log_date')
-
+            const logs = logsRes.data
             // Per ogni esercizio raccoglie tutte le sessioni con dettaglio
             const byEx = {}
             ;(logs||[]).forEach(l => {
@@ -223,12 +220,8 @@ export default function ReportAllenamento({ reportId, onClose, readOnly=false, a
           }
         }
 
-        // Aderenza e diario
-        const from4w = new Date(Date.now()-28*24*60*60*1000).toISOString().split('T')[0]
-        const [adhRes, diaryRes] = await Promise.all([
-          supabase.from('meal_adherence').select('followed').eq('client_id', clientId).gte('adherence_date', from4w),
-          supabase.from('diary_entries').select('entry_date,kcal').eq('client_id', clientId).gte('entry_date', from4w),
-        ])
+        // Aderenza e diario (già in viaggio dal primo passaggio)
+        const [adhRes, diaryRes] = await statsP
         const adh = adhRes.data || []
         if (adh.length) setAdherence({ followed:adh.filter(a=>a.followed).length, total:adh.length, pct:Math.round(adh.filter(a=>a.followed).length/adh.length*100) })
         const diary = diaryRes.data || []

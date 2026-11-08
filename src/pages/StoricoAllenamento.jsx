@@ -348,10 +348,10 @@ export default function StoricoAllenamento() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <button onClick={e => { e.stopPropagation(); openEdit(sess) }} style={s.shareBtn}>
+                        <button aria-label="Modifica l'allenamento" onClick={e => { e.stopPropagation(); openEdit(sess) }} style={s.shareBtn}>
                           <i className="ti ti-pencil" style={{ fontSize: 11 }} />
                         </button>
-                        <button onClick={e => { e.stopPropagation(); shareSession(sess) }} style={s.shareBtn} disabled={sharingId === sess.id}>
+                        <button aria-label="Condividi l'allenamento" onClick={e => { e.stopPropagation(); shareSession(sess) }} style={s.shareBtn} disabled={sharingId === sess.id}>
                           <i className="ti ti-share" style={{ fontSize: 11 }} />
                         </button>
                         <i className={`ti ti-chevron-${isExpSess ? 'up' : 'down'}`} style={{ fontSize: 13, color: '#AAA' }} />
@@ -447,7 +447,7 @@ export default function StoricoAllenamento() {
                     <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '36px 1fr 1fr 1fr', gap: 6, marginBottom: 5, alignItems: 'center' }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#F4894A', textAlign: 'center' }}>S{log.set_number}</div>
                       <input type="text" inputMode="decimal" value={log.weight_kg || ''} onChange={e => updateLog(log.id, 'weight_kg', e.target.value)} placeholder="kg" style={s.inp} />
-                      <input type="number" value={log.reps_done || ''} onChange={e => updateLog(log.id, 'reps_done', e.target.value)} placeholder="reps" style={s.inp} />
+                      <input inputMode="numeric" type="number" value={log.reps_done || ''} onChange={e => updateLog(log.id, 'reps_done', e.target.value)} placeholder="reps" style={s.inp} />
                       <input type="text" value={log.exercise_note || ''} onChange={e => updateLog(log.id, 'exercise_note', e.target.value)} placeholder="nota" style={{ ...s.inp, textAlign: 'left' }} />
                     </div>
                   ))}

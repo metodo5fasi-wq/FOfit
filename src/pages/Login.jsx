@@ -41,7 +41,7 @@ export default function Login() {
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom:14 }}>
             <label style={{ fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Email</label>
-            <input
+            <input autoComplete="username"
               type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="marco@email.com" required
               style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}
@@ -51,7 +51,7 @@ export default function Login() {
           </div>
           <div style={{ marginBottom:14 }}>
             <label style={{ fontSize:11, color:'#CCC', display:'block', marginBottom:5, textTransform:'uppercase', letterSpacing:'0.07em' }}>Password</label>
-            <input
+            <input autoComplete="current-password"
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required
               style={{ width:'100%', padding:'11px 13px', border:`0.5px solid ${error ? '#E24B4A' : '#2A2A2A'}`, borderRadius:8, fontSize:14, color:'#F0F0F0', background:'#161616', outline:'none' }}

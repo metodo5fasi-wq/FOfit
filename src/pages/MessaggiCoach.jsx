@@ -247,7 +247,7 @@ export default function MessaggiCoach() {
               padding:'6px 0', alignSelf:'center',
             }}
           />
-          <button
+          <button className="tap" aria-label="Invia il messaggio"
             onClick={send}
             disabled={!input.trim() || sending}
             style={{

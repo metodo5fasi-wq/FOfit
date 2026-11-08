@@ -172,7 +172,7 @@ export default function Calendario() {
                   </div>
                   <div style={{fontSize:12,color:'#CCC',marginTop:2}}>Ore {b.time_slot}</div>
                 </div>
-                <button onClick={()=>cancelBooking(b.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:18}}>
+                <button aria-label="Annulla la prenotazione" onClick={()=>cancelBooking(b.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontSize:18}}>
                   <i className="ti ti-trash"/>
                 </button>
               </div>

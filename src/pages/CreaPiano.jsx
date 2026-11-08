@@ -471,7 +471,7 @@ export default function CreaPiano(){
     <div style={s.page}>
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button onClick={()=>navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #222',background:'#161616',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',flexShrink:0}}>
+        <button className="tap" aria-label="Indietro" onClick={()=>navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #222',background:'#161616',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div style={{flex:1,minWidth:0}}>
@@ -562,7 +562,7 @@ export default function CreaPiano(){
             ].map(f=>(
               <div key={f.l}>
                 <label style={{...s.label,color:f.c}}>{f.l}</label>
-                <input style={{...s.input,borderColor:`${f.c}44`,textAlign:'center',fontWeight:700,color:f.c}} type="number" value={f.v} onChange={e=>f.s(e.target.value)} placeholder="—"/>
+                <input inputMode="decimal" style={{...s.input,borderColor:`${f.c}44`,textAlign:'center',fontWeight:700,color:f.c}} type="number" value={f.v} onChange={e=>f.s(e.target.value)} placeholder="—"/>
               </div>
             ))}
           </div>
@@ -589,7 +589,7 @@ export default function CreaPiano(){
                 {dayCalories.map((kcal,i)=>(
                   <div key={i} style={{flex:1,textAlign:'center'}}>
                     <div style={{fontSize:9,color:'#AAA',marginBottom:2}}>{DAY_NAMES[i].slice(0,3)}</div>
-                    <input type="number" value={kcal} onChange={e=>{const n=[...dayCalories];n[i]=parseInt(e.target.value)||0;setDayCalories(n)}}
+                    <input inputMode="numeric" type="number" value={kcal} onChange={e=>{const n=[...dayCalories];n[i]=parseInt(e.target.value)||0;setDayCalories(n)}}
                       style={{width:'100%',padding:'3px 2px',border:'0.5px solid #222',borderRadius:5,fontSize:10,textAlign:'center',color:i===selectedDay?'#F4894A':'#CCC',background:i===selectedDay?'rgba(212,87,10,0.1)':'#161616',outline:'none',fontFamily:'inherit'}}/>
                   </div>
                 ))}
@@ -693,7 +693,7 @@ export default function CreaPiano(){
             <div key={mi} style={{...s.card,border:isSelected?'0.5px solid rgba(226,75,74,0.5)':selectMode?'0.5px solid #333':'0.5px solid #1C1C1C',position:'relative'}}>
               {/* Checkbox selezione */}
               {selectMode&&(
-                <div onClick={()=>toggleMealSelect(selectedDay,mi)} style={{position:'absolute',top:12,right:12,width:22,height:22,borderRadius:6,border:`1.5px solid ${isSelected?'#E24B4A':'#333'}`,background:isSelected?'rgba(226,75,74,0.2)':'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <div className="tap tap-xl" aria-label="Seleziona il pasto" onClick={()=>toggleMealSelect(selectedDay,mi)} style={{position:'absolute',top:12,right:12,width:22,height:22,borderRadius:6,border:`1.5px solid ${isSelected?'#E24B4A':'#333'}`,background:isSelected?'rgba(226,75,74,0.2)':'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   {isSelected&&<i className="ti ti-check" style={{fontSize:13,color:'#E24B4A'}}/>}
                 </div>
               )}
@@ -710,7 +710,7 @@ export default function CreaPiano(){
                   </div>
                 )}
                 {!selectMode&&(
-                  <button onClick={()=>removeMeal(selectedDay,mi)} style={{...s.btnDanger,flexShrink:0}}>
+                  <button aria-label="Elimina il pasto" onClick={()=>removeMeal(selectedDay,mi)} style={{...s.btnDanger,flexShrink:0}}>
                     <i className="ti ti-trash" style={{fontSize:13}}/>
                   </button>
                 )}
@@ -737,7 +737,7 @@ export default function CreaPiano(){
                       <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{food.food_name}</div>
                       <div style={{fontSize:10,color:'#888',marginTop:1}}>{food.kcal} kcal · P{food.protein_g}g · C{food.carbs_g}g · G{food.fat_g}g</div>
                     </div>
-                    <input type="number" value={food.quantity_g} onChange={e=>updateFoodQty(selectedDay,mi,fi,e.target.value)}
+                    <input inputMode="decimal" type="number" value={food.quantity_g} onChange={e=>updateFoodQty(selectedDay,mi,fi,e.target.value)}
                       style={{width:56,padding:'4px 6px',border:'0.5px solid #222',borderRadius:6,fontSize:12,textAlign:'center',color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}/>
                     <span style={{fontSize:10,color:'#AAA',flexShrink:0}}>g</span>
                     <button onClick={()=>removeFood(selectedDay,mi,fi)} style={s.btnDanger}>✕</button>
@@ -818,7 +818,7 @@ export default function CreaPiano(){
               </div>
               <div style={{display:'flex',gap:8}}>
                 <input style={{...s.input,flex:1}} value={foodSearch} onChange={e=>searchFood(e.target.value)} placeholder="Cerca tra 1.054 alimenti..." autoFocus/>
-                <input type="number" value={newQty} onChange={e=>setNewQty(e.target.value)} style={{...s.input,width:65,textAlign:'center'}} placeholder="g"/>
+                <input inputMode="decimal" type="number" value={newQty} onChange={e=>setNewQty(e.target.value)} style={{...s.input,width:65,textAlign:'center'}} placeholder="g"/>
               </div>
             </div>
             <div style={{flex:1,overflowY:'auto'}}>

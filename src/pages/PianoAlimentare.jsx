@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import PlanPdfButton from '../components/PlanPdfButton'
+import { loadSWR, hasCache } from '../lib/offline'
+import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -30,40 +33,42 @@ export default function PianoAlimentare() {
   const [selectedDay, setSelectedDay] = useState(0)
   const [openMeals, setOpenMeals] = useState({})
   const [noplan, setNoPlan] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [stale, setStale] = useState(false)           // si vedono i dati salvati sul telefono perché non si riesce ad aggiornarli
 
   useEffect(() => {
     if (profile) fetchPlan()
   }, [profile])
+  // tornando all'app dopo un po', un piano aggiornato dal coach compare da solo
+  useRefreshOnReturn(() => { if (profile) fetchPlan({ instant: false, quiet: true }) })
 
-  async function fetchPlan() {
-    setLoading(true)
-    // Prendi il piano attivo del cliente
-    const { data: planData } = await supabase
-      .from('meal_plans')
-      .select('*')
-      .eq('client_id', profile.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (!planData) { setNoPlan(true); setLoading(false); return }
-    setPlan(planData)
-
-    // Prendi tutti i pasti del piano con gli alimenti
-    const { data: mealsData } = await supabase
-      .from('plan_meals')
-      .select('*, plan_meal_foods(*)')
-      .eq('plan_id', planData.id)
-      .order('meal_order')
-
-    // Organizza per giorno
-    const byDay = {}
-    for (let d = 1; d <= 7; d++) {
-      byDay[d] = (mealsData || []).filter(m => m.day_of_week === d)
+  function applyView(v) {
+    if (!v?.plan) { setNoPlan(true); setPlan(null); setMeals({}) }
+    else {
+      setNoPlan(false); setPlan(v.plan)
+      const byDay = {}
+      for (let d = 1; d <= 7; d++) byDay[d] = (v.meals || []).filter(m => m.day_of_week === d)
+      setMeals(byDay)
     }
-    setMeals(byDay)
     setLoading(false)
+  }
+
+  // Prima visita: scheletro, poi i dati. Dalle visite successive il piano compare SUBITO (ultima copia salvata) e si aggiorna da solo.
+  // Se la lettura fallisce e non c'è nessuna copia lo si dice ("Non riesco a caricare"), invece di mostrare "Nessun piano attivo".
+  async function fetchPlan({ instant = true, quiet = false } = {}) {
+    if (!quiet && !hasCache(profile.id, 'piano_view')) setLoading(true)
+    setLoadError(false)
+    const r = await loadSWR(profile.id, 'piano_view', async () => {
+      const { data: planData, error } = await supabase.from('meal_plans').select('*')
+        .eq('client_id', profile.id).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (error) return { data: null, error }
+      if (!planData) return { data: { plan: null, meals: [] }, error: null }
+      const { data: mealsData, error: e2 } = await supabase.from('plan_meals').select('*, plan_meal_foods(*)').eq('plan_id', planData.id).order('meal_order')
+      if (e2) return { data: null, error: e2 }
+      return { data: { plan: planData, meals: mealsData || [] }, error: null }
+    }, { onData: applyView, cacheFirst: instant })
+    if (r.error && !r.data) { setLoadError(true); setLoading(false) }
+    setStale(!!r.error || !!r.fromCache)
   }
 
   function toggleMeal(key) {
@@ -75,12 +80,14 @@ export default function PianoAlimentare() {
   if (loading) return (
     <>
       <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div></div>
-      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
-        <div style={{textAlign:'center',color:'#AAA'}}>
-          <i className="ti ti-loader" style={{fontSize:32,display:'block',marginBottom:8,color:'#D4570A'}}/>
-          Caricamento piano...
-        </div>
-      </div>
+      <div style={s.page}><Skeleton rows={4} height={72} style={{padding:0}} /></div>
+    </>
+  )
+
+  if (loadError) return (
+    <>
+      <div style={s.topbar}><div style={{fontSize:15,fontWeight:500,color:'#F0F0F0'}}>Piano alimentare</div></div>
+      <LoadError text="Non riesco a caricare il piano." onRetry={() => fetchPlan({ instant: false })} />
     </>
   )
 
@@ -110,6 +117,7 @@ export default function PianoAlimentare() {
         </div>
       </div>
 
+      {stale && <StaleNotice onRetry={() => fetchPlan({ instant: false, quiet: true })} />}
       <div style={s.page}>
 
         {/* Nota coach */}

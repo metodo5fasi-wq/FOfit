@@ -302,7 +302,7 @@ export default function Abbonamenti() {
                             </select>
                           </div>
                           <div><label style={s.label}>Importo per rata (€)</label>
-                            <input style={s.input} type="number" placeholder="es. 100" value={form.installment_amount} onChange={e=>setForm(p=>({...p,installment_amount:e.target.value}))}/>
+                            <input inputMode="decimal" style={s.input} type="number" placeholder="es. 100" value={form.installment_amount} onChange={e=>setForm(p=>({...p,installment_amount:e.target.value}))}/>
                           </div>
                         </div>
 

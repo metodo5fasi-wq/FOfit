@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { done } from '../lib/toast'
 import { localDateStr, addDaysStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
+import { loadSWR, hasCache, cachePruneDated } from '../lib/offline'
+import { StaleNotice, Skeleton } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { searchFoods } from '../lib/foodDatabase'
@@ -29,6 +33,7 @@ export default function DiarioGiornaliero() {
   const [qty, setQty] = useState(100)
   const [selectedMeal, setSelectedMeal] = useState('Colazione')
   const [loading, setLoading] = useState(true)
+  const [stale, setStale] = useState(false)
   const [water, setWater] = useState(0)          // bicchieri (250 ml) del giorno selezionato; si salvano sul telefono
   const [waterGoal, setWaterGoal] = useState(() => parseInt(localStorage.getItem('fofit_water_goal')) || 8)
   const [editingWaterGoal, setEditingWaterGoal] = useState(false)
@@ -72,8 +77,10 @@ export default function DiarioGiornaliero() {
     done(n > 0 ? `💧 ${n}/${waterGoal} bicchieri` : 'Acqua azzerata')
   }
 
-  useEffect(() => { if (profile) { fetchDiary(); fetchPlan() } }, [profile])
-  useEffect(() => { if (profile) fetchDiary() }, [selectedDate])
+  useEffect(() => { if (profile) fetchPlan() }, [profile])
+  // un'unica lettura (prima partivano due richieste uguali all'apertura): al primo ingresso e a ogni cambio di giorno
+  useEffect(() => { if (profile) fetchDiary({ instant: true }) }, [profile, selectedDate])
+  useRefreshOnReturn(() => { if (profile) fetchDiary() })
 
   async function fetchPlan() {
     const { data } = await supabase.from('meal_plans').select('*')
@@ -81,10 +88,7 @@ export default function DiarioGiornaliero() {
     if (data) setPlan(data)
   }
 
-  async function fetchDiary() {
-    setLoading(true)
-    const { data } = await supabase.from('diary_entries').select('*')
-      .eq('client_id', profile.id).eq('entry_date', selectedDate).order('created_at')
+  function applyDiary(data) {
     const byMeal = {}
     MEAL_SLOTS.forEach(m => byMeal[m] = [])
     ;(data || []).forEach(e => {
@@ -93,6 +97,17 @@ export default function DiarioGiornaliero() {
     })
     setDiary(byMeal)
     setLoading(false)
+  }
+
+  // Aprendo il diario (o cambiando giorno) i pasti già letti compaiono SUBITO; dopo aver aggiunto o tolto un alimento si rilegge dal database.
+  async function fetchDiary({ instant = false } = {}) {
+    const key = 'diary_' + selectedDate
+    if (instant && !hasCache(profile.id, key)) setLoading(true)
+    const r = await loadSWR(profile.id, key, () => supabase.from('diary_entries').select('*')
+      .eq('client_id', profile.id).eq('entry_date', selectedDate).order('created_at'), { onData: applyDiary, cacheFirst: instant })
+    setLoading(false)
+    setStale(!!r.error || !!r.fromCache)
+    cachePruneDated(profile.id, 'diary_', 14)
   }
 
   function handleSearch(val) {
@@ -139,7 +154,7 @@ export default function DiarioGiornaliero() {
   }
 
   async function clearAll() {
-    if (!window.confirm('Vuoi azzerare tutto il diario di oggi?')) return
+    if (!(await askConfirm('Vuoi azzerare tutto il diario di oggi?', { confirmLabel: 'Azzera', danger: true }))) return
     const r = await dbSave(supabase.from('diary_entries').delete()
       .eq('client_id', profile.id).eq('entry_date', selectedDate), 'il diario', 'eliminare', { done: 'Giorno svuotato' })
     if (!r.ok) return                                   // il diario è ancora lì: non si svuota la schermata
@@ -166,7 +181,7 @@ export default function DiarioGiornaliero() {
       <div style={s.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           {/* Navigazione date */}
-          <button onClick={()=>{
+          <button aria-label="Giorno precedente" onClick={()=>{
             setSelectedDate(addDaysStr(selectedDate, -1))
           }} style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',padding:4,display:'flex',alignItems:'center'}}>
             <i className="ti ti-chevron-left" style={{fontSize:18}}/>
@@ -182,7 +197,7 @@ export default function DiarioGiornaliero() {
               </button>
             )}
           </div>
-          <button onClick={()=>{
+          <button aria-label="Giorno successivo" onClick={()=>{
             const next = addDaysStr(selectedDate, 1)
             if (next <= today) setSelectedDate(next)
           }} style={{background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',
@@ -249,6 +264,7 @@ export default function DiarioGiornaliero() {
 
           {/* PASTI */}
           <div style={{display: window.innerWidth < 768 && activeTab !== 'pasti' ? 'none' : 'block'}}>
+            {stale && <StaleNotice text="Diario salvato sul telefono: non riesco ad aggiornarlo." onRetry={() => fetchDiary()} />}
             {MEAL_SLOTS.map(meal => {
               const foods = diary[meal] || []
               const mealKcal = Math.round(foods.reduce((s,e) => s+(e.kcal||0), 0))
@@ -264,7 +280,7 @@ export default function DiarioGiornaliero() {
                     {mealKcal > 0 && <span style={{fontSize:11,color:'#F4894A',fontWeight:600}}>{mealKcal} kcal</span>}
                   </div>
                   {foods.length === 0 ? (
-                    <div style={{fontSize:11,color:'#E0DDD6',paddingTop:4}}>Nessun alimento</div>
+                    loading ? <Skeleton rows={1} height={14} style={{ padding: '6px 0 0' }} /> : <div style={{fontSize:11,color:'#E0DDD6',paddingTop:4}}>Nessun alimento</div>
                   ) : foods.map(f => (
                     <div key={f.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'0.5px solid #1A1A1A'}}>
                       <div style={{width:5,height:5,borderRadius:'50%',background:'#D4570A',flexShrink:0}}/>
@@ -331,7 +347,7 @@ export default function DiarioGiornaliero() {
                 <div style={{background:'rgba(212,87,10,0.1)',borderRadius:8,padding:'12px',marginBottom:10}}>
                   <div style={{fontSize:12,fontWeight:600,color:'#F4894A',marginBottom:8}}>{selectedFood.name}</div>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                    <input type="number" value={qty} onChange={e=>setQty(parseFloat(e.target.value)||100)} min={1}
+                    <input inputMode="decimal" type="number" value={qty} onChange={e=>setQty(parseFloat(e.target.value)||100)} min={1}
                       style={{...s.input,width:75,textAlign:'center'}}/>
                     <span style={{fontSize:12,color:'#AAA'}}>g</span>
                     <span style={{fontSize:13,color:'#F4894A',fontWeight:700,marginLeft:'auto'}}>
@@ -360,7 +376,7 @@ export default function DiarioGiornaliero() {
                   <div style={{fontSize:11,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.06em'}}>Idratazione</div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <div style={{fontSize:11,color:'#F4894A',fontWeight:600}}>{water * 250}ml / {waterGoal * 250}ml</div>
-                    <button onClick={()=>{ setWaterGoalInput(waterGoal); setEditingWaterGoal(!editingWaterGoal) }}
+                    <button aria-label="Modifica l'obiettivo dell'acqua" onClick={()=>{ setWaterGoalInput(waterGoal); setEditingWaterGoal(!editingWaterGoal) }}
                       style={{background:'none',border:'none',cursor:'pointer',color:'#AAA',padding:0}}>
                       <i className="ti ti-settings" style={{fontSize:13}}/>
                     </button>
@@ -371,13 +387,13 @@ export default function DiarioGiornaliero() {
                   <div style={{marginBottom:10,background:'#161616',borderRadius:10,padding:'10px 12px'}}>
                     <div style={{fontSize:11,color:'#AAA',marginBottom:8}}>Quanti bicchieri vuoi bere al giorno?</div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <button onClick={()=>setWaterGoalInput(Math.max(1, waterGoalInput-1))}
+                      <button className="tap" onClick={()=>setWaterGoalInput(Math.max(1, waterGoalInput-1))}
                         style={{width:32,height:32,borderRadius:8,background:'#0D0D0D',border:'0.5px solid #1C1C1C',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>−</button>
                       <div style={{flex:1,textAlign:'center'}}>
                         <div style={{fontSize:22,fontWeight:700,color:'#F0F0F0'}}>{waterGoalInput}</div>
                         <div style={{fontSize:10,color:'#AAA'}}>{waterGoalInput * 250}ml totali</div>
                       </div>
-                      <button onClick={()=>setWaterGoalInput(Math.min(20, waterGoalInput+1))}
+                      <button className="tap" onClick={()=>setWaterGoalInput(Math.min(20, waterGoalInput+1))}
                         style={{width:32,height:32,borderRadius:8,background:'#0D0D0D',border:'0.5px solid #1C1C1C',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit'}}>+</button>
                     </div>
                     <button onClick={saveWaterGoal}

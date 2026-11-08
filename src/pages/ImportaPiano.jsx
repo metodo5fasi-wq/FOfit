@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { done } from '../lib/toast'
 import { localDateStr } from '../lib/dates'
 import { dbMust } from '../lib/db'
@@ -148,7 +149,7 @@ export default function ImportaPiano() {
   async function savePlan() {
     if (!selectedClient) { setError('Seleziona un cliente'); return }
     const flagged = checks.filter(c => c.status !== 'ok')
-    if ((flagged.length || gaps.length) && !window.confirm(`${flagged.length ? `${flagged.length} ${flagged.length === 1 ? 'giorno ha' : 'giorni hanno'} dei controlli da rivedere` : ''}${flagged.length && gaps.length ? ' e ' : ''}${gaps.length ? `${gaps.length} ${gaps.length === 1 ? 'giorno non è stato trovato' : 'giorni non sono stati trovati'} nel testo` : ''}.\n\nSalvare comunque il piano?`)) return
+    if ((flagged.length || gaps.length) && !(await askConfirm(`${flagged.length ? `${flagged.length} ${flagged.length === 1 ? 'giorno ha' : 'giorni hanno'} dei controlli da rivedere` : ''}${flagged.length && gaps.length ? ' e ' : ''}${gaps.length ? `${gaps.length} ${gaps.length === 1 ? 'giorno non è stato trovato' : 'giorni non sono stati trovati'} nel testo` : ''}.\n\nSalvare comunque il piano?`, { confirmLabel: 'Salva comunque' }))) return
     setSaving(true)
     setError('')
     try {
@@ -228,7 +229,7 @@ export default function ImportaPiano() {
     <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#161616'}}>
       {/* TOPBAR */}
       <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',padding:'0 16px',height:56,display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-        <button onClick={()=>step===2?setStep(1):navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#F0F0F0'}}>
+        <button className="tap" aria-label="Indietro" onClick={()=>step===2?setStep(1):navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#F0F0F0'}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div>
@@ -361,7 +362,7 @@ export default function ImportaPiano() {
               ].map(({k,l})=>(
                 <div key={k}>
                   <label style={s.label}>{l}</label>
-                  <input style={s.input} type="number" value={targets[k]||''} onChange={e=>setTargets(p=>({...p,[k]:parseInt(e.target.value)||0}))}/>
+                  <input inputMode="numeric" style={s.input} type="number" value={targets[k]||''} onChange={e=>setTargets(p=>({...p,[k]:parseInt(e.target.value)||0}))}/>
                 </div>
               ))}
             </div>

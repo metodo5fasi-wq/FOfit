@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { compressImage, makeThumb, thumbUrl, thumbPath, onThumbError } from '../lib/imageResize'
 import { localDateStr } from '../lib/dates'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
+import { loadSWR, hasCache } from '../lib/offline'
+import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import PhotoCompare from '../components/PhotoCompare'
 
 const MISURE = [
@@ -76,6 +80,8 @@ export default function TrackerProgressi() {
   const [entries, setEntries] = useState([])
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [stale, setStale] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -88,20 +94,22 @@ export default function TrackerProgressi() {
     weight_kg:'', waist_cm:'', hips_cm:'', chest_cm:'', arm_cm:'', thigh_cm:'', body_fat_pct:'', notes:''
   })
 
-  useEffect(() => { if (profile) { fetchEntries(); fetchPhotos() } }, [profile])
+  useEffect(() => { if (profile) { fetchEntries({ instant: true }); fetchPhotos({ instant: true }) } }, [profile])
+  useRefreshOnReturn(() => { if (profile) { fetchEntries(); fetchPhotos() } })
 
-  async function fetchEntries() {
-    setLoading(true)
-    const { data } = await supabase.from('progress_entries').select('*')
-      .eq('client_id', profile.id).order('entry_date', { ascending: false })
-    setEntries(data || [])
+  // Le misure compaiono SUBITO dalla seconda visita (ultima copia salvata) e si aggiornano da sole; dopo un salvataggio si rilegge senza lampeggi.
+  async function fetchEntries({ instant = false } = {}) {
+    if (instant && !hasCache(profile.id, 'progress_list')) setLoading(true)
+    const r = await loadSWR(profile.id, 'progress_list', () => supabase.from('progress_entries').select('*')
+      .eq('client_id', profile.id).order('entry_date', { ascending: false }), { onData: d => { setEntries(d || []); setLoading(false) }, cacheFirst: instant })
     setLoading(false)
+    setLoadError(!!r.error && r.data == null)                      // prima: "Nessuna misurazione ancora" anche quando era la rete a mancare
+    setStale(!!r.error || !!r.fromCache)
   }
 
-  async function fetchPhotos() {
-    const { data } = await supabase.from('progress_photos').select('*')
-      .eq('client_id', profile.id).order('photo_date', { ascending: false })
-    setPhotos(data || [])
+  async function fetchPhotos({ instant = false } = {}) {
+    await loadSWR(profile.id, 'progress_photos_list', () => supabase.from('progress_photos').select('*')
+      .eq('client_id', profile.id).order('photo_date', { ascending: false }), { onData: d => setPhotos(d || []), cacheFirst: instant })
   }
 
   async function saveEntry() {
@@ -123,20 +131,26 @@ export default function TrackerProgressi() {
   }
 
   async function uploadPhoto(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const original = e.target.files?.[0]
+    if (!original) return
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop().toLowerCase() || 'jpg'
-      const fileName = `${profile.id}/${Date.now()}.${ext}`
-      
+      // La foto si ridimensiona prima di partire (da 3–10 MB a ~300 KB), con una miniatura per le griglie. Se non si riesce, parte l'originale.
+      const file = await compressImage(original)
+      const processed = file !== original
+      const base = `${profile.id}/${Date.now()}`
+      const fileName = processed ? `${base}-p.jpg` : `${base}.${(original.name.split('.').pop() || 'jpg').toLowerCase()}`
+
       const { error: upErr } = await supabase.storage
         .from('progress-photos')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+        .upload(fileName, file, { cacheControl: '31536000', upsert: false })
       if (upErr) { toast('Non sono riuscito a caricare la foto. Riprova.', 'error'); setUploading(false); e.target.value = ''; return }
+      if (processed) {                                                          // miniatura: se non parte non è grave, si userà la foto intera
+        try { const th = await makeThumb(original); if (th) await supabase.storage.from('progress-photos').upload(thumbPath(fileName), th, { cacheControl: '31536000', upsert: false, contentType: 'image/jpeg' }) } catch {}
+      }
 
       const publicUrl = `https://hdgiwrwcxfbojqfeyrxn.supabase.co/storage/v1/object/public/progress-photos/${fileName}`
-      
+
       const { error: dbErr } = await supabase.from('progress_photos').insert({
         client_id: profile.id,
         photo_date: localDateStr(),
@@ -146,7 +160,7 @@ export default function TrackerProgressi() {
       })
       if (dbErr) {
         toast('Non sono riuscito a salvare la foto. Riprova.', 'error'); setUploading(false); e.target.value = ''
-        try { await supabase.storage.from('progress-photos').remove([fileName]) } catch {}          // niente file orfano nell'archivio
+        try { await supabase.storage.from('progress-photos').remove([fileName, thumbPath(fileName)]) } catch {}          // niente file orfano nell'archivio
         return
       }
 
@@ -162,8 +176,10 @@ export default function TrackerProgressi() {
 
   async function deletePhoto(id, photoUrl) {
     const path = photoUrl.split('/progress-photos/')[1]
-    if (path) await supabase.storage.from('progress-photos').remove([path])
-    await dbSave(supabase.from('progress_photos').delete().eq('id', id), 'la foto', 'eliminare', { done: 'Foto eliminata' })
+    // prima la riga nel database: se viene rifiutata la foto resta com'è (prima si toglieva il file e restava un'immagine rotta in elenco)
+    const r = await dbSave(supabase.from('progress_photos').delete().eq('id', id), 'la foto', 'eliminare', { done: 'Foto eliminata' })
+    if (!r.ok) return
+    if (path) { try { await supabase.storage.from('progress-photos').remove([path, thumbPath(path)]) } catch {} }          // poi i file, miniatura compresa
     fetchPhotos()
   }
 
@@ -245,7 +261,7 @@ export default function TrackerProgressi() {
                   {MISURE.map(m => (
                     <div key={m.key} style={{marginBottom:10}}>
                       <label style={s.label}>{m.label} ({m.unit})</label>
-                      <input type="number" step="0.1" style={s.input} placeholder="—"
+                      <input inputMode="decimal" type="number" step="0.1" style={s.input} placeholder="—"
                         value={form[m.key]} onChange={e => setForm({...form, [m.key]:e.target.value})}/>
                     </div>
                   ))}
@@ -301,8 +317,11 @@ export default function TrackerProgressi() {
 
             <div style={s.card}>
               <div style={{fontSize:12, fontWeight:600, color:'#AAA', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12}}>Storico</div>
+              {stale && !loadError && <StaleNotice text="Misure salvate sul telefono: non riesco ad aggiornarle." onRetry={() => fetchEntries()} />}
               {loading ? (
-                <div style={{textAlign:'center', padding:'20px 0', color:'#AAA', fontSize:13}}>Caricamento...</div>
+                <Skeleton rows={3} height={46} style={{padding:0}} />
+              ) : loadError ? (
+                <LoadError text="Non riesco a caricare le misure." onRetry={() => fetchEntries({ instant: true })} />
               ) : entries.length === 0 ? (
                 <div style={{textAlign:'center', padding:'30px 0'}}>
                   <i className="ti ti-ruler" style={{fontSize:40, color:'#E0DDD6', display:'block', marginBottom:12}}/>
@@ -378,8 +397,8 @@ export default function TrackerProgressi() {
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8}}>
                   {dayPhotos.map(photo => (
                     <div key={photo.id} style={{position:'relative'}}>
-                      <img loading="lazy"
-                        src={photo.photo_url}
+                      <img loading="lazy" decoding="async"
+                        src={thumbUrl(photo.photo_url)} data-full={photo.photo_url} onError={onThumbError}
                         alt={photo.label}
                         onClick={() => setLightbox(photo)}
                         style={{width:'100%', aspectRatio:'3/4', objectFit:'cover', borderRadius:10, cursor:'pointer', display:'block'}}
@@ -387,8 +406,9 @@ export default function TrackerProgressi() {
                       <div style={{position:'absolute', bottom:6, left:6, background:'rgba(0,0,0,0.6)', color:'white', fontSize:10, padding:'2px 7px', borderRadius:10, fontWeight:600}}>
                         {photo.label}
                       </div>
-                      <button
+                      <button className="tap tap-xl"
                         onClick={() => deletePhoto(photo.id, photo.photo_url)}
+                        aria-label="Elimina foto"
                         style={{position:'absolute', top:6, right:6, background:'rgba(0,0,0,0.5)', border:'none', borderRadius:'50%', width:24, height:24, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'white'}}
                       >
                         <i className="ti ti-x" style={{fontSize:12}}/>

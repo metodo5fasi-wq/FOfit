@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { authFetch } from '../lib/authFetch'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -49,7 +50,7 @@ function ExerciseCard({ ex, first, last, selectMode, isSel, isOpen, onSel, onOpe
     <div data-testid="ex-card" style={{ background: '#111', borderRadius: 12, padding: '10px 12px', marginBottom: 8, border: isSel ? '0.5px solid rgba(226,75,74,0.6)' : '0.5px solid #1C1C1C' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         {selectMode && (
-          <div onClick={onSel} role="checkbox" aria-checked={isSel} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${isSel ? '#E24B4A' : '#444'}`, background: isSel ? 'rgba(226,75,74,0.2)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div className="tap tap-xl" aria-label="Seleziona il giorno" onClick={onSel} role="checkbox" aria-checked={isSel} style={{ width: 22, height: 22, borderRadius: 6, border: `1.5px solid ${isSel ? '#E24B4A' : '#444'}`, background: isSel ? 'rgba(226,75,74,0.2)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {isSel && <i className="ti ti-check" style={{ fontSize: 13, color: '#E24B4A' }} />}
           </div>
         )}
@@ -70,9 +71,9 @@ function ExerciseCard({ ex, first, last, selectMode, isSel, isOpen, onSel, onOpe
           <select value={ex.muscle_group} onChange={e => onChange({ muscle_group: e.target.value })} style={{ ...S.input, padding: '7px 6px', fontSize: 12 }}>
             {[...new Set([ex.muscle_group, ...MUSCLES])].filter(Boolean).map(m => <option key={m} value={m}>{m}</option>)}
           </select></div>
-        <div><span style={S.label}>Serie</span><input type="number" min="1" value={ex.sets} onChange={e => onChange({ sets: e.target.value })} style={num} aria-label="Serie" /></div>
+        <div><span style={S.label}>Serie</span><input inputMode="numeric" type="number" min="1" value={ex.sets} onChange={e => onChange({ sets: e.target.value })} style={num} aria-label="Serie" /></div>
         <div><span style={S.label}>Ripet.</span><input value={ex.reps} onChange={e => onChange({ reps: e.target.value })} style={num} aria-label="Ripetizioni" /></div>
-        <div><span style={S.label}>Riposo s</span><input type="number" value={ex.rest_seconds} onChange={e => onChange({ rest_seconds: e.target.value })} style={num} aria-label="Riposo" /></div>
+        <div><span style={S.label}>Riposo s</span><input inputMode="numeric" type="number" value={ex.rest_seconds} onChange={e => onChange({ rest_seconds: e.target.value })} style={num} aria-label="Riposo" /></div>
       </div>
       <button onClick={onOpen} style={{ ...S.btnGray, marginTop: 8, fontSize: 11, padding: '5px 9px', color: '#BBB' }}>
         <i className={`ti ti-chevron-${isOpen ? 'up' : 'down'}`} style={{ fontSize: 12 }} />
@@ -156,9 +157,9 @@ export default function CreaAllenamento() {
   const patchDay = (i, patch) => setDays(p => p.map((d, k) => k === i ? { ...d, ...patch } : d))
   const patchEx = (uidv, patch) => setDays(p => p.map((d, k) => k !== dayIdx ? d : { ...d, exercises: d.exercises.map(e => e.uid === uidv ? { ...e, ...patch } : e) }))
   function addDay() { if (days.length >= 7) { toast('Massimo 7 giorni', 'error'); return } setDays(p => [...p, newDay('')]); setSel(days.length) }
-  function removeDay(i) {
+  async function removeDay(i) {
     if (days.length <= 1) return
-    if (days[i].exercises.length && !window.confirm('Eliminare questo giorno e i suoi esercizi?')) return
+    if (days[i].exercises.length && !(await askConfirm('Eliminare questo giorno e i suoi esercizi?', { confirmLabel: 'Elimina', danger: true }))) return
     setDays(p => p.filter((_, k) => k !== i)); setSel(s => Math.max(0, Math.min(s, days.length - 2)))
   }
   function duplicateDay(i) {
@@ -290,7 +291,7 @@ export default function CreaAllenamento() {
   return (
     <div style={S.page}>
       <div style={S.topbar}>
-        <button onClick={() => navigate('/admin')} style={{ width: 34, height: 34, borderRadius: 9, border: '0.5px solid #222', background: '#161616', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F0F0F0', flexShrink: 0 }}><i className="ti ti-arrow-left" style={{ fontSize: 16 }} /></button>
+        <button className="tap" aria-label="Indietro" onClick={() => navigate('/admin')} style={{ width: 34, height: 34, borderRadius: 9, border: '0.5px solid #222', background: '#161616', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F0F0F0', flexShrink: 0 }}><i className="ti ti-arrow-left" style={{ fontSize: 16 }} /></button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Crea Scheda Allenamento</div>
           {clientName && <div style={{ fontSize: 10, color: '#999' }}>{clientName}</div>}

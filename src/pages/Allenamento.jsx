@@ -11,7 +11,7 @@ import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Toast, Confetti } from '../components/Animations'
 import KgPicker from '../components/KgPicker'
-import { uuid, enqueue, flush, applyPending, loadWithCache } from '../lib/offline'
+import { uuid, enqueue, flush, applyPending, loadWithCache, pendingCount } from '../lib/offline'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -52,8 +52,20 @@ export default function Allenamento() {
   async function fetchAll() {
     setLoading(true)
     const uid = profile.id
-    await flush(supabase, uid).catch(() => {})   // prima si invia ciò che era rimasto in coda
+    // Le letture indipendenti partono INSIEME (prima erano 6 richieste una dopo l'altra: in palestra, con poca rete, si sentiva).
+    // Se c'è ancora roba in coda la si invia PRIMA di leggere serie e sedute, così il database è aggiornato; altrimenti non si aspetta nulla.
+    const flushP = flush(supabase, uid).catch(() => {})
+    const logsP = (pendingCount(uid) === 0 ? Promise.resolve() : flushP).then(() => Promise.all([
+      loadWithCache(uid, 'wk_today_' + today, () => supabase.from('workout_logs')
+        .select('*').eq('client_id', uid).eq('log_date', today)),
+      // tutto lo storico (il database ne dà al massimo 1000 per volta): serve ai record personali e alla progressione
+      loadWithCache(uid, 'wk_all', () => fetchAllRows(() => supabase.from('workout_logs')
+        .select('*').eq('client_id', uid).order('log_date', {ascending:true}).order('id', {ascending:true})), { cacheMap: d => (d || []).slice(-1500) }),
+      loadWithCache(uid, 'wk_sessions', () => supabase.from('workout_sessions')
+        .select('*').eq('client_id', uid).order('session_date', {ascending:false}), { cacheMap: d => (d || []).slice(0, 200) }),
+    ]))
     let fromCache = false
+    // scheda ed esercizi: gli esercizi dipendono dal piano, quindi restano in due passaggi (ma in parallelo alle letture sopra)
     const planR = await loadWithCache(uid, 'wk_plan', () => supabase.from('workout_plans')
       .select('*').eq('client_id', uid).eq('is_active', true).limit(1))
     fromCache = fromCache || planR.fromCache
@@ -71,13 +83,7 @@ export default function Allenamento() {
         loadProgression(exData) // Carica stato progressione
       }
     }
-    const todayR = await loadWithCache(uid, 'wk_today_' + today, () => supabase.from('workout_logs')
-      .select('*').eq('client_id', uid).eq('log_date', today))
-    // tutto lo storico (il database ne dà al massimo 1000 per volta): serve ai record personali e alla progressione
-    const allR = await loadWithCache(uid, 'wk_all', () => fetchAllRows(() => supabase.from('workout_logs')
-      .select('*').eq('client_id', uid).order('log_date', {ascending:true}).order('id', {ascending:true})), { cacheMap: d => (d || []).slice(-1500) })
-    const sessR = await loadWithCache(uid, 'wk_sessions', () => supabase.from('workout_sessions')
-      .select('*').eq('client_id', uid).order('session_date', {ascending:false}), { cacheMap: d => (d || []).slice(0, 200) })
+    const [todayR, allR, sessR] = await logsP
     fromCache = fromCache || allR.fromCache || sessR.fromCache
     setUsingCache(fromCache)
     // alle righe lette si sovrappone ciò che è ancora in coda (salvato sul telefono, non ancora inviato)
@@ -570,7 +576,7 @@ export default function Allenamento() {
                             ))}
                           </select>
                           {/* Check */}
-                          <button onClick={()=>{toggleSet(ex,setNum);showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
+                          <button className="tap" aria-label={log ? 'Serie fatta: tocca per annullare' : 'Segna la serie come fatta'} aria-pressed={!!log} onClick={()=>{toggleSet(ex,setNum);showToast(log?'Serie annullata':'Serie completata! 💪','')}} style={{
                             width:36,height:36,borderRadius:9,cursor:'pointer',flexShrink:0,
                             background:log?'#3B8C5A':'#1C1C1C',
                             border:'none',

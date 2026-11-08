@@ -3,6 +3,9 @@ import { notify } from '../lib/toast'
 import { dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
+import { loadSWR, hasCache, cachePatch } from '../lib/offline'
+import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
+import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -48,24 +51,30 @@ export default function ListaSpesa() {
   const { profile } = useAuth()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [stale, setStale] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [plan, setPlan] = useState(null)
   const [newItem, setNewItem] = useState('')
 
-  useEffect(() => { if (profile) { fetchItems(); fetchPlan() } }, [profile])
+  useEffect(() => { if (profile) { fetchItems({ instant: true }); fetchPlan() } }, [profile])
+  useRefreshOnReturn(() => { if (profile) { fetchItems(); fetchPlan() } })
 
   async function fetchPlan() {
-    const { data } = await supabase.from('meal_plans').select('*')
-      .eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()
-    setPlan(data)
+    const r = await loadSWR(profile.id, 'lista_plan', () => supabase.from('meal_plans').select('*')
+      .eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(), { onData: d => setPlan(d), cacheFirst: false })
+    if (r.error && r.data == null) return                          // senza piano il pulsante "Genera" resta spento: nessun messaggio inutile
   }
 
-  async function fetchItems() {
-    setLoading(true)
-    const { data } = await supabase.from('shopping_list_items').select('*')
-      .eq('client_id', profile.id).order('category').order('food_name')
-    setItems(data || [])
+  // Dalla seconda visita la lista compare SUBITO (ultima copia salvata) e si aggiorna da sola. Dopo un salvataggio si rilegge senza far lampeggiare nulla.
+  async function fetchItems({ instant = false } = {}) {
+    if (instant && !hasCache(profile.id, 'lista_items')) setLoading(true)
+    const r = await loadSWR(profile.id, 'lista_items', () => supabase.from('shopping_list_items').select('*')
+      .eq('client_id', profile.id).order('category').order('food_name'),
+      { onData: d => { setItems(d || []); setLoading(false) }, cacheFirst: instant })
     setLoading(false)
+    setLoadError(!!r.error && r.data == null)                      // lettura fallita e nessuna copia: lo si dice, invece di "Lista vuota"
+    setStale(!!r.error || !!r.fromCache)
   }
 
   async function generateList() {
@@ -99,6 +108,7 @@ export default function ListaSpesa() {
   async function toggleItem(id, checked) {
     await dbSave(supabase.from('shopping_list_items').update({ is_checked: !checked }).eq('id', id), 'la lista della spesa', 'salvare', { done: 'Aggiornato' })
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_checked: !checked } : i))
+    cachePatch(profile.id, 'lista_items', l => (l || []).map(i => i.id === id ? { ...i, is_checked: !checked } : i))      // la copia salvata segue la spunta
   }
 
   async function clearChecked() {
@@ -107,8 +117,10 @@ export default function ListaSpesa() {
   }
 
   async function clearAll() {
-    await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare', { done: 'Lista svuotata' })
+    const r = await dbSave(supabase.from('shopping_list_items').delete().eq('client_id', profile.id), 'la lista della spesa', 'eliminare', { done: 'Lista svuotata' })
+    if (!r.ok) return                                   // la lista è ancora lì: non si svuota la schermata
     setItems([])
+    cachePatch(profile.id, 'lista_items', () => [])
   }
 
   async function addManualItem() {
@@ -170,7 +182,10 @@ export default function ListaSpesa() {
           </div>
         )}
 
-        {!loading && total === 0 && (
+        {stale && !loadError && <StaleNotice onRetry={() => { fetchItems(); fetchPlan() }} />}
+        {loading && <Skeleton rows={4} height={52} style={{ padding: 0 }} />}
+        {loadError && <LoadError text="Non riesco a caricare la lista." onRetry={() => fetchItems({ instant: true })} />}
+        {!loading && !loadError && total === 0 && (
           <div style={{...s.card, textAlign:'center', padding:'40px 20px'}}>
             <i className="ti ti-shopping-cart" style={{fontSize:48,color:'#E0DDD6',display:'block',marginBottom:16}}/>
             <div style={{fontSize:15,fontWeight:500,color:'#F0F0F0',marginBottom:8}}>Lista vuota</div>

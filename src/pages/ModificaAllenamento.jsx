@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { done } from '../lib/toast'
 import { dbMust } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -75,7 +76,7 @@ function WeeklyTargetsTable({ ex, onChange }) {
             <div key={t.week} style={{display:'grid',gridTemplateColumns:'44px 1fr 52px 72px 68px 28px',gap:6,padding:'6px 8px',background:i%2===0?'#0D0D0D':'#161616',alignItems:'center',borderBottom:'0.5px solid #1C1C1C'}}>
               <div style={{fontSize:13,fontWeight:800,color:'#F4894A',textAlign:'center'}}>S{t.week}</div>
               <input style={{...inp,textAlign:'left',fontSize:11}} value={t.note||''} onChange={e=>updateRow(t.week,'note',e.target.value)} placeholder="es. Pesante, Deload..."/>
-              <input style={inp} type="number" min={1} max={10} value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||'')}/>
+              <input inputMode="numeric" style={inp} type="number" min={1} max={10} value={t.sets||''} onChange={e=>updateRow(t.week,'sets',parseInt(e.target.value)||'')}/>
               <input style={inp} value={t.reps||''} onChange={e=>updateRow(t.week,'reps',e.target.value)} placeholder="8-10"/>
               <input style={{...inp,fontWeight:700}} type="text" inputMode="decimal" value={t.kg||''} onChange={e=>updateRow(t.week,'kg',e.target.value)} placeholder="kg"/>
               <button onClick={()=>removeWeek(t.week)} style={{background:'none',border:'none',cursor:'pointer',color:'#E24B4A',fontSize:15,padding:0,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -247,8 +248,8 @@ export default function ModificaAllenamento() {
     setDirty(true)
   }
 
-  function removeDay(dayLabel) {
-    if (!window.confirm(`Rimuovere il giorno "${dayLabel}" e tutti i suoi esercizi?`)) return
+  async function removeDay(dayLabel) {
+    if (!(await askConfirm(`Rimuovere il giorno "${dayLabel}" e tutti i suoi esercizi?`, { confirmLabel: 'Rimuovi', danger: true }))) return
     setExercises(prev => prev.filter(e=>e.day_label!==dayLabel))
     const remaining = days.filter(d=>d!==dayLabel)
     setSelectedDay(remaining[0] || null)
@@ -314,7 +315,7 @@ export default function ModificaAllenamento() {
 
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+        <button className="tap" aria-label="Indietro" onClick={()=>navigate(-1)} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div style={{flex:1,minWidth:0}}>
@@ -431,7 +432,7 @@ export default function ModificaAllenamento() {
                       {days.length > 1 && (
                         <button onClick={()=>setShowCopyModal(showCopyModal===ex.id?null:ex.id)} style={{...s.btnGray,padding:'3px 5px'}} title="Copia su altro giorno"><i className="ti ti-transfer" style={{fontSize:11}}/></button>
                       )}
-                      <button onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 5px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+                      <button aria-label="Elimina l'esercizio" onClick={()=>removeEx(ex.id)} style={{...s.btnDanger,padding:'3px 5px'}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
                     </div>
                     <i className={`ti ti-chevron-${isExpanded?'up':'down'}`} style={{fontSize:12,color:'#AAA',flexShrink:0}}/>
                   </div>
@@ -461,13 +462,13 @@ export default function ModificaAllenamento() {
                           </select>
                         </div>
                         <div><label style={s.label}>Serie</label>
-                          <input style={s.input} type="number" value={ex.sets} onChange={e=>updateEx(ex.id,'sets',parseInt(e.target.value)||0)}/>
+                          <input inputMode="numeric" style={s.input} type="number" value={ex.sets} onChange={e=>updateEx(ex.id,'sets',parseInt(e.target.value)||0)}/>
                         </div>
                         <div><label style={s.label}>Reps</label>
                           <input style={s.input} value={ex.reps} onChange={e=>updateEx(ex.id,'reps',e.target.value)} placeholder="Es. 8-10"/>
                         </div>
                         <div><label style={s.label}>Recupero (sec)</label>
-                          <input style={s.input} type="number" value={ex.rest_seconds} onChange={e=>updateEx(ex.id,'rest_seconds',parseInt(e.target.value)||0)}/>
+                          <input inputMode="numeric" style={s.input} type="number" value={ex.rest_seconds} onChange={e=>updateEx(ex.id,'rest_seconds',parseInt(e.target.value)||0)}/>
                         </div>
                         <div><label style={s.label}>TUT</label>
                           <input style={s.input} value={ex.tut||''} onChange={e=>updateEx(ex.id,'tut',e.target.value)} placeholder="Es. 3-1-2"/>
@@ -560,13 +561,13 @@ export default function ModificaAllenamento() {
                 {/* PARAMETRI */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
                   <div><label style={s.label}>Serie</label>
-                    <input style={s.input} type="number" min={1} max={20} value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:parseInt(e.target.value)||3}))}/>
+                    <input inputMode="numeric" style={s.input} type="number" min={1} max={20} value={newEx.sets} onChange={e=>setNewEx(p=>({...p,sets:parseInt(e.target.value)||3}))}/>
                   </div>
                   <div><label style={s.label}>Reps</label>
                     <input style={s.input} value={newEx.reps} onChange={e=>setNewEx(p=>({...p,reps:e.target.value}))} placeholder="8-10"/>
                   </div>
                   <div><label style={s.label}>Recupero (sec)</label>
-                    <input style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:parseInt(e.target.value)||60}))}/>
+                    <input inputMode="numeric" style={s.input} type="number" value={newEx.rest_seconds} onChange={e=>setNewEx(p=>({...p,rest_seconds:parseInt(e.target.value)||60}))}/>
                   </div>
                 </div>
 

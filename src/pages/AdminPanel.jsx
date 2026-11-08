@@ -120,12 +120,14 @@ export default function AdminPanel() {
 
   async function fetchAll() {
     setLoading(true)
-    const { data: prof } = await supabase.from('profiles').select('*')
-      .neq('role','admin').order('created_at',{ascending:false})
+    // Clienti e piani insieme: non dipendono l'uno dall'altro (il nome del cliente si collega dopo)
+    const [{ data: prof }, { data: plRaw, error: plErr }] = await Promise.all([
+      supabase.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false}),
+      supabase.from('meal_plans').select('*').order('created_at',{ascending:false}),
+    ])
     setClients(prof||[])
     // Nessuna unione con "profiles": meal_plans ha DUE collegamenti verso profiles (client_id e created_by),
     // quindi l'unione è ambigua e può fallire in silenzio → nessun piano riconosciuto. Il nome arriva dai clienti già caricati.
-    const { data: plRaw, error: plErr } = await supabase.from('meal_plans').select('*').order('created_at',{ascending:false})
     if (plErr) console.error('Errore caricamento piani:', plErr)
     const pl = (plRaw||[]).map(pp => ({ ...pp, profiles: { full_name: (prof||[]).find(cc => cc.id === pp.client_id)?.full_name } }))
     setPlans(pl)
@@ -133,32 +135,20 @@ export default function AdminPanel() {
     if (prof?.length) {
       const ids = prof.map(c => c.id)
       const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0]
-      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes] = await Promise.all([
+      const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes, repQ, amnQ] = await Promise.all([
         supabase.from('diary_entries').select('client_id,entry_date,kcal').in('client_id', ids).gte('entry_date', weekAgo),
         supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}),
         supabase.from('workout_sessions').select('client_id,session_date,sets_completed,sets_total').in('client_id', ids).gte('session_date', weekAgo),
         supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}),
         supabase.from('coach_messages').select('client_id,is_read,sender_role,created_at').in('client_id', ids).eq('sender_role','client').eq('is_read',false),
         supabase.from('meal_adherence').select('client_id,followed,adherence_date').in('client_id', ids).gte('adherence_date', weekAgo),
+        // report e anamnesi non letti: nello stesso giro (prima due richieste in più, una dopo l'altra)
+        supabase.from('workout_reports').select('client_id,id,submitted_at,read_by_coach').in('client_id', ids).not('submitted_at','is',null).eq('read_by_coach',false),
+        supabase.from('anamnesi').select('client_id,id,completed_at,read_by_coach').in('client_id', ids).not('completed_at','is',null).eq('read_by_coach',false),
       ])
-
-      // workout_reports separato — tabella potrebbe non esistere
-      let reportsRes = { data: [] }
-      try {
-        const { data: repData } = await supabase.from('workout_reports')
-          .select('client_id,id,submitted_at,read_by_coach')
-          .in('client_id', ids).not('submitted_at','is',null).eq('read_by_coach',false)
-        reportsRes = { data: repData || [] }
-      } catch(e) { /* tabella non ancora creata */ }
-
-      // anamnesi non lette
-      let anamnesiRes = { data: [] }
-      try {
-        const { data: amnData } = await supabase.from('anamnesi')
-          .select('client_id,id,completed_at,read_by_coach')
-          .in('client_id', ids).not('completed_at','is',null).eq('read_by_coach',false)
-        anamnesiRes = { data: amnData || [] }
-      } catch(e) { /* colonna non ancora creata */ }
+      // le tabelle potrebbero non esistere ancora: in quel caso l'errore c'è ma i dati sono vuoti
+      const reportsRes = { data: repQ.data || [] }
+      const anamnesiRes = { data: amnQ.data || [] }
 
       const diaryByClient = {}
       ;(diaryRes.data||[]).forEach(d => {
@@ -462,7 +452,7 @@ export default function AdminPanel() {
                   <i className="ti ti-user-plus" style={{fontSize:13}}/>
                   {!isMobile && ' Nuovo'}
                 </button>
-                <button style={s.btnGray} onClick={fetchAll}>
+                <button aria-label="Aggiorna l'elenco" style={s.btnGray} onClick={fetchAll}>
                   <i className="ti ti-refresh" style={{fontSize:13}}/>
                 </button>
               </>
@@ -686,12 +676,12 @@ export default function AdminPanel() {
             <div style={{fontSize:12,color:'#CCC',marginBottom:20}}>Crea l'account e comunicagli le credenziali.</div>
             <div style={s.formGroup}><label style={s.label}>Nome completo *</label><input style={s.input} placeholder="Es. Marco Rossi" value={newClient.full_name} onChange={e=>setNewClient(p=>({...p,full_name:e.target.value}))}/></div>
             <div style={s.grid2}>
-              <div style={s.formGroup}><label style={s.label}>Email *</label><input style={s.input} type="email" value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))}/></div>
+              <div style={s.formGroup}><label style={s.label}>Email *</label><input autoComplete="off" style={s.input} type="email" value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))}/></div>
               <div style={s.formGroup}><label style={s.label}>Password *</label><input style={s.input} type="text" value={newClient.password} onChange={e=>setNewClient(p=>({...p,password:e.target.value}))}/></div>
             </div>
             <div style={s.grid2}>
               <div style={s.formGroup}><label style={s.label}>Telefono</label><input style={s.input} value={newClient.phone} onChange={e=>setNewClient(p=>({...p,phone:e.target.value}))}/></div>
-              <div style={s.formGroup}><label style={s.label}>Altezza (cm)</label><input style={s.input} type="number" value={newClient.height_cm} onChange={e=>setNewClient(p=>({...p,height_cm:e.target.value}))}/></div>
+              <div style={s.formGroup}><label style={s.label}>Altezza (cm)</label><input inputMode="decimal" style={s.input} type="number" value={newClient.height_cm} onChange={e=>setNewClient(p=>({...p,height_cm:e.target.value}))}/></div>
             </div>
             <div style={s.formGroup}><label style={s.label}>Obiettivo</label>
               <select style={s.select} value={newClient.goal} onChange={e=>setNewClient(p=>({...p,goal:e.target.value}))}>
@@ -727,11 +717,11 @@ export default function AdminPanel() {
             </div>
             {dietType==='lineare' && (
               <>
-                <div style={s.formGroup}><label style={s.label}>Calorie target (kcal)</label><input style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/></div>
+                <div style={s.formGroup}><label style={s.label}>Calorie target (kcal)</label><input inputMode="decimal" style={s.input} type="number" value={newPlan.kcal_target} onChange={e=>handleKcalChange(e.target.value)}/></div>
                 <div style={s.grid2}>
-                  <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
-                  <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
-                  <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Proteine (g)</label><input inputMode="decimal" style={s.input} type="number" value={newPlan.protein_target_g} onChange={e=>handleMacroChange('protein_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Carboidrati (g)</label><input inputMode="decimal" style={s.input} type="number" value={newPlan.carbs_target_g} onChange={e=>handleMacroChange('carbs_target_g', e.target.value)}/></div>
+                  <div style={s.formGroup}><label style={s.label}>Grassi (g)</label><input inputMode="decimal" style={s.input} type="number" value={newPlan.fat_target_g} onChange={e=>handleMacroChange('fat_target_g', e.target.value)}/></div>
                   <div style={s.formGroup}><label style={s.label}>Totale da macro</label><div style={{padding:'9px 12px',background:'rgba(59,109,17,0.1)',borderRadius:8,fontSize:13,color:'#6FCF97',fontWeight:600}}>{macroKcal(newPlan)} kcal ✓</div></div>
                 </div>
               </>

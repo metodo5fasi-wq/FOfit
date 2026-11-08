@@ -110,11 +110,11 @@ export default function AssistenteAI() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
 
   async function loadContext() {
-    const { data: planData } = await supabase.from('meal_plans').select('*')
-      .eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()
-    const { data: progress } = await supabase.from('progress_entries').select('*')
-      .eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle()
-
+    // piano e ultima misura insieme (prima uno dopo l'altro)
+    const [{ data: planData }, { data: progress }] = await Promise.all([
+      supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
+      supabase.from('progress_entries').select('*').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle(),
+    ])
     let pianoParsed = null
     if (planData) {
       const { data: meals } = await supabase.from('plan_meals')
@@ -263,7 +263,7 @@ export default function AssistenteAI() {
           </div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          <button onClick={clearHistory} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontFamily:'inherit'}}>
+          <button aria-label="Cancella la chat" onClick={clearHistory} style={{background:'none',border:'none',cursor:'pointer',color:'#E0DDD6',fontFamily:'inherit'}}>
             <i className="ti ti-trash" style={{fontSize:16}}/>
           </button>
         </div>
@@ -307,7 +307,7 @@ export default function AssistenteAI() {
           <textarea ref={textareaRef} style={s.input}
             placeholder="Chiedi una ricetta o un consiglio..."
             value={input} onChange={handleInput} onKeyDown={handleKeyDown} rows={1}/>
-          <button style={{...s.sendBtn,opacity:(!input.trim()||loading)?0.5:1}}
+          <button aria-label="Invia il messaggio" style={{...s.sendBtn,opacity:(!input.trim()||loading)?0.5:1}}
             onClick={()=>sendMessage()} disabled={!input.trim()||loading}>
             <i className="ti ti-send" style={{fontSize:16,color:'white'}}/>
           </button>

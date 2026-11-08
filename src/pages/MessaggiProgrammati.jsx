@@ -262,7 +262,7 @@ export default function MessaggiProgrammati() {
                         <button onClick={()=>sendNow(msg)} disabled={isSending} style={{...s.btn,fontSize:11,padding:'6px 12px'}}>
                           <i className="ti ti-send" style={{fontSize:12}}/>{isSending?'Invio...':'Invia ora'}
                         </button>
-                        <button onClick={()=>remove(msg.id)} style={s.btnDanger}>
+                        <button aria-label="Elimina il messaggio programmato" onClick={()=>remove(msg.id)} style={s.btnDanger}>
                           <i className="ti ti-trash" style={{fontSize:11}}/>
                         </button>
                       </div>
