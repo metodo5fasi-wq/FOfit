@@ -6,8 +6,17 @@
 .tap::after { content: ''; position: absolute; inset: -6px; }
 .tap-xl::after { inset: -11px; }
 
-/* Niente attesa di 300 ms né zoom accidentale al doppio tocco sui pulsanti */
-button, [role="button"], a, select, summary { touch-action: manipulation; }
+/* Niente attesa di 300 ms né zoom accidentale al doppio tocco, ovunque. Lo zoom con DUE dita resta permesso (touch-action: manipulation lo consente). */
+* { touch-action: manipulation; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* Campi di scrittura a 16 px sui dispositivi a tocco. Sotto i 16 px l'iPhone ingrandisce da solo la pagina quando si tocca un campo
+   (per questo prima lo zoom era bloccato per tutta l'app). Sul computer restano le dimensioni compatte delle tabelle del coach.
+   Il resto (checkbox, selettori, file, colori) non è testo e non cambia. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="image"]),
+  select, textarea { font-size: 16px !important; }
+}
 
 /* Chi usa la tastiera (coach al computer) vede dove si trova: l'anello compare solo con la tastiera, non al tocco o al clic */
 button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [role="checkbox"]:focus-visible, [tabindex]:focus-visible {
