@@ -1,4 +1,5 @@
 import React from 'react'
+import { askConfirm } from '../../lib/confirm'
 import { done } from '../../lib/toast'
 import { useAuth } from '../../App'
 import { sendToClients } from '../../lib/notify'
@@ -34,7 +35,7 @@ export default function NotifBell({ clients }) {
     if (!title.trim() || !body.trim() || sending) return
     const ids = selectedClient === 'all' ? list.map(c => c.id) : [selectedClient]
     if (!ids.length) { setResult({ type: 'error', text: 'Non ci sono clienti a cui inviare.' }); return }
-    if (selectedClient === 'all' && !window.confirm(`Inviare questa notifica a tutti i ${ids.length} clienti?`)) return
+    if (selectedClient === 'all' && !(await askConfirm(`Inviare questa notifica a tutti i ${ids.length} clienti?`, { confirmLabel: 'Invia a tutti' }))) return
     setSending(true); setResult(null)
     const { sent, failed } = await sendToClients(ids, { coachId: profile?.id, title: title.trim(), body: body.trim() })
     setSending(false)
@@ -51,7 +52,7 @@ export default function NotifBell({ clients }) {
   const rc = { ok: ['rgba(59,140,90,0.14)', '#6FCF97'], warn: ['rgba(232,160,32,0.12)', '#E8C050'], error: ['rgba(226,75,74,0.14)', '#F07070'] }
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} aria-label="Invia notifica ai clienti" aria-expanded={open} style={{
+      <button className="tap" onClick={() => setOpen(!open)} aria-label="Invia notifica ai clienti" aria-expanded={open} style={{
         width: 36, height: 36, borderRadius: 9, border: '0.5px solid #1C1C1C',
         background: open ? 'rgba(212,87,10,0.12)' : '#161616',
         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',

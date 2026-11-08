@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { thumbUrl, onThumbError } from '../../lib/imageResize'
 import { supabase } from '../../lib/supabase'
 import PhotoCompare from '../../components/PhotoCompare'
 import PhotoLightbox from '../../components/PhotoLightbox'
@@ -217,7 +218,7 @@ export default function CheckinAdmin({ focus, clearFocus }) {
                 {photos.map(p=>(
                   <div key={p.id} onClick={()=>setLightbox(p)}
                     style={{position:'relative',cursor:'pointer',borderRadius:9,overflow:'hidden',aspectRatio:'3/4',background:'#141414'}}>
-                    <img loading="lazy" src={p.photo_url} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+                    <img loading="lazy" decoding="async" src={thumbUrl(p.photo_url)} data-full={p.photo_url} onError={onThumbError} alt={p.label} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                     <div style={{position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.7))',padding:'10px 5px 4px'}}>
                       <div style={{fontSize:8,color:'white',fontWeight:600,textTransform:'uppercase'}}>{p.label}</div>
                       {p.photo_date&&<div style={{fontSize:7,color:'rgba(255,255,255,0.6)'}}>{new Date(p.photo_date+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})}</div>}

@@ -82,7 +82,7 @@ export default function CalendarioAdmin({ focus, clearFocus }) {
                 <td style={s.td}><div style={{display:'flex',alignItems:'center'}}><div style={{...s.avatar,width:24,height:24,fontSize:10,marginRight:6}}>{initials(b.profiles?.full_name||'')}</div><span style={{fontSize:12}}>{b.profiles?.full_name||'—'}</span></div></td>
                 <td style={s.td}>{new Date(b.booking_date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</td>
                 <td style={s.td}><span style={{fontWeight:600}}>{b.time_slot}</span></td>
-                <td style={s.td}><button style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>cancelBooking(b.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button></td>
+                <td aria-label="Annulla la prenotazione" style={s.td}><button aria-label="Annulla la prenotazione" style={{...s.btnGray,color:'#E24B4A'}} onClick={()=>cancelBooking(b.id)}><i className="ti ti-trash" style={{fontSize:13}}/></button></td>
               </tr>
             ))}</tbody>
           </table>

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import { askConfirm } from '../../lib/confirm'
+import { thumbUrl, onThumbError } from '../../lib/imageResize'
 import { supabase } from '../../lib/supabase'
 import { dbSave } from '../../lib/db'
 import GraficoPeso from '../../components/GraficoPeso'
@@ -128,7 +130,7 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
   }
 
   async function deactivatePlan(planId) {
-    if (!window.confirm('Disattivare questo piano? Il cliente non lo vedrà più nell\'app.')) return
+    if (!(await askConfirm('Disattivare questo piano? Il cliente non lo vedrà più nell\'app.', { confirmLabel: 'Disattiva', danger: true }))) return
     const r = await dbSave(supabase.from('meal_plans').update({ is_active: false }).eq('id', planId), 'il piano alimentare', 'disattivare', { done: 'Piano disattivato' })
     if (!r.ok) return
     setEditingPlan(false)
@@ -168,7 +170,7 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
                   <option value="dimagrimento">Dimagrimento</option><option value="massa">Massa muscolare</option><option value="ricomposizione">Ricomposizione corporea</option><option value="mantenimento">Mantenimento</option><option value="forza">Forza</option><option value="resistenza">Resistenza</option>
                 </select>
               </div>
-              <div style={s.formGroup}><label style={s.label}>Altezza (cm)</label><input style={s.input} type="number" value={form.height_cm} onChange={e=>setForm(f=>({...f,height_cm:e.target.value}))}/></div>
+              <div style={s.formGroup}><label style={s.label}>Altezza (cm)</label><input inputMode="decimal" style={s.input} type="number" value={form.height_cm} onChange={e=>setForm(f=>({...f,height_cm:e.target.value}))}/></div>
             </div>
             <div style={s.formGroup}><label style={s.label}>Telefono</label><input style={s.input} value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
             <div style={s.formGroup}><label style={s.label}>Note (visibili al cliente non sono — uso interno)</label><textarea style={{...s.input,height:50,resize:'vertical'}} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></div>
@@ -238,10 +240,10 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
               {editingPlan && (
                 <div style={{background:'#161616',borderRadius:10,padding:'14px',border:'0.5px solid #1C1C1C'}}>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
-                    <div><label style={s.label}>Kcal target</label><input style={s.input} type="number" value={planEdit.kcal_target} onChange={e=>setPlanEdit(p=>({...p,kcal_target:e.target.value}))}/></div>
-                    <div><label style={s.label}>Proteine (g)</label><input style={s.input} type="number" value={planEdit.protein_target_g} onChange={e=>setPlanEdit(p=>({...p,protein_target_g:e.target.value}))}/></div>
-                    <div><label style={s.label}>Carboidrati (g)</label><input style={s.input} type="number" value={planEdit.carbs_target_g} onChange={e=>setPlanEdit(p=>({...p,carbs_target_g:e.target.value}))}/></div>
-                    <div><label style={s.label}>Grassi (g)</label><input style={s.input} type="number" value={planEdit.fat_target_g} onChange={e=>setPlanEdit(p=>({...p,fat_target_g:e.target.value}))}/></div>
+                    <div><label style={s.label}>Kcal target</label><input inputMode="decimal" style={s.input} type="number" value={planEdit.kcal_target} onChange={e=>setPlanEdit(p=>({...p,kcal_target:e.target.value}))}/></div>
+                    <div><label style={s.label}>Proteine (g)</label><input inputMode="decimal" style={s.input} type="number" value={planEdit.protein_target_g} onChange={e=>setPlanEdit(p=>({...p,protein_target_g:e.target.value}))}/></div>
+                    <div><label style={s.label}>Carboidrati (g)</label><input inputMode="decimal" style={s.input} type="number" value={planEdit.carbs_target_g} onChange={e=>setPlanEdit(p=>({...p,carbs_target_g:e.target.value}))}/></div>
+                    <div><label style={s.label}>Grassi (g)</label><input inputMode="decimal" style={s.input} type="number" value={planEdit.fat_target_g} onChange={e=>setPlanEdit(p=>({...p,fat_target_g:e.target.value}))}/></div>
                   </div>
                   <div style={{marginBottom:10}}><label style={s.label}>Titolo</label><input style={s.input} value={planEdit.title} onChange={e=>setPlanEdit(p=>({...p,title:e.target.value}))}/></div>
                   <div style={{marginBottom:10}}><label style={s.label}>Note</label><textarea style={{...s.input,resize:'none',height:60}} value={planEdit.notes||''} onChange={e=>setPlanEdit(p=>({...p,notes:e.target.value}))}/></div>
@@ -413,7 +415,7 @@ export default function ClientDetailModal({ client, plans, onClose, onSaved, onN
               {photos.map((p,i) => (
                 <button key={p.id} type="button" onClick={()=>setPhotoView(i)} aria-label={`Apri foto ${p.label||''} del ${p.photo_date||''}`.trim()}
                   style={{padding:0,border:'0.5px solid #2A2A2A',background:'none',borderRadius:8,cursor:'zoom-in',flexShrink:0,overflow:'hidden'}}>
-                  <img src={p.photo_url} alt={p.label} style={{width:60,height:80,objectFit:'cover',display:'block'}}/>
+                  <img src={thumbUrl(p.photo_url)} data-full={p.photo_url} onError={onThumbError} loading="lazy" decoding="async" alt={p.label} style={{width:60,height:80,objectFit:'cover',display:'block'}}/>
                 </button>
               ))}
             </div>
