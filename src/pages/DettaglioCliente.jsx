@@ -381,9 +381,6 @@ function ClientDetail({ client, navigate }) {
               <button onClick={sendQuickMsg} disabled={!quickMsg.trim()||sendingMsg} style={{...s.btn,flex:1,justifyContent:'center',opacity:!quickMsg.trim()?0.5:1}}>
                 <i className="ti ti-send" style={{fontSize:13}}/>{sendingMsg?'Invio...':'Invia'}
               </button>
-              <button aria-label="Apri la chat con il cliente" onClick={()=>navigate(`/messaggi-coach?client=${client.id}`)} style={{...s.btnGray,padding:'9px 14px'}}>
-                <i className="ti ti-external-link" style={{fontSize:13}}/>
-              </button>
             </div>
           </div>
         </>}
