@@ -51,6 +51,32 @@ export async function loadWithCache(userId, name, fetcher, { cacheMap } = {}) {
   }
 }
 
+// Mostra SUBITO l'ultima copia salvata (se c'è) e intanto rilegge: la pagina si vede all'istante e poi si aggiorna da sola.
+// Va usata solo al primo caricamento di una pagina (cacheFirst); dopo un salvataggio si usa cacheFirst:false, altrimenti per un attimo
+// si rivedrebbero i dati vecchi. onData(dati, { fromCache }) viene chiamato con la copia (se c'è) e poi con i dati freschi.
+// Risultato: { data, fromCache, error? }. Se la lettura fallisce ma una copia c'è, si tiene la copia e si segnala l'errore (stale).
+export async function loadSWR(userId, name, fetcher, { onData, cacheMap, cacheFirst = true } = {}) {
+  const cached = cacheGet(userId, name)
+  if (cacheFirst && cached !== null && onData) onData(cached, { fromCache: true, instant: true })
+  const r = await loadWithCache(userId, name, fetcher, { cacheMap })
+  if (r.error) return { data: r.data ?? cached, fromCache: r.data == null && cached !== null, error: r.error, stale: cached !== null }
+  if (onData) onData(r.data, { fromCache: r.fromCache, instant: false })
+  return r
+}
+export const hasCache = (userId, name) => cacheGet(userId, name) !== null
+// Le copie "per giorno" (es. diary_2026-11-07) si accumulano: si tolgono quelle più vecchie di keepDays giorni
+export function cachePruneDated(userId, prefix, keepDays = 14) {
+  try {
+    const start = `${CACHE_PREFIX}${userId}:${prefix}`, limit = new Date(Date.now() - keepDays * 864e5), min = `${limit.getFullYear()}-${String(limit.getMonth() + 1).padStart(2, '0')}-${String(limit.getDate()).padStart(2, '0')}`
+    Object.keys(localStorage).filter(k => k.startsWith(start)).forEach(k => { const d = k.slice(start.length); if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d < min) localStorage.removeItem(k) })
+  } catch {}
+}
+// Aggiorna la copia salvata dopo una modifica fatta sulla pagina (es. spunta della lista), così alla prossima apertura non è vecchia
+export function cachePatch(userId, name, updater) {
+  const c = cacheGet(userId, name); if (c === null) return
+  try { cacheSet(userId, name, updater(c)) } catch {}
+}
+
 // ── sessione offline ─────────────────────────────────────────
 export const saveLastProfile = p => { if (p?.id) write(LAST_PROFILE_KEY, p) }
 export const loadLastProfile = () => read(LAST_PROFILE_KEY, null)
