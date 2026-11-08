@@ -2,8 +2,9 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <!-- Zoom con due dita PERMESSO (prima bloccato: chi vede poco non poteva ingrandire nulla). Niente zoom automatico nei campi: sono a 16 px sui dispositivi a tocco (src/ui.css). -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Zoom BLOCCATO di proposito: l'app ha pagine fisse che scorrono al loro interno e, una volta ingrandita (anche da sola, toccando un campo),
+         sul telefono non si riesce più a spostarla né a tornare alla vista normale. Provato il 08/11: non riabilitare senza provare su un telefono vero. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>FOfit</title>
 
     <!-- PWA Manifest -->
@@ -56,6 +57,13 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+  
+    /* Campi di scrittura a 16 px sui dispositivi a tocco (più leggibili). Sul computer restano le dimensioni compatte delle tabelle del coach.
+       Checkbox, selettori, file e colori non sono testo e non cambiano. */
+    @media (pointer: coarse) {
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="image"]),
+      select, textarea { font-size: 16px !important; }
     }
   </style>
   <div id="root"></div>
