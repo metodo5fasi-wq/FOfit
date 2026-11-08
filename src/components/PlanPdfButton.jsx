@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { askConfirm } from '../lib/confirm'
 import { supabase } from '../lib/supabase'
 import { useToast } from './Toast'
 import { exportPlanPdf } from '../lib/planPdf'
@@ -11,7 +12,7 @@ export default function PlanPdfButton({ planId, confirmMessage = null, style = {
     e?.stopPropagation?.()
     if (!planId || busy) return
     if (navigator.onLine === false) { toast?.('Per creare il PDF serve la connessione', 'error'); return }
-    if (confirmMessage && !window.confirm(confirmMessage)) return
+    if (confirmMessage && !(await askConfirm(confirmMessage, { confirmLabel: 'Continua' }))) return
     setBusy(true)
     try { const ok = await exportPlanPdf(supabase, planId); if (!ok) toast?.('Impossibile aprire il PDF. Riprova.', 'error') }
     catch (err) { toast?.('Errore nella creazione del PDF: ' + (err?.message || 'riprova'), 'error') }

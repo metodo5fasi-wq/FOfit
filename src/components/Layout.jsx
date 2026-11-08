@@ -281,7 +281,7 @@ export default function Layout() {
             top:0,
             zIndex:50,
           }}>
-            <button onClick={()=>setMobileOpen(true)} style={{
+            <button className="tap" aria-label="Apri il menu" onClick={()=>setMobileOpen(true)} style={{
               background:'#D4570A',
               border:'none', color:'white', width:36, height:36, borderRadius:10,
               cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
