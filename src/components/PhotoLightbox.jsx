@@ -6,7 +6,7 @@ const nav = (side, off) => ({ position: 'absolute', top: '50%', [side]: 10, tran
 // Visualizzatore di foto a schermo intero: frecce, tastiera (← → Esc), scorrimento col dito, tocco fuori per chiudere.
 // photos: [{ photo_url, label, photo_date, notes }] · index: foto aperta (null = chiuso) · onChange(nuovoIndice) · onClose()
 export default function PhotoLightbox({ photos = [], index = null, onChange, onClose }) {
-  const touch = useRef(null)
+  const touch = useRef(null), multi = useRef(false)          // multi: sono apparse due dita (pizzico per ingrandire): non è uno scorrimento
   const open = index !== null && index !== undefined && index >= 0 && photos[index]
   const go = d => { const n = index + d; if (n >= 0 && n < photos.length) onChange?.(n) }
   useEffect(() => {
@@ -18,7 +18,9 @@ export default function PhotoLightbox({ photos = [], index = null, onChange, onC
   const p = photos[index]
   return (
     <div role="dialog" aria-modal="true" aria-label={`Foto ${p.label || ''} ${fmt(p.photo_date)}`.trim()} data-testid="lightbox" onClick={onClose}
-      onTouchStart={e => { touch.current = e.touches[0].clientX }} onTouchEnd={e => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; touch.current = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1) }}
+      onTouchStart={e => { if ((e.touches?.length || 0) > 1) { multi.current = true; touch.current = null; return } if (!multi.current) touch.current = e.touches[0].clientX }}
+      onTouchEnd={e => { if ((e.touches?.length || 0) > 0) return; if (multi.current) { multi.current = false; touch.current = null; return } if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; touch.current = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1) }}
+      onTouchCancel={() => { touch.current = null; multi.current = false }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <button className="tap" type="button" aria-label="Chiudi" onClick={e => { e.stopPropagation(); onClose?.() }} style={{ position: 'absolute', top: 16, right: 16, width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="ti ti-x" style={{ fontSize: 19, color: 'white' }} /></button>
       {photos.length > 1 && <>
