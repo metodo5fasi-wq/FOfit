@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { askConfirm } from '../lib/confirm'
-import { done } from '../lib/toast'
+import { done, notify } from '../lib/toast'
 import { dbMust } from '../lib/db'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -89,6 +89,23 @@ function WeeklyTargetsTable({ ex, onChange }) {
 }
 
 
+// Riquadro per scrivere il nome del nuovo giorno (si apre con "+ Giorno"): Invio conferma, Esc annulla
+function AddDayForm({ value, onChange, onConfirm, onCancel, stacked }) {
+  const ref = React.useRef(null)
+  React.useEffect(() => { ref.current?.focus(); ref.current?.select() }, [])
+  return (
+    <div style={{display:'flex',flexDirection:stacked?'column':'row',gap:6,alignItems:stacked?'stretch':'center',flexShrink:0}}>
+      <input ref={ref} aria-label="Nome del nuovo giorno" value={value} onChange={e=>onChange(e.target.value)} placeholder="Es. Giorno D - Braccia" maxLength={40}
+        onKeyDown={e=>{ if (e.key==='Enter') onConfirm(); else if (e.key==='Escape') onCancel() }}
+        style={{...s.input,width:stacked?'100%':190,padding:'5px 8px',fontSize:12}} />
+      <div style={{display:'flex',gap:6}}>
+        <button aria-label="Aggiungi il giorno" onClick={onConfirm} style={{...s.btnSm,flex:stacked?1:'none'}}>✓ Aggiungi</button>
+        <button aria-label="Annulla" onClick={onCancel} style={s.btnGray}>✕</button>
+      </div>
+    </div>
+  )
+}
+
 export default function ModificaAllenamento() {
   const { planId } = useParams()
   const navigate = useNavigate()
@@ -102,6 +119,7 @@ export default function ModificaAllenamento() {
   const [dirty, setDirty] = useState(false)
   const [showAddDay, setShowAddDay] = useState(false)
   const [newDayLabel, setNewDayLabel] = useState('')
+  const [emptyDays, setEmptyDays] = useState([])      // giorni appena aggiunti, ancora senza esercizi: esistono a schermo ma non si salvano finché non ne hanno uno
   const [addingExToDay, setAddingExToDay] = useState(null)
   const [newEx, setNewEx] = useState({ ...EMPTY_EX })
   const [expandedEx, setExpandedEx] = useState(null)
@@ -132,12 +150,12 @@ export default function ModificaAllenamento() {
     setExercises(exData || [])
     if (exData?.length) {
       const days = [...new Set(exData.map(e=>e.day_label))]
-      setSelectedDay(days[0])
+      setSelectedDay(prev => (prev && days.includes(prev)) ? prev : days[0])          // dopo il salvataggio si resta sul giorno in cui si era
     }
     setLoading(false)
   }
 
-  const days = [...new Set(exercises.map(e=>e.day_label))]
+  const days = [...new Set([...exercises.map(e=>e.day_label), ...emptyDays])]
   const dayExercises = exercises.filter(e=>e.day_label===selectedDay)
 
   function updateEx(id, field, value) {
@@ -150,6 +168,9 @@ export default function ModificaAllenamento() {
     setDirty(true)
   }
 
+  // Rimette gli esercizi di un giorno nel nuovo ordine SENZA spostare il giorno nell'elenco dei giorni (prima, riordinando, il giorno finiva in fondo)
+  function reorderDay(day, ordered) { let k = 0; return exercises.map(e => e.day_label === day ? ordered[k++] : e) }
+
   function moveEx(id, dir) {
     const dayExs = exercises.filter(e=>e.day_label===selectedDay)
     const idx = dayExs.findIndex(e=>e.id===id)
@@ -158,8 +179,7 @@ export default function ModificaAllenamento() {
     const swapIdx = dir==='up' ? idx-1 : idx+1
     const newDayExs = [...dayExs]
     ;[newDayExs[idx], newDayExs[swapIdx]] = [newDayExs[swapIdx], newDayExs[idx]]
-    const otherExs = exercises.filter(e=>e.day_label!==selectedDay)
-    setExercises([...otherExs, ...newDayExs])
+    setExercises(reorderDay(selectedDay, newDayExs))
     setDirty(true)
   }
 
@@ -204,8 +224,7 @@ export default function ModificaAllenamento() {
     const newDayExs = [...dayExs]
     const [moved] = newDayExs.splice(fromIdx, 1)
     newDayExs.splice(toIdx, 0, moved)
-    const otherExs = exercises.filter(e => e.day_label !== selectedDay)
-    setExercises([...otherExs, ...newDayExs])
+    setExercises(reorderDay(selectedDay, newDayExs))
     setDragId(null); setDragOverId(null)
     setDirty(true)
   }
@@ -232,31 +251,50 @@ export default function ModificaAllenamento() {
     setDirty(true)
   }
 
+  // Proposta di nome per il prossimo giorno: "Giorno D" se ci sono A, B, C
+  function suggestDayName() {
+    const used = new Set(days.map(d => d.trim().toLowerCase()))
+    for (let k = 0; k < 26; k++) { const n = `Giorno ${String.fromCharCode(65 + ((days.length + k) % 26))}`; if (!used.has(n.toLowerCase())) return n }
+    return `Giorno ${days.length + 1}`
+  }
+  function openAddDay() {
+    if (days.length >= 7) { notify('Massimo 7 giorni', 'error'); return }
+    setNewDayLabel(suggestDayName()); setShowAddDay(true)
+  }
+  function cancelAddDay() { setShowAddDay(false); setNewDayLabel('') }
+
+  // Prima il pulsante "+ Giorno" non faceva nulla: chiamava questa funzione con il nome ancora vuoto, che usciva in silenzio.
+  // Il giorno nuovo non ha esercizi: esiste a schermo finché non ne aggiungi uno (un giorno vuoto non si salva, niente più esercizi "senza nome").
   function addDay() {
-    if (!newDayLabel.trim()) return
-    const ex = {
-      ...EMPTY_EX,
-      id: 'new-' + Date.now(),
-      plan_id: planId,
-      day_label: newDayLabel.trim(),
-      order_index: 0,
-    }
-    setExercises(prev => [...prev, ex])
-    setSelectedDay(newDayLabel.trim())
-    setNewDayLabel('')
-    setShowAddDay(false)
-    setDirty(true)
+    const label = newDayLabel.trim()
+    if (!label) { notify('Scrivi il nome del giorno', 'error'); return }
+    if (days.some(d => d.trim().toLowerCase() === label.toLowerCase())) { notify('Esiste già un giorno con questo nome', 'error'); return }
+    if (days.length >= 7) { notify('Massimo 7 giorni', 'error'); return }
+    setEmptyDays(p => [...p, label])
+    setSelectedDay(label)
+    setNewDayLabel(''); setShowAddDay(false)
+    setSearchEx(''); setShowAddExercise(true)          // si parte subito dal primo esercizio
+    done('Giorno aggiunto: aggiungi il primo esercizio')
   }
 
   async function removeDay(dayLabel) {
-    if (!(await askConfirm(`Rimuovere il giorno "${dayLabel}" e tutti i suoi esercizi?`, { confirmLabel: 'Rimuovi', danger: true }))) return
+    const empty = !exercises.some(e => e.day_label === dayLabel)            // un giorno ancora vuoto si toglie senza chiedere
+    if (!empty && !(await askConfirm(`Rimuovere il giorno "${dayLabel}" e tutti i suoi esercizi?`, { confirmLabel: 'Rimuovi', danger: true }))) return
+    setEmptyDays(prev => prev.filter(d => d !== dayLabel))
     setExercises(prev => prev.filter(e=>e.day_label!==dayLabel))
     const remaining = days.filter(d=>d!==dayLabel)
     setSelectedDay(remaining[0] || null)
-    setDirty(true)
+    if (!empty) setDirty(true)
   }
 
   async function saveAll() {
+    // un esercizio senza nome non si salva: prima di toccare il database si porta il coach proprio su quell'esercizio
+    const unnamed = exercises.filter(e => !String(e.exercise_name || '').trim())
+    if (unnamed.length) {
+      notify(unnamed.length === 1 ? 'Un esercizio non ha il nome: scrivilo o eliminalo' : `${unnamed.length} esercizi non hanno il nome: scrivili o eliminali`, 'error')
+      setSelectedDay(unnamed[0].day_label); setExpandedEx(unnamed[0].id); setAllExpanded(false)
+      return
+    }
     setSaving(true)
     try {
       // Elimina esercizi rimossi
@@ -293,6 +331,7 @@ export default function ModificaAllenamento() {
       }
 
       setDirty(false)
+      setEmptyDays([])
       setSavedMsg('✓ Scheda salvata!')
       done('Scheda salvata')
       setTimeout(() => setSavedMsg(''), 3000)
@@ -353,9 +392,13 @@ export default function ModificaAllenamento() {
               )
             })}
             <div style={{padding:'8px 10px'}}>
-              <button onClick={addDay} style={{width:'100%',padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:'inherit',color:'#AAA',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
-                <i className="ti ti-plus" style={{fontSize:12}}/>Giorno
-              </button>
+              {showAddDay ? (
+                <AddDayForm stacked value={newDayLabel} onChange={setNewDayLabel} onConfirm={addDay} onCancel={cancelAddDay} />
+              ) : (
+                <button onClick={openAddDay} aria-label="Aggiungi un giorno" style={{width:'100%',padding:'6px',background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:'inherit',color:'#AAA',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                  <i className="ti ti-plus" style={{fontSize:12}}/>Giorno
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -375,7 +418,11 @@ export default function ModificaAllenamento() {
                   borderColor:selectedDay===day?'#D4570A':'#2A2A2A',
                 }}>{day}</button>
               ))}
-              <button onClick={addDay} style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #2A2A2A',background:'transparent',color:'#AAA',fontFamily:'inherit'}}>+ Giorno</button>
+              {showAddDay ? (
+                <AddDayForm value={newDayLabel} onChange={setNewDayLabel} onConfirm={addDay} onCancel={cancelAddDay} />
+              ) : (
+                <button onClick={openAddDay} aria-label="Aggiungi un giorno" style={{flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,cursor:'pointer',border:'0.5px dashed #2A2A2A',background:'transparent',color:'#AAA',fontFamily:'inherit'}}>+ Giorno</button>
+              )}
             </div>
           )}
 
@@ -488,6 +535,9 @@ export default function ModificaAllenamento() {
             })}
 
             {/* AGGIUNGI ESERCIZIO */}
+            {dayExercises.length === 0 && !showAddExercise && (
+              <div style={{textAlign:'center',color:'#AAA',fontSize:12,padding:'18px 10px'}}>Giorno vuoto: aggiungi almeno un esercizio, altrimenti non verrà salvato.</div>
+            )}
             {showAddExercise ? (
               <div style={{background:'#0D0D0D',borderRadius:12,border:'0.5px solid #D4570A',padding:'14px',marginBottom:10}}>
                 <div style={{fontSize:12,fontWeight:700,color:'#F4894A',marginBottom:12}}>
