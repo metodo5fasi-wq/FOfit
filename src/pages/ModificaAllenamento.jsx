@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { askConfirm } from '../lib/confirm'
 import { done, notify } from '../lib/toast'
 import { dbMust, dbSave } from '../lib/db'
+import { startHandleDrag } from '../lib/dragHandle'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'
@@ -602,10 +603,8 @@ export default function ModificaAllenamento() {
             {filteredDayExercises.map((ex, ei) => {
               const isExpanded = expandedEx === ex.id || expandedEx === 'all'
               return (
-                <div key={ex.id}
-                  draggable onDragStart={()=>handleDragStart(ex.id)}
+                <div key={ex.id} data-drag-card
                   onDragOver={e=>handleDragOver(e,ex.id)} onDrop={()=>handleDrop(ex.id)}
-                  onDragEnd={handleDragEnd}
                   style={{...s.card,
                     opacity:dragId===ex.id?0.4:1,
                     border:dragOverId===ex.id?'1.5px solid #D4570A':'0.5px solid #2A2A2A',
@@ -614,7 +613,8 @@ export default function ModificaAllenamento() {
                   {/* HEADER ESERCIZIO */}
                   <div style={{display:'flex',alignItems:'center',gap:7,padding:'9px 11px',cursor:'pointer'}}
                     onClick={()=>{if(expandedEx==='all'){setAllExpanded(false);setExpandedEx(ex.id)}else setExpandedEx(isExpanded?null:ex.id)}}>
-                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'2px 3px',color:'#CCC',flexShrink:0}}>
+                    <div draggable data-testid={`maniglia-${ex.id}`} title="Trascina per riordinare" onDragStart={e=>{startHandleDrag(e);handleDragStart(ex.id)}} onDragEnd={handleDragEnd} onClick={e=>e.stopPropagation()}
+                      style={{display:'flex',flexDirection:'column',alignItems:'center',cursor:'grab',padding:'6px 7px',margin:'-4px -4px',color:'#CCC',flexShrink:0,userSelect:'none'}}>
                       <i className="ti ti-grip-vertical" style={{fontSize:15}}/>
                       <span style={{fontSize:9,fontWeight:700,color:'#F4894A',marginTop:-2}}>{ei+1}</span>
                     </div>

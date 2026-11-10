@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { askConfirm } from '../lib/confirm'
 import { dbMust, dbSave } from '../lib/db'
+import { startHandleDrag } from '../lib/dragHandle'
 import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -815,15 +816,14 @@ export default function ModificaPiano() {
 
                 {/* ALIMENTI */}
                 {(meal.plan_meal_foods||[]).map((food) => (
-                  <div key={food.id}
-                    draggable onDragStart={()=>handleFoodDragStart(meal.id,food.id)}
+                  <div key={food.id} data-drag-card
                     onDragOver={e=>handleFoodDragOver(e,food.id)} onDrop={()=>handleFoodDrop(meal.id,food.id)}
-                    onDragEnd={handleFoodDragEnd}
                     style={{padding:'7px 12px',borderBottom:'0.5px solid #1C1C1C',
                       opacity:dragFoodId===food.id?0.4:1,
                       background:dragOverFoodId===food.id?'rgba(212,87,10,0.14)':'transparent'}}>
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
-                      <i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC',cursor:'grab',flexShrink:0}}/>
+                      <span draggable data-testid={`maniglia-${food.id}`} title="Trascina per riordinare" onDragStart={e=>{startHandleDrag(e);handleFoodDragStart(meal.id,food.id)}} onDragEnd={handleFoodDragEnd}
+                        style={{display:'flex',padding:'6px 7px',margin:'-6px -4px',cursor:'grab',flexShrink:0,userSelect:'none'}}><i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC'}}/></span>
                       <span style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.food_name}</span>
                       <button aria-label="Rimuovi l'alimento" onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
                     </div>
