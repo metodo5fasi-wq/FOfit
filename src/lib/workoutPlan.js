@@ -1,3 +1,4 @@
+import { normalizeNotes } from './coachNotes'
 // ─────────────────────────────────────────────────────────────
 // Logica della modifica allenamento, senza interfaccia (così si prova da sola).
 // ─────────────────────────────────────────────────────────────
@@ -143,6 +144,7 @@ export function writeDraft(planId, state, baseExercises) { try { localStorage.se
 export function readDraft(planId) { try { const d = JSON.parse(localStorage.getItem(draftKey(planId)) || 'null'); return d && d.v === 1 && Array.isArray(d.exercises) ? d : null } catch { return null } }
 export function clearDraft(planId) { try { localStorage.removeItem(draftKey(planId)) } catch {} }
 // la bozza serve solo se è DIVERSA da ciò che c'è sul server (o ha giorni vuoti / rinomine in sospeso)
-export const draftIsUseful = (draft, serverExercises) => !!draft && (signature(draft.exercises) !== signature(serverExercises) || (draft.emptyDays || []).length > 0 || (draft.renames || []).length > 0)
+export const draftIsUseful = (draft, serverExercises, serverNotes) => !!draft && (signature(draft.exercises) !== signature(serverExercises) || (draft.emptyDays || []).length > 0 || (draft.renames || []).length > 0
+  || (typeof serverNotes === 'string' && typeof draft.notes === 'string' && normalizeNotes(draft.notes) !== normalizeNotes(serverNotes)))
 // la scheda sul server è cambiata dopo la bozza (altro dispositivo o altra sessione): ripristinare sovrascriverebbe quelle modifiche
 export const draftIsStale = (draft, serverExercises) => !!draft && draft.baseSig !== signature(serverExercises)
