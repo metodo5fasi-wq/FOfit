@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import RouteBoundary from './RouteBoundary'
 import { supabase } from '../lib/supabase'
 import { clearCache } from '../lib/offline'
+import { RUNNING_BUILD } from '../lib/appVersion'
 import { useAuth, useTheme } from '../App'
 
 const NAV_CLIENT = [
@@ -163,6 +164,7 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#A0A0A0',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:13,color:'#CCC'}}/>Esci
         </button>
+        <span data-testid="versione-app" title="Versione dell'app" style={{marginLeft:'auto',fontSize:10,color:'#999'}}>v {RUNNING_BUILD}</span>
 
       </div>
     </div>
