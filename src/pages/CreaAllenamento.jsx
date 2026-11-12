@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 import { EXERCISE_DB, searchExercises } from '../data/exerciseDatabase.js'
+import { NotesEditor } from '../components/CoachNotes'
+import { normalizeNotes, hasNotes, isMissingNotesColumn, MISSING_COLUMN_MSG } from '../lib/coachNotes'
 import {
   MUSCLES, letter, buildStructure, libraryByMuscle, matchExercise, normalizeMuscle, buildExerciseRows,
   estimateMinutes, totalSets, volumeByMuscle, dayLabel, parseDayTitle, prefillFromAnamnesi,
@@ -104,13 +106,15 @@ function ExerciseCard({ ex, first, last, selectMode, isSel, isOpen, onSel, onOpe
 export default function CreaAllenamento() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { toast } = useToast()
+  const toast = useToast()
   const { profile } = useAuth()
 
   const [clients, setClients] = useState([])
   const [selectedClient, setSelectedClient] = useState(searchParams.get('client') || '')
   const [anamnesi, setAnamnesi] = useState(null)
   const [planName, setPlanName] = useState('Scheda allenamento')
+  const [generalNotes, setGeneralNotes] = useState('')          // note generali: il cliente le legge in cima alla sua sezione Allenamento
+  const [notesOpen, setNotesOpen] = useState(false)
   const [days, setDays] = useState(() => [newDay('')])
   const [sel, setSel] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -260,9 +264,14 @@ export default function CreaAllenamento() {
     if (!filled.length) { toast('Aggiungi almeno un esercizio', 'error'); return }
     if (filled.some(d => d.exercises.some(e => !String(e.exercise_name || '').trim()))) { toast('Ci sono esercizi senza nome', 'error'); return }
     if (!profile?.id) { toast('Sessione scaduta, ricarica la pagina', 'error'); return }
-    setSaving(true); let newPlanId = null
+    setSaving(true); let newPlanId = null; let notesLost = false
     try {
-      const { data: plan, error: planErr } = await supabase.from('workout_plans').insert({ client_id: selectedClient, created_by: profile.id, title: planName || 'Scheda allenamento', is_active: false }).select().single()
+      // Le note si salvano con la scheda. Se il database non ha ancora la colonna (script SQL non eseguito) la scheda si crea lo stesso e lo si dice.
+      const cleanNotes = normalizeNotes(generalNotes)
+      const basePlan = { client_id: selectedClient, created_by: profile.id, title: planName || 'Scheda allenamento', is_active: false }
+      let ins = await supabase.from('workout_plans').insert(cleanNotes ? { ...basePlan, general_notes: cleanNotes } : basePlan).select().single()
+      if (ins.error && cleanNotes && isMissingNotesColumn(ins.error)) { notesLost = true; ins = await supabase.from('workout_plans').insert(basePlan).select().single() }
+      const { data: plan, error: planErr } = ins
       if (planErr) throw planErr
       newPlanId = plan.id
       const { error: exErr } = await supabase.from('workout_exercises').insert(buildExerciseRows(plan.id, filled))
@@ -271,7 +280,9 @@ export default function CreaAllenamento() {
       if (offErr) throw offErr
       const { error: onErr } = await supabase.from('workout_plans').update({ is_active: true }).eq('id', plan.id)
       if (onErr) throw onErr
-      toast('Scheda salvata! 🎉', 'success'); setTimeout(() => navigate(`/modifica-allenamento/${plan.id}`), 800)
+      if (notesLost) toast('Scheda salvata, ma le note NON sono state salvate. ' + MISSING_COLUMN_MSG, 'error')
+      else toast('Scheda salvata! 🎉', 'success')
+      setTimeout(() => navigate(`/modifica-allenamento/${plan.id}`), notesLost ? 3500 : 800)
     } catch (e) {
       if (newPlanId) { try { await supabase.from('workout_plans').delete().eq('id', newPlanId) } catch (_) {} }
       toast('Errore: ' + (e.message || 'salvataggio non riuscito') + ' — la scheda precedente del cliente non è stata toccata', 'error')
@@ -321,6 +332,11 @@ export default function CreaAllenamento() {
             </select>
           </Field>
           <Field label="Nome scheda"><input value={planName} onChange={e => setPlanName(e.target.value)} style={S.input} placeholder="es. Scheda ipertrofia fase 1" /></Field>
+          <Field label="Note generali per il cliente (opzionale)">
+            {notesOpen || hasNotes(generalNotes)
+              ? <NotesEditor idPrefix="crea" value={generalNotes} onChange={setGeneralNotes} />
+              : <button type="button" onClick={() => setNotesOpen(true)} style={{ ...S.btnGray, width: '100%', justifyContent: 'center' }}><i className="ti ti-notes" style={{ fontSize: 13 }} />Scrivi indicazioni e consigli per il cliente</button>}
+          </Field>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={openImport} disabled={!selectedClient} style={{ ...S.btnGray, opacity: selectedClient ? 1 : 0.5 }}><i className="ti ti-copy" style={{ fontSize: 12 }} />Copia da altro cliente</button>
             <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Progressione carichi a tutta la scheda:</span>

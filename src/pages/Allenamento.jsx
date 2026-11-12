@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { done } from '../lib/toast'
 import { fetchAllRows } from '../lib/pagedQuery'
 import { localDateStr } from '../lib/dates'
-document.title = 'FOfit — Allenamento'
-document.title = 'FOfit — Allenamento'
-// Titolo pagina per iOS back button
-document.title = 'FOfit — Allenamento'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { Link } from 'react-router-dom'
 import { Toast, Confetti } from '../components/Animations'
 import KgPicker from '../components/KgPicker'
 import { uuid, enqueue, flush, applyPending, loadWithCache, pendingCount } from '../lib/offline'
+import { ClientNotesCard } from '../components/CoachNotes'
+
+// Titolo pagina per iOS (tasto indietro)
+document.title = 'FOfit — Allenamento'
 
 const s = {
   topbar: { background:'#0D0D0D', borderBottom:'0.5px solid #1A1A1A', padding:'0 22px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 },
@@ -413,6 +413,9 @@ export default function Allenamento() {
             <span>Stai usando la scheda salvata sul telefono. Le serie che segni si inviano appena c'è rete.</span>
           </div>
         )}
+
+        {/* NOTE GENERALI DEL COACH */}
+        <ClientNotesCard planId={plan.id} text={plan.general_notes} />
 
         {/* TAB GIORNI */}
         <div style={{display:'flex',gap:4,marginBottom:14,overflowX:'auto',background:'#0D0D0D',borderRadius:12,padding:4,border:'0.5px solid #1C1C1C'}}>

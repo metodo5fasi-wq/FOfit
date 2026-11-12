@@ -59,7 +59,7 @@ export default function CreaPiano(){
   const navigate=useNavigate()
   const [searchParams]=useSearchParams()
   const clientId=searchParams.get('client')
-  const {toast}=useToast()
+  const toast = useToast()
   const {profile}=useAuth()
 
   const [clients,setClients]=useState([])

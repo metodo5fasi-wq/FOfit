@@ -3,6 +3,8 @@ import { askConfirm } from '../lib/confirm'
 import { done, notify } from '../lib/toast'
 import { dbMust, dbSave } from '../lib/db'
 import { startHandleDrag } from '../lib/dragHandle'
+import { NotesEditor } from '../components/CoachNotes'
+import { normalizeNotes, hasNotes, isMissingNotesColumn, MISSING_COLUMN_MSG } from '../lib/coachNotes'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { EXERCISE_DB } from '../data/exerciseDatabase'
@@ -189,6 +191,8 @@ export default function ModificaAllenamento() {
   const [clientLogs, setClientLogs] = useState([])             // serie registrate dal cliente: servono per "Ultimo carico"
   const [draftOffer, setDraftOffer] = useState(null)           // bozza non salvata trovata all'apertura
   const [renaming, setRenaming] = useState(false)
+  const [notes, setNotes] = useState('')                       // note generali: il cliente le legge in cima alla sua sezione Allenamento
+  const [notesOpen, setNotesOpen] = useState(false)
   const [renameValue, setRenameValue] = useState('')
 
   React.useEffect(() => {
@@ -205,6 +209,9 @@ export default function ModificaAllenamento() {
     const { data: planData } = await supabase.from('workout_plans').select('*').eq('id', planId).single()
     if (!planData) { setLoading(false); return }
     setPlan(planData)
+    const planNotes = planData.general_notes || ''
+    setNotes(planNotes); serverNotesRef.current = planNotes
+    if (checkDraft) setNotesOpen(hasNotes(planNotes))          // se ci sono già note si aprono, così le vedi
     // cliente ed esercizi non dipendono l'uno dall'altro: insieme
     const [{ data: prof }, { data: exData }] = await Promise.all([
       supabase.from('profiles').select('full_name').eq('id', planData.client_id).single(),
@@ -217,7 +224,7 @@ export default function ModificaAllenamento() {
       const days = [...new Set(exData.map(e=>e.day_label))]
       setSelectedDay(prev => (prev && days.includes(prev)) ? prev : days[0])          // dopo il salvataggio si resta sul giorno in cui si era
     }
-    if (checkDraft) { const d = readDraft(planId); if (draftIsUseful(d, exData || [])) setDraftOffer(d); else if (d) clearDraft(planId) }
+    if (checkDraft) { const d = readDraft(planId); if (draftIsUseful(d, exData || [], planNotes)) setDraftOffer(d); else if (d) clearDraft(planId) }
     setLoading(false)
     loadClientLogs(planData.client_id)
   }
@@ -231,8 +238,9 @@ export default function ModificaAllenamento() {
   const dayExercises = exercises.filter(e=>e.day_label===selectedDay)
 
   const serverRef = useRef([])                              // com'è la scheda sul server (serve a capire se una bozza è ancora valida)
+  const serverNotesRef = useRef('')                         // e com'erano le note
   const latest = useRef({})
-  latest.current = { planId, exercises, emptyDays, renames, selectedDay, dirty, draftOffer }
+  latest.current = { planId, exercises, emptyDays, renames, selectedDay, dirty, draftOffer, notes }
   const exKey = exercises.map(e => e.id + '' + e.exercise_name).join('|')
   const lastMap = useMemo(() => lastLoads(clientLogs, exercises), [clientLogs, exKey])
   const invalid = useMemo(() => Object.fromEntries(validateExercises(exercises).map(p => [p.id, new Set(p.fields)])), [exercises])
@@ -241,10 +249,10 @@ export default function ModificaAllenamento() {
   // Bozza sul telefono: ogni modifica si ricorda (anche se chiudi la scheda o il telefono si spegne). Finché si sceglie cosa fare di una bozza trovata, non si sovrascrive.
   useEffect(() => {
     if (loading || !dirty || draftOffer) return
-    const tm = setTimeout(() => writeDraft(planId, { exercises, emptyDays, renames, selectedDay }, serverRef.current), 500)
+    const tm = setTimeout(() => writeDraft(planId, { exercises, emptyDays, renames, selectedDay, notes }, serverRef.current), 500)
     return () => clearTimeout(tm)
-  }, [exercises, emptyDays, renames, selectedDay, dirty, loading, draftOffer])
-  useEffect(() => () => { const l = latest.current; if (l.dirty && !l.draftOffer) writeDraft(l.planId, { exercises: l.exercises, emptyDays: l.emptyDays, renames: l.renames, selectedDay: l.selectedDay }, serverRef.current) }, [])
+  }, [exercises, emptyDays, renames, selectedDay, notes, dirty, loading, draftOffer])
+  useEffect(() => () => { const l = latest.current; if (l.dirty && !l.draftOffer) writeDraft(l.planId, { exercises: l.exercises, emptyDays: l.emptyDays, renames: l.renames, selectedDay: l.selectedDay, notes: l.notes }, serverRef.current) }, [])
   // chiudendo la finestra o ricaricando con modifiche non salvate il browser avvisa
   useEffect(() => {
     if (!dirty) return
@@ -264,6 +272,7 @@ export default function ModificaAllenamento() {
   function restoreDraft() {
     const d = draftOffer; if (!d) return
     setExercises(d.exercises); setEmptyDays(d.emptyDays || []); setRenames(d.renames || [])
+    if (typeof d.notes === 'string') { setNotes(d.notes); if (hasNotes(d.notes)) setNotesOpen(true) }
     const ds = dayList(d.exercises, d.emptyDays || []); setSelectedDay(ds.includes(d.selectedDay) ? d.selectedDay : (ds[0] || null))
     setDirty(true); setDraftOffer(null); done('Bozza ripristinata')
   }
@@ -444,6 +453,13 @@ export default function ModificaAllenamento() {
     }
     setSaving(true)
     try {
+      // Note generali: per PRIME, e da sole. Se il database non ha ancora la colonna (script SQL non eseguito) lo dice chiaramente e non scrive altro.
+      const cleanNotes = normalizeNotes(notes)
+      if (cleanNotes !== normalizeNotes(serverNotesRef.current)) {
+        const { error: notesErr } = await supabase.from('workout_plans').update({ general_notes: cleanNotes || null }).eq('id', planId)
+        if (notesErr) throw new Error(isMissingNotesColumn(notesErr) ? MISSING_COLUMN_MSG : 'Non sono riuscito a salvare le note. Riprova.')
+        serverNotesRef.current = cleanNotes; setNotes(cleanNotes)
+      }
       const { data: dbExs, error: readErr } = await supabase.from('workout_exercises').select('id').eq('plan_id', planId)
       if (readErr) throw new Error('Non riesco a leggere la scheda: riprova')
       const { toDelete, update, insert } = planSave((dbExs || []).map(r => r.id), exercises, planId)
@@ -513,6 +529,22 @@ export default function ModificaAllenamento() {
           <button onClick={discardDraft} style={{...s.btnGray,padding:'6px 12px'}}>Scarta</button>
         </div>
       )}
+
+      {/* NOTE GENERALI PER IL CLIENTE */}
+      <div data-testid="note-generali" style={{background:'#0D0D0D',borderBottom:'0.5px solid #1C1C1C',flexShrink:0}}>
+        <button onClick={()=>setNotesOpen(o=>!o)} aria-expanded={notesOpen} aria-controls="note-generali-corpo"
+          style={{width:'100%',display:'flex',alignItems:'center',gap:8,padding:'9px 14px',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
+          <i className="ti ti-notes" style={{fontSize:16,color:'#F4894A'}}/>
+          <span style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Note generali per il cliente</span>
+          <span style={{fontSize:11,color:hasNotes(notes)?'#6FCF97':'#888',flex:1}}>{hasNotes(notes) ? `${normalizeNotes(notes).length} caratteri · le vede nella sua sezione Allenamento` : 'vuote · scrivi qui indicazioni e consigli'}</span>
+          <i className={`ti ti-chevron-${notesOpen?'up':'down'}`} style={{fontSize:15,color:'#AAA'}}/>
+        </button>
+        {notesOpen && (
+          <div id="note-generali-corpo" style={{padding:'0 14px 12px',maxHeight:'55vh',overflowY:'auto'}}>
+            <NotesEditor idPrefix="modifica" value={notes} onChange={v=>{ setNotes(v); setDirty(true) }}/>
+          </div>
+        )}
+      </div>
 
       {/* LAYOUT */}
       <div style={{flex:1,display:'flex',overflow:'hidden'}}>
