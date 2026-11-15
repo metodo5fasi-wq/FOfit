@@ -4,6 +4,8 @@ import RouteBoundary from './RouteBoundary'
 import { supabase } from '../lib/supabase'
 import { clearCache } from '../lib/offline'
 import { RUNNING_BUILD } from '../lib/appVersion'
+import { useInstallments } from '../lib/useInstallments'
+import InstallmentNotice from './InstallmentNotice'
 import { useAuth, useTheme } from '../App'
 
 const NAV_CLIENT = [
@@ -196,11 +198,9 @@ export default function Layout() {
   // Conto alla rovescia — giorni rimanenti
   const daysLeft = subEnd && isClient ? Math.ceil((new Date(subEnd+'T23:59:59') - new Date()) / (1000*60*60*24)) : null
   const showCountdown = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7
-  const installBlocked = isClient &&
-    activeProfile?.payment_type === 'rate' &&
-    activeProfile?.installments_paid !== null &&
-    activeProfile?.installments_paid !== undefined &&
-    parseInt(activeProfile?.installments_paid||0) < parseInt(activeProfile?.installments||1)
+  // Rate: l'app si blocca SOLO se una rata non pagata è scaduta da più di 3 giorni (prima bastava avere rate non ancora pagate, anche future)
+  const { summary: rateSummary } = useInstallments(profile)
+  const installBlocked = isClient && !!rateSummary?.blocked
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -225,7 +225,7 @@ export default function Layout() {
         </div>
         <div style={{fontSize:14,color:'#CCC',lineHeight:1.6,maxWidth:300,marginBottom:24}}>
           {installBlocked
-            ? 'Non hai saldato una o più rate del tuo abbonamento. Contatta il coach per sbloccare l\'accesso.'
+            ? `${rateSummary.alert?.text || 'Non hai saldato una rata del tuo abbonamento.'} Contatta il coach per sbloccare l\'accesso.`
             : 'Il tuo abbonamento è scaduto. Contatta il coach per rinnovarlo e tornare ad accedere all\'app.'}
         </div>
         <div style={{background:'#101010',borderRadius:12,padding:'16px 20px',border:'0.5px solid #1C1C1C',marginBottom:16}}>
@@ -299,6 +299,9 @@ export default function Layout() {
         )}
 
         <div style={{flex:1,overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column',WebkitOverflowScrolling:'touch'}}>
+
+          {/* AVVISO RATA: 2 giorni prima, il giorno stesso, poi ogni giorno fino al blocco */}
+          {isClient && rateSummary?.alert && <InstallmentNotice alert={rateSummary.alert} compact />}
 
           {/* BANNER SCADENZA ABBONAMENTO */}
           {showCountdown && (
