@@ -5,6 +5,8 @@ import PlanPdfButton from '../components/PlanPdfButton'
 import { loadSWR, hasCache } from '../lib/offline'
 import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
 import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
+import { ClientNotesCard } from '../components/CoachNotes'
+import { sortFoods } from '../lib/mealPlan'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -30,7 +32,8 @@ export default function PianoAlimentare() {
   const [plan, setPlan] = useState(null)
   const [meals, setMeals] = useState({})
   const [loading, setLoading] = useState(true)
-  const [selectedDay, setSelectedDay] = useState(0)
+  const today = (new Date().getDay() + 6) % 7                // 0 = lunedì … 6 = domenica
+  const [selectedDay, setSelectedDay] = useState(today)      // si apre sul giorno di oggi
   const [openMeals, setOpenMeals] = useState({})
   const [noplan, setNoPlan] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -120,15 +123,8 @@ export default function PianoAlimentare() {
       {stale && <StaleNotice onRetry={() => fetchPlan({ instant: false, quiet: true })} />}
       <div style={s.page}>
 
-        {/* Nota coach */}
-        {plan?.notes && (
-          <div style={{background:'rgba(212,87,10,0.1)',borderLeft:'3px solid #D4570A',borderRadius:8,padding:'11px 14px',marginBottom:14,fontSize:13,color:'#F4894A',lineHeight:1.5}}>
-            <div style={{fontSize:11,fontWeight:500,color:'#F4894A',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>
-              <i className="ti ti-message-circle" style={{fontSize:12,verticalAlign:-1,marginRight:4}}/>Note del coach
-            </div>
-            {plan.notes}
-          </div>
-        )}
+        {/* Note generali del coach: richiudibili, si aprono da sole se sono nuove o cambiate */}
+        <ClientNotesCard planId={plan?.id} text={plan?.notes} />
 
         {/* Riepilogo macro */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
@@ -148,11 +144,17 @@ export default function PianoAlimentare() {
         {/* Tabs giorni */}
         <div style={{display:'flex',gap:8,marginBottom:16,overflowX:'auto',paddingBottom:4}}>
           {DAYS.map((day, i) => (
-            <div key={i} style={selectedDay===i ? s.dayTabActive : s.dayTab} onClick={() => { setSelectedDay(i); setOpenMeals({}) }}>
-              {day}
+            <div key={i} style={selectedDay===i ? s.dayTabActive : s.dayTab} onClick={() => { setSelectedDay(i); setOpenMeals({}) }} aria-current={i===today ? 'date' : undefined}>
+              {i===today && <span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:selectedDay===i?'white':'#D4570A',marginRight:6,verticalAlign:1}}/>}{day}
             </div>
           ))}
         </div>
+
+        {dayMeals.length > 0 && (() => {
+          const all = dayMeals.flatMap(m => m.plan_meal_foods || [])
+          const k = Math.round(all.reduce((a, f) => a + (Number(f.kcal) || 0), 0)), p = Math.round(all.reduce((a, f) => a + (Number(f.protein_g) || 0), 0)), c = Math.round(all.reduce((a, f) => a + (Number(f.carbs_g) || 0), 0)), g = Math.round(all.reduce((a, f) => a + (Number(f.fat_g) || 0), 0))
+          return k > 0 ? <div data-testid="totale-giorno" style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'baseline',margin:'-4px 2px 12px',fontSize:12,color:'#AAA'}}><span>Totale {DAYS[selectedDay]}:</span><span style={{color:'#F4894A',fontWeight:600}}>{k.toLocaleString('it-IT')} kcal</span><span>P {p}g · C {c}g · G {g}g</span></div> : null
+        })()}
 
         {/* Pasti del giorno */}
         {dayMeals.length === 0 ? (
@@ -164,7 +166,7 @@ export default function PianoAlimentare() {
           dayMeals.map((meal, mi) => {
             const key = `${selectedDay}-${mi}`
             const isOpen = openMeals[key]
-            const foods = meal.plan_meal_foods || []
+            const foods = sortFoods(meal.plan_meal_foods)           // nell'ordine scelto dal coach
             const mealKcal = Math.round(foods.reduce((s, f) => s + (f.kcal || 0), 0))
             const mealP = Math.round(foods.reduce((s, f) => s + (f.protein_g || 0), 0))
             const mealC = Math.round(foods.reduce((s, f) => s + (f.carbs_g || 0), 0))

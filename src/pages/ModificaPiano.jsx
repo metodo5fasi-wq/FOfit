@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { askConfirm } from '../lib/confirm'
-import { dbMust, dbSave } from '../lib/db'
+import { dbMust, notify, done } from '../lib/db'
+import { uuid } from '../lib/offline'
+import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
+import { normalizeNotes, hasNotes } from '../lib/coachNotes'
+import { DAY_NAMES as DAYS, num, enrichMeals, validateMeals, problemsMessage, suspiciousFoods, suspiciousMessage, planSave, hasWork, planPatch, copyDay, moveMeal, moveFood, writeDraft, readDraft, clearDraft, draftIsUseful, draftIsStale } from '../lib/mealPlan'
 import { startHandleDrag } from '../lib/dragHandle'
 import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -47,6 +51,8 @@ function recalc(food, newQty) {
   }
 }
 
+const targetsOf = plan => ({ kcal_target: plan?.kcal_target, protein_target_g: plan?.protein_target_g, carbs_target_g: plan?.carbs_target_g, fat_target_g: plan?.fat_target_g })
+
 export default function ModificaPiano() {
   const toast = useToast()
   const { planId } = useParams()
@@ -59,60 +65,38 @@ export default function ModificaPiano() {
   const [saving, setSaving] = useState(false)
   const [fixingMacros, setFixingMacros] = useState(false)
 
+  // Ricalcola kcal e macro di tutti gli alimenti dal database alimenti. Solo sulla pagina: si controlla e poi si preme Salva (o Scarta). Prima scriveva subito sul database, senza chiedere.
   async function fixMacros() {
+    const allFoods = meals.flatMap(m => m.plan_meal_foods)
+    const found = allFoods.filter(f => searchFoods(f.food_name)?.length)
+    if (!found.length) { toast('Nessun alimento trovato nel database', 'info'); return }
+    if (!(await askConfirm(`Ricalcolare kcal e macro di ${found.length} alimenti dal database? I valori che hai scritto a mano verranno sostituiti. Potrai controllare e poi salvare, oppure scartare.`, { title: 'Ricalcolare i macro?', confirmLabel: 'Ricalcola' }))) return
     setFixingMacros(true)
     try {
-      // Ricalcola tutti gli alimenti del piano dal database locale
-      const allFoods = meals.flatMap(m => m.plan_meal_foods)
-      let fixed = 0
-      const updates = []
-
-      for (const food of allFoods) {
-        const results = searchFoods(food.food_name)
-        if (!results?.length) continue
-        const match = results[0]
-        const qty = parseFloat(food.quantity_g) || 100
-        const newKcal = Math.round(match.kcal100 * qty / 100)
-        const newProt = Math.round(match.p * qty / 100 * 10) / 10
-        const newCarbs = Math.round(match.c * qty / 100 * 10) / 10
-        const newFat = Math.round(match.g * qty / 100 * 10) / 10
-
-        updates.push({ id: food.id, kcal: newKcal, protein_g: newProt, carbs_g: newCarbs, fat_g: newFat })
-        fixed++
+      const updates = new Map()
+      for (const food of found) {
+        const match = searchFoods(food.food_name)[0], qty = parseFloat(food.quantity_g) || 100
+        updates.set(food.id, { kcal: Math.round(match.kcal100 * qty / 100), protein_g: Math.round(match.p * qty / 100 * 10) / 10, carbs_g: Math.round(match.c * qty / 100 * 10) / 10, fat_g: Math.round(match.g * qty / 100 * 10) / 10 })
       }
-
-      if (!updates.length) {
-        toast('Nessun alimento trovato nel database', 'info')
-        setFixingMacros(false)
-        return
-      }
-
-      // Salva su Supabase
-      await Promise.all(updates.map(u => {
-        const { id, ...data } = u
-        return dbSave(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare', { quiet: true })
-      }))
-
-      // Aggiorna stato locale immediatamente
-      setMeals(prev => prev.map(m => ({
-        ...m,
-        plan_meal_foods: m.plan_meal_foods.map(f => {
-          const u = updates.find(x => x.id === f.id)
-          return u ? { ...f, ...u,
-            _origKcal: u.kcal, _origProt: u.protein_g, _origCarbs: u.carbs_g, _origFat: u.fat_g
-          } : f
-        })
-      })))
-
-      toast(`✓ Ricalcolati ${fixed} alimenti`, 'success')
+      setMeals(prev => prev.map(m => ({ ...m, plan_meal_foods: m.plan_meal_foods.map(f => {
+        const u = updates.get(f.id)
+        return u ? { ...f, ...u, _origKcal: u.kcal, _origProt: u.protein_g, _origCarbs: u.carbs_g, _origFat: u.fat_g } : f
+      }) })))
+      setDirty(true)
+      toast(`Ricalcolati ${updates.size} alimenti: controlla e premi Salva`, 'success')
     } catch(e) {
       console.error(e)
       toast('Errore nel ricalcolo: ' + e.message, 'error')
     }
     setFixingMacros(false)
   }
-  const [savedMsg, setSavedMsg] = useState('')
   const [dirty, setDirty] = useState(false)
+  const [notes, setNotes] = useState('')                       // note generali: il cliente le legge in cima alla sua sezione Piano alimentare
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [showErrors, setShowErrors] = useState(false)          // dopo un tentativo di salvataggio i campi da controllare restano in rosso
+  const [draftOffer, setDraftOffer] = useState(null)           // bozza non salvata trovata all'apertura
+  const serverRef = useRef({ meals: [], targets: {}, notes: '' })   // com'è il piano sul server (serve a capire se una bozza è ancora valida)
+  const latest = useRef({})
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
   React.useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900)
@@ -155,44 +139,60 @@ export default function ModificaPiano() {
   const [showMacroTarget, setShowMacroTarget] = useState(false)
   const [mealTargets, setMealTargets] = useState({})
 
-  useEffect(() => { if (planId) fetchPlan() }, [planId])
+  useEffect(() => { if (planId) fetchPlan({ checkDraft: true }) }, [planId])
 
-  async function fetchPlan(silent = false) {
-    if (!silent) setLoading(true)   // dopo un salvataggio si ricarica senza far lampeggiare la pagina
+  // quiet: dopo un salvataggio si rilegge senza far lampeggiare la pagina
+  async function fetchPlan({ quiet = false, checkDraft = false } = {}) {
+    if (!quiet) setLoading(true)
     const { data: planData } = await supabase.from('meal_plans').select('*').eq('id', planId).single()
     if (!planData) { setLoading(false); return }
     setPlan(planData)
+    const planNotes = planData.notes || ''
+    setNotes(planNotes)
+    if (checkDraft) setNotesOpen(hasNotes(planNotes))          // se ci sono già note si aprono, così le vedi
 
-    const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', planData.client_id).single()
+    // cliente e pasti non dipendono l'uno dall'altro: insieme
+    const [{ data: prof }, { data: mealsData }] = await Promise.all([
+      supabase.from('profiles').select('full_name').eq('id', planData.client_id).single(),
+      supabase.from('plan_meals').select('*, plan_meal_foods(*)').eq('plan_id', planId).order('day_of_week').order('meal_order'),
+    ])
     setClientName(prof?.full_name || '')
-
-    const { data: mealsData } = await supabase.from('plan_meals')
-      .select('*, plan_meal_foods(*)')
-      .eq('plan_id', planId)
-      .order('day_of_week').order('meal_order')
-
-    // Arricchisce ogni alimento con i valori originali per il ricalcolo
-    const enriched = (mealsData || []).map(m => ({
-      ...m,
-      plan_meal_foods: (m.plan_meal_foods || []).map(f => {
-        const qty  = parseFloat(f.quantity_g)  || 0
-        const prot = parseFloat(f.protein_g)   || 0
-        const carbs= parseFloat(f.carbs_g)     || 0
-        const fat  = parseFloat(f.fat_g)       || 0
-        const kcalFromDB = parseFloat(f.kcal)  || 0
-        // Se i macro sono presenti, ricalcola le kcal per coerenza
-        const macroKcal = Math.round(prot*4 + carbs*4 + fat*9)
-        const kcal = (prot>0||carbs>0||fat>0) ? macroKcal : kcalFromDB
-        return {
-          ...f,
-          quantity_g: qty, kcal, protein_g: prot, carbs_g: carbs, fat_g: fat,
-          _origQty: qty, _origKcal: kcal, _origProt: prot, _origCarbs: carbs, _origFat: fat,
-        }
-      })
-    }))
+    const enriched = enrichMeals(mealsData)          // alimenti nell'ordine scelto dal coach, kcal coerenti con i macro
     setMeals(enriched)
+    const targets = { kcal_target: planData.kcal_target, protein_target_g: planData.protein_target_g, carbs_target_g: planData.carbs_target_g, fat_target_g: planData.fat_target_g }
+    serverRef.current = { meals: enriched, targets, notes: planNotes }
+    if (checkDraft) { const d = readDraft(planId); if (draftIsUseful(d, serverRef.current)) setDraftOffer(d); else if (d) clearDraft(planId) }
     setLoading(false)
   }
+
+  latest.current = { planId, meals, plan, notes, selectedDay, dirty, draftOffer }
+  // Bozza sul telefono: ogni modifica si ricorda (anche se chiudi la pagina o il telefono si spegne). Finché si sceglie cosa fare di una bozza trovata, non si sovrascrive.
+  const draftState = l => ({ meals: l.meals, targets: targetsOf(l.plan), notes: l.notes, selectedDay: l.selectedDay })
+  useEffect(() => {
+    if (loading || !dirty || draftOffer) return
+    const tm = setTimeout(() => writeDraft(planId, draftState(latest.current), serverRef.current), 500)
+    return () => clearTimeout(tm)
+  }, [meals, plan, notes, selectedDay, dirty, loading, draftOffer])
+  useEffect(() => () => { const l = latest.current; if (l.dirty && !l.draftOffer) writeDraft(l.planId, draftState(l), serverRef.current) }, [])
+
+  async function goBack() {
+    if (dirty && !(await askConfirm('Hai modifiche non salvate. Se esci restano come bozza su questo telefono e potrai ripristinarle riaprendo il piano.', { title: 'Modifiche non salvate', confirmLabel: 'Esci', cancelLabel: 'Resta qui', danger: true }))) return
+    navigate(-1)
+  }
+  async function discardChanges() {
+    if (!(await askConfirm('Scartare tutte le modifiche non salvate? Tornerà il piano com\'è salvato.', { title: 'Scartare le modifiche?', confirmLabel: 'Scarta', danger: true }))) return
+    clearDraft(planId); setDraftOffer(null); setDirty(false); setShowErrors(false); setShowAddMeal(false); setAddingFoodToMeal(null)
+    await fetchPlan({ quiet: true }); done('Modifiche scartate')
+  }
+  function restoreDraft() {
+    const d = draftOffer; if (!d) return
+    setMeals(d.meals)
+    setPlan(p => ({ ...p, ...(d.targets || {}) }))
+    if (typeof d.notes === 'string') { setNotes(d.notes); if (hasNotes(d.notes)) setNotesOpen(true) }
+    if (d.selectedDay >= 1 && d.selectedDay <= 7) setSelectedDay(d.selectedDay)
+    setDirty(true); setDraftOffer(null); done('Bozza ripristinata')
+  }
+  function discardDraft() { clearDraft(planId); setDraftOffer(null) }
 
   const dayMeals = meals.filter(m => m.day_of_week === selectedDay)
 
@@ -333,7 +333,7 @@ export default function ModificaPiano() {
 
   function applyTemplate(mealId, template) {
     const newFoods = template.foods.map(f => ({
-      ...f, id: 'new-' + Date.now() + Math.random(), _isNew: true,
+      ...f, id: uuid(),
     }))
     setMeals(prev => prev.map(m => m.id === mealId
       ? { ...m, plan_meal_foods: [...(m.plan_meal_foods||[]), ...newFoods] }
@@ -350,24 +350,13 @@ export default function ModificaPiano() {
   }
 
   // ── COPIA GIORNO INTERO ──────────────────────────────────
-  function copyDayTo(targetDay) {
-    const sourceMeals = meals.filter(m => m.day_of_week === selectedDay)
-    const newMeals = sourceMeals.map((m, mi) => ({
-      ...m,
-      id: 'new-' + Date.now() + mi,
-      day_of_week: targetDay,
-      _isNew: true,
-      plan_meal_foods: (m.plan_meal_foods||[]).map((f,fi) => ({
-        ...f, id: 'new-' + Date.now() + mi + fi, _isNew: true,
-      })),
-    }))
-    // Rimuovi pasti esistenti nel giorno target e sostituisci
-    setMeals(prev => [
-      ...prev.filter(m => m.day_of_week !== targetDay),
-      ...newMeals,
-    ])
+  async function copyDayTo(targetDay) {
+    const existing = meals.filter(m => m.day_of_week === targetDay).length
+    if (existing && !(await askConfirm(`${DAYS[targetDay - 1]} ha già ${existing} ${existing === 1 ? 'pasto' : 'pasti'}: verranno sostituiti con quelli di ${DAYS[selectedDay - 1]}. Potrai scartare tutto prima di salvare.`, { title: 'Sostituire il giorno?', confirmLabel: 'Sostituisci', danger: true }))) { return }
+    setMeals(prev => copyDay(prev, selectedDay, targetDay, uuid))
     setShowCopyDay(false)
     setDirty(true)
+    done(`${DAYS[selectedDay - 1]} copiato su ${DAYS[targetDay - 1]}`)
   }
 
   // ── DRAG ALIMENTI DENTRO PASTO ───────────────────────────
@@ -379,16 +368,7 @@ export default function ModificaPiano() {
     if (!dragFoodId || dragFoodId === targetFoodId || dragFoodMeal !== mealId) {
       setDragFoodId(null); setDragOverFoodId(null); return
     }
-    setMeals(prev => prev.map(m => {
-      if (m.id !== mealId) return m
-      const foods = [...(m.plan_meal_foods||[])]
-      const fromIdx = foods.findIndex(f => f.id === dragFoodId)
-      const toIdx = foods.findIndex(f => f.id === targetFoodId)
-      if (fromIdx === -1 || toIdx === -1) return m
-      const [moved] = foods.splice(fromIdx, 1)
-      foods.splice(toIdx, 0, moved)
-      return { ...m, plan_meal_foods: foods }
-    }))
+    setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, plan_meal_foods: moveFood(m.plan_meal_foods || [], dragFoodId, targetFoodId) }))
     setDragFoodId(null); setDragOverFoodId(null); setDragFoodMeal(null)
     setDirty(true)
   }
@@ -400,7 +380,7 @@ export default function ModificaPiano() {
   async function addFood(mealId) {
     if (!newFood.food_name.trim()) return
     const food = {
-      id: 'new-' + Date.now(),
+      id: uuid(),
       plan_meal_id: mealId,
       food_name: newFood.food_name,
       quantity_g: parseFloat(newFood.quantity_g) || 100,
@@ -408,13 +388,11 @@ export default function ModificaPiano() {
       protein_g: parseFloat(newFood.protein_g) || 0,
       carbs_g: parseFloat(newFood.carbs_g) || 0,
       fat_g: parseFloat(newFood.fat_g) || 0,
-      sort_order: 999,
       _origQty: parseFloat(newFood.quantity_g) || 100,
       _origKcal: parseInt(newFood.kcal) || 0,
       _origProt: parseFloat(newFood.protein_g) || 0,
       _origCarbs: parseFloat(newFood.carbs_g) || 0,
       _origFat: parseFloat(newFood.fat_g) || 0,
-      _isNew: true,
     }
     setMeals(prev => prev.map(m => m.id === mealId ? { ...m, plan_meal_foods: [...m.plan_meal_foods, food] } : m))
     setNewFood({ food_name:'', quantity_g:100, kcal:0, protein_g:0, carbs_g:0, fat_g:0 })
@@ -422,132 +400,60 @@ export default function ModificaPiano() {
     setDirty(true)
   }
 
-  // Aggiunge nuovo pasto
-  async function addMeal() {
-    const { data: mealData } = await dbSave(supabase.from('plan_meals').insert({
-      plan_id: planId, day_of_week: selectedDay,
-      meal_type: newMealType, meal_order: dayMeals.length,
-    }).select().single(), 'il piano', 'salvare', { done: 'Pasto aggiunto' })
-    if (mealData) {
-      setMeals(prev => [...prev, { ...mealData, plan_meal_foods: [] }])
-      setShowAddMeal(false)
-      setDirty(true)
-    }
+  // Aggiunge un pasto SOLO sulla pagina: finisce sul database con "Salva" (prima si scriveva subito e uno "Scarta" non lo toglieva)
+  function addMeal() {
+    setMeals(prev => [...prev, { id: uuid(), plan_id: planId, day_of_week: selectedDay, day_label: DAYS[selectedDay - 1], meal_type: newMealType, plan_meal_foods: [] }])
+    setShowAddMeal(false)
+    setDirty(true)
   }
 
-  // Salva tutto
+  // Sposta un pasto su/giù dentro il giorno (prima l'ordine dei pasti non si poteva cambiare)
+  function shiftMeal(id, dir) { setMeals(prev => moveMeal(prev, id, dir)); setDirty(true) }
+
+  // Salva tutto. Ordine pensato per non perdere nulla: PRIMA si inserisce e si aggiorna, per ULTIMA si elimina
+  // (se qualcosa va storto a metà, niente è stato cancellato e puoi riprovare: la pagina resta com'era).
   async function saveAll() {
+    if (saving) return
+    const problems = validateMeals(meals)
+    if (problems.length) {
+      setShowErrors(true); notify(problemsMessage(problems), 'error')
+      setSelectedDay(problems[0].day)
+      return
+    }
     setSaving(true)
-    setSavedMsg('')
     try {
-      // Raccogli tutti gli update/insert
-      const toUpdate = []
-      const toInsert = []
-      // IDs degli alimenti esistenti che vogliamo tenere (non _isNew)
-      const keepFoodIds = new Set()
+      // lo stato del database ORA (non quello di quando si è aperta la pagina): così si scrive solo ciò che serve
+      const { data: dbMeals, error: e1 } = await supabase.from('plan_meals').select('*').eq('plan_id', planId)
+      if (e1) throw new Error('Non riesco a leggere il piano: riprova')
+      const ids = (dbMeals || []).map(m => m.id)
+      let dbFoods = []
+      if (ids.length) { const r = await supabase.from('plan_meal_foods').select('*').in('plan_meal_id', ids); if (r.error) throw new Error('Non riesco a leggere il piano: riprova'); dbFoods = r.data || [] }
+      const work = planSave({ planId, meals, dbMeals: dbMeals || [], dbFoods })
+      const patch = planPatch(plan, serverRef.current.targets, notes, serverRef.current.notes, normalizeNotes)
 
-      for (const meal of meals) {
-        for (const food of meal.plan_meal_foods) {
-          const payload = {
-            quantity_g: parseFloat(String(food.quantity_g).replace(',','.')) || 0,
-            kcal: Math.round(parseFloat(food.kcal) || 0),
-            protein_g: parseFloat(food.protein_g) || 0,
-            carbs_g: parseFloat(food.carbs_g) || 0,
-            fat_g: parseFloat(food.fat_g) || 0,
-          }
-          if (food._isNew) {
-            toInsert.push({ ...payload, plan_meal_id: meal.id, food_name: food.food_name, sort_order: food.sort_order || 0 })
-          } else {
-            toUpdate.push({ id: food.id, ...payload })
-            keepFoodIds.add(food.id)
-          }
-        }
-      }
+      // alimenti con quantità insolite (0 g, oltre 2000 g): si chiede conferma
+      const odd = suspiciousFoods(meals, new Map(dbFoods.map(f => [f.id, f])))
+      if (odd.length && !(await askConfirm(suspiciousMessage(odd), { title: 'Controlla le quantità', confirmLabel: 'Salva comunque', cancelLabel: 'Torna a controllare' }))) { setSaving(false); return }
 
-      // 1. Elimina pasti rimossi PRIMA di qualsiasi altra operazione
-      const { data: dbMeals } = await supabase.from('plan_meals').select('id').eq('plan_id', planId)
-      const currentMealIds = new Set(meals.map(m => m.id))
-      const deleteMealPromises = (dbMeals || [])
-        .filter(dbMeal => !currentMealIds.has(dbMeal.id))
-        .map(async dbMeal => {
-          await dbMust(supabase.from('plan_meal_foods').delete().eq('plan_meal_id', dbMeal.id), 'il piano', 'eliminare')
-          await dbMust(supabase.from('plan_meals').delete().eq('id', dbMeal.id), 'il piano', 'eliminare')
-        })
-      await Promise.all(deleteMealPromises)
+      if (work.insertMeals.length) await dbMust(supabase.from('plan_meals').insert(work.insertMeals), 'il piano', 'salvare')
+      if (work.insertFoods.length) await dbMust(supabase.from('plan_meal_foods').insert(work.insertFoods), 'il piano', 'salvare')
+      for (let k = 0; k < work.updateMeals.length; k += 8)
+        await Promise.all(work.updateMeals.slice(k, k + 8).map(({ id, ...p }) => dbMust(supabase.from('plan_meals').update(p).eq('id', id), 'il piano', 'salvare')))
+      for (let k = 0; k < work.updateFoods.length; k += 8)
+        await Promise.all(work.updateFoods.slice(k, k + 8).map(({ id, ...p }) => dbMust(supabase.from('plan_meal_foods').update(p).eq('id', id), 'il piano', 'salvare')))
+      // target e note del piano (prima il tasto Salva non li scriveva: restavano solo nella pagina)
+      if (Object.keys(patch).length) await dbMust(supabase.from('meal_plans').update(patch).eq('id', planId), 'il piano', 'salvare')
+      // eliminazioni per ULTIME: prima gli alimenti, poi i pasti
+      if (work.deleteFoodIds.length) await dbMust(supabase.from('plan_meal_foods').delete().in('id', work.deleteFoodIds), 'il piano', 'eliminare')
+      if (work.deleteMealIds.length) await dbMust(supabase.from('plan_meals').delete().in('id', work.deleteMealIds), 'il piano', 'eliminare')
 
-      // 2. Elimina SOLO gli alimenti che l'utente ha rimosso (non i nuovi)
-      // Usa keepFoodIds calcolato PRIMA dell'insert per non cancellare i nuovi
-      const deleteFoodPromises = []
-      for (const meal of meals) {
-        if (meal.id?.toString().startsWith('new')) continue
-        const { data: dbFoods } = await supabase
-          .from('plan_meal_foods').select('id').eq('plan_meal_id', meal.id)
-        for (const dbFood of dbFoods || []) {
-          if (!keepFoodIds.has(dbFood.id)) {
-            deleteFoodPromises.push(
-              dbMust(supabase.from('plan_meal_foods').delete().eq('id', dbFood.id), 'il piano', 'eliminare')
-            )
-          }
-        }
-      }
-      await Promise.all(deleteFoodPromises)
-
-      // 3. UPDATE alimenti esistenti
-      const batchSize = 20
-      for (let i = 0; i < toUpdate.length; i += batchSize) {
-        const batch = toUpdate.slice(i, i + batchSize)
-        await Promise.all(batch.map(f => {
-          const { id, ...data } = f
-          return dbMust(supabase.from('plan_meal_foods').update(data).eq('id', id), 'il piano', 'salvare')
-        }))
-      }
-
-      // 4. INSERT nuovi alimenti — DOPO le eliminazioni, così non li cancella
-      if (toInsert.length > 0) {
-        const { error } = await supabase.from('plan_meal_foods').insert(toInsert)
-        if (error) throw new Error('Insert fallito: ' + error.message)
-      }
-
-      // 4. Il target kcal/macro resta quello impostato dal coach — NON viene sovrascritto dagli alimenti
-      // Le barre live mostrano il confronto tra alimenti inseriti e target
-
-      // 5. Aggiorna day_kcal_target per ogni giorno — così PianoAlimentare mostra il valore giusto
-      const dayTotals = {}
-      meals.forEach(m => {
-        if (!dayTotals[m.day_of_week]) dayTotals[m.day_of_week] = {kcal:0,protein:0,carbs:0,fat:0}
-        const foods = m.plan_meal_foods
-        dayTotals[m.day_of_week].kcal += foods.reduce((s,f)=>s+(parseFloat(f.kcal)||0),0)
-        dayTotals[m.day_of_week].protein += foods.reduce((s,f)=>s+(parseFloat(f.protein_g)||0),0)
-        dayTotals[m.day_of_week].carbs += foods.reduce((s,f)=>s+(parseFloat(f.carbs_g)||0),0)
-        dayTotals[m.day_of_week].fat += foods.reduce((s,f)=>s+(parseFloat(f.fat_g)||0),0)
-      })
-      // Aggiorna il primo pasto di ogni giorno con i totali del giorno
-      const dayUpdatePromises = []
-      for (const [day, totals] of Object.entries(dayTotals)) {
-        const firstMealOfDay = meals.find(m => m.day_of_week === parseInt(day))
-        if (firstMealOfDay && !firstMealOfDay.id?.startsWith('new')) {
-          dayUpdatePromises.push(
-            dbMust(supabase.from('plan_meals').update({
-              day_kcal_target: Math.round(totals.kcal),
-              day_protein_target_g: Math.round(totals.protein),
-              day_carbs_target_g: Math.round(totals.carbs),
-              day_fat_target_g: Math.round(totals.fat),
-            }).eq('id', firstMealOfDay.id), 'il piano', 'salvare')
-          )
-        }
-      }
-      await Promise.all(dayUpdatePromises)
-
+      clearDraft(planId); setDraftOffer(null); setShowErrors(false)          // niente avviso di bozza vecchia dopo aver salvato
       setDirty(false)
-      setSavedMsg('✓ Salvato!')
-      setTimeout(() => setSavedMsg(''), 3000)
-      toast('Piano salvato con successo!', 'success')
-      // Ricarica da Supabase per avere gli ID reali degli alimenti inseriti
-      await fetchPlan(true)
+      done('Piano salvato')
+      await fetchPlan({ quiet: true })
     } catch(e) {
       console.error('saveAll:', e)
-      toast('Errore nel salvataggio: ' + (e.message || 'Riprova'), 'error')
-      setSavedMsg('')
+      notify(e.message || 'Non sono riuscito a salvare il piano. Riprova.', 'error')       // la pagina resta com'era: le modifiche sono ancora lì
     }
     setSaving(false)
   }
@@ -564,12 +470,7 @@ export default function ModificaPiano() {
 
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button className="tap" aria-label="Indietro" onClick={async ()=>{
-  if (dirty) {
-    await saveAll()
-  }
-  navigate(-1)
-}} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}><i className="ti ti-arrow-left" style={{fontSize:16}}/></button>
+        <button className="tap" aria-label="Indietro" onClick={goBack} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}><i className="ti ti-arrow-left" style={{fontSize:16}}/></button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
           <div style={{fontSize:11,color:'#AAA'}}>{clientName}{plan && ` · target: ${plan.kcal_target} kcal`}</div>
@@ -582,14 +483,15 @@ export default function ModificaPiano() {
               ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>Ricalcolo...</>
               : <><i className="ti ti-refresh" style={{fontSize:12}}/>Ricalcola</>}
           </button>
+          {!saving && dirty && (
+            <button aria-label="Scarta le modifiche" onClick={discardChanges} style={{...s.btnGray,padding:'8px 10px'}}>Scarta</button>
+          )}
           <button onClick={saveAll} disabled={saving}
             style={{...s.btn,minWidth:80,display:'flex',alignItems:'center',gap:4,
-              background:savedMsg?'#3B6D11':saving?'#888':dirty?'#D4570A':'#888780',
+              background:saving?'#888':dirty?'#D4570A':'#888780',
             }}>
             {saving
               ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>Salvo...</>
-              : savedMsg
-              ? <><i className="ti ti-check" style={{fontSize:12}}/>{savedMsg}</>
               : <><i className="ti ti-device-floppy" style={{fontSize:12}}/>{dirty?'Salva':'Salvato'}</>}
           </button>
         </div>
@@ -598,21 +500,7 @@ export default function ModificaPiano() {
       {/* MACRO UNIFICATO: target + live nella stessa sezione */}
       <div style={{background:'#0D0D0D',padding:'10px 14px',borderBottom:'0.5px solid #1A1A1A',flexShrink:0}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
-          <span style={{fontSize:9,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em'}}>Inserito / Target</span>
-          {plan && (
-            <button onClick={async ()=>{
-              await dbSave(supabase.from('meal_plans').update({
-                kcal_target: plan.kcal_target,
-                protein_target_g: plan.protein_target_g,
-                carbs_target_g: plan.carbs_target_g,
-                fat_target_g: plan.fat_target_g,
-              }).eq('id', planId), 'il piano alimentare', 'salvare', { done: 'Target salvati' })
-              setSavedMsg('✓ Salvato')
-              setTimeout(()=>setSavedMsg(''),2000)
-            }} style={{padding:'3px 9px',background:savedMsg?'#3B6D11':'#D4570A',color:'white',border:'none',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit',transition:'background 0.2s'}}>
-              {savedMsg||'Salva target'}
-            </button>
-          )}
+          <span style={{fontSize:9,fontWeight:700,color:'#AAA',textTransform:'uppercase',letterSpacing:'0.07em'}}>Inserito / Target <span style={{fontWeight:400,textTransform:'none',letterSpacing:0}}>· i target si salvano con «Salva»</span></span>
         </div>
         <div style={{display:'flex',gap:8}}>
           {[
@@ -676,6 +564,34 @@ export default function ModificaPiano() {
         })()}
       </div>
 
+      {/* BOZZA NON SALVATA TROVATA ALL'APERTURA */}
+      {draftOffer && (
+        <div role="status" data-testid="bozza-trovata" style={{background:'rgba(244,137,74,0.12)',borderBottom:'0.5px solid rgba(244,137,74,0.4)',padding:'9px 14px',display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',flexShrink:0}}>
+          <i className="ti ti-alert-triangle" style={{fontSize:16,color:'#F4894A'}}/>
+          <span style={{fontSize:12,color:'#F4894A',flex:1,minWidth:200,lineHeight:1.45}}>
+            Hai modifiche non salvate del {new Date(draftOffer.savedAt).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}{draftIsStale(draftOffer, serverRef.current) ? ' — ma il piano è stato modificato dopo: controlla bene prima di salvare' : ''}.
+          </span>
+          <button onClick={restoreDraft} style={{...s.btn,padding:'6px 14px',fontSize:12}}>Ripristina</button>
+          <button onClick={discardDraft} style={{...s.btnGray,padding:'6px 12px'}}>Scarta</button>
+        </div>
+      )}
+
+      {/* NOTE GENERALI PER IL CLIENTE */}
+      <div data-testid="note-generali" style={{background:'#0D0D0D',borderBottom:'0.5px solid #1C1C1C',flexShrink:0}}>
+        <button onClick={()=>setNotesOpen(o=>!o)} aria-expanded={notesOpen} aria-controls="note-generali-corpo"
+          style={{width:'100%',display:'flex',alignItems:'center',gap:8,padding:'9px 14px',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
+          <i className="ti ti-notes" style={{fontSize:16,color:'#F4894A'}}/>
+          <span style={{fontSize:12,fontWeight:700,color:'#F0F0F0'}}>Note generali per il cliente</span>
+          <span style={{fontSize:11,color:hasNotes(notes)?'#6FCF97':'#888',flex:1}}>{hasNotes(notes) ? `${normalizeNotes(notes).length} caratteri · le vede nel suo Piano alimentare` : 'vuote · scrivi qui indicazioni e consigli'}</span>
+          <i className={`ti ti-chevron-${notesOpen?'up':'down'}`} style={{fontSize:15,color:'#AAA'}}/>
+        </button>
+        {notesOpen && (
+          <div id="note-generali-corpo" style={{padding:'0 14px 12px',maxHeight:'55vh',overflowY:'auto'}}>
+            <NotesEditor idPrefix="modifica-piano" placeholder={PLACEHOLDER_PIANO} value={notes} onChange={v=>{ setNotes(v); setDirty(true) }}/>
+          </div>
+        )}
+      </div>
+
       <div style={{background:'#0D0D0D',padding:'6px 14px',borderBottom:'0.5px solid #1A1A1A',flexShrink:0}}>
         {/* AZIONI GIORNO */}
         <div style={{display:'flex',gap:6}}>
@@ -689,7 +605,7 @@ export default function ModificaPiano() {
         {showCopyDay && (
           <div style={{marginTop:6,display:'flex',gap:6,flexWrap:'wrap'}}>
             {DAY_NAMES.filter((_,i)=>i+1!==selectedDay).map((dn,i)=>(
-              <button key={dn} onClick={()=>copyDayTo(i+1<selectedDay?i+1:i+2)} style={{fontSize:11,fontWeight:600,background:'#0D0D0D',border:'0.5px solid #D4570A',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontFamily:'inherit',color:'#F4894A'}}>{dn}</button>
+              <button key={dn} onClick={()=>copyDayTo(DAY_NAMES.indexOf(dn)+1)} style={{fontSize:11,fontWeight:600,background:'#0D0D0D',border:'0.5px solid #D4570A',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontFamily:'inherit',color:'#F4894A'}}>{dn}</button>
             ))}
           </div>
         )}
@@ -788,6 +704,8 @@ export default function ModificaPiano() {
                       </div>
                     </div>
                     <div style={{display:'flex',gap:4}}>
+                      <button aria-label="Sposta il pasto su" disabled={dayMeals[0]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'up')} style={{...s.btnGray,padding:'3px 6px',fontSize:10,opacity:dayMeals[0]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-up" style={{fontSize:11}}/></button>
+                      <button aria-label="Sposta il pasto giù" disabled={dayMeals[dayMeals.length-1]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'down')} style={{...s.btnGray,padding:'3px 6px',fontSize:10,opacity:dayMeals[dayMeals.length-1]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-down" style={{fontSize:11}}/></button>
                       <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
                       <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
                       <button aria-label="Elimina il pasto" onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
@@ -831,7 +749,7 @@ export default function ModificaPiano() {
                       {[{k:'quantity_g',l:'g',bold:true},{k:'kcal',l:'kcal'},{k:'protein_g',l:'P'},{k:'carbs_g',l:'C'},{k:'fat_g',l:'G'}].map(f=>(
                         <div key={f.k}>
                           <div style={{fontSize:8,color:'#AAA',textAlign:'center',marginBottom:1}}>{f.l}</div>
-                          <input inputMode="decimal" style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'rgba(212,87,10,0.12)':'#161616',borderColor:f.bold?'rgba(212,87,10,0.3)':'#222'}}
+                          <input inputMode="decimal" aria-label={`${f.l} di ${food.food_name}`} style={{...s.input,padding:'4px 3px',fontSize:11,textAlign:'center',fontWeight:f.bold?700:400,background:f.bold?'rgba(212,87,10,0.12)':'#161616',borderColor:f.bold?'rgba(212,87,10,0.3)':'#222',...(showErrors && num(food[f.k])<0 ? {borderColor:'#E24B4A',background:'rgba(226,75,74,0.08)'} : null)}}
                             type="number" value={food[f.k]||0}
                             onChange={e=>{
                               const val = parseFloat(e.target.value)||0

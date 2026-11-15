@@ -5,6 +5,9 @@ import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 import { searchFoods } from '../data/foodDatabase.js'
+import { askConfirm } from '../lib/confirm'
+import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
+import { normalizeNotes, hasNotes } from '../lib/coachNotes'
 
 const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_TYPES = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena','Spuntino sera']
@@ -110,8 +113,54 @@ export default function CreaPiano(){
   // Preview
   const [showPreview,setShowPreview]=useState(false)
 
-  // Meal notes
-  const [mealNotes,setMealNotes]=useState({})
+  // Note generali: il cliente le legge in cima alla sua sezione Piano alimentare
+  const [planNotes,setPlanNotes]=useState('')
+  const [notesOpen,setNotesOpen]=useState(false)
+
+  // Bozza: finché il piano non è salvato, tutto si ricorda sul telefono (prima un tocco su "indietro" o un ricaricamento cancellava anche un piano appena generato con l'AI)
+  const DRAFT_KEY='fofit_draft_crea_piano'
+  const [draftOffer,setDraftOffer]=useState(null)
+  const skipTdee=useRef(false)           // dopo aver ripristinato una bozza i target ripristinati non vengono sovrascritti dal calcolo dal profilo
+  const mealCount=Object.values(days).reduce((n,d)=>n+d.length,0)
+  const foodCount=Object.values(days).reduce((n,d)=>n+d.reduce((k,m)=>k+m.foods.length,0),0)
+  const hasContent=foodCount>0||hasNotes(planNotes)
+  const latestDraft=useRef({}), draftDone=useRef(false)       // draftDone: il piano è stato salvato, la bozza non va più scritta
+  latestDraft.current={hasContent,state:{selectedClient,planName,kcalTarget,protTarget,carbsTarget,fatTarget,selectedDiet,dayCalories,days,planNotes,selectedDay}}
+  const writeDraftNow=()=>{ if(draftDone.current) return; try{ localStorage.setItem(DRAFT_KEY,JSON.stringify({v:1,savedAt:new Date().toISOString(),...latestDraft.current.state})) }catch{} }
+  const clearDraft=()=>{ draftDone.current=true; try{ localStorage.removeItem(DRAFT_KEY) }catch{} }
+  useEffect(()=>{
+    try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null')
+      const withFoods=d?.days&&Object.values(d.days).some(x=>Array.isArray(x)&&x.some(m=>m.foods?.length))
+      if(d&&d.v===1&&(withFoods||hasNotes(d.planNotes))) setDraftOffer(d)
+    }catch{}
+  },[])
+  useEffect(()=>{
+    if(!hasContent||draftOffer) return
+    const t=setTimeout(writeDraftNow,600)
+    return()=>clearTimeout(t)
+  },[selectedClient,planName,kcalTarget,protTarget,carbsTarget,fatTarget,selectedDiet,dayCalories,days,planNotes,selectedDay,hasContent,draftOffer])
+  useEffect(()=>()=>{ const l=latestDraft.current; if(l.hasContent&&!l.offered) writeDraftNow() },[])
+  useEffect(()=>{ latestDraft.current.offered=!!draftOffer },[draftOffer])
+  useEffect(()=>{
+    if(!hasContent) return
+    const h=e=>{e.preventDefault();e.returnValue=''}
+    window.addEventListener('beforeunload',h); return()=>window.removeEventListener('beforeunload',h)
+  },[hasContent])
+  function restoreDraft(){
+    const d=draftOffer; if(!d) return
+    skipTdee.current=true
+    setSelectedClient(d.selectedClient||''); setPlanName(d.planName||'Piano alimentare'); setKcalTarget(d.kcalTarget||''); setProtTarget(d.protTarget||''); setCarbsTarget(d.carbsTarget||''); setFatTarget(d.fatTarget||'')
+    setSelectedDiet(d.selectedDiet||'lineare'); if(Array.isArray(d.dayCalories)) setDayCalories(d.dayCalories)
+    const nd={};for(let i=0;i<7;i++)nd[i]=Array.isArray(d.days?.[i])?d.days[i]:[]
+    setDays(nd); setPlanNotes(d.planNotes||''); if(hasNotes(d.planNotes)) setNotesOpen(true)
+    if(d.selectedDay>=0&&d.selectedDay<=6) setSelectedDay(d.selectedDay)
+    setDraftOffer(null); toast('Bozza ripristinata','success')
+  }
+  function discardDraft(){ try{ localStorage.removeItem(DRAFT_KEY) }catch{}; setDraftOffer(null) }
+  async function goBack(){
+    if(hasContent&&!(await askConfirm('Il piano non è ancora salvato. Se esci resta come bozza su questo telefono e potrai ripristinarlo riaprendo "Crea piano".',{title:'Piano non salvato',confirmLabel:'Esci',cancelLabel:'Resta qui',danger:true}))) return
+    navigate('/admin')
+  }
 
   useEffect(()=>{
     supabase.from('profiles').select('id,full_name').eq('role','client').order('full_name').then(({data})=>setClients(data||[]))
@@ -123,6 +172,7 @@ export default function CreaPiano(){
       if(data){
         setClientAnamnesi(data)
         const calc=calcolaTDEE(data)
+        if(skipTdee.current){ skipTdee.current=false; return }
         if(calc){
           setKcalTarget(String(calc.kcal))
           setProtTarget(String(calc.prot))
@@ -409,7 +459,7 @@ export default function CreaPiano(){
         client_id:selectedClient, created_by:profile.id, title:planName||'Piano alimentare', week_number:1,
         kcal_target:parseInt(kcalTarget)||2000, protein_target_g:parseInt(protTarget)||150,
         carbs_target_g:parseInt(carbsTarget)||200, fat_target_g:parseInt(fatTarget)||65,
-        is_active:false,
+        is_active:false, notes:normalizeNotes(planNotes)||null,
       }).select().single()
       if(planErr) throw planErr
       newPlanId=plan.id
@@ -422,7 +472,7 @@ export default function CreaPiano(){
           const{data:md,error:me}=await supabase.from('plan_meals').insert({
             plan_id:plan.id, day_of_week:parseInt(di)+1, meal_type:mealTypeToDb(meal.meal_type), meal_name:meal.meal_type,
             meal_order:order++, day_label:DAY_NAMES[parseInt(di)],
-            coach_note:(mealNotes[`${di}-${meals.indexOf(meal)}`]||meal.note_pasto||'')||null,
+            coach_note:[meal.note_pasto,meal.note_cliente].map(x=>String(x||'').trim()).filter(Boolean).join('\n\n')||null,
           }).select().single()
           if(me) throw me
           const{error:fe}=await supabase.from('plan_meal_foods').insert(meal.foods.map((f,fi)=>({
@@ -438,6 +488,7 @@ export default function CreaPiano(){
       if(offErr) throw offErr
       const{error:onErr}=await supabase.from('meal_plans').update({is_active:true}).eq('id',plan.id)
       if(onErr) throw onErr
+      clearDraft()
       toast('Piano salvato! 🎉','success')
       setTimeout(()=>navigate(`/modifica-piano/${plan.id}`),800)
     }catch(e){
@@ -471,7 +522,7 @@ export default function CreaPiano(){
     <div style={s.page}>
       {/* TOPBAR */}
       <div style={s.topbar}>
-        <button className="tap" aria-label="Indietro" onClick={()=>navigate('/admin')} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #222',background:'#161616',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',flexShrink:0}}>
+        <button className="tap" aria-label="Indietro" onClick={goBack} style={{width:34,height:34,borderRadius:9,border:'0.5px solid #222',background:'#161616',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#F0F0F0',flexShrink:0}}>
           <i className="ti ti-arrow-left" style={{fontSize:16}}/>
         </button>
         <div style={{flex:1,minWidth:0}}>
@@ -489,6 +540,17 @@ export default function CreaPiano(){
           {saving?'Salvo...':'Salva'}
         </button>
       </div>
+
+      {draftOffer&&(
+        <div role="status" data-testid="bozza-trovata" style={{background:'rgba(244,137,74,0.12)',borderBottom:'0.5px solid rgba(244,137,74,0.4)',padding:'9px 16px',display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          <i className="ti ti-alert-triangle" style={{fontSize:16,color:'#F4894A'}}/>
+          <span style={{fontSize:12,color:'#F4894A',flex:1,minWidth:200,lineHeight:1.45}}>
+            Hai un piano non salvato del {new Date(draftOffer.savedAt).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} ({Object.values(draftOffer.days||{}).reduce((n,d)=>n+(Array.isArray(d)?d.length:0),0)} pasti).
+          </span>
+          <button onClick={restoreDraft} style={{...s.btn,padding:'6px 14px',fontSize:12}}>Ripristina</button>
+          <button onClick={discardDraft} style={s.btnGray}>Scarta</button>
+        </div>
+      )}
 
       <div style={{maxWidth:700,margin:'0 auto',padding:'14px 16px'}}>
 
@@ -613,6 +675,14 @@ export default function CreaPiano(){
               </>
             )}
           </div>
+        </div>
+
+        {/* NOTE GENERALI PER IL CLIENTE */}
+        <div style={s.card} data-testid="note-generali">
+          <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Note generali per il cliente</div>
+          {notesOpen||hasNotes(planNotes)
+            ? <NotesEditor idPrefix="crea-piano" placeholder={PLACEHOLDER_PIANO} value={planNotes} onChange={setPlanNotes}/>
+            : <button type="button" onClick={()=>setNotesOpen(true)} style={{...s.btnGray,width:'100%',justifyContent:'center'}}><i className="ti ti-notes" style={{fontSize:13}}/>Scrivi indicazioni e consigli per il cliente</button>}
         </div>
 
         {/* GIORNI */}
@@ -766,7 +836,7 @@ export default function CreaPiano(){
               )}
 
               {/* Note coach per il cliente */}
-              <input value={mealNotes[nk]||''} onChange={e=>setMealNotes(p=>({...p,[nk]:e.target.value}))}
+              <input value={meal.note_cliente||''} onChange={e=>setDays(p=>{const d={...p};d[selectedDay][mi]={...d[selectedDay][mi],note_cliente:e.target.value};return d})}
                 placeholder="Note per il cliente..." style={{...s.input,fontSize:11,padding:'6px 10px',color:'#888',marginBottom:8}}/>
 
               {/* Azioni pasto */}
