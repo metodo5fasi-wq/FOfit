@@ -22,7 +22,9 @@ export function NotesText({ text }) {
 }
 
 // Per il coach: campo di scrittura con conteggio, suggerimento sul formato e anteprima "come lo vede il cliente"
-export function NotesEditor({ value, onChange, idPrefix = 'note' }) {
+export const PLACEHOLDER_ALLENAMENTO = 'Scrivi qui le indicazioni e i consigli per il cliente.\n\n# Riscaldamento\n- 5-10 minuti di cardio leggero\n- 2 serie leggere sul primo esercizio\n\n# Recuperi\nRispetta i tempi indicati: **non accorciarli**.'
+export const PLACEHOLDER_PIANO = 'Scrivi qui le indicazioni e i consigli per il cliente.\n\n# Idratazione\n- Almeno 2-3 litri di acqua al giorno\n\n# Pesatura\nPesa gli alimenti **a crudo**, se non indicato diversamente.'
+export function NotesEditor({ value, onChange, idPrefix = 'note', placeholder = PLACEHOLDER_ALLENAMENTO }) {
   const [preview, setPreview] = useState(false)
   const n = (value || '').length, near = n > NOTES_MAX * 0.9
   return (
@@ -35,7 +37,7 @@ export function NotesEditor({ value, onChange, idPrefix = 'note' }) {
       ) : (
         <textarea id={`${idPrefix}-testo`} aria-label="Note generali per il cliente" value={value || ''} maxLength={NOTES_MAX} rows={7}
           onChange={e => onChange(e.target.value)}
-          placeholder={'Scrivi qui le indicazioni e i consigli per il cliente.\n\n# Riscaldamento\n- 5-10 minuti di cardio leggero\n- 2 serie leggere sul primo esercizio\n\n# Recuperi\nRispetta i tempi indicati: **non accorciarli**.'}
+          placeholder={placeholder}
           style={{ width: '100%', boxSizing: 'border-box', minHeight: 150, padding: '10px 12px', background: '#0D0D0D', border: '0.5px solid #2A2A2A', borderRadius: 10, color: '#F0F0F0', fontSize: 13, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
