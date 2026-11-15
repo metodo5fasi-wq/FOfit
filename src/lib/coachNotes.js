@@ -63,3 +63,11 @@ export function notesStatus(planId, text) {
 // La colonna delle note è stata aggiunta al database con uno script: finché non è eseguito, salvare le note dà questo errore
 export const isMissingNotesColumn = err => /general_notes/i.test(String(err?.message || err || ''))
 export const MISSING_COLUMN_MSG = 'Per salvare le note serve un aggiornamento del database: esegui lo script SQL "fofit-note-allenamento.sql" in Supabase.'
+
+// Le note nel PDF del piano: titoli, elenchi e grassetto come nell'app (i link restano scritti per esteso). Il testo è sempre "escapato".
+export function notesToHtml(text, esc) {
+  const inline = str => splitInline(str).map(p => p.b ? `<strong>${esc(p.t)}</strong>` : esc(p.t)).join('')
+  return parseNotes(text).map(b => b.type === 'h' ? `<div style="font-weight:700;color:#D4570A;font-style:normal;margin:8px 0 2px">${inline(b.text)}</div>`
+    : b.type === 'ul' ? `<ul style="margin:2px 0 6px;padding-left:18px;font-style:normal">${b.items.map(i => `<li>${inline(i)}</li>`).join('')}</ul>`
+    : `<p style="margin:0 0 6px;font-style:normal">${inline(b.text).replace(/\n/g, '<br>')}</p>`).join('')
+}

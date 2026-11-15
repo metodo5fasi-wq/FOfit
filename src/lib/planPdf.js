@@ -1,4 +1,6 @@
 import { openPdf } from './pdfViewer'
+import { notesToHtml, hasNotes } from './coachNotes'
+import { sortFoods } from './mealPlan'
 // ─────────────────────────────────────────────────────────────
 // PDF del piano alimentare — stessa grafica di anamnesi e report (intestazione scura, titoli arancioni, piè di pagina FOfit)
 // Pagina 1: profilo, obiettivi, riepilogo settimanale e note · una pagina per ogni giorno · ultima pagina: alimenti della settimana
@@ -91,14 +93,14 @@ export function buildPlanHtml({ plan = {}, meals = [], client = {}, weight = nul
   })
   if (sum.filledDays) h += `<tr class="tot"><td>Media</td><td class="n"></td><td class="n">${fmt(sum.avg.kcal)}</td><td class="n">${fmt(sum.avg.p)} g</td><td class="n">${fmt(sum.avg.c)} g</td><td class="n">${fmt(sum.avg.g)} g</td><td class="n" style="color:${tone(pctOf(sum.avg.kcal, kt))}">${pctOf(sum.avg.kcal, kt) == null ? '—' : pctOf(sum.avg.kcal, kt) + '%'}</td></tr>`
   h += '</tbody></table></div>'
-  if (plan.notes) h += `<div class="sec"><div class="st">Note del coach</div><div class="note">${esc(plan.notes).replace(/\n/g, '<br>')}</div></div>`
+  if (hasNotes(plan.notes)) h += `<div class="sec"><div class="st">Note del coach</div><div class="note" style="font-style:normal">${notesToHtml(plan.notes, esc)}</div></div>`
   h += '</div>'
   // ── un giorno per pagina ──
   sum.days.filter(d => d.meals).forEach(d => {
     const p = pctOf(d.kcal, kt)
     h += `<div class="day"><div class="body"><div class="dh"><div><h2>${d.name}</h2><p>${d.meals} ${d.meals === 1 ? 'pasto' : 'pasti'}${p != null ? ` · ${p}% dell'obiettivo calorico` : ''}</p></div><p style="text-align:right"><strong style="font-size:18px;color:#111">${fmt(d.kcal)} kcal</strong><br>P ${fmt(d.p)} g · C ${fmt(d.c)} g · G ${fmt(d.g)} g</p></div>`
     byDay[d.day].forEach(m => {
-      const foods = m.plan_meal_foods || [], t = foodTotals(foods), type = m.meal_type || 'pasto'
+      const foods = sortFoods(m.plan_meal_foods), t = foodTotals(foods), type = m.meal_type || 'pasto'
       const title = m.meal_name && m.meal_name.trim().toLowerCase() !== String(type).toLowerCase() ? `${type} — ${m.meal_name}` : type
       h += `<div class="meal"><div class="mh"><strong>${esc(title)}</strong><span><em>${fmt(t.kcal)} kcal</em> · P ${fmt(t.p)} · C ${fmt(t.c)} · G ${fmt(t.g)}</span></div>`
       if (foods.length) {
