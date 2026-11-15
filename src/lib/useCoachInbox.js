@@ -24,7 +24,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
     if (!coachId) return
     setLoading(true)
     const now = new Date(), since30 = new Date(now - 30 * DAY).toISOString(), since90 = new Date(now - 90 * DAY).toISOString(), today = dayKey(now)
-    const [checkins, messages, reports, anam, bookings, photos, measures, wplans, seenRes] = await Promise.all([
+    const [checkins, messages, reports, anam, bookings, photos, measures, wplans, seenRes, ratesRes] = await Promise.all([
       safe(supabase.from('weekly_checkins').select('*').gte('created_at', since30).order('created_at', { ascending: false }).limit(300)),
       safe(supabase.from('coach_messages').select('*').eq('sender_role', 'client').eq('is_read', false).order('created_at', { ascending: false }).limit(300)),
       safe(supabase.from('workout_reports').select('id,client_id,submitted_at,read_by_coach').not('submitted_at', 'is', null).eq('read_by_coach', false).order('submitted_at', { ascending: false }).limit(100)),
@@ -34,6 +34,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
       safe(supabase.from('progress_entries').select('*').gte('created_at', since30).order('created_at', { ascending: false }).limit(300)),
       safe(supabase.from('workout_plans').select('client_id').eq('is_active', true).limit(1000)),
       safe(supabase.from('coach_inbox_seen').select('item_key').eq('coach_id', coachId).gte('seen_at', since90).limit(5000)),
+      safe(supabase.from('subscription_installments').select('*').is('paid_at', null).limit(2000)),
     ])
     if (!alive.current) return
     const bad = []
@@ -42,6 +43,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
       checkins: take(checkins, 'check-in'), messages: take(messages, 'messaggi'), reports: take(reports, 'report'), anamnesi: take(anam, 'anamnesi'),
       bookings: take(bookings, 'chiamate'), photos: take(photos, 'foto'), measures: take(measures, 'misure'),
       workoutPlanClients: wplans.error ? null : new Set((wplans.data || []).map(r => r.client_id)),
+      ratesByClient: ratesRes.error ? null : (ratesRes.data || []).reduce((o, r) => { (o[r.client_id] = o[r.client_id] || []).push(r); return o }, {}),
     })
     setSeenTableOk(!seenRes.error)
     setSeen(new Set([...readLocal(), ...(seenRes.error ? [] : (seenRes.data || []).map(r => r.item_key))]))
@@ -59,7 +61,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
     return {
       items: buildInbox({ ...raw, seenKeys: seen, clientsById, now }),
       agenda: buildAgenda({ bookings: raw.bookings, clientsById, now }),
-      attention: buildAttention({ clients: clients || [], stats: clientStats || {}, lastCheckinAt, workoutPlanClients: raw.workoutPlanClients, now }),
+      attention: buildAttention({ clients: clients || [], stats: clientStats || {}, lastCheckinAt, workoutPlanClients: raw.workoutPlanClients, ratesByClient: raw.ratesByClient, now }),
       week: buildWeek({ clients: clients || [], stats: clientStats || {}, checkins: raw.checkins, now }),
     }
   }, [raw, seen, clientsById, clients, clientStats])

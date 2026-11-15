@@ -1,6 +1,7 @@
 // Dashboard del coach: costruisce l'elenco "Da gestire", l'agenda delle chiamate e i clienti da seguire.
 // Funzioni pure (nessun accesso al database): si possono provare da sole.
 import { SLOT_MINUTES } from './callAvailability.js'
+import { summarize as summarizeRates } from './installments.js'
 
 export const DAY = 86400000
 // Soglie (modificabili qui)
@@ -103,7 +104,7 @@ export function buildAgenda({ bookings = [], clientsById = {}, now = new Date() 
 
 // ── Clienti da seguire ──
 // stats = clientStats di AdminPanel; lastCheckinAt = { [clienteId]: data ISO dell'ultimo check-in }; workoutPlanClients = Set dei clienti con scheda attiva (null = non noto)
-export function buildAttention({ clients = [], stats = {}, lastCheckinAt = {}, workoutPlanClients = null, now = new Date() }) {
+export function buildAttention({ clients = [], stats = {}, lastCheckinAt = {}, workoutPlanClients = null, ratesByClient = null, now = new Date() }) {
   const out = []
   clients.forEach(c => {
     const st = stats[c.id]; if (!st) return     // dati non ancora caricati: niente falsi allarmi
@@ -114,6 +115,15 @@ export function buildAttention({ clients = [], stats = {}, lastCheckinAt = {}, w
       const left = dayDiff(end, now)
       if (left < 0) { flags.push({ code: 'sub_expired', severity: 'red', text: `Abbonamento scaduto da ${plural(-left, 'giorno', 'giorni')}` }); if (-left > T.expiredIgnoreDays) ignoreActivity = true }
       else if (left <= T.subscriptionDays) flags.push({ code: 'sub_soon', severity: left <= 2 ? 'red' : 'amber', text: left === 0 ? 'Abbonamento scade oggi' : `Abbonamento scade tra ${plural(left, 'giorno', 'giorni')}` })
+    }
+    // Rate (stesse regole dell'app del cliente: avviso da 2 giorni prima, blocco dal 4° giorno di ritardo). Valgono anche per chi ha l'abbonamento scaduto da tempo.
+    const rs = ratesByClient && ratesByClient[c.id] && ratesByClient[c.id].length ? summarizeRates(ratesByClient[c.id], dayKey(now)) : null
+    if (rs && rs.top) {
+      const st2 = rs.top.st
+      if (rs.blocked) flags.push({ code: 'rate', severity: 'red', text: `Rata scaduta da ${plural(rs.blocked.st.late, 'giorno', 'giorni')}: app bloccata` })
+      else if (st2.code === 'overdue') flags.push({ code: 'rate', severity: 'red', text: `Rata scaduta da ${plural(st2.late, 'giorno', 'giorni')} · blocco tra ${plural(st2.daysToBlock, 'giorno', 'giorni')}` })
+      else if (st2.code === 'due_today') flags.push({ code: 'rate', severity: 'red', text: 'Rata scade oggi' })
+      else flags.push({ code: 'rate', severity: 'amber', text: `Rata scade tra ${plural(st2.left, 'giorno', 'giorni')}` })
     }
     if (!ignoreActivity) {
       if (!st.activePlan) flags.push(st.inactivePlan ? { code: 'plan_off', severity: 'amber', text: 'Piano alimentare non attivo' } : { code: 'no_plan', severity: 'red', text: 'Senza piano alimentare' })
