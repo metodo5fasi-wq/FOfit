@@ -54,6 +54,38 @@ export function splitByDay(text) {
 }
 export const missingDays = blocks => { const have = new Set(blocks.map(b => b.dayNum)); return have.size ? [1, 2, 3, 4, 5, 6, 7].filter(n => !have.has(n)) : [] }
 
+// ── lettura diretta dei giorni scritti in formato regolare ───────────────────
+//   COLAZIONE — 439 kcal | P: 37g | C: 36g | G: 16g
+//   - Yogurt greco 0%: 149g → 88 kcal | P: 15g | C: 5g | G: 0g
+// Se TUTTE le righe del giorno sono in questa forma si legge qui, senza AI: istantaneo, gratis, numeri identici al testo.
+// Se anche una sola riga non torna (alternative, quantità in pezzi, note…) restituisce null e il giorno passa all'AI come prima.
+const NUM = '([\\d.,]+)'
+const FOOD_RE = new RegExp('^[-•*]\\s*(.+?)\\s*:\\s*' + NUM + '\\s*g\\b\\s*(?:→|->|=>|=|—|–)?\\s*' + NUM + '\\s*kcal(?:\\s*\\|\\s*P\\s*:?\\s*' + NUM + '\\s*g)?(?:\\s*\\|\\s*C\\s*:?\\s*' + NUM + '\\s*g)?(?:\\s*\\|\\s*G\\s*:?\\s*' + NUM + '\\s*g)?\\s*$', 'i')
+const mealType = f => /PRE\b.*(ALLENAMENTO|WORKOUT|PALESTRA)|PRE-?WORKOUT/.test(f) ? 'pre-workout' : /POST\b.*(ALLENAMENTO|WORKOUT|PALESTRA)|POST-?WORKOUT|DOPO PALESTRA/.test(f) ? 'post-workout'
+  : f.includes('COLAZIONE') ? 'colazione' : f.includes('SPUNTINO') || f.includes('SNACK') ? 'spuntino' : f.includes('PRANZO') ? 'pranzo' : f.includes('MERENDA') ? 'merenda' : f.includes('CENA') ? 'cena' : 'altro'
+export function parseStructuredDay(body) {
+  const pasti = []; let cur = null
+  for (const raw of String(body || '').split(/\r?\n/)) {
+    const line = raw.trim().replace(/^#+\s*/, '').replace(/\*\*/g, '')
+    if (!line || /^[=\-_]{3,}$/.test(line)) continue
+    if (/^[-•*]\s/.test(line)) {
+      const m = line.match(FOOD_RE); if (!m || !cur) return null
+      cur.alimenti.push({ nome: m[1].trim(), marca: '', quantita_g: parseNum(m[2]), kcal: parseNum(m[3]), proteine_g: m[4] != null ? parseNum(m[4]) : null, carboidrati_g: m[5] != null ? parseNum(m[5]) : null, grassi_g: m[6] != null ? parseNum(m[6]) : null, opzioni: [] })
+      continue
+    }
+    if (/^TOTALE\b/i.test(fold(line))) continue
+    const f = fold(line)
+    if (/OPPURE|ALTERNATIV/.test(f)) return null                       // alternative: ci pensa l'AI
+    const head = line.split(/\s+[—–]\s+|\s+-\s+|:\s*$/)[0].trim()      // "COLAZIONE — 439 kcal | …" → "COLAZIONE"
+    if (head && head === head.toUpperCase() && /[A-ZÀ-Ú]/.test(head) && head.length <= 40) {
+      cur = { nome: head.charAt(0) + head.slice(1).toLowerCase(), tipo: mealType(fold(head)), orario: null, alimenti: [], alternative: [] }
+      pasti.push(cur); continue
+    }
+    return null                                                         // una riga che non capisco: meglio l'AI che indovinare
+  }
+  return pasti.length && pasti.every(p => p.alimenti.length) ? { pasti, truncated: false, local: true } : null
+}
+
 // ── somme e controlli ────────────────────────────────────────
 export function foodsSum(pasti = []) {
   let kcal = 0, p = 0, c = 0, g = 0, foods = 0, missing = 0
@@ -70,7 +102,7 @@ export function makeVariante(block, res) {
     nome: DAY_LABEL[block.dayNum] || block.dayName, dayNum: block.dayNum, pasti,
     kcal: s.kcal > 0 ? s.kcal : null, kcalDoc: doc, missingKcal: s.missing, foods: s.foods,
     proteine_g: block.macros?.proteine_g ?? (s.proteine_g || null), carboidrati_g: block.macros?.carboidrati_g ?? (s.carboidrati_g || null), grassi_g: block.macros?.grassi_g ?? (s.grassi_g || null),
-    truncated: !!res?.truncated, failed: pasti.length === 0, docHasKcal: /kcal/i.test(block.body || ''),
+    truncated: !!res?.truncated, failed: pasti.length === 0, error: res?.error || null, local: !!res?.local, docHasKcal: /kcal/i.test(block.body || ''),
   }
 }
 const pct = (a, b) => b ? Math.round((a - b) / b * 100) : null
