@@ -186,6 +186,7 @@ export default function ModificaAllenamento() {
   const [showCopyModal, setShowCopyModal] = useState(null)
   const [showAddExercise, setShowAddExercise] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
+  const tbm = isMobile ? { minHeight:38, paddingTop:0, paddingBottom:0, fontSize:12 } : {}   // pulsanti della barra del giorno: più alti al tocco
   const [showErrors, setShowErrors] = useState(false)          // dopo un tentativo di salvataggio i campi da controllare restano evidenziati in rosso
   const [renames, setRenames] = useState([])                   // giorni rinominati: lo storico delle sedute si aggiorna dopo il salvataggio
   const [clientLogs, setClientLogs] = useState([])             // serie registrate dal cliente: servono per "Ultimo carico"
@@ -211,7 +212,7 @@ export default function ModificaAllenamento() {
     setPlan(planData)
     const planNotes = planData.general_notes || ''
     setNotes(planNotes); serverNotesRef.current = planNotes
-    if (checkDraft) setNotesOpen(hasNotes(planNotes))          // se ci sono già note si aprono, così le vedi
+    if (checkDraft) setNotesOpen(hasNotes(planNotes) && window.innerWidth >= 900)          // sul computer, se ci sono già note si aprono; sul telefono restano chiuse (occuperebbero lo schermo)
     // cliente ed esercizi non dipendono l'uno dall'altro: insieme
     const [{ data: prof }, { data: exData }] = await Promise.all([
       supabase.from('profiles').select('full_name').eq('id', planData.client_id).single(),
@@ -488,14 +489,14 @@ export default function ModificaAllenamento() {
   }
 
   if (loading) return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0}}>
       <div style={s.topbar}><div style={{fontSize:15,fontWeight:600}}>Modifica scheda</div></div>
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#AAA',fontSize:13}}>Caricamento...</div>
     </div>
   )
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#161616'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#161616'}}>
 
       {/* TOPBAR */}
       <div style={s.topbar}>
@@ -504,19 +505,22 @@ export default function ModificaAllenamento() {
         </button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.name || 'Modifica scheda'}</div>
-          <div style={{fontSize:11,color:'#AAA'}}>{clientName}{plan ? ` · ${plan.days_per_week} giorni/sett · ${plan.weeks_duration} settimane` : ''}</div>
+          <div style={{fontSize:11,color:'#AAA',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{clientName}{plan?.days_per_week ? ` · ${plan.days_per_week} giorni/sett` : ''}{plan?.weeks_duration ? ` · ${plan.weeks_duration} settimane` : ''}</div>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
           {saving && <span style={{fontSize:11,color:'#AAA'}}>Salvo...</span>}
           {!saving && dirty && (
-            <button aria-label="Scarta le modifiche" onClick={discardChanges} style={{...s.btnGray,padding:'8px 10px'}}>Scarta</button>
+            <button aria-label="Scarta le modifiche" onClick={discardChanges} style={{...s.btnGray,padding:isMobile?'10px 12px':'8px 10px'}}>Scarta</button>
           )}
           {!saving && dirty && (
-            <button onClick={saveAll} style={{...s.btn,minWidth:80}}>💾 Salva</button>
+            <button onClick={saveAll} style={{...s.btn,minWidth:80,...(isMobile?{padding:'10px 14px'}:{})}}>💾 Salva</button>
           )}
           {!dirty && <span style={{fontSize:11,color:'#6FCF97',fontWeight:600}}>✓ Salvato</span>}
         </div>
       </div>
+
+      {/* Telefono: un'unica area che scorre (note, giorni, esercizi). Computer: nessun cambiamento (display:contents) */}
+      <div data-testid="area-scorrevole" style={isMobile ? {flex:1,minHeight:0,overflowY:'auto',overflowX:'hidden',WebkitOverflowScrolling:'touch',display:'flex',flexDirection:'column'} : {display:'contents'}}>
 
       {/* BOZZA NON SALVATA TROVATA ALL'APERTURA */}
       {draftOffer && (
@@ -547,7 +551,7 @@ export default function ModificaAllenamento() {
       </div>
 
       {/* LAYOUT */}
-      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+      <div style={isMobile ? {flexShrink:0} : {flex:1,display:'flex',overflow:'hidden'}}>
 
         {/* SIDEBAR GIORNI (PC) */}
         {!isMobile && (
@@ -580,14 +584,14 @@ export default function ModificaAllenamento() {
         )}
 
         {/* CONTENUTO */}
-        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={isMobile ? {} : {flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
           {/* TAB GIORNI MOBILE */}
           {isMobile && (
-            <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',display:'flex',overflowX:'auto',flexShrink:0,padding:'8px 10px',gap:6}}>
+            <div data-testid="barra-giorni" style={{position:'sticky',top:0,zIndex:20,background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',display:'flex',overflowX:'auto',flexShrink:0,padding:'8px 10px',gap:6}}>
               {days.map(day => (
                 <button key={day} onClick={()=>setSelectedDay(day)} style={{
-                  flexShrink:0,padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:600,
+                  flexShrink:0,padding:'8px 14px',minHeight:36,borderRadius:18,fontSize:12,fontWeight:600,
                   cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
                   background:selectedDay===day?'#D4570A':'#0D0D0D',
                   color:selectedDay===day?'white':'#888780',
@@ -609,7 +613,7 @@ export default function ModificaAllenamento() {
             <div style={{flex:1}}/>
             {dayExercises.length > 1 && (
               <button onClick={()=>{if(allExpanded){setExpandedEx(null);setAllExpanded(false)}else{setExpandedEx('all');setAllExpanded(true)}}}
-                style={{...s.btnGray,padding:'5px 12px',fontSize:11,whiteSpace:'nowrap'}}>
+                style={{...s.btnGray,padding:'5px 12px',fontSize:11,whiteSpace:'nowrap',...tbm}}>
                 {allExpanded?'⊖ Collassa tutto':'⊕ Espandi tutto'}
               </button>
             )}
@@ -617,12 +621,12 @@ export default function ModificaAllenamento() {
               <AddDayForm value={renameValue} onChange={setRenameValue} onConfirm={confirmRename} onCancel={()=>setRenaming(false)} ariaLabel="Nuovo nome del giorno" confirmAria="Conferma il nuovo nome" confirmText="✓ Rinomina" placeholder="Nome del giorno"/>
             ) : (
               <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-                <button aria-label="Rinomina il giorno" onClick={startRename} style={{...s.btnGray,padding:'5px 10px',fontSize:11}}><i className="ti ti-pencil" style={{fontSize:12}}/> Rinomina</button>
-                <button aria-label="Sposta il giorno prima" disabled={!canMoveDay(-1)} onClick={()=>moveDayBy(-1)} style={{...s.btnGray,padding:'5px 9px',fontSize:11,opacity:canMoveDay(-1)?1:0.35}}><i className="ti ti-arrow-left" style={{fontSize:12}}/></button>
-                <button aria-label="Sposta il giorno dopo" disabled={!canMoveDay(1)} onClick={()=>moveDayBy(1)} style={{...s.btnGray,padding:'5px 9px',fontSize:11,opacity:canMoveDay(1)?1:0.35}}><i className="ti ti-arrow-right" style={{fontSize:12}}/></button>
-                <button aria-label="Duplica il giorno" onClick={duplicateWholeDay} style={{...s.btnGray,padding:'5px 10px',fontSize:11}}><i className="ti ti-copy" style={{fontSize:12}}/> Duplica</button>
+                <button aria-label="Rinomina il giorno" onClick={startRename} style={{...s.btnGray,padding:'5px 10px',fontSize:11,...tbm}}><i className="ti ti-pencil" style={{fontSize:12}}/> Rinomina</button>
+                <button aria-label="Sposta il giorno prima" disabled={!canMoveDay(-1)} onClick={()=>moveDayBy(-1)} style={{...s.btnGray,padding:'5px 9px',fontSize:11,opacity:canMoveDay(-1)?1:0.35,...tbm}}><i className="ti ti-arrow-left" style={{fontSize:12}}/></button>
+                <button aria-label="Sposta il giorno dopo" disabled={!canMoveDay(1)} onClick={()=>moveDayBy(1)} style={{...s.btnGray,padding:'5px 9px',fontSize:11,opacity:canMoveDay(1)?1:0.35,...tbm}}><i className="ti ti-arrow-right" style={{fontSize:12}}/></button>
+                <button aria-label="Duplica il giorno" onClick={duplicateWholeDay} style={{...s.btnGray,padding:'5px 10px',fontSize:11,...tbm}}><i className="ti ti-copy" style={{fontSize:12}}/> Duplica</button>
                 {days.length > 1 && (
-                  <button aria-label="Elimina il giorno" onClick={()=>removeDay(selectedDay)} style={{...s.btnDanger,padding:'4px 8px',fontSize:11}}>
+                  <button aria-label="Elimina il giorno" onClick={()=>removeDay(selectedDay)} style={{...s.btnDanger,padding:'4px 8px',fontSize:11,...tbm}}>
                     <i className="ti ti-trash" style={{fontSize:12}}/>Elimina giorno
                   </button>
                 )}
@@ -631,7 +635,7 @@ export default function ModificaAllenamento() {
           </div>
 
           {/* ESERCIZI */}
-          <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'10px 12px'}}>
+          <div style={isMobile ? {padding:'10px 12px 48px'} : {flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'10px 12px'}}>
             {filteredDayExercises.map((ex, ei) => {
               const isExpanded = expandedEx === ex.id || expandedEx === 'all'
               return (
@@ -829,6 +833,7 @@ export default function ModificaAllenamento() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

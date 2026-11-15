@@ -98,6 +98,7 @@ export default function ModificaPiano() {
   const serverRef = useRef({ meals: [], targets: {}, notes: '' })   // com'è il piano sul server (serve a capire se una bozza è ancora valida)
   const latest = useRef({})
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900)
+  const mb = isMobile ? { padding:0, width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } : { padding:'3px 6px' }   // pulsanti dell'intestazione del pasto: più grandi al tocco
   React.useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 900)
     window.addEventListener('resize', h)
@@ -149,7 +150,7 @@ export default function ModificaPiano() {
     setPlan(planData)
     const planNotes = planData.notes || ''
     setNotes(planNotes)
-    if (checkDraft) setNotesOpen(hasNotes(planNotes))          // se ci sono già note si aprono, così le vedi
+    if (checkDraft) setNotesOpen(hasNotes(planNotes) && window.innerWidth >= 900)          // sul computer, se ci sono già note si aprono; sul telefono restano chiuse (occuperebbero lo schermo)
 
     // cliente e pasti non dipendono l'uno dall'altro: insieme
     const [{ data: prof }, { data: mealsData }] = await Promise.all([
@@ -363,6 +364,16 @@ export default function ModificaPiano() {
   function handleFoodDragStart(mealId, foodId) {
     setDragFoodMeal(mealId); setDragFoodId(foodId)
   }
+  // Sposta un alimento di una posizione (per il telefono, dove il trascinamento non è comodo)
+  function shiftFood(mealId, foodId, dir) {
+    setMeals(prev => prev.map(m => {
+      if (m.id !== mealId) return m
+      const L = m.plan_meal_foods || [], i = L.findIndex(f => f.id === foodId), j = i + dir
+      if (i < 0 || j < 0 || j >= L.length) return m
+      return { ...m, plan_meal_foods: moveFood(L, foodId, L[j].id) }
+    }))
+    setDirty(true)
+  }
   function handleFoodDragOver(e, foodId) { e.preventDefault(); setDragOverFoodId(foodId) }
   function handleFoodDrop(mealId, targetFoodId) {
     if (!dragFoodId || dragFoodId === targetFoodId || dragFoodMeal !== mealId) {
@@ -459,35 +470,35 @@ export default function ModificaPiano() {
   }
 
   if (loading) return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0}}>
       <div style={s.topbar}><div style={{fontSize:15,fontWeight:600}}>Modifica piano</div></div>
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'#AAA',fontSize:13}}>Caricamento...</div>
     </div>
   )
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#161616'}}>
+    <div style={{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#161616'}}>
 
       {/* TOPBAR */}
       <div style={s.topbar}>
         <button className="tap" aria-label="Indietro" onClick={goBack} style={{width:32,height:32,borderRadius:8,border:'0.5px solid #1C1C1C',background:'#161616',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}><i className="ti ti-arrow-left" style={{fontSize:16}}/></button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:14,fontWeight:700,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plan?.title || 'Piano alimentare'}</div>
-          <div style={{fontSize:11,color:'#AAA'}}>{clientName}{plan && ` · target: ${plan.kcal_target} kcal`}</div>
+          <div style={{fontSize:11,color:'#AAA',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{clientName}{plan && ` · target: ${plan.kcal_target} kcal`}</div>
         </div>
         <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
           <PlanPdfButton planId={planId} confirmMessage={dirty ? 'Ci sono modifiche non salvate: il PDF userà la versione salvata del piano. Continuare?' : null} style={{padding:'5px 9px',fontSize:11}}/>
-          <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola tutti i macro dal database"
-            style={{...s.btnGray,padding:'5px 9px',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
+          <button onClick={fixMacros} disabled={fixingMacros} title="Ricalcola tutti i macro dal database" aria-label="Ricalcola i macro"
+            style={{...s.btnGray,padding:isMobile?'0':'5px 9px',...(isMobile?{width:38,height:38,justifyContent:'center'}:{}),fontSize:11,display:'flex',alignItems:'center',gap:4}}>
             {fixingMacros
-              ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>Ricalcolo...</>
-              : <><i className="ti ti-refresh" style={{fontSize:12}}/>Ricalcola</>}
+              ? <><i className="ti ti-loader-2" style={{fontSize:12}}/>{!isMobile && 'Ricalcolo...'}</>
+              : <><i className="ti ti-refresh" style={{fontSize:isMobile?16:12}}/>{!isMobile && 'Ricalcola'}</>}
           </button>
           {!saving && dirty && (
-            <button aria-label="Scarta le modifiche" onClick={discardChanges} style={{...s.btnGray,padding:'8px 10px'}}>Scarta</button>
+            <button aria-label="Scarta le modifiche" onClick={discardChanges} style={{...s.btnGray,padding:isMobile?'10px 12px':'8px 10px'}}>Scarta</button>
           )}
           <button onClick={saveAll} disabled={saving}
-            style={{...s.btn,minWidth:80,display:'flex',alignItems:'center',gap:4,
+            style={{...s.btn,minWidth:80,...(isMobile?{padding:'10px 14px'}:{}),display:'flex',alignItems:'center',gap:4,
               background:saving?'#888':dirty?'#D4570A':'#888780',
             }}>
             {saving
@@ -496,6 +507,9 @@ export default function ModificaPiano() {
           </button>
         </div>
       </div>
+
+      {/* Telefono: un'unica area che scorre (totali, note, giorni, pasti). Computer: nessun cambiamento (display:contents) */}
+      <div data-testid="area-scorrevole" style={isMobile ? {flex:1,minHeight:0,overflowY:'auto',overflowX:'hidden',WebkitOverflowScrolling:'touch',display:'flex',flexDirection:'column'} : {display:'contents'}}>
 
       {/* MACRO UNIFICATO: target + live nella stessa sezione */}
       <div style={{background:'#0D0D0D',padding:'10px 14px',borderBottom:'0.5px solid #1A1A1A',flexShrink:0}}>
@@ -627,18 +641,19 @@ export default function ModificaPiano() {
       </div>
 
       {/* LAYOUT PRINCIPALE */}
-      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+      <div style={isMobile ? {flexShrink:0} : {flex:1,display:'flex',overflow:'hidden'}}>
 
         {/* SIDEBAR GIORNI (PC) o TABS (Mobile) */}
         {isMobile ? (
-          <div style={{background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A',display:'flex',overflowX:'auto',flexShrink:0,padding:'8px 12px',gap:6}}>
+          <div data-testid="barra-giorni" style={{position:'sticky',top:0,zIndex:20,background:'#0D0D0D',borderBottom:'0.5px solid #1A1A1A'}}>
+          <div style={{display:'flex',overflowX:'auto',padding:'8px 12px 6px',gap:6}}>
             {DAY_NAMES.map((dn,i) => {
               const dayN = i+1
               const dayM = meals.filter(m=>m.day_of_week===dayN)
               const hasFood = dayM.some(m=>m.plan_meal_foods?.length>0)
               return (
                 <button key={dayN} onClick={()=>setSelectedDay(dayN)} style={{
-                  flexShrink:0,padding:'5px 12px',borderRadius:16,fontSize:11,fontWeight:600,
+                  flexShrink:0,padding:'8px 14px',minHeight:36,borderRadius:18,fontSize:12,fontWeight:600,
                   cursor:'pointer',border:'0.5px solid',fontFamily:'inherit',
                   background:selectedDay===dayN?'#D4570A':'#0D0D0D',
                   color:selectedDay===dayN?'white':hasFood?'#F0F0F0':'#AAA',
@@ -646,6 +661,15 @@ export default function ModificaPiano() {
                 }}>{dn.slice(0,3)}</button>
               )
             })}
+          </div>
+          {plan && (() => {
+            const items=[['Kcal',dayTotals.kcal,plan.kcal_target,'#D4570A'],['P',dayTotals.protein,plan.protein_target_g,'#4A90D4'],['C',dayTotals.carbs,plan.carbs_target_g,'#E8A020'],['G',dayTotals.fat,plan.fat_target_g,'#3B8C5A']]
+            return (
+              <div data-testid="totali-giorno" style={{display:'flex',justifyContent:'space-between',gap:6,padding:'0 14px 7px',fontSize:11,fontWeight:700}}>
+                {items.map(([l,v,t,c])=>{ const pct=t>0?v/t*100:0, col=pct>110?'#E24B4A':pct>=90?'#6FCF97':c; return <span key={l} style={{color:col,whiteSpace:'nowrap'}}>{l} {Math.round(v)}<span style={{color:'#888',fontWeight:500}}>/{t||'–'}</span></span> })}
+              </div>
+            )
+          })()}
           </div>
         ) : (
           <div style={{width:160,flexShrink:0,background:'#0D0D0D',borderRight:'0.5px solid #1A1A1A',overflowY:'auto'}}>
@@ -680,7 +704,7 @@ export default function ModificaPiano() {
         )}
 
         {/* CONTENUTO GIORNO */}
-        <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px'}}>
+        <div style={isMobile ? {padding:'12px 12px 48px'} : {flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',padding:'12px'}}>
           {/* PASTI */}
           {dayMeals.map((meal) => {
             const mealKcal = Math.round((meal.plan_meal_foods||[]).reduce((s,f)=>s+(parseFloat(f.kcal)||0),0))
@@ -691,9 +715,9 @@ export default function ModificaPiano() {
               <div key={meal.id} style={s.card}>
                 {/* HEADER PASTO */}
                 <div style={{background:'rgba(212,87,10,0.1)',borderBottom:'0.5px solid rgba(212,87,10,0.35)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',flexWrap:isMobile?'wrap':'nowrap'}}>
                     <i className={`ti ${MEAL_ICONS[meal.meal_type]||'ti-circle'}`} style={{fontSize:14,color:'#D4570A'}}/>
-                    <div style={{flex:1}}>
+                    <div style={{flex:1,minWidth:isMobile?120:0}}>
                       <div style={{fontSize:12,fontWeight:700,color:'#F4894A',textTransform:'capitalize'}}>{meal.meal_type}</div>
                       <div style={{fontSize:10,color:'#F4894A'}}>{mealKcal} kcal · P{mealProt}g C{mealCarbs}g G{mealFat}g
                         {mealTargets[meal.id] && plan?.kcal_target && (
@@ -703,12 +727,12 @@ export default function ModificaPiano() {
                         )}
                       </div>
                     </div>
-                    <div style={{display:'flex',gap:4}}>
-                      <button aria-label="Sposta il pasto su" disabled={dayMeals[0]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'up')} style={{...s.btnGray,padding:'3px 6px',fontSize:10,opacity:dayMeals[0]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-up" style={{fontSize:11}}/></button>
-                      <button aria-label="Sposta il pasto giù" disabled={dayMeals[dayMeals.length-1]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'down')} style={{...s.btnGray,padding:'3px 6px',fontSize:10,opacity:dayMeals[dayMeals.length-1]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-down" style={{fontSize:11}}/></button>
-                      <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
-                      <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" style={{...s.btnGray,padding:'3px 6px',fontSize:10}}><i className="ti ti-bookmark" style={{fontSize:11}}/></button>
-                      <button aria-label="Elimina il pasto" onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,padding:'3px 6px',fontSize:10}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+                    <div style={{display:'flex',gap:isMobile?6:4,flexWrap:isMobile?'wrap':'nowrap'}}>
+                      <button aria-label="Sposta il pasto su" disabled={dayMeals[0]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'up')} style={{...s.btnGray,...mb,fontSize:10,opacity:dayMeals[0]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-up" style={{fontSize:isMobile?17:11}}/></button>
+                      <button aria-label="Sposta il pasto giù" disabled={dayMeals[dayMeals.length-1]?.id===meal.id} onClick={()=>shiftMeal(meal.id,'down')} style={{...s.btnGray,...mb,fontSize:10,opacity:dayMeals[dayMeals.length-1]?.id===meal.id?0.35:1}}><i className="ti ti-chevron-down" style={{fontSize:isMobile?17:11}}/></button>
+                      <button onClick={()=>setShowSaveTemplate(showSaveTemplate===meal.id?null:meal.id)} title="Salva template" aria-label="Salva come modello" style={{...s.btnGray,...mb,fontSize:isMobile?12:10,...(isMobile?{width:'auto',padding:'0 10px',gap:5}:{})}}><i className="ti ti-bookmark" style={{fontSize:isMobile?17:11}}/>{isMobile && 'Salva modello'}</button>
+                      <button onClick={()=>{setShowTemplates(showTemplates===meal.id?null:meal.id);loadTemplates()}} title="Carica template" aria-label="Carica un modello" style={{...s.btnGray,...mb,fontSize:isMobile?12:10,...(isMobile?{width:'auto',padding:'0 10px',gap:5}:{})}}><i className="ti ti-bookmark" style={{fontSize:isMobile?17:11}}/>{isMobile && 'Carica modello'}</button>
+                      <button aria-label="Elimina il pasto" onClick={()=>removeMeal(meal.id)} style={{...s.btnDanger,...mb,fontSize:10}}><i className="ti ti-trash" style={{fontSize:isMobile?17:11}}/></button>
                     </div>
                   </div>
                   {showSaveTemplate===meal.id && (
@@ -742,8 +766,12 @@ export default function ModificaPiano() {
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                       <span draggable data-testid={`maniglia-${food.id}`} title="Trascina per riordinare" onDragStart={e=>{startHandleDrag(e);handleFoodDragStart(meal.id,food.id)}} onDragEnd={handleFoodDragEnd}
                         style={{display:'flex',padding:'6px 7px',margin:'-6px -4px',cursor:'grab',flexShrink:0,userSelect:'none'}}><i className="ti ti-grip-vertical" style={{fontSize:13,color:'#CCC'}}/></span>
-                      <span style={{flex:1,fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.food_name}</span>
-                      <button aria-label="Rimuovi l'alimento" onClick={()=>removeFood(meal.id,food.id)} style={{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:12}}/></button>
+                      <span style={{flex:1,fontSize:isMobile?13:12,fontWeight:600,color:'#F0F0F0',minWidth:0,overflowWrap:'anywhere'}}>{food.food_name}</span>
+                      {isMobile && (()=>{ const L=meal.plan_meal_foods||[], i=L.findIndex(x=>x.id===food.id); return (<>
+                        <button aria-label="Sposta l'alimento su" disabled={i<=0} onClick={()=>shiftFood(meal.id,food.id,-1)} style={{...s.btnGray,...mb,opacity:i<=0?0.35:1}}><i className="ti ti-chevron-up" style={{fontSize:17}}/></button>
+                        <button aria-label="Sposta l'alimento giù" disabled={i>=L.length-1} onClick={()=>shiftFood(meal.id,food.id,1)} style={{...s.btnGray,...mb,opacity:i>=L.length-1?0.35:1}}><i className="ti ti-chevron-down" style={{fontSize:17}}/></button>
+                      </>) })()}
+                      <button aria-label="Rimuovi l'alimento" onClick={()=>removeFood(meal.id,food.id)} style={isMobile?{...s.btnDanger,...mb}:{background:'none',border:'none',cursor:'pointer',color:'#CCC',padding:'0 2px'}}><i className="ti ti-x" style={{fontSize:isMobile?17:12}}/></button>
                     </div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,marginLeft:19}}>
                       {[{k:'quantity_g',l:'g',bold:true},{k:'kcal',l:'kcal'},{k:'protein_g',l:'P'},{k:'carbs_g',l:'C'},{k:'fat_g',l:'G'}].map(f=>(
@@ -786,7 +814,8 @@ export default function ModificaPiano() {
                 {/* AGGIUNGI ALIMENTO */}
                 {addingFoodToMeal===meal.id ? (
                   <div style={{padding:'10px 12px',background:'#161616',borderTop:'0.5px solid #1A1A1A'}}>
-                    <div style={{position:'relative',marginBottom:7}}>
+                    <div style={{marginBottom:7}}>
+                     <div style={{position:'relative'}}>
                       <i className="ti ti-search" style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:12,color:'#AAA',pointerEvents:'none',zIndex:1}}/>
                       <input
                         style={{...s.input,paddingLeft:26,paddingRight:28,fontSize:12}}
@@ -805,8 +834,9 @@ export default function ModificaPiano() {
                           style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#AAA',fontSize:14,padding:'0 2px',zIndex:1}}>✕</button>
                       )}
                       {searchingFood && !newFood.food_name && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#AAA'}}/>}
+                     </div>
                       {foodResults.length>0 && (
-                        <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,right:0,background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:9,boxShadow:'0 4px 20px rgba(0,0,0,0.14)',zIndex:200,maxHeight:220,overflowY:'auto'}}>
+                        <div data-testid="risultati-alimenti" style={{marginTop:4,background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:9,maxHeight:isMobile?'40vh':220,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
                           {foodResults.map((food,i)=>(
                             <div key={i}
                               onMouseDown={e=>{e.preventDefault();selectFoodFromSearch(food)}}
@@ -890,6 +920,7 @@ export default function ModificaPiano() {
             </button>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

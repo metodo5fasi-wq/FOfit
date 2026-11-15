@@ -6,6 +6,8 @@ import { useAuth } from '../App'
 import { loadSWR, hasCache, cachePatch } from '../lib/offline'
 import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
 import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
+import { useInstallments } from '../lib/useInstallments'
+import InstallmentNotice, { RateList } from '../components/InstallmentNotice'
 
 const PREFIX = /^↩️ In risposta a «[^»]*»: /           // contesto aggiunto alle risposte, perché il coach capisca a cosa si risponde
 const snippet = (s, n = 60) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t }
@@ -36,6 +38,7 @@ export default function Notifiche() {
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState(false)
   const [stale, setStale] = useState(false)
+  const { rows: rateRows, summary: rateSummary, today: rateToday } = useInstallments(profile)
 
   useEffect(() => { if (profile) fetchNotifiche({ instant: true }) }, [profile])
   // una notifica nuova del coach compare tornando all'app, senza chiuderla e riaprirla
@@ -103,6 +106,8 @@ export default function Notifiche() {
       </div>
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '14px' }}>
         {stale && !loadError && <StaleNotice onRetry={() => fetchNotifiche()} />}
+        <InstallmentNotice alert={rateSummary?.alert} />
+        <RateList rows={rateRows} today={rateToday} />
         {loading ? (
           <Skeleton rows={4} height={76} style={{ padding: 0 }} />
         ) : loadError ? (
