@@ -7,7 +7,7 @@ import { authFetch } from '../lib/authFetch'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
-import { DAY_LABEL, parseNum, extractMacros, splitByDay, missingDays, foodsSum, makeVariante, checkDays, planKcalTarget } from '../lib/planImport'
+import { DAY_LABEL, parseNum, extractMacros, splitByDay, missingDays, foodsSum, makeVariante, checkDays, planKcalTarget, parseStructuredDay } from '../lib/planImport'
 
 const s = {
   card: { background:'#0D0D0D', borderRadius:12, border:'0.5px solid #1C1C1C', padding:'16px', marginBottom:12 },
@@ -46,18 +46,21 @@ export default function ImportaPiano() {
   const [progress, setProgress] = useState({ current: 0, total: 0, label: '' })
   const checks = useMemo(() => checkDays(parsedPlan?.varianti || [], { target: parseInt(targets.kcal_target) || null }), [parsedPlan, targets.kcal_target])
 
-  // Legge UN giorno con l'AI (con un secondo tentativo per l'avvio a freddo del servizio)
+  // Legge UN giorno: prima direttamente (se il testo è in formato regolare), altrimenti con l'AI (con un secondo tentativo per l'avvio a freddo del servizio)
   async function readDay(db) {
+    const direct = parseStructuredDay(db.body); if (direct) return direct
+    let lastErr = null
     const call = async () => {
       const r = await authFetch('/api/parse-day', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dayText: db.body, macros: db.macros }) })
       const txt = await r.text(); let parsed = null; try { parsed = JSON.parse(txt) } catch (e) {}
+      if (!parsed?.pasti?.length) lastErr = parsed?.error || (!r.ok ? `errore ${r.status}` : 'risposta vuota')
       return parsed?.pasti?.length ? parsed : null
     }
     try {
       let res = await call()
       if (!res) { await new Promise(r => setTimeout(r, 800)); res = await call() }
-      return res || { pasti: [] }
-    } catch (e) { return { pasti: [] } }
+      return res || { pasti: [], error: lastErr }
+    } catch (e) { return { pasti: [], error: e.message || lastErr } }
   }
 
   async function reparse(dayNum) {
@@ -125,7 +128,7 @@ export default function ImportaPiano() {
         setProgress({ current: i + 1, total: dayBlocks.length, label: `${i + 1} / ${dayBlocks.length} giorni` })
         if (i < dayBlocks.length - 1) await new Promise(res => setTimeout(res, 300))      // piccola pausa tra le chiamate
       }
-      if (varianti.every(v => v.failed)) throw new Error('Nessun giorno elaborato. Controlla il formato del piano.')
+      if (varianti.every(v => v.failed)) throw new Error('Nessun giorno elaborato. ' + (varianti.find(v => v.error)?.error ? `La lettura con l'AI non è riuscita (${varianti.find(v => v.error).error}). ` : '') + 'Controlla il formato del piano.')
 
       const avg = key => { const a = varianti.filter(v => !v.failed && v[key] != null).map(v => v[key]); return a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null }
       const plan = {
