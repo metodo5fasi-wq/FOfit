@@ -4,6 +4,9 @@ import './fonts.css'
 import './icons.css'
 import './ui.css'
 import App from './App'
+import { installErrorLog } from './lib/errorLog'
+
+installErrorLog()      // registro errori: segnala al coach i problemi non gestiti
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

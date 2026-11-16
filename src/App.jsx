@@ -22,8 +22,11 @@ import { saveLastProfile, loadLastProfile, clearCache, resolveOfflineSession, st
 
 // Pagine caricate solo quando servono: i clienti non scaricano più gli strumenti del coach
 import { lazyPage } from './lib/lazyPage'
+import { logError } from './lib/errorLog'
 const GraficiProgressi = lazyPage(() => import('./components/GraficiProgressi'))
 const AdminPanel = lazyPage(() => import('./pages/AdminPanel'))
+const ErroriApp = lazyPage(() => import('./pages/ErroriApp'))
+const GiroSettimanale = lazyPage(() => import('./pages/GiroSettimanale'))
 const DettaglioCliente = lazyPage(() => import('./pages/DettaglioCliente'))
 const ImportaPiano = lazyPage(() => import('./pages/ImportaPiano'))
 const ImportaAllenamento = lazyPage(() => import('./pages/ImportaAllenamento'))
@@ -57,6 +60,7 @@ class ErrorBoundary extends React.Component {
   }
   componentDidCatch(error, info) {
     console.error('App crash:', error, info)
+    logError(error, 'react')
   }
   render() {
     if (this.state.error) {
@@ -371,6 +375,8 @@ export default function App() {
             <Route path="messaggi-programmati" element={!profile ? null : profile.role === 'admin' ? <MessaggiProgrammati /> : <Navigate to="/" />} />
             <Route path="report-pdf" element={!profile ? null : profile.role === 'admin' ? <ReportPDF /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaAllenamentoCliente /> : <Navigate to="/" />} />
+            <Route path="errori" element={!profile ? null : profile.role === 'admin' ? <ErroriApp /> : <Navigate to="/" />} />
+            <Route path="giro-settimanale" element={!profile ? null : profile.role === 'admin' ? <GiroSettimanale /> : <Navigate to="/" />} />
             <Route path="admin" element={!profile ? null : profile.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
             <Route path="cliente/:clientId" element={!profile ? null : profile.role === 'admin' ? <DettaglioCliente /> : <Navigate to="/" />} />
             <Route path="importa" element={!profile ? null : profile.role === 'admin' ? <ImportaPiano /> : <Navigate to="/" />} />
