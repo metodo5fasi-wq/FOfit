@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { done } from '../lib/toast'
 import { TYPES, relTime } from '../lib/coachInbox.js'
 
@@ -20,6 +21,7 @@ function Tile({ label, value, color = '#F0F0F0', hint }) {
 }
 
 export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient, onOpenItem, onReply }) {
+  const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
   const [limit, setLimit] = useState(15)
   const [allAtt, setAllAtt] = useState(false)
@@ -54,13 +56,22 @@ export default function CoachDashboard({ inbox, clients, onOpenTab, onOpenClient
           <div style={{ fontSize: 18, fontWeight: 800, color: '#F0F0F0' }}>Dashboard</div>
           <div style={{ fontSize: 12, color: '#999', textTransform: 'capitalize' }}>{now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
         </div>
-        <button onClick={inbox.reload} disabled={loading} style={{ ...S.btn, opacity: loading ? 0.6 : 1 }}><i className="ti ti-refresh" style={{ fontSize: 12 }} /> {loading ? 'Aggiorno...' : 'Aggiorna'}</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/giro-settimanale')} style={S.btn}><i className="ti ti-checklist" style={{ fontSize: 12 }} /> Giro settimanale</button>
+          <button onClick={inbox.reload} disabled={loading} style={{ ...S.btn, opacity: loading ? 0.6 : 1 }}><i className="ti ti-refresh" style={{ fontSize: 12 }} /> {loading ? 'Aggiorno...' : 'Aggiorna'}</button>
+        </div>
       </div>
 
       {problems.length > 0 && (
         <div role="alert" style={{ background: 'rgba(226,75,74,0.1)', border: '0.5px solid rgba(226,75,74,0.4)', borderRadius: 10, padding: '10px 12px', color: '#F07070', fontSize: 12, marginBottom: 12, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
           <span>Alcune sezioni non si sono caricate ({problems.join(', ')}). I numeri potrebbero essere incompleti.</span>
           <button onClick={inbox.reload} style={S.btn}>Riprova</button>
+        </div>
+      )}
+      {inbox.errorCount > 0 && (
+        <div data-testid="avviso-errori" style={{ background: 'rgba(226,75,74,0.1)', border: '0.5px solid rgba(226,75,74,0.4)', borderRadius: 10, padding: '10px 12px', color: '#F07070', fontSize: 12, marginBottom: 12, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+          <span>{inbox.errorCount === 1 ? "1 errore dell'app" : `${inbox.errorCount} errori dell'app`} nelle ultime 48 ore.</span>
+          <button onClick={() => navigate('/errori')} style={S.btn}>Guarda</button>
         </div>
       )}
       {!seenTableOk && (
