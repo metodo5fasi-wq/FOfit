@@ -16,6 +16,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
   const [seen, setSeen] = useState(readLocal)
   const [loading, setLoading] = useState(true)
   const [problems, setProblems] = useState([])
+  const [errorCount, setErrorCount] = useState(0)
   const [seenTableOk, setSeenTableOk] = useState(true)
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -24,7 +25,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
     if (!coachId) return
     setLoading(true)
     const now = new Date(), since30 = new Date(now - 30 * DAY).toISOString(), since90 = new Date(now - 90 * DAY).toISOString(), today = dayKey(now)
-    const [checkins, messages, reports, anam, bookings, photos, measures, wplans, seenRes, ratesRes] = await Promise.all([
+    const [checkins, messages, reports, anam, bookings, photos, measures, wplans, seenRes, ratesRes, errRes] = await Promise.all([
       safe(supabase.from('weekly_checkins').select('*').gte('created_at', since30).order('created_at', { ascending: false }).limit(300)),
       safe(supabase.from('coach_messages').select('*').eq('sender_role', 'client').eq('is_read', false).order('created_at', { ascending: false }).limit(300)),
       safe(supabase.from('workout_reports').select('id,client_id,submitted_at,read_by_coach').not('submitted_at', 'is', null).eq('read_by_coach', false).order('submitted_at', { ascending: false }).limit(100)),
@@ -35,6 +36,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
       safe(supabase.from('workout_plans').select('client_id').eq('is_active', true).limit(1000)),
       safe(supabase.from('coach_inbox_seen').select('item_key').eq('coach_id', coachId).gte('seen_at', since90).limit(5000)),
       safe(supabase.from('subscription_installments').select('*').is('paid_at', null).limit(2000)),
+      safe(supabase.from('app_errors').select('id').eq('resolved', false).gte('created_at', new Date(now - 2 * DAY).toISOString()).limit(100)),      // errori dell'app delle ultime 48 ore
     ])
     if (!alive.current) return
     const bad = []
@@ -46,6 +48,7 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
       ratesByClient: ratesRes.error ? null : (ratesRes.data || []).reduce((o, r) => { (o[r.client_id] = o[r.client_id] || []).push(r); return o }, {}),
     })
     setSeenTableOk(!seenRes.error)
+    setErrorCount(errRes.error ? 0 : (errRes.data || []).length)
     setSeen(new Set([...readLocal(), ...(seenRes.error ? [] : (seenRes.data || []).map(r => r.item_key))]))
     setProblems(bad); setLoading(false)
   }, [coachId])
@@ -88,5 +91,5 @@ export function useCoachInbox({ clients, clientStats, coachId, onChanged }) {
     if (native.length) onChanged && onChanged()
   }, [coachId, load, onChanged])
 
-  return { loading, problems, seenTableOk, items: derived.items, unseen, unseenCount: unseen.length, counts, agenda: derived.agenda, attention: derived.attention, week: derived.week, markSeen, reload: load }
+  return { loading, problems, errorCount, seenTableOk, items: derived.items, unseen, unseenCount: unseen.length, counts, agenda: derived.agenda, attention: derived.attention, week: derived.week, markSeen, reload: load }
 }

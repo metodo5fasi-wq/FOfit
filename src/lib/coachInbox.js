@@ -2,10 +2,11 @@
 // Funzioni pure (nessun accesso al database): si possono provare da sole.
 import { SLOT_MINUTES } from './callAvailability.js'
 import { summarize as summarizeRates } from './installments.js'
+import { weightAlert } from './weightAlerts.js'
 
 export const DAY = 86400000
 // Soglie (modificabili qui)
-export const T = { diaryDays: 3, workoutDays: 7, checkinDays: 8, subscriptionDays: 7, expiredIgnoreDays: 30, inboxWindowDays: 30, bookingWindowDays: 14 }
+export const T = { diaryDays: 3, workoutDays: 7, checkinDays: 8, subscriptionDays: 7, expiredIgnoreDays: 30, planStaleDays: 42, inboxWindowDays: 30, bookingWindowDays: 14 }
 
 export const TYPES = {
   checkin:  { label: 'Check-in',  icon: 'ti-activity',          color: '#4A90D4' },
@@ -126,6 +127,11 @@ export function buildAttention({ clients = [], stats = {}, lastCheckinAt = {}, w
       else flags.push({ code: 'rate', severity: 'amber', text: `Rata scade tra ${plural(st2.left, 'giorno', 'giorni')}` })
     }
     if (!ignoreActivity) {
+      if (st.activePlan) {      // piano attivo ma non toccato da molto tempo (data dell'ultima modifica, se il database la registra; altrimenti di creazione)
+        const touched = parseDay(st.activePlan.updated_at || st.activePlan.created_at), stale = touched ? dayDiff(now, touched) : 0
+        if (stale >= T.planStaleDays) flags.push({ code: 'plan_old', severity: 'amber', text: `Piano alimentare invariato da ${plural(Math.floor(stale / 7), 'settimana', 'settimane')}` })
+      }
+      const wa = weightAlert(st.weights || [], c.goal, dayKey(now)); if (wa) flags.push(wa)
       if (!st.activePlan) flags.push(st.inactivePlan ? { code: 'plan_off', severity: 'amber', text: 'Piano alimentare non attivo' } : { code: 'no_plan', severity: 'red', text: 'Senza piano alimentare' })
       const hasWorkoutPlan = workoutPlanClients ? workoutPlanClients.has(c.id) : null
       if (hasWorkoutPlan === false) flags.push({ code: 'no_workout_plan', severity: 'amber', text: 'Senza scheda di allenamento' })
