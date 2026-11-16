@@ -4,6 +4,8 @@ import { localDateStr } from '../lib/dates'
 import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { askConfirm } from '../lib/confirm'
+import { fetchAllRows } from '../lib/pagedQuery'
+import EconomyPanel from '../components/EconomyPanel'
 import { num, MAX_RATE, addMonths, addDays, effectiveDue, rateState, generateRates, validateRates, planRates, ratesTotal, ratesPaid, coachBadge, usesProroga, isMissingProrogaColumn, MISSING_PROROGA_MSG, fmtDate, money, GRACE_DAYS } from '../lib/installments'
 
 const s = {
@@ -62,7 +64,7 @@ export default function Abbonamenti() {
       .select('id,full_name,subscription_start,subscription_end,subscription_type,subscription_notes,payment_type,installments,installment_amount,installments_paid')
       .eq('role','client').order('full_name')
     setClients(data||[])
-    const { data: rr } = await supabase.from('subscription_installments').select('*')
+    const { data: rr } = await fetchAllRows(() => supabase.from('subscription_installments').select('*').order('due_date').order('id'), { maxRows: 10000 })
     const by = {}; (rr||[]).forEach(r => { (by[r.client_id] = by[r.client_id] || []).push(r) })
     setAllRates(by)
     setLoading(false)
@@ -76,17 +78,17 @@ export default function Abbonamenti() {
       if (days === 4) {
         const { data: ex } = await supabase.from('notifications')
           .select('id').eq('client_id',c.id).eq('type','subscription_expiring')
-          .gte('created_at', new Date(Date.now()-86400000).toISOString())
+          .gte('created_at', new Date(Date.now()-2*86400000).toISOString())
         if (!ex?.length) await dbSave(supabase.from('notifications').insert({
           client_id:c.id, type:'subscription_expiring',
           title:'⚠️ Abbonamento in scadenza',
           body:`Il tuo abbonamento scadrà tra 4 giorni. Contatta il coach per il rinnovo.`
         }), 'la notifica', 'salvare', { silent: true })
       }
-      if (days !== null && days <= 0) {
+      if (days !== null && days <= 0 && days >= -7) {      // come l'invio automatico: una sola volta per scadenza, solo nei 7 giorni dopo
         const { data: ex } = await supabase.from('notifications')
           .select('id').eq('client_id',c.id).eq('type','subscription_expired')
-          .gte('created_at', new Date(Date.now()-86400000).toISOString())
+          .gte('created_at', c.subscription_end)
         if (!ex?.length) await dbSave(supabase.from('notifications').insert({
           client_id:c.id, type:'subscription_expired',
           title:'🔒 Abbonamento scaduto',
@@ -266,6 +268,8 @@ export default function Abbonamenti() {
           </div>
         )}
 
+        <EconomyPanel clients={clients} rates={Object.values(allRates).flat()} today={today} onOpen={async id=>{ const c=clients.find(x=>x.id===id); if(!c) return; await openEdit(c); try { document.querySelector(`[data-cliente="${id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}) } catch {} }}/>
+
         {/* STATS */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
           {[
@@ -293,7 +297,7 @@ export default function Abbonamenti() {
             const rateBlocked = rb?.level==='blocked'
 
             return (
-              <div key={c.id} style={{...s.card, borderColor: isBlocked||rateBlocked?'#E24B4A': rb?'#E8A020':'#2A2A2A'}}>
+              <div key={c.id} data-cliente={c.id} style={{...s.card, borderColor: isBlocked||rateBlocked?'#E24B4A': rb?'#E8A020':'#2A2A2A'}}>
                 {/* HEADER */}
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:isEditing?12:0}}>
                   <div style={{width:38,height:38,borderRadius:'50%',background:isBlocked?'rgba(226,75,74,0.16)':'linear-gradient(135deg,#D4570A,#F4894A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:isBlocked?'#E24B4A':'white',flexShrink:0}}>

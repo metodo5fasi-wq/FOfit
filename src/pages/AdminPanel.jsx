@@ -3,6 +3,7 @@ import { done } from '../lib/toast'
 import { dbSave } from '../lib/db'
 import { sendToClient } from '../lib/notify'
 import { authFetch } from '../lib/authFetch'
+import { fetchAllRows } from '../lib/pagedQuery'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { useNavigate } from 'react-router-dom'
@@ -122,8 +123,8 @@ export default function AdminPanel() {
     setLoading(true)
     // Clienti e piani insieme: non dipendono l'uno dall'altro (il nome del cliente si collega dopo)
     const [{ data: prof }, { data: plRaw, error: plErr }] = await Promise.all([
-      supabase.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false}),
-      supabase.from('meal_plans').select('*').order('created_at',{ascending:false}),
+      fetchAllRows(() => supabase.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false}).order('id')),
+      fetchAllRows(() => supabase.from('meal_plans').select('*').order('created_at',{ascending:false}).order('id')),
     ])
     setClients(prof||[])
     // Nessuna unione con "profiles": meal_plans ha DUE collegamenti verso profiles (client_id e created_by),
@@ -137,9 +138,9 @@ export default function AdminPanel() {
       const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0]
       const [diaryRes, measureRes, sessionsRes, checkinRes, msgRes, adherenceRes, repQ, amnQ] = await Promise.all([
         supabase.from('diary_entries').select('client_id,entry_date,kcal').in('client_id', ids).gte('entry_date', weekAgo),
-        supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}),
+        fetchAllRows(() => supabase.from('progress_entries').select('client_id,entry_date,weight_kg').in('client_id', ids).order('entry_date',{ascending:false}).order('id'), { maxRows: 15000 }),
         supabase.from('workout_sessions').select('client_id,session_date,sets_completed,sets_total').in('client_id', ids).gte('session_date', weekAgo),
-        supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}),
+        fetchAllRows(() => supabase.from('weekly_checkins').select('client_id,energy,sleep,stress,week_date').in('client_id', ids).order('week_date',{ascending:false}).order('id'), { maxRows: 10000 }),
         supabase.from('coach_messages').select('client_id,is_read,sender_role,created_at').in('client_id', ids).eq('sender_role','client').eq('is_read',false),
         supabase.from('meal_adherence').select('client_id,followed,adherence_date').in('client_id', ids).gte('adherence_date', weekAgo),
         // report e anamnesi non letti: nello stesso giro (prima due richieste in più, una dopo l'altra)
@@ -157,7 +158,11 @@ export default function AdminPanel() {
       })
 
       const latestByClient = {}
-      ;(measureRes.data||[]).forEach(m => { if (!latestByClient[m.client_id]) latestByClient[m.client_id] = m })
+      const weightsByClient = {}, since60 = new Date(Date.now()-60*86400000).toISOString().split('T')[0]
+      ;(measureRes.data||[]).forEach(m => {
+        if (!latestByClient[m.client_id]) latestByClient[m.client_id] = m
+        if (m.weight_kg != null && m.entry_date >= since60) (weightsByClient[m.client_id] = weightsByClient[m.client_id] || []).push({ date: m.entry_date, value: m.weight_kg })   // per gli avvisi sul peso
+      })
 
       const sessionsByClient = {}
       ;(sessionsRes.data||[]).forEach(s => {
@@ -195,6 +200,7 @@ export default function AdminPanel() {
           activePlan: cp.find(p => p.is_active) || null,
           inactivePlan: cp.some(p => p.is_active) ? null : (cp[0] || null),   // i piani arrivano dal più recente
           latestMeasure: latestByClient[c.id] || null,
+          weights: (weightsByClient[c.id] || []).reverse(),
           sessions7: sessionsByClient[c.id] || [],
           lastCheckin: checkinByClient[c.id] || null,
           unreadMessages: unreadByClient[c.id] || 0,

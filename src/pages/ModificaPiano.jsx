@@ -11,6 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlanPdfButton from '../components/PlanPdfButton'
 import { useToast } from '../components/Toast'
+import * as MT from '../lib/mealTemplates'
 import { searchFoods } from '../data/foodDatabase.js'
 
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -130,6 +131,7 @@ export default function ModificaPiano() {
   const [searchingFood, setSearchingFood] = useState(false)
   const searchTimeoutRef = React.useRef(null)
   const [savedTemplates, setSavedTemplates] = useState([])
+  const [templatesRemote, setTemplatesRemote] = useState(true)      // false = la tabella dei modelli non c'è ancora: si usa il browser
   const [showTemplates, setShowTemplates] = useState(null) // mealId
   const [showSaveTemplate, setShowSaveTemplate] = useState(null) // mealId
   const [templateName, setTemplateName] = useState('')
@@ -304,32 +306,21 @@ export default function ModificaPiano() {
   }
 
   // ── TEMPLATE PASTI ───────────────────────────────────────
-  function saveTemplate(mealId) {
+  async function saveTemplate(mealId) {
     const meal = meals.find(m => m.id === mealId)
     if (!meal || !templateName.trim()) return
-    const template = {
-      id: Date.now(),
-      name: templateName.trim(),
-      meal_type: meal.meal_type,
-      foods: meal.plan_meal_foods.map(f => ({
-        food_name: f.food_name, quantity_g: f.quantity_g,
-        kcal: f.kcal, protein_g: f.protein_g, carbs_g: f.carbs_g, fat_g: f.fat_g,
-        _origQty: f.quantity_g, _origKcal: f.kcal, _origProt: f.protein_g, _origCarbs: f.carbs_g, _origFat: f.fat_g,
-      })),
-    }
-    const updated = [...savedTemplates, template]
-    setSavedTemplates(updated)
-    try { localStorage.setItem('fofit_meal_templates', JSON.stringify(updated)) } catch(e) {}
+    if (!(meal.plan_meal_foods || []).length) { notify('Il pasto è vuoto: aggiungi almeno un alimento prima di salvarlo come modello.', 'error'); return }
+    const r = await MT.saveTemplate({ name: templateName, meal_type: meal.meal_type, foods: meal.plan_meal_foods }, templatesRemote)
+    if (!r.ok) { notify('Non sono riuscito a salvare il modello. Riprova.', 'error'); return }
+    setSavedTemplates(prev => [...prev, r.template])
     setShowSaveTemplate(null)
     setTemplateName('')
-    toast('Operazione completata', 'success')
+    done(r.remote ? 'Modello salvato' : 'Modello salvato solo su questo dispositivo')
   }
 
-  function loadTemplates() {
-    try {
-      const saved = localStorage.getItem('fofit_meal_templates')
-      if (saved) setSavedTemplates(JSON.parse(saved))
-    } catch(e) {}
+  async function loadTemplates() {
+    const r = await MT.loadTemplates()
+    setSavedTemplates(r.templates); setTemplatesRemote(r.remote)
   }
 
   function applyTemplate(mealId, template) {
@@ -344,10 +335,10 @@ export default function ModificaPiano() {
     setDirty(true)
   }
 
-  function deleteTemplate(id) {
-    const updated = savedTemplates.filter(t => t.id !== id)
-    setSavedTemplates(updated)
-    try { localStorage.setItem('fofit_meal_templates', JSON.stringify(updated)) } catch(e) {}
+  async function deleteTemplate(id) {
+    const r = await MT.deleteTemplate(id, templatesRemote)
+    if (!r.ok) { notify('Non sono riuscito a eliminare il modello.', 'error'); return }
+    setSavedTemplates(prev => prev.filter(t => t.id !== id))
   }
 
   // ── COPIA GIORNO INTERO ──────────────────────────────────

@@ -95,12 +95,24 @@ export default function MessaggiProgrammati() {
     setSaving(false)
   }
 
+  // "Prenota" il messaggio prima di inviarlo: l'invio automatico del server (pg_cron) e questa pagina possono lavorare insieme senza mai mandarlo due volte.
+  // Chi riesce a segnarlo "inviato" per primo lo invia; l'altro lo salta. Se l'invio poi fallisce, lo si rimette "da inviare".
+  async function claim(id, at) {
+    const { data, error } = await supabase.from('scheduled_messages').update({ sent: true, sent_at: at }).eq('id', id).eq('sent', false).select('id')
+    return !error && !!data?.length
+  }
+  async function release(id) {
+    await supabase.from('scheduled_messages').update({ sent: false, sent_at: null }).eq('id', id)
+  }
+
   async function sendNow(msg) {
     setSending(msg.id)
+    const at = new Date().toISOString()
+    if (!(await claim(msg.id, at))) { setSending(null); notify('Questo messaggio risulta già inviato.'); fetchScheduled(); return }
     // notifica nell'app + push + messaggio in conversazione (un solo percorso, condiviso con la campanella)
     const r = await sendToClient({ clientId: msg.client_id, coachId: profile.id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
-    if (!r.ok) { setSending(null); notify('Non sono riuscito a inviare il messaggio. Riprova.', 'error'); return }      // resta "da inviare"
-    await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: new Date().toISOString() }).eq('id', msg.id), 'il messaggio programmato', 'salvare', { done: 'Messaggio inviato' })
+    if (!r.ok) { await release(msg.id); setSending(null); notify('Non sono riuscito a inviare il messaggio. Riprova.', 'error'); fetchScheduled(); return }      // resta "da inviare"
+    done('Messaggio inviato')
     fetchScheduled()
     setSending(null)
   }
@@ -117,9 +129,9 @@ export default function MessaggiProgrammati() {
       const { data: toSend } = await supabase.from('scheduled_messages')
         .select('*').eq('sent', false).lte('scheduled_at', now)
       for (const msg of toSend||[]) {
+        if (!(await claim(msg.id, now))) continue          // già inviato dal server o da un'altra scheda aperta
         const r = await sendToClient({ clientId: msg.client_id, coachId: msg.coach_id, title: 'Messaggio dal coach', pushTitle: '💬 Messaggio dal coach', body: msg.message })
-        if (!r.ok) continue            // non inviato: riprova al prossimo controllo (nessun duplicato, la notifica non è stata creata)
-        await dbSave(supabase.from('scheduled_messages').update({ sent:true, sent_at: now }).eq('id', msg.id), 'il messaggio programmato', 'salvare', { quiet: true })
+        if (!r.ok) await release(msg.id)            // non inviato: torna "da inviare" e riprova al prossimo controllo
       }
       if (toSend?.length) fetchScheduled()
     }
