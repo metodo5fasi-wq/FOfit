@@ -99,8 +99,8 @@ function trovaAlternative(inp, keys, pool) {
   return {
     result: {
       ok: true, alimento: `${f.name} ${grams} g`, kcal: r.kcal,
-      alternative: (r.pool || r.items).slice(0, 10).map(i => ({ alimento: i.name, grammi: i.grams, kcal: i.kcal, p: i.p, c: i.c, g: i.g })),
-      nota: 'Grammi e kcal sono già calcolati: riportali così, senza modificarli. Scegline 3-4 diverse tra loro e aggiungi tu il tocco sfizioso (come cucinarle, abbinamenti).' + (blocked ? ` Attenzione: l'alimento del piano contiene ${blocked}.` : ''),
+      alternative: (r.pool || r.items).slice(0, 16).map(i => ({ alimento: i.name, grammi: i.grams, kcal: i.kcal, p: i.p, c: i.c, g: i.g })),
+      nota: 'Grammi e kcal sono già calcolati: riportali così, senza modificarli. Proponine 5-6 diverse tra loro (cereali, legumi, patate… non tutte dello stesso tipo) e aggiungi tu il tocco sfizioso (come cucinarle, abbinamenti). Se il cliente ne vuole altre, usa le restanti dell\'elenco.' + (blocked ? ` Attenzione: l'alimento del piano contiene ${blocked}.` : ''),
     },
   }
 }
