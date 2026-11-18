@@ -12,6 +12,7 @@ import { readSse } from '../lib/assistantStream'
 const SUGGERIMENTI = [
   { label: '🍳 Ricetta con pollo', text: 'Dammi una ricetta sfiziosa con il pollo che rispetti i miei macro per il pranzo.' },
   { label: '🔄 Sostituisci alimento', text: 'Puoi aiutarmi a trovare un\'alternativa sfiziosa a un alimento del mio piano?' },
+  { label: '📅 Il mio piano di oggi', text: 'Mostrami il mio piano alimentare di oggi, pasto per pasto, con kcal e macro.' },
   { label: '📊 Analizza piano', text: 'Puoi analizzare il mio piano alimentare e dirmi se è bilanciato per il mio obiettivo?' },
   { label: '🥗 Piatto sfizioso', text: 'Suggeriscimi un piatto gustoso e creativo che rispetti i miei macro.' },
   { label: '🍽️ Cosa mi resta oggi?', text: 'Guarda il mio diario di oggi: quante kcal e macro mi restano e cosa posso mangiare per restare nel piano?' },
@@ -140,8 +141,7 @@ export default function AssistenteAI() {
   // il diario cambia durante la giornata: prima di ogni domanda lo rileggo (una sola lettura)
   async function freshContext() {
     const diary = await safe(supabase.from('diary_entries').select('meal_type,food_name,quantity_g,kcal,protein_g,carbs_g,fat_g').eq('client_id', profile.id).eq('entry_date', today))
-    if (!diary) return clientContext
-    rowsRef.current = { ...rowsRef.current, diary }
+    rowsRef.current = diary ? { ...rowsRef.current, diary } : rowsRef.current      // la data si ricalcola sempre (la pagina può restare aperta a cavallo di mezzanotte)
     const c = buildContext(rowsRef.current); setClientContext(c); return c
   }
 
