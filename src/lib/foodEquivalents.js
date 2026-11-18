@@ -161,12 +161,13 @@ export function matchFood(row, db) {
 
 // row: riga del piano {food_name, brand, quantity_g, kcal, protein_g, carbs_g, fat_g} · db: FOOD_DB · mealType: 'colazione' | 'pranzo' | …
 // → { ok, reason?, kcal, items:[{name, brand, cat, grams, kcal, dKcal, p, c, g}], equalGrams? }
-export function equivalents(row, db, { mealType, day } = {}) {
+export function equivalents(row, db, { mealType, day, exclude } = {}) {
   const grams = n(row.quantity_g), macroKcal = n(row.protein_g) * 4 + n(row.carbs_g) * 4 + n(row.fat_g) * 9
   const kcal0 = macroKcal > 0 ? Math.round(macroKcal) : n(row.kcal)      // come in Modifica piano: con i macro presenti le kcal si ricalcolano
   if (!(grams > 0) || !(kcal0 > 0) || !Array.isArray(db) || !db.length) return { ok: false, reason: 'dati', items: [] }
   const grp = mealGroup(mealType)
-  const all = db.filter(f => !BASE_KEYS.has(norm(f.name))).concat(BASE_DB)      // il database + la lista base del coach (prima scelta: se un alimento è nella lista, vale quella versione)
+  let all = db.filter(f => !BASE_KEYS.has(norm(f.name))).concat(BASE_DB)
+  if (typeof exclude === 'function') all = all.filter(f => !exclude(f))      // alimenti vietati (allergie, intolleranze): mai proposti, lista base compresa; il database + la lista base del coach (prima scelta: se un alimento è nella lista, vale quella versione)
   const { main: rowMain, share } = mainOf(row.protein_g, row.carbs_g, row.fat_g)
   let mine = matchFood(row, all)
   if (mine && mainOf(mine.p, mine.c, mine.g).main !== rowMain) mine = null      // il nome somiglia ma i macro dicono un'altra cosa: non ci si fida
