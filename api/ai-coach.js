@@ -1,6 +1,6 @@
 import { applyCors, guard } from '../server/auth.js'
 import { TOOLS, runTool } from '../server/assistantTools.js'
-import { contextToPrompt, restrictionKeys, pickModel } from '../src/lib/assistantContext.js'
+import { contextToPrompt, restrictionKeys, pickModel, todayInfo } from '../src/lib/assistantContext.js'
 
 // Assistente nutrizionale FO Coach.
 //  • risposta IN STREAMING (il testo compare mentre viene scritto)
@@ -14,6 +14,7 @@ const BASE_PROMPT = `Sei FO Coach, l'assistente nutrizionale di FOfit creato dal
 
 COME RISPONDI
 - Rapido e concreto: di solito 3-6 righe. Niente premesse, niente ripetere la domanda. Elenchi solo quando servono.
+- Sai che giorno è (vedi «OGGI È» sotto): "oggi", "stasera", "domani" si riferiscono a quel giorno del piano, mai a lunedì per default. Se ti chiede il piano di oggi, riporta il blocco «PIANO DI OGGI» così com'è, pasto per pasto, senza inventare.
 - Sempre sul piano di QUESTO cliente: conosci i suoi 7 giorni, i macro, il diario di oggi, le sue preferenze e restrizioni (sotto). Citali quando servono ("a pranzo di martedì hai…").
 - Sostenibilità prima di tutto: piatti sfiziosi, semplici, di tutti i giorni, che il cliente voglia davvero mangiare. Niente ingredienti strani.
 - Se per rispondere bene ti manca un dato, fai UNA domanda precisa con 2-4 opzioni ("Per quale pasto? colazione / pranzo / cena"; "Quanto tempo hai: 10 minuti o di più?"; "Cucina o niente fornelli?"). Se puoi rispondere senza, rispondi e basta.
@@ -86,7 +87,9 @@ export default async function handler(req, res) {
 
   const ctx = clientContext && typeof clientContext === 'object' ? clientContext : {}
   const keys = restrictionKeys(ctx)
-  const system = [{ type: 'text', text: BASE_PROMPT + '\n\n' + contextToPrompt(ctx).slice(0, 30000), cache_control: { type: 'ephemeral' } }]
+  const rome = todayInfo(new Date(), 'Europe/Rome'), ora = ctx.oggi?.ora && /^\d\d:\d\d$/.test(ctx.oggi.ora) ? ctx.oggi.ora : rome.ora
+  // il blocco lungo (piano, anamnesi…) resta uguale tra un messaggio e l'altro e si mette in cache; l'ora cambia sempre, quindi sta in un blocco a parte
+  const system = [{ type: 'text', text: BASE_PROMPT + '\n\n' + contextToPrompt(ctx, rome).slice(0, 30000), cache_control: { type: 'ephemeral' } }, { type: 'text', text: `ORA ATTUALE: ${ora} (usala per capire quale pasto è il prossimo).` }]
   const convo = history.map(m => ({ role: m.role, content: m.content }))
 
   // prima chiamata PRIMA di aprire il flusso: se il modello veloce non risponde si riprova con quello principale, e un errore arriva come errore vero (non a metà)
