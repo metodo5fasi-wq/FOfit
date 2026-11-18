@@ -1,3 +1,5 @@
+import { BASE_FOODS } from './alimentiBase.js'
+
 // FOfit Food Database — 2000 alimenti italiani curati
 // Aggiornato con tutti i principali prodotti italiani e integratori fitness
 
@@ -1066,6 +1068,14 @@ export const FOOD_DB = [
 
 
 ]
+
+// Alimenti BASE del coach (src/data/alimentiBase.js): si aggiungono solo se nel database non c'è già un alimento con lo stesso nome (le marche non contano)
+{
+  const norm = s => String(s || '').toLowerCase().replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim()
+  const have = new Set(FOOD_DB.map(f => norm(f.name)))
+  for (const b of BASE_FOODS) if (!have.has(norm(b.name))) { have.add(norm(b.name)); FOOD_DB.push({ cat: b.cat, name: b.name, brand: b.brand, kcal100: b.kcal100, p: b.p, c: b.c, g: b.g }) }
+}
+
 export function searchFoods(query) {
   if (!query || query.length < 2) return []
   const q = query.toLowerCase().trim()
