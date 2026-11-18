@@ -7,6 +7,9 @@
 // Niente import: lo usano sia la pagina sia il server (api/ai-coach.js).
 // ─────────────────────────────────────────────────────────────
 const DAY = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
+const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre']
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const p2 = n => String(n).padStart(2, '0')
 const txt = v => (Array.isArray(v) ? v.filter(Boolean).join(', ') : String(v ?? '')).replace(/\s+/g, ' ').trim()
 const nz = v => { const x = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(x) ? x : 0 }
 const r1 = v => Math.round(nz(v) * 10) / 10
@@ -44,9 +47,21 @@ export function blockedBy(food, keys) {
   return null
 }
 
+// ── che giorno è oggi ─────────────────────────────────────────
+// Nel piano il lunedì è il giorno 1 e la domenica il 7 (come in «Piano alimentare»). Senza fuso usa l'orologio del telefono; con tz (es. 'Europe/Rome') quello del server.
+export function todayInfo(d = new Date(), tz = null) {
+  let y, m, day, wd, hh, mm
+  if (tz) {
+    const P = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d).map(x => [x.type, x.value]))
+    y = +P.year; m = +P.month; day = +P.day; wd = WD.indexOf(P.weekday); hh = +P.hour % 24; mm = +P.minute
+  } else { y = d.getFullYear(); m = d.getMonth() + 1; day = d.getDate(); wd = d.getDay(); hh = d.getHours(); mm = d.getMinutes() }
+  const n = ((wd + 6) % 7) + 1
+  return { data: `${y}-${p2(m)}-${p2(day)}`, n, giorno: DAY[n - 1], label: `${DAY[n - 1]} ${day} ${MESI[m - 1]} ${y}`, ora: `${p2(hh)}:${p2(mm)}`, domani: { n: (n % 7) + 1, giorno: DAY[n % 7] }, ieri: { n: ((n + 5) % 7) + 1, giorno: DAY[(n + 5) % 7] } }
+}
+
 // ── costruzione del contesto (lato pagina) ────────────────────
 // rows: { profile, plan, meals (plan_meals con plan_meal_foods), anamnesi, diary (voci di oggi), progress (ultime misure, dalla più recente), workoutPlan, workoutDays, sessions }
-export function buildContext({ profile, plan, meals, anamnesi, diary, progress, workoutPlan, workoutDays, sessions } = {}) {
+export function buildContext({ profile, plan, meals, anamnesi, diary, progress, workoutPlan, workoutDays, sessions, now } = {}) {
   const A = anamnesi || {}
   const giorni = []
   const alt = new Map()
@@ -67,6 +82,7 @@ export function buildContext({ profile, plan, meals, anamnesi, diary, progress, 
   const dl = diary || []
   const tot = dl.reduce((a, e) => ({ kcal: a.kcal + nz(e.kcal), p: a.p + nz(e.protein_g), c: a.c + nz(e.carbs_g), g: a.g + nz(e.fat_g) }), { kcal: 0, p: 0, c: 0, g: 0 })
   return {
+    oggi: todayInfo(now || new Date()),
     nome: txt(profile?.full_name), obiettivo: txt(profile?.goal || A.obiettivo),
     target: { kcal: nz(plan?.kcal_target) || null, p: nz(plan?.protein_target_g) || null, c: nz(plan?.carbs_target_g) || null, g: nz(plan?.fat_target_g) || null },
     pianoNote: txt(plan?.notes),
@@ -89,24 +105,36 @@ export function buildContext({ profile, plan, meals, anamnesi, diary, progress, 
 export const restrictionKeys = ctx => allergenKeys([ctx?.anamnesi?.allergie, ctx?.anamnesi?.intolleranze, ctx?.anamnesi?.reazioni])
 
 // ── testo per l'AI ────────────────────────────────────────────
-export function planText(piano) {
+const dayIndex = name => DAY.indexOf(name) + 1
+function dayText(g, tag = '') {
+  let dk = 0, dp = 0, dc = 0, dg = 0
+  const pasti = g.pasti.map(p => {
+    const k = p.alimenti.reduce((a, f) => a + f.k, 0); dk += k
+    p.alimenti.forEach(f => { dp += f.p; dc += f.c; dg += f.gr })
+    return `  ${p.tipo} (${k} kcal)${p.nota ? ` — nota: ${cut(p.nota, 160)}` : ''}: ` + p.alimenti.map(f => `${f.n} ${f.g}g [${f.k} kcal P${f.p} C${f.c} G${f.gr}]`).join('; ')
+  }).join('\n')
+  return `${g.giorno.toUpperCase()}${tag} — totale ${Math.round(dk)} kcal · P${Math.round(dp)} C${Math.round(dc)} G${Math.round(dg)}\n${pasti}`
+}
+export function planText(piano, oggi = null) {
   if (!piano || !piano.giorni?.length) return 'Nessun piano alimentare attivo.'
-  const rows = piano.giorni.map(g => {
-    let dk = 0, dp = 0, dc = 0, dg = 0
-    const pasti = g.pasti.map(p => {
-      const k = p.alimenti.reduce((a, f) => a + f.k, 0); dk += k
-      p.alimenti.forEach(f => { dp += f.p; dc += f.c; dg += f.gr })
-      return `  ${p.tipo} (${k} kcal)${p.nota ? ` — nota: ${cut(p.nota, 160)}` : ''}: ` + p.alimenti.map(f => `${f.n} ${f.g}g [${f.k} kcal P${f.p} C${f.c} G${f.gr}]`).join('; ')
-    }).join('\n')
-    return `${g.giorno.toUpperCase()} — totale ${Math.round(dk)} kcal · P${Math.round(dp)} C${Math.round(dc)} G${Math.round(dg)}\n${pasti}`
-  })
-  return rows.join('\n\n')
+  return piano.giorni.map(g => {
+    const n = dayIndex(g.giorno)
+    return dayText(g, oggi && n === oggi.n ? ' (OGGI)' : oggi && n === oggi.domani?.n ? ' (DOMANI)' : '')
+  }).join('\n\n')
 }
 
-export function contextToPrompt(ctx = {}) {
+export function contextToPrompt(ctx = {}, fallbackToday = null) {
   const A = ctx.anamnesi || {}, T = ctx.target || {}, keys = restrictionKeys(ctx)
+  const oggi = ctx.oggi?.n >= 1 && ctx.oggi?.n <= 7 ? ctx.oggi : fallbackToday
   const line = (label, v) => (v ? `- ${label}: ${cut(v, 400)}\n` : '')
-  let out = `PROFILO CLIENTE\n- Nome: ${cut(ctx.nome, 60) || 'Cliente'}\n- Obiettivo: ${cut(ctx.obiettivo, 200) || 'non specificato'}\n- Target giornaliero: ${T.kcal || '—'} kcal · P ${T.p || '—'} g · C ${T.c || '—'} g · G ${T.g || '—'} g\n`
+  let out = ''
+  if (oggi) {
+    const today = ctx.piano?.giorni?.find(g => dayIndex(g.giorno) === oggi.n)
+    out += `OGGI È ${String(oggi.label || oggi.giorno).toUpperCase()} → giorno ${oggi.n} del piano. Domani è ${oggi.domani?.giorno}, ieri era ${oggi.ieri?.giorno}.\n`
+    out += 'Quando il cliente dice "oggi", "stasera", "domani", "ieri" o non indica il giorno, vale SEMPRE questa data: non usare mai lunedì per default e non scegliere un altro giorno.\n\n'
+    out += `PIANO DI OGGI (${oggi.giorno})\n` + (today ? dayText(today) : `Il piano non ha pasti per ${oggi.giorno}: dillo, non inventarli.`) + '\n\n'
+  }
+  out += `PROFILO CLIENTE\n- Nome: ${cut(ctx.nome, 60) || 'Cliente'}\n- Obiettivo: ${cut(ctx.obiettivo, 200) || 'non specificato'}\n- Target giornaliero: ${T.kcal || '—'} kcal · P ${T.p || '—'} g · C ${T.c || '—'} g · G ${T.g || '—'} g\n`
   if (ctx.pianoNote) out += `- Note del coach sul piano: ${cut(ctx.pianoNote, 600)}\n`
   out += '\n'
   // RESTRIZIONI: in cima, perché vengono prima di tutto
@@ -116,7 +144,7 @@ export function contextToPrompt(ctx = {}) {
   out += line('Non vuole / evita', A.nonVuole) + line('Cibi che gli danno gonfiore', A.gonfiano) + line('Regole alimentari personali', A.regole)
   out += line('Diagnosi e indicazioni mediche (non dare consigli medici: rimanda al coach)', A.diagnosi) + line('Gravidanza / allattamento', A.gravidanza)
   out += '\nPREFERENZE E VITA REALE\n' + (line('Piatti e cibi che ama', A.preferiti) + line('Chi cucina', A.chiCucina) + line('Tempo per preparare i pasti', A.tempo) + line('Pasti fuori casa / al lavoro', A.fuori) || '- (non indicato)\n')
-  out += `\nPIANO ALIMENTARE ATTIVO (tutti i giorni; valori per la quantità indicata, alimenti crudi/secchi dove non scritto diversamente)\n${planText(ctx.piano)}\n`
+  out += `\nPIANO ALIMENTARE ATTIVO (tutti i giorni; valori per la quantità indicata, alimenti crudi/secchi dove non scritto diversamente)\n${planText(ctx.piano, oggi)}\n`
   if (ctx.piano?.alternative?.length) out += `\nALTERNATIVE SCELTE DAL COACH (hanno la precedenza quando il cliente chiede un cambio)\n` + ctx.piano.alternative.slice(0, 60).map(x => `- ${x.n}: ${x.a.slice(0, 12).join(', ')}`).join('\n') + '\n'
   const D = ctx.diario
   if (D) out += `\nDIARIO DI OGGI\n` + (D.voci?.length ? `- Già mangiato: ${D.kcal} kcal · P${D.p} C${D.c} G${D.g}${T.kcal ? ` — restano circa ${Math.max(0, T.kcal - D.kcal)} kcal` : ''}\n` + D.voci.map(v => `  · ${v.pasto}: ${v.n} ${v.g}g (${v.k} kcal)`).join('\n') + '\n' : '- Oggi non ha ancora registrato nulla nel diario.\n')
