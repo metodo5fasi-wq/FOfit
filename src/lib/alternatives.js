@@ -5,7 +5,7 @@
 // e riportare le alternative su un altro giorno dà già le grammature giuste per quel giorno.
 // Funzioni pure: nessuno schermo, nessun database.
 // ─────────────────────────────────────────────────────────────
-import { niceGrams, kcalOf, mealGroup, norm, n } from './foodEquivalents'
+import { niceGrams, kcalOf, mealGroup, norm, n, baseKey } from './foodEquivalents'
 
 export const MAX_ALTS = 12
 
@@ -44,7 +44,11 @@ export function scaleChoice(choice, kcal0) {
   const k = per100 * grams / 100
   return { ...choice, grams, kcal: Math.round(k), dKcal: Math.round(k) - kcal0, pG: Math.round(choice.p * grams / 100), cG: Math.round(choice.c * grams / 100), gG: Math.round(choice.g * grams / 100) }
 }
-export const scaleChoices = (choices, kcal0) => normAlts(choices).map(c => scaleChoice(c, kcal0)).filter(Boolean)
+// Mai lo stesso alimento due volte (es. «Pasta di semola» e «Pasta integrale»): resta il primo scelto
+export function scaleChoices(choices, kcal0) {
+  const seen = new Set()
+  return normAlts(choices).filter(c => { const k = baseKey(c.name); if (seen.has(k)) return false; seen.add(k); return true }).map(c => scaleChoice(c, kcal0)).filter(Boolean)
+}
 
 export function toggleChoice(list, choice) {
   const cur = normAlts(list), k = altKey(choice)
