@@ -7,6 +7,7 @@ import { Skeleton, LoadError, StaleNotice } from '../components/LoadStates'
 import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { ClientNotesCard } from '../components/CoachNotes'
 import { sortFoods } from '../lib/mealPlan'
+import { normAlts, scaleChoices, foodKcal } from '../lib/alternatives'
 import { equivalents } from '../lib/foodEquivalents'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
@@ -230,38 +231,43 @@ export default function PianoAlimentare() {
   )
 }
 
-// «Vedi alternative» sotto ogni alimento: alimenti adatti a quel pasto, con le stesse calorie e quantità tonde (calcolati al momento, il database alimenti si scarica solo alla prima apertura)
+// «Vedi alternative» sotto ogni alimento. Se il coach ha scelto le alternative per quell'alimento si vedono quelle (a pari calorie, ricalcolate sulla quantità del piano);
+// altrimenti sono proposte in automatico: alimenti adatti a quel pasto, stesse calorie, quantità tonde (il database alimenti si scarica solo alla prima apertura)
 function FoodAlternatives({ food, mealType }) {
   const [open, setOpen] = React.useState(false)
   const [db, setDb] = React.useState(null), [failed, setFailed] = React.useState(false)
+  const coach = React.useMemo(() => scaleChoices(food.alternatives, foodKcal(food)), [food])
+  const byCoach = normAlts(food.alternatives).length > 0
   function toggle() {
     const next = !open; setOpen(next)
-    if (next && !db && !failed) import('../data/foodDatabase.js').then(m => setDb(m.FOOD_DB || m.default || []), () => setFailed(true))
+    if (next && !byCoach && !db && !failed) import('../data/foodDatabase.js').then(m => setDb(m.FOOD_DB || m.default || []), () => setFailed(true))
   }
-  const res = React.useMemo(() => (open && db ? equivalents(food, db, { mealType }) : null), [open, db, food, mealType])
+  const res = React.useMemo(() => (open && !byCoach && db ? equivalents(food, db, { mealType }) : null), [open, byCoach, db, food, mealType])
   const MSG = { misto: 'Questo alimento è un piatto o un mix: non propongo equivalenze automatiche. Chiedi al tuo coach.', piccolo: 'La quantità è piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.', pasto: 'Per questo pasto non propongo alternative automatiche. Chiedi al tuo coach.' }
+  const list = byCoach ? coach.map(a => ({ grams: a.grams, name: a.name, brand: a.brand, kcal: a.kcal, dKcal: a.dKcal })) : (res?.ok ? res.items : [])
+  const kcal0 = byCoach ? foodKcal(food) : res?.kcal
   return (
     <div style={{padding:'0 0 8px 16px'}}>
       <button onClick={toggle} aria-expanded={open} data-testid="vedi-alternative" style={{background:'none',border:'none',padding:'6px 4px',minHeight:32,cursor:'pointer',fontFamily:'inherit',fontSize:12,color:'#F4894A',display:'inline-flex',alignItems:'center',gap:5}}>
         <i className="ti ti-refresh" style={{fontSize:13}}/>{open ? 'Nascondi alternative' : 'Vedi alternative'}
       </button>
       {open && (
-        <div data-testid="alternative-alimento" style={{background:'rgba(212,87,10,0.06)',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:8,padding:'8px 10px',marginTop:2}}>
-          {failed && <div style={{fontSize:12,color:'#F07070'}}>Non riesco a caricare le alternative. Riprova tra poco.</div>}
-          {!failed && !res && <div style={{fontSize:12,color:'#AAA'}}>Cerco le alternative…</div>}
+        <div data-testid="alternative-alimento" data-fonte={byCoach ? 'coach' : 'auto'} style={{background:'rgba(212,87,10,0.06)',border:'0.5px solid rgba(212,87,10,0.25)',borderRadius:8,padding:'8px 10px',marginTop:2}}>
+          {!byCoach && failed && <div style={{fontSize:12,color:'#F07070'}}>Non riesco a caricare le alternative. Riprova tra poco.</div>}
+          {!byCoach && !failed && !res && <div style={{fontSize:12,color:'#AAA'}}>Cerco le alternative…</div>}
           {res && !res.ok && <div style={{fontSize:12,color:'#AAA'}}>{MSG[res.reason] || MSG.misto}</div>}
-          {res?.ok && res.items.length === 0 && <div style={{fontSize:12,color:'#AAA'}}>Nessuna alternativa adatta trovata. Chiedi al tuo coach.</div>}
-          {res?.ok && res.items.length > 0 && (
+          {(byCoach || res?.ok) && list.length === 0 && <div style={{fontSize:12,color:'#AAA'}}>Nessuna alternativa adatta trovata. Chiedi al tuo coach.</div>}
+          {list.length > 0 && (
             <>
-              <div style={{fontSize:11,color:'#CCC',marginBottom:6}}>{res.equalGrams ? 'Si possono scambiare con la stessa quantità:' : `Con le stesse calorie (≈ ${res.kcal} kcal) · i macro possono cambiare:`}</div>
-              {res.items.map((a, i) => (
+              <div style={{fontSize:11,color:'#CCC',marginBottom:6}}>{res?.equalGrams ? 'Si possono scambiare con la stessa quantità:' : `${byCoach ? 'Alternative scelte dal tuo coach' : 'Alternative'} · stesse calorie (≈ ${kcal0} kcal) · i macro possono cambiare:`}</div>
+              {list.map((a, i) => (
                 <div key={i} style={{display:'flex',alignItems:'baseline',gap:8,padding:'5px 0',borderTop:i?'0.5px solid rgba(212,87,10,0.12)':'none',fontSize:12}}>
                   <span style={{minWidth:46,fontWeight:600,color:'#F0F0F0'}}>{a.grams} g</span>
                   <span style={{flex:1,color:'#F0F0F0',wordBreak:'break-word'}}>{a.name}{a.brand ? <span style={{color:'#888'}}> · {a.brand}</span> : null}</span>
                   <span style={{color:'#AAA',whiteSpace:'nowrap'}}>{a.kcal} kcal <span style={{color:Math.abs(a.dKcal) <= 15 ? '#6FCF97' : '#E8C050'}}>({a.dKcal > 0 ? '+' : a.dKcal < 0 ? '−' : '±'}{Math.abs(a.dKcal)})</span></span>
                 </div>
               ))}
-              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>Quantità arrotondate, calcolate in automatico: indicative. Per sostituzioni fisse nel piano chiedi al tuo coach.</div>
+              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>{byCoach ? 'Quantità arrotondate per avere le stesse calorie.' : 'Quantità arrotondate, calcolate in automatico: indicative. Per sostituzioni fisse nel piano chiedi al tuo coach.'}</div>
             </>
           )}
         </div>

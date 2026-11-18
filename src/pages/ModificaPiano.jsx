@@ -10,6 +10,8 @@ import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlanPdfButton from '../components/PlanPdfButton'
+import AlternativePicker from '../components/AlternativePicker'
+import { planPropagation } from '../lib/alternatives'
 import { useToast } from '../components/Toast'
 import * as MT from '../lib/mealTemplates'
 import { searchFoods } from '../data/foodDatabase.js'
@@ -412,6 +414,22 @@ export default function ModificaPiano() {
   // Sposta un pasto su/giù dentro il giorno (prima l'ordine dei pasti non si poteva cambiare)
   function shiftMeal(id, dir) { setMeals(prev => moveMeal(prev, id, dir)); setDirty(true) }
 
+  // ── ALTERNATIVE SCELTE ───────────────────────────────────
+  function setFoodAlts(mealId, foodId, alts) {
+    setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, plan_meal_foods: m.plan_meal_foods.map(f => f.id === foodId ? { ...f, alternatives: alts } : f) }))
+    setDirty(true)
+  }
+  const altItems = ms => ms.flatMap(m => (m.plan_meal_foods || []).map(f => ({ key: f.id, day: m.day_of_week, mealType: m.meal_type, name: f.food_name, alts: f.alternatives })))
+  // Riporta le alternative sugli stessi alimenti (stesso nome, stesso tipo di pasto) degli altri giorni: i grammi si adeguano da soli, a pari calorie
+  async function propagateAlts({ fromKey = null, day = null, overwrite = false }) {
+    const r = planPropagation(altItems(meals), { fromKey, day, overwrite })
+    if (!r.count) { notify(r.kept ? `Gli altri giorni hanno già le loro alternative (${r.kept} alimenti): non ho toccato nulla.` : 'Non ci sono altri giorni con lo stesso alimento nello stesso tipo di pasto.', 'error'); return }
+    if (overwrite && !(await askConfirm(`Le alternative verranno riportate su ${r.count} ${r.count === 1 ? 'alimento' : 'alimenti'} degli altri giorni, sostituendo quelle che hanno già. Potrai scartare tutto prima di salvare.`, { title: 'Applicare a tutti i giorni?', confirmLabel: 'Applica' }))) return
+    setMeals(prev => prev.map(m => ({ ...m, plan_meal_foods: m.plan_meal_foods.map(f => r.updates.has(f.id) ? { ...f, alternatives: r.updates.get(f.id) } : f) })))
+    setDirty(true)
+    done(`Alternative riportate su ${r.count} ${r.count === 1 ? 'alimento' : 'alimenti'}${r.kept ? ` (${r.kept} con scelte proprie lasciati com'erano)` : ''}`)
+  }
+
   // Salva tutto. Ordine pensato per non perdere nulla: PRIMA si inserisce e si aggiorna, per ULTIMA si elimina
   // (se qualcosa va storto a metà, niente è stato cancellato e puoi riprovare: la pagina resta com'era).
   async function saveAll() {
@@ -455,6 +473,7 @@ export default function ModificaPiano() {
       await fetchPlan({ quiet: true })
     } catch(e) {
       console.error('saveAll:', e)
+      if (/alternatives/i.test(e.cause?.message || '')) { notify('Per salvare le alternative serve eseguire lo script fofit-alternative.sql su Supabase (una volta sola). Poi premi di nuovo Salva.', 'error'); setSaving(false); return }
       notify(e.message || 'Non sono riuscito a salvare il piano. Riprova.', 'error')       // la pagina resta com'era: le modifiche sono ancora lì
     }
     setSaving(false)
@@ -602,6 +621,9 @@ export default function ModificaPiano() {
         <div style={{display:'flex',gap:6}}>
           <button onClick={()=>setShowCopyDay(!showCopyDay)} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
             📋 Copia giorno su...
+          </button>
+          <button data-testid="alt-riporta-giorno" onClick={()=>propagateAlts({ day: selectedDay })} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
+            🔁 Alternative su tutti i giorni
           </button>
           <button onClick={()=>setShowMacroTarget(!showMacroTarget)} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
             🎯 Target per pasto
@@ -799,6 +821,9 @@ export default function ModificaPiano() {
                         </div>
                       ))}
                     </div>
+                    <AlternativePicker food={food} mealType={meal.meal_type}
+                      onChange={alts=>setFoodAlts(meal.id,food.id,alts)}
+                      onApplyAll={()=>propagateAlts({ fromKey: food.id, overwrite: true })}/>
                   </div>
                 ))}
 

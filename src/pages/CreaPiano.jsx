@@ -8,6 +8,8 @@ import { searchFoods } from '../data/foodDatabase.js'
 import { askConfirm } from '../lib/confirm'
 import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
 import { normalizeNotes, hasNotes } from '../lib/coachNotes'
+import AlternativePicker from '../components/AlternativePicker'
+import { normAlts, planPropagation } from '../lib/alternatives'
 
 const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_TYPES = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena','Spuntino sera']
@@ -225,6 +227,17 @@ export default function CreaPiano(){
       return d})
   }
 
+  // ── Alternative scelte (si salvano con il piano; i grammi si ricalcolano a pari calorie) ──
+  function setFoodAlts(di,mi,fi,alts){setDays(p=>{const d={...p};d[di]=d[di].map((m,i)=>i!==mi?m:{...m,foods:m.foods.map((f,j)=>j!==fi?f:{...f,alternatives:alts})});return d})}
+  function altItems(){const out=[];for(const[di,meals] of Object.entries(days))meals.forEach((m,mi)=>m.foods.forEach((f,fi)=>out.push({key:`${di}-${mi}-${fi}`,day:parseInt(di),mealType:mealTypeToDb(m.meal_type),name:f.food_name,alts:f.alternatives})));return out}
+  async function propagateAlts({fromKey=null,day=null,overwrite=false}){
+    const r=planPropagation(altItems(),{fromKey,day,overwrite})
+    if(!r.count){toast(r.kept?`Gli altri giorni hanno già le loro alternative (${r.kept} alimenti): non ho toccato nulla.`:'Non ci sono altri giorni con lo stesso alimento nello stesso tipo di pasto.','error');return}
+    if(overwrite&&!(await askConfirm(`Le alternative verranno riportate su ${r.count} ${r.count===1?'alimento':'alimenti'} degli altri giorni, sostituendo quelle che hanno già.`,{title:'Applicare a tutti i giorni?',confirmLabel:'Applica'})))return
+    setDays(p=>{const d={...p};for(const di of Object.keys(d))d[di]=d[di].map((m,mi)=>({...m,foods:m.foods.map((f,fi)=>{const k=`${di}-${mi}-${fi}`;return r.updates.has(k)?{...f,alternatives:r.updates.get(k)}:f})}));return d})
+    toast(`Alternative riportate su ${r.count} ${r.count===1?'alimento':'alimenti'}${r.kept?` (${r.kept} con scelte proprie lasciati com'erano)`:''}`,'success')
+  }
+
   function updatePrep(di,mi,fi,prep){setDays(p=>{const d={...p};d[di][mi].foods[fi]={...d[di][mi].foods[fi],prep};return d})}
 
   // Selection mode
@@ -297,7 +310,7 @@ export default function CreaPiano(){
     const nd={};for(let i=0;i<7;i++)nd[i]=[]
     meals.forEach(m=>{
       const di=Math.min(6,Math.max(0,(parseInt(m.day_of_week)||1)-1))
-      nd[di]=[...(nd[di]||[]),{meal_type:mealLabelFromDb(m),note_pasto:m.coach_note||'',foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:''}))}]
+      nd[di]=[...(nd[di]||[]),{meal_type:mealLabelFromDb(m),note_pasto:m.coach_note||'',foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:'',alternatives:normAlts(f.alternatives)}))}]
     })
     setDays(nd);setShowCopyPlan(false)
     toast('Piano importato!','success')
@@ -452,7 +465,7 @@ export default function CreaPiano(){
     if(!hasMeals){toast('Aggiungi almeno un pasto con degli alimenti','error');return}
     if(!profile?.id){toast('Sessione scaduta, ricarica la pagina','error');return}
     setSaving(true)
-    let newPlanId=null
+    let newPlanId=null, altLost=false
     try{
       // 1) crea il nuovo piano NON ancora attivo: il piano attuale del cliente resta intatto
       const{data:plan,error:planErr}=await supabase.from('meal_plans').insert({
@@ -475,10 +488,15 @@ export default function CreaPiano(){
             coach_note:[meal.note_pasto,meal.note_cliente].map(x=>String(x||'').trim()).filter(Boolean).join('\n\n')||null,
           }).select().single()
           if(me) throw me
-          const{error:fe}=await supabase.from('plan_meal_foods').insert(meal.foods.map((f,fi)=>({
+          const rows=meal.foods.map((f,fi)=>({
             plan_meal_id:md.id, food_name:f.food_name, quantity_g:Math.round(f.quantity_g), kcal:Math.round(f.kcal),
             protein_g:f.protein_g, carbs_g:f.carbs_g, fat_g:f.fat_g, sort_order:fi,
-          })))
+            ...(normAlts(f.alternatives).length?{alternatives:normAlts(f.alternatives)}:{}),
+          }))
+          let{error:fe}=await supabase.from('plan_meal_foods').insert(rows)
+          if(fe&&/alternatives/i.test(fe.message||'')){       // la colonna delle alternative non c'è ancora su Supabase: il piano si salva lo stesso, senza alternative
+            altLost=true; ;({error:fe}=await supabase.from('plan_meal_foods').insert(rows.map(({alternatives,...r})=>r)))
+          }
           if(fe) throw fe
         }
       }
@@ -489,7 +507,8 @@ export default function CreaPiano(){
       const{error:onErr}=await supabase.from('meal_plans').update({is_active:true}).eq('id',plan.id)
       if(onErr) throw onErr
       clearDraft()
-      toast('Piano salvato! 🎉','success')
+      if(altLost) toast('Piano salvato, ma le alternative NON sono state salvate: esegui lo script fofit-alternative.sql su Supabase e scegli di nuovo le alternative in Modifica piano.','error')
+      else toast('Piano salvato! 🎉','success')
       setTimeout(()=>navigate(`/modifica-piano/${plan.id}`),800)
     }catch(e){
       // se qualcosa non va, il piano incompleto viene eliminato e quello precedente del cliente resta com'era
@@ -746,6 +765,7 @@ export default function CreaPiano(){
             {DAY_NAMES.map((d,i)=>i!==selectedDay&&(
               <button key={i} onClick={()=>copyDay(selectedDay,i)} style={s.btnGray}>{d.slice(0,3)}</button>
             ))}
+            <button data-testid="alt-riporta-giorno" onClick={()=>propagateAlts({day:selectedDay})} style={s.btnGray}>🔁 Alternative su tutti i giorni</button>
             <button onClick={()=>regenSingleDay(selectedDay)} disabled={regenDay!==null} style={{...s.btnGray,color:'#4A90D4',border:'0.5px solid rgba(74,144,212,0.3)',marginLeft:'auto'}}>
               <i className={`ti ti-refresh${regenDay===selectedDay?' ti-spin':''}`} style={{fontSize:12}}/>
               {regenDay===selectedDay?'Rigenero...':'Rigenera giorno'}
@@ -821,6 +841,7 @@ export default function CreaPiano(){
                         style={{flex:1,padding:'3px 8px',border:'0.5px solid #1A1A1A',borderRadius:6,fontSize:10,color:'#888',background:'transparent',outline:'none',fontFamily:'inherit'}}/>
                     </div>
                   )}
+                  <AlternativePicker food={food} mealType={mealTypeToDb(meal.meal_type)} onChange={alts=>setFoodAlts(selectedDay,mi,fi,alts)} onApplyAll={()=>propagateAlts({fromKey:`${selectedDay}-${mi}-${fi}`,overwrite:true})} compact/>
                 </div>
               ))}
 
