@@ -12,6 +12,8 @@ export const MAX_FOOD_G = 2000            // oltre questa quantità per un singo
 
 export const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0 }
 export const macroKcal = (p, c, g) => Math.round(num(p) * 4 + num(c) * 4 + num(g) * 9)
+// Quantità del piano: al multiplo di 5 g più vicino (17 → 15, 18 → 20, 146 → 145, 148 → 150). Sotto i 10 g si arrotonda al grammo (olio, semi…).
+export const roundGrams = q => { const v = num(q); if (v <= 0) return v; return v < 10 ? Math.max(1, Math.round(v)) : Math.round(v / 5) * 5 }
 const same = (a, b) => Math.abs(num(a) - num(b)) < 1e-9
 
 // Gli alimenti di un pasto nell'ordine scelto dal coach (sort_order). Prima il database li restituiva in ordine casuale.
