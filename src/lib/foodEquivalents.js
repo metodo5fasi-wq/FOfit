@@ -14,8 +14,8 @@
 export const EQ = { minKcal: 40, minRatio: 0.35, maxRatio: 3, maxG: 600, perCategory: 2, total: 8, candShare: 0.55, mainPer100: 5, tolPct: 0.08, tolKcal: 12, lightKcal: 60, minCerealDensity: 120, dominantShare: 0.5 }
 
 const FAM_MAIN = { cereali: 'c', frutta: 'c', proteine: 'p', latticini: 'p', grassi: 'g' }
-const norm = s => String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
-const n = v => { const x = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(x) ? x : 0 }
+export const norm = s => String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+export const n = v => { const x = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(x) ? x : 0 }
 const TUBER = /^(patat|mais\b|topinambur|manioca|yucca|igname|taro)/i
 // Dolci, farine, prodotti arricchiti: non sono alternative sensate a riso, pane o pasta
 const NOT_STAPLE = /panettone|pandoro|colomba|croissant|cornetto|brioche|biscotti|biscottini|merend|torta|plumcake|wafer|dolce|cioccolat|choco|frosted|nutella|barretta|\bbar\b|protein|overnight|granola|cookie|donut|krapfen|muffin|pancake|waffle|snack|gelato|crema|farina|amido|fecola|lievito|muesli|marmellata|miele|zucchero|sciroppo|gommos|caramell|nesquik|quaglia|wurstel|würstel|hamburger|salsicc|mortadella|salame|nuggets|cotoletta|polpett|cinghiale|agnello|brasato/i
@@ -26,7 +26,7 @@ function mainOf(p, c, g) {
   return { main, share: val / tot }
 }
 const profile = (p, c, g) => { const a = [n(p) * 4, n(c) * 4, n(g) * 9], t = a.reduce((x, y) => x + y, 0) || 1; return a.map(x => x / t) }
-const kcalOf = f => n(f.p) * 4 + n(f.c) * 4 + n(f.g) * 9 || n(f.kcal100)      // kcal dai macro, come in Modifica piano
+export const kcalOf = f => n(f.p) * 4 + n(f.c) * 4 + n(f.g) * 9 || n(f.kcal100)      // kcal dai macro, come in Modifica piano
 
 // Famiglia di un alimento del database (le categorie "Bevande", "Integratori", "Surgelati"… non sono famiglie: non vengono mai proposte)
 export function familyOf(f) {
@@ -51,7 +51,7 @@ export const COMMON = {
   cereali: /^(pasta|spaghetti|penne|fusilli|rigatoni|farfalle|linguine|mezze maniche|orecchiette|bucatini|paccheri|tagliatelle|gnocchi|riso|orzo perlato|farro perlato|cous cous|pane|pan bauletto|pan carr|pan sandwich|piadina|tortilla|wrap|grissini|cracker|fette biscottate|gallette|bagel|fiocchi avena|corn flakes|special k|muesli classico|rice krispies|fitness|lenticchie (secche|in scatola)|ceci (secchi|in scatola)|fagioli (borlotti|cannellini)|patate)/i,
   proteine: /^(petto di pollo|petto di tacchino|fesa|fettine di vitello|manzo magro|macinato manzo magro|filetto di manzo|bistecca manzo|controfiletto|vitello fesa|lonza|maiale lonza|bresaola|prosciutto cotto|salmone fresco|tonno al naturale|tonno leggero|merluzzo|orata|branzino|sogliola|pesce spada|trota|gamberetti|calamari|uovo intero|albume|tofu compatto)/i,
   latticini: /^(yogurt greco|yogurt naturale|yogurt bianco|yogurt proteico|skyr|latte (intero|parz|scremato|senza lattosio|di soia|di avena|di mandorla)|ricotta (vaccina|light)|fiocchi di latte|mozzarella|parmigiano|grana padano|scamorza|stracchino|caprino|cottage|quark|philadelphia|sottilette|formaggio light|cagliata)/i,
-  frutta: /^(banana$|mela|pera|arancia|mandarino|clementine|pompelmo|fragole|mirtilli$|lamponi|kiwi$|uva (bianca|nera)|ananas|mango|pesche|nettarine|albicocche$|ciliegie|susine|cocomero|melone|fichi freschi|melagrana|melograno)/i,
+  frutta: /^(banana$|mela( |$)|pera( |$)|arancia|mandarino|clementine|pompelmo|fragole|mirtilli$|lamponi|kiwi$|uva (bianca|nera)|ananas|mango|pesche|nettarine|albicocche$|ciliegie|susine|cocomero|melone|fichi freschi|melograno)/i,
   grassi: /^(olio extravergine|olio di semi di girasole|olio di semi girasole|olio di oliva|burro$|burro (di )?(arachidi|mandorle)|crema di arachidi|mandorle|noci$|nocciole|anacardi|pistacchi|arachidi|mix frutta secca|semi di (chia|lino|girasole|zucca))/i,
   verdura: /^(spinaci|broccoli|zucchine|pomodori (freschi|datterini|ciliegia)|insalata|lattuga|rucola|carote|peperon|melanzan|cavolfiore|cetrioli$|finocchio|funghi champignon|carciofi$|bietole|zucca$|verza|cavolo cappuccio|radicchio|asparagi|sedano$|cicoria|indivia|fagiolini|verdure miste)/i,
 }
@@ -172,5 +172,5 @@ export function equivalents(row, db, { mealType } = {}) {
 
 function item(f, grams, kcal0) {
   const k = kcalOf(f) * grams / 100
-  return { name: f.name, brand: f.brand && f.brand !== '—' && !norm(f.name).includes(norm(f.brand)) ? f.brand : '', cat: f.cat, grams, kcal: Math.round(k), dKcal: Math.round(k) - kcal0, p: Math.round(f.p * grams / 100), c: Math.round(f.c * grams / 100), g: Math.round(f.g * grams / 100) }
+  return { name: f.name, brand: f.brand && f.brand !== '—' && !norm(f.name).includes(norm(f.brand)) ? f.brand : '', cat: f.cat, grams, kcal: Math.round(k), dKcal: Math.round(k) - kcal0, p: Math.round(f.p * grams / 100), c: Math.round(f.c * grams / 100), g: Math.round(f.g * grams / 100), p100: n(f.p), c100: n(f.c), g100: n(f.g) }
 }

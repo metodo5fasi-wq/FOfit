@@ -6,6 +6,7 @@
 //  • copia di un giorno, spostamento dei pasti
 //  • bozza sul telefono (modifiche non salvate)
 // ─────────────────────────────────────────────────────────────
+import { normAlts, sameAlts } from './alternatives'
 export const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
 export const MAX_FOOD_G = 2000            // oltre questa quantità per un singolo alimento si chiede conferma (di solito è un refuso)
 
@@ -91,8 +92,14 @@ export function planSave({ planId, meals, dbMeals, dbFoods }) {
     }
     ;(m.plan_meal_foods || []).forEach((f, i) => {
       const p = foodPayload(f, i), db = dbFoodMap.get(f.id)
-      if (!db) insertFoods.push({ id: f.id, plan_meal_id: m.id, ...p })
-      else if (db.plan_meal_id !== m.id || db.food_name !== p.food_name || ['quantity_g', 'kcal', 'protein_g', 'carbs_g', 'fat_g', 'sort_order'].some(k => !same(db[k], p[k]))) updateFoods.push({ id: f.id, plan_meal_id: m.id, ...p })
+      // alternative scelte: si scrive la colonna solo quando serve (così, finché non si usano, il salvataggio non dipende da essa)
+      const alts = normAlts(f.alternatives)
+      if (!db) insertFoods.push({ id: f.id, plan_meal_id: m.id, ...p, ...(alts.length ? { alternatives: alts } : {}) })
+      else {
+        const altChanged = !sameAlts(db.alternatives, alts)
+        if (altChanged || db.plan_meal_id !== m.id || db.food_name !== p.food_name || ['quantity_g', 'kcal', 'protein_g', 'carbs_g', 'fat_g', 'sort_order'].some(k => !same(db[k], p[k])))
+          updateFoods.push({ id: f.id, plan_meal_id: m.id, ...p, ...(altChanged ? { alternatives: alts.length ? alts : null } : {}) })
+      }
     })
   }
   return {
@@ -144,7 +151,7 @@ export function moveFood(foods, fromId, toId) {
 export const draftKey = planId => `fofit_draft_meals_${planId}`
 export function signature(meals, targets = {}, notes = '') {
   const s = JSON.stringify([
-    (meals || []).map(m => [m.id, m.day_of_week, m.meal_type, (m.plan_meal_foods || []).map(f => [f.id, f.food_name, num(f.quantity_g), Math.round(num(f.kcal)), num(f.protein_g), num(f.carbs_g), num(f.fat_g)])]),
+    (meals || []).map(m => [m.id, m.day_of_week, m.meal_type, (m.plan_meal_foods || []).map(f => [f.id, f.food_name, num(f.quantity_g), Math.round(num(f.kcal)), num(f.protein_g), num(f.carbs_g), num(f.fat_g), normAlts(f.alternatives).map(a => a.name + '|' + a.brand)])]),
     ['kcal_target', 'protein_target_g', 'carbs_target_g', 'fat_target_g'].map(k => num(targets[k])), String(notes || '').trim(),
   ])
   let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
