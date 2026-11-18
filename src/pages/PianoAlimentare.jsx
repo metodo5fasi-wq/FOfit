@@ -8,7 +8,7 @@ import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { ClientNotesCard } from '../components/CoachNotes'
 import { sortFoods } from '../lib/mealPlan'
 import { normAlts, scaleChoices, foodKcal } from '../lib/alternatives'
-import { equivalents } from '../lib/foodEquivalents'
+import { equivalents, weekWindow } from '../lib/foodEquivalents'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
@@ -205,7 +205,7 @@ export default function PianoAlimentare() {
                             <span style={{...s.tag,background:'#161616',color:'#AAA'}}>G {food.fat_g}g</span>
                           </div>
                         </div>
-                        <FoodAlternatives food={food} mealType={meal.meal_type}/>
+                        <FoodAlternatives food={food} mealType={meal.meal_type} day={meal.day_of_week}/>
                       </div>
                     ))}
                     {foods.length > 0 && (
@@ -233,7 +233,7 @@ export default function PianoAlimentare() {
 
 // «Vedi alternative» sotto ogni alimento. Se il coach ha scelto le alternative per quell'alimento si vedono quelle (a pari calorie, ricalcolate sulla quantità del piano);
 // altrimenti sono proposte in automatico: alimenti adatti a quel pasto, stesse calorie, quantità tonde (il database alimenti si scarica solo alla prima apertura)
-function FoodAlternatives({ food, mealType }) {
+function FoodAlternatives({ food, mealType, day }) {
   const [open, setOpen] = React.useState(false)
   const [db, setDb] = React.useState(null), [failed, setFailed] = React.useState(false)
   const coach = React.useMemo(() => scaleChoices(food.alternatives, foodKcal(food)), [food])
@@ -242,9 +242,10 @@ function FoodAlternatives({ food, mealType }) {
     const next = !open; setOpen(next)
     if (next && !byCoach && !db && !failed) import('../data/foodDatabase.js').then(m => setDb(m.FOOD_DB || m.default || []), () => setFailed(true))
   }
-  const res = React.useMemo(() => (open && !byCoach && db ? equivalents(food, db, { mealType }) : null), [open, byCoach, db, food, mealType])
+  const res = React.useMemo(() => (open && !byCoach && db ? equivalents(food, db, { mealType, day }) : null), [open, byCoach, db, food, mealType, day])
   const MSG = { misto: 'Questo alimento è un piatto o un mix: non propongo equivalenze automatiche. Chiedi al tuo coach.', piccolo: 'La quantità è piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.', pasto: 'Per questo pasto non propongo alternative automatiche. Chiedi al tuo coach.' }
-  const list = byCoach ? coach.map(a => ({ grams: a.grams, name: a.name, brand: a.brand, kcal: a.kcal, dKcal: a.dKcal })) : (res?.ok ? res.items : [])
+  const coachShown = byCoach ? weekWindow(coach, day, mealType) : []
+  const list = byCoach ? coachShown.map(a => ({ grams: a.grams, name: a.name, brand: a.brand, kcal: a.kcal, dKcal: a.dKcal })) : (res?.ok ? res.items : [])
   const kcal0 = byCoach ? foodKcal(food) : res?.kcal
   return (
     <div style={{padding:'0 0 8px 16px'}}>
@@ -267,7 +268,7 @@ function FoodAlternatives({ food, mealType }) {
                   <span style={{color:'#AAA',whiteSpace:'nowrap'}}>{a.kcal} kcal <span style={{color:Math.abs(a.dKcal) <= 15 ? '#6FCF97' : '#E8C050'}}>({a.dKcal > 0 ? '+' : a.dKcal < 0 ? '−' : '±'}{Math.abs(a.dKcal)})</span></span>
                 </div>
               ))}
-              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>{byCoach ? 'Quantità arrotondate per avere le stesse calorie.' : 'Quantità arrotondate, calcolate in automatico: indicative. Per sostituzioni fisse nel piano chiedi al tuo coach.'}</div>
+              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>{byCoach ? (coach.length > coachShown.length ? 'Quantità arrotondate per avere le stesse calorie. Il tuo coach ne ha scelte altre: cambiano nei vari giorni.' : 'Quantità arrotondate per avere le stesse calorie.') : 'Quantità arrotondate, calcolate in automatico: indicative. Per sostituzioni fisse nel piano chiedi al tuo coach.'}</div>
             </>
           )}
         </div>
