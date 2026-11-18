@@ -1,5 +1,5 @@
 import React from 'react'
-import { equivalents } from '../lib/foodEquivalents'
+import { equivalents, baseKey } from '../lib/foodEquivalents'
 import { normAlts, altKey, choiceFromItem, foodKcal, scaleChoice, toggleChoice } from '../lib/alternatives'
 
 // «Alternative» sotto un alimento del piano (lato coach): l'app propone alimenti sensati per quel pasto, a pari calorie e con quantità tonde;
@@ -20,7 +20,7 @@ export default function AlternativePicker({ food, mealType, onChange, onApplyAll
   // righe: prima le scelte già fatte, poi i suggerimenti non ancora scelti
   const rows = []
   for (const c of chosen) { const sc = scaleChoice(c, kcal0); if (sc) rows.push({ choice: c, sc, on: true }) }
-  for (const it of (sugg?.ok ? sugg.items : [])) { const c = choiceFromItem(it); if (!chosen.some(x => altKey(x) === altKey(c))) { const sc = scaleChoice(c, kcal0); if (sc) rows.push({ choice: c, sc, on: false }) } }
+  for (const it of (sugg?.ok ? sugg.items : [])) { const c = choiceFromItem(it); if (!chosen.some(x => altKey(x) === altKey(c) || baseKey(x.name) === baseKey(c.name))) { const sc = scaleChoice(c, kcal0); if (sc) rows.push({ choice: c, sc, on: false }) } }
   const MSG = { misto: 'Piatto o mix: non propongo alternative automatiche.', piccolo: 'Quantità piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.', pasto: 'Per questo pasto non propongo alternative automatiche.' }
   const btn = { background: 'none', border: 'none', padding: '6px 4px', minHeight: 32, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: '#F4894A', display: 'inline-flex', alignItems: 'center', gap: 5 }
   return (
