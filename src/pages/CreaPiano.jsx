@@ -10,6 +10,7 @@ import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
 import { normalizeNotes, hasNotes } from '../lib/coachNotes'
 import AlternativePicker from '../components/AlternativePicker'
 import { normAlts, planPropagation } from '../lib/alternatives'
+import { roundGrams } from '../lib/mealPlan'
 
 const DAY_NAMES = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
 const MEAL_TYPES = ['Colazione','Spuntino mattina','Pranzo','Spuntino pomeriggio','Cena','Spuntino sera']
@@ -213,7 +214,7 @@ export default function CreaPiano(){
   function addFood(food){
     if(!addingTo) return
     const{dayIdx:di,mealIdx:mi}=addingTo
-    const qty=parseFloat(newQty)||100
+    const qty=roundGrams(parseFloat(newQty)||100)
     const item={food_name:food.name,quantity_g:qty,kcal:Math.round(food.kcal100*qty/100),protein_g:Math.round(food.p*qty/100*10)/10,carbs_g:Math.round(food.c*qty/100*10)/10,fat_g:Math.round(food.g*qty/100*10)/10,_k100:food.kcal100,_p100:food.p,_c100:food.c,_g100:food.g,prep:''}
     setDays(p=>{const d={...p};d[di][mi].foods=[...d[di][mi].foods,item];return d})
     setFoodSearch('');setFoodResults([]);setNewQty('100')
@@ -225,6 +226,13 @@ export default function CreaPiano(){
     setDays(p=>{const d={...p};const f=d[di][mi].foods[fi];const q=parseFloat(qty)||0
       d[di][mi].foods[fi]={...f,quantity_g:q,kcal:Math.round((f._k100||0)*q/100),protein_g:Math.round((f._p100||0)*q/100*10)/10,carbs_g:Math.round((f._c100||0)*q/100*10)/10,fat_g:Math.round((f._g100||0)*q/100*10)/10}
       return d})
+  }
+
+  // Quantità al multiplo di 5 g più vicino (17 → 15, 148 → 150), con kcal e macro ricalcolati
+  function roundAllQty(){
+    setDays(p=>{const d={};for(const[di,meals] of Object.entries(p))d[di]=meals.map(m=>({...m,foods:m.foods.map(f=>{const q=roundGrams(f.quantity_g);if(q===f.quantity_g)return f;return{...f,quantity_g:q,kcal:Math.round((f._k100||0)*q/100),protein_g:Math.round((f._p100||0)*q/100*10)/10,carbs_g:Math.round((f._c100||0)*q/100*10)/10,fat_g:Math.round((f._g100||0)*q/100*10)/10}})}));return d})
+    const count=Object.values(days).flat().reduce((a,m)=>a+m.foods.filter(f=>roundGrams(f.quantity_g)!==f.quantity_g).length,0)
+    toast(count?`Quantità arrotondate su ${count} ${count===1?'alimento':'alimenti'}`:'Tutte le quantità sono già arrotondate a 5 g',count?'success':'info')
   }
 
   // ── Alternative scelte (si salvano con il piano; i grammi si ricalcolano a pari calorie) ──
@@ -361,7 +369,7 @@ export default function CreaPiano(){
       meal_type:m.meal_type||'Pasto',
       note_pasto:m.note_pasto||'',
       foods:Array.isArray(m.foods)?m.foods.filter(f=>f&&f.name).map(f=>{
-        const qty=parseFloat(f.qty)||100
+        const qty=roundGrams(parseFloat(f.qty)||100)
         return{food_name:f.name,quantity_g:qty,kcal:Math.round((parseFloat(f.kcal100)||0)*qty/100),protein_g:Math.round((parseFloat(f.p100)||0)*qty/100*10)/10,carbs_g:Math.round((parseFloat(f.c100)||0)*qty/100*10)/10,fat_g:Math.round((parseFloat(f.g100)||0)*qty/100*10)/10,_k100:parseFloat(f.kcal100)||0,_p100:parseFloat(f.p100)||0,_c100:parseFloat(f.c100)||0,_g100:parseFloat(f.g100)||0,prep:f.prep||''}
       }):[]
     }))
@@ -450,7 +458,7 @@ export default function CreaPiano(){
     setDays(p=>{
       const d={...p}
       d[di]=d[di].map(m=>({...m,foods:m.foods.map(f=>{
-        const q=Math.round(f.quantity_g*ratio)
+        const q=roundGrams(f.quantity_g*ratio)
         return{...f,quantity_g:q,kcal:Math.round((f._k100||0)*q/100),protein_g:Math.round((f._p100||0)*q/100*10)/10,carbs_g:Math.round((f._c100||0)*q/100*10)/10,fat_g:Math.round((f._g100||0)*q/100*10)/10}
       })}))
       return d
@@ -765,6 +773,7 @@ export default function CreaPiano(){
             {DAY_NAMES.map((d,i)=>i!==selectedDay&&(
               <button key={i} onClick={()=>copyDay(selectedDay,i)} style={s.btnGray}>{d.slice(0,3)}</button>
             ))}
+            <button data-testid="arrotonda-quantita" onClick={roundAllQty} style={s.btnGray}>≈ Arrotonda a 5 g</button>
             <button data-testid="alt-riporta-giorno" onClick={()=>propagateAlts({day:selectedDay})} style={s.btnGray}>🔁 Alternative su tutti i giorni</button>
             <button onClick={()=>regenSingleDay(selectedDay)} disabled={regenDay!==null} style={{...s.btnGray,color:'#4A90D4',border:'0.5px solid rgba(74,144,212,0.3)',marginLeft:'auto'}}>
               <i className={`ti ti-refresh${regenDay===selectedDay?' ti-spin':''}`} style={{fontSize:12}}/>
@@ -827,7 +836,7 @@ export default function CreaPiano(){
                       <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{food.food_name}</div>
                       <div style={{fontSize:10,color:'#888',marginTop:1}}>{food.kcal} kcal · P{food.protein_g}g · C{food.carbs_g}g · G{food.fat_g}g</div>
                     </div>
-                    <input inputMode="decimal" type="number" value={food.quantity_g} onChange={e=>updateFoodQty(selectedDay,mi,fi,e.target.value)}
+                    <input inputMode="decimal" type="number" value={food.quantity_g} onChange={e=>updateFoodQty(selectedDay,mi,fi,e.target.value)} onBlur={()=>{const q=roundGrams(food.quantity_g);if(q!==food.quantity_g)updateFoodQty(selectedDay,mi,fi,q)}}
                       style={{width:56,padding:'4px 6px',border:'0.5px solid #222',borderRadius:6,fontSize:12,textAlign:'center',color:'#F0F0F0',background:'#0D0D0D',outline:'none',fontFamily:'inherit'}}/>
                     <span style={{fontSize:10,color:'#AAA',flexShrink:0}}>g</span>
                     <button onClick={()=>removeFood(selectedDay,mi,fi)} style={s.btnDanger}>✕</button>

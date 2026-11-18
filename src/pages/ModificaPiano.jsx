@@ -4,7 +4,7 @@ import { dbMust, notify, done } from '../lib/db'
 import { uuid } from '../lib/offline'
 import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
 import { normalizeNotes, hasNotes } from '../lib/coachNotes'
-import { DAY_NAMES as DAYS, num, enrichMeals, validateMeals, problemsMessage, suspiciousFoods, suspiciousMessage, planSave, hasWork, planPatch, copyDay, moveMeal, moveFood, writeDraft, readDraft, clearDraft, draftIsUseful, draftIsStale } from '../lib/mealPlan'
+import { roundGrams, DAY_NAMES as DAYS, num, enrichMeals, validateMeals, problemsMessage, suspiciousFoods, suspiciousMessage, planSave, hasWork, planPatch, copyDay, moveMeal, moveFood, writeDraft, readDraft, clearDraft, draftIsUseful, draftIsStale } from '../lib/mealPlan'
 import { startHandleDrag } from '../lib/dragHandle'
 import { authFetch } from '../lib/authFetch'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -276,7 +276,7 @@ export default function ModificaPiano() {
   }
 
   function selectFoodFromSearch(food) {
-    const qty = parseFloat(newFood.quantity_g) || 100
+    const qty = roundGrams(parseFloat(newFood.quantity_g) || 100)
     const k100 = food.kcal_100 ?? food.kcal ?? 0
     const p100 = food.protein_100 ?? food.protein_g ?? 0
     const c100 = food.carbs_100 ?? food.carbs_g ?? 0
@@ -415,6 +415,16 @@ export default function ModificaPiano() {
   function shiftMeal(id, dir) { setMeals(prev => moveMeal(prev, id, dir)); setDirty(true) }
 
   // ── ALTERNATIVE SCELTE ───────────────────────────────────
+  // Quantità al multiplo di 5 g più vicino (17 → 15, 148 → 150), con kcal e macro riproporzionati. Nulla si salva finché non premi Salva.
+  function roundQty(mealId, foodId) {
+    setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, plan_meal_foods: m.plan_meal_foods.map(f => { const q = roundGrams(f.quantity_g); return f.id === foodId && q !== f.quantity_g ? { ...f, ...recalc(f, q) } : f }) }))
+  }
+  function roundAllQty() {
+    setMeals(prev => prev.map(m => ({ ...m, plan_meal_foods: m.plan_meal_foods.map(f => { const q = roundGrams(f.quantity_g); return q === f.quantity_g ? f : { ...f, ...recalc(f, q) } }) })))
+    const count = meals.reduce((a, m) => a + (m.plan_meal_foods || []).filter(f => roundGrams(f.quantity_g) !== f.quantity_g).length, 0)
+    if (!count) { notify('Tutte le quantità sono già arrotondate a 5 g.'); return }
+    setDirty(true); done(`Quantità arrotondate su ${count} ${count === 1 ? 'alimento' : 'alimenti'}. Premi Salva per confermare.`)
+  }
   function setFoodAlts(mealId, foodId, alts) {
     setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, plan_meal_foods: m.plan_meal_foods.map(f => f.id === foodId ? { ...f, alternatives: alts } : f) }))
     setDirty(true)
@@ -622,6 +632,9 @@ export default function ModificaPiano() {
           <button onClick={()=>setShowCopyDay(!showCopyDay)} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
             📋 Copia giorno su...
           </button>
+          <button data-testid="arrotonda-quantita" onClick={roundAllQty} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
+            ≈ Arrotonda a 5 g
+          </button>
           <button data-testid="alt-riporta-giorno" onClick={()=>propagateAlts({ day: selectedDay })} style={{fontSize:10,background:'#161616',border:'0.5px solid #1C1C1C',borderRadius:6,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit',color:'#AAA'}}>
             🔁 Alternative su tutti i giorni
           </button>
@@ -817,7 +830,8 @@ export default function ModificaPiano() {
                                 })}
                               }))
                               setDirty(true)
-                            }}/>
+                            }}
+                            onBlur={f.k==='quantity_g' ? ()=>{ if (roundGrams(food.quantity_g)!==food.quantity_g) { roundQty(meal.id,food.id); setDirty(true) } } : undefined}/>
                         </div>
                       ))}
                     </div>
