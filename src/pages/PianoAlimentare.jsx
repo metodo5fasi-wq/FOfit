@@ -204,7 +204,7 @@ export default function PianoAlimentare() {
                             <span style={{...s.tag,background:'#161616',color:'#AAA'}}>G {food.fat_g}g</span>
                           </div>
                         </div>
-                        <FoodAlternatives food={food}/>
+                        <FoodAlternatives food={food} mealType={meal.meal_type}/>
                       </div>
                     ))}
                     {foods.length > 0 && (
@@ -230,16 +230,16 @@ export default function PianoAlimentare() {
   )
 }
 
-// «Vedi alternative» sotto ogni alimento: equivalenti con lo stesso macro principale (calcolati al momento, il database alimenti si scarica solo alla prima apertura)
-function FoodAlternatives({ food }) {
+// «Vedi alternative» sotto ogni alimento: alimenti adatti a quel pasto, con le stesse calorie e quantità tonde (calcolati al momento, il database alimenti si scarica solo alla prima apertura)
+function FoodAlternatives({ food, mealType }) {
   const [open, setOpen] = React.useState(false)
   const [db, setDb] = React.useState(null), [failed, setFailed] = React.useState(false)
   function toggle() {
     const next = !open; setOpen(next)
     if (next && !db && !failed) import('../data/foodDatabase.js').then(m => setDb(m.FOOD_DB || m.default || []), () => setFailed(true))
   }
-  const res = React.useMemo(() => (open && db ? equivalents(food, db) : null), [open, db, food])
-  const MSG = { misto: 'Questo alimento è un piatto o un mix: non propongo equivalenze automatiche. Chiedi al tuo coach.', piccolo: 'La quantità è piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.' }
+  const res = React.useMemo(() => (open && db ? equivalents(food, db, { mealType }) : null), [open, db, food, mealType])
+  const MSG = { misto: 'Questo alimento è un piatto o un mix: non propongo equivalenze automatiche. Chiedi al tuo coach.', piccolo: 'La quantità è piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.', pasto: 'Per questo pasto non propongo alternative automatiche. Chiedi al tuo coach.' }
   return (
     <div style={{padding:'0 0 8px 16px'}}>
       <button onClick={toggle} aria-expanded={open} data-testid="vedi-alternative" style={{background:'none',border:'none',padding:'6px 4px',minHeight:32,cursor:'pointer',fontFamily:'inherit',fontSize:12,color:'#F4894A',display:'inline-flex',alignItems:'center',gap:5}}>
@@ -253,7 +253,7 @@ function FoodAlternatives({ food }) {
           {res?.ok && res.items.length === 0 && <div style={{fontSize:12,color:'#AAA'}}>Nessuna alternativa adatta trovata. Chiedi al tuo coach.</div>}
           {res?.ok && res.items.length > 0 && (
             <>
-              <div style={{fontSize:11,color:'#CCC',marginBottom:6}}>{res.equalGrams ? 'Si possono scambiare con la stessa quantità:' : `Con gli stessi ${res.mainLabel} (≈ ${res.mainG} g) · le kcal possono variare:`}</div>
+              <div style={{fontSize:11,color:'#CCC',marginBottom:6}}>{res.equalGrams ? 'Si possono scambiare con la stessa quantità:' : `Con le stesse calorie (≈ ${res.kcal} kcal) · i macro possono cambiare:`}</div>
               {res.items.map((a, i) => (
                 <div key={i} style={{display:'flex',alignItems:'baseline',gap:8,padding:'5px 0',borderTop:i?'0.5px solid rgba(212,87,10,0.12)':'none',fontSize:12}}>
                   <span style={{minWidth:46,fontWeight:600,color:'#F0F0F0'}}>{a.grams} g</span>
@@ -261,7 +261,7 @@ function FoodAlternatives({ food }) {
                   <span style={{color:'#AAA',whiteSpace:'nowrap'}}>{a.kcal} kcal <span style={{color:Math.abs(a.dKcal) <= 15 ? '#6FCF97' : '#E8C050'}}>({a.dKcal > 0 ? '+' : a.dKcal < 0 ? '−' : '±'}{Math.abs(a.dKcal)})</span></span>
                 </div>
               ))}
-              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>Equivalenze indicative, calcolate in automatico. Per sostituzioni fisse nel piano chiedi al tuo coach.</div>
+              <div style={{fontSize:10,color:'#888',marginTop:6,lineHeight:1.4}}>Quantità arrotondate, calcolate in automatico: indicative. Per sostituzioni fisse nel piano chiedi al tuo coach.</div>
             </>
           )}
         </div>
