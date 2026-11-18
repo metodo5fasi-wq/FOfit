@@ -6,12 +6,15 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { useNavigate } from 'react-router-dom'
 import { PulseDot } from '../components/Animations'
+import { buildContext } from '../lib/assistantContext'
+import { readSse } from '../lib/assistantStream'
 
 const SUGGERIMENTI = [
   { label: '🍳 Ricetta con pollo', text: 'Dammi una ricetta sfiziosa con il pollo che rispetti i miei macro per il pranzo.' },
   { label: '🔄 Sostituisci alimento', text: 'Puoi aiutarmi a trovare un\'alternativa sfiziosa a un alimento del mio piano?' },
   { label: '📊 Analizza piano', text: 'Puoi analizzare il mio piano alimentare e dirmi se è bilanciato per il mio obiettivo?' },
   { label: '🥗 Piatto sfizioso', text: 'Suggeriscimi un piatto gustoso e creativo che rispetti i miei macro.' },
+  { label: '🍽️ Cosa mi resta oggi?', text: 'Guarda il mio diario di oggi: quante kcal e macro mi restano e cosa posso mangiare per restare nel piano?' },
   { label: '🍝 Sostituzione carboidrati', text: 'Quali sono le migliori alternative ai carboidrati del mio piano, con grammature equivalenti?' },
 ]
 
@@ -56,7 +59,7 @@ function RecipeCard({ recipe, onAdd }) {
       <div style={{marginBottom:12}}>
         {recipe.ingredienti.map((ing, i) => (
           <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.1)'}}>
-            <span style={{fontSize:12,color:'#F0F0F0'}}>{ing.nome}</span>
+            <span style={{fontSize:12,color:'#F0F0F0'}}>{ing.nome}{ing.stima ? <span title="Valori stimati" style={{color:'#E8C050'}}> ≈</span> : null}</span>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
               <span style={{fontSize:11,color:'#AAA'}}>{ing.quantita_g}g</span>
               <span style={{fontSize:11,color:'#F4894A',fontWeight:500}}>{ing.kcal} kcal</span>
@@ -64,6 +67,12 @@ function RecipeCard({ recipe, onAdd }) {
           </div>
         ))}
       </div>
+
+      {Array.isArray(recipe.passaggi) && recipe.passaggi.length > 0 && (
+        <ol data-testid="ricetta-passaggi" style={{margin:'0 0 12px',paddingLeft:18,fontSize:12,color:'#DDD',lineHeight:1.5}}>
+          {recipe.passaggi.map((p, i) => <li key={i}>{p}</li>)}
+        </ol>
+      )}
 
       {/* Seleziona pasto + bottone */}
       {!added ? (
@@ -109,45 +118,31 @@ export default function AssistenteAI() {
   useEffect(() => { if (profile) { loadContext(); loadHistory() } }, [profile])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
 
+  // Tutto quello che l'assistente deve sapere: piano intero, anamnesi, diario di oggi, peso, allenamenti (ogni lettura che fallisce non blocca le altre)
+  const rowsRef = useRef({})
+  const safe = p => Promise.resolve(p).then(r => r?.data ?? null, () => null)
   async function loadContext() {
-    // piano e ultima misura insieme (prima uno dopo l'altro)
-    const [{ data: planData }, { data: progress }] = await Promise.all([
-      supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle(),
-      supabase.from('progress_entries').select('*').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(1).maybeSingle(),
+    const [plan, progress, anamnesi, diary, wplan, sessions] = await Promise.all([
+      safe(supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()),
+      safe(supabase.from('progress_entries').select('entry_date,weight_kg,waist_cm').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(8)),
+      safe(supabase.from('anamnesi').select('*').eq('client_id', profile.id).maybeSingle()),
+      safe(supabase.from('diary_entries').select('meal_type,food_name,quantity_g,kcal,protein_g,carbs_g,fat_g').eq('client_id', profile.id).eq('entry_date', today)),
+      safe(supabase.from('workout_plans').select('id,title').eq('client_id', profile.id).eq('is_active', true).limit(1)),
+      safe(supabase.from('workout_sessions').select('session_date').eq('client_id', profile.id).order('session_date', { ascending: false }).limit(6)),
     ])
-    let pianoParsed = null
-    if (planData) {
-      const { data: meals } = await supabase.from('plan_meals')
-        .select('*, plan_meal_foods(*)').eq('plan_id', planData.id).order('meal_order')
-      const giorni = []
-      for (let d = 1; d <= 7; d++) {
-        const dayMeals = (meals || []).filter(m => m.day_of_week === d)
-        if (dayMeals.length > 0) {
-          giorni.push({
-            giorno: ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][d-1],
-            pasti: dayMeals.map(m => ({
-              nome: m.meal_type,
-              alimenti: (m.plan_meal_foods || []).map(f => ({
-                nome: f.food_name, quantita_g: f.quantity_g,
-                kcal: f.kcal, proteine_g: f.protein_g, carboidrati_g: f.carbs_g, grassi_g: f.fat_g,
-              }))
-            }))
-          })
-        }
-      }
-      pianoParsed = { giorni }
-    }
-
-    setClientContext({
-      clientName: profile.full_name,
-      goal: profile.goal,
-      kcalTarget: planData?.kcal_target,
-      proteinTarget: planData?.protein_target_g,
-      carbsTarget: planData?.carbs_target_g,
-      fatTarget: planData?.fat_target_g,
-      plan: pianoParsed,
-      recentProgress: progress,
-    })
+    const [meals, exercises] = await Promise.all([
+      plan ? safe(supabase.from('plan_meals').select('*, plan_meal_foods(*)').eq('plan_id', plan.id).order('meal_order')) : null,
+      wplan?.[0] ? safe(supabase.from('workout_exercises').select('day_label').eq('plan_id', wplan[0].id)) : null,
+    ])
+    rowsRef.current = { profile, plan, meals: meals || [], anamnesi, diary: diary || [], progress: progress || [], workoutPlan: wplan?.[0], workoutDays: (exercises || []).map(e => e.day_label), sessions: sessions || [] }
+    setClientContext(buildContext(rowsRef.current))
+  }
+  // il diario cambia durante la giornata: prima di ogni domanda lo rileggo (una sola lettura)
+  async function freshContext() {
+    const diary = await safe(supabase.from('diary_entries').select('meal_type,food_name,quantity_g,kcal,protein_g,carbs_g,fat_g').eq('client_id', profile.id).eq('entry_date', today))
+    if (!diary) return clientContext
+    rowsRef.current = { ...rowsRef.current, diary }
+    const c = buildContext(rowsRef.current); setClientContext(c); return c
   }
 
   async function loadHistory() {
@@ -158,7 +153,7 @@ export default function AssistenteAI() {
     } else {
       setMessages([{
         role: 'assistant',
-        content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nPosso suggerirti ricette sfiziose calibrate sui tuoi macro e aggiungerle direttamente al tuo diario con un click. Posso anche aiutarti con sostituzioni creative o analizzare il tuo piano.\n\nCosa ti preparo oggi?`,
+        content: `Ciao ${profile.full_name?.split(' ')[0] || ''}! 👋 Sono FO Coach, il tuo assistente nutrizionale.\n\nConosco il tuo piano per intero, le tue preferenze e cosa hai mangiato oggi. Ti propongo ricette sfiziose con calorie e macro calcolati sul database, alternative a pari calorie, e le aggiungo al diario con un click.\n\nCosa ti preparo oggi?`,
         id: 'welcome'
       }])
     }
@@ -180,6 +175,13 @@ export default function AssistenteAI() {
     await dbSave(supabase.from('diary_entries').insert(entries), 'il diario', 'salvare', { done: 'Ricetta aggiunta al diario' })
   }
 
+  const [status, setStatus] = useState('')
+  async function saveAssistant(reply, recipe) {
+    const row = { client_id: profile.id, role: 'assistant', content: reply }
+    if (recipe) { const r = await supabase.from('ai_chat_messages').insert({ ...row, recipe }); if (!r.error) return }      // senza la colonna «recipe» (fofit-assistente.sql) il testo si salva lo stesso
+    await dbSave(supabase.from('ai_chat_messages').insert(row), 'la chat', 'salvare', { silent: true })
+  }
+
   async function sendMessage(text) {
     const userText = text || input.trim()
     if (!userText || loading) return
@@ -189,36 +191,33 @@ export default function AssistenteAI() {
 
     const userMsg = { role: 'user', content: userText, id: Date.now().toString() }
     const newMessages = [...messages.filter(m => m.id !== 'welcome'), userMsg]
-    setMessages(newMessages)
-    setLoading(true)
+    const aiId = Date.now().toString() + '_ai'
+    setMessages([...newMessages, { role: 'assistant', content: '', id: aiId }])
+    setLoading(true); setStatus('')
 
-    await dbSave(supabase.from('ai_chat_messages').insert({
-      client_id: profile.id, role: 'user', content: userText
-    }), 'la chat', 'salvare', { silent: true })
-
+    // il salvataggio del messaggio e la lettura del diario partono insieme alla richiesta: non la fanno aspettare
+    const savedUser = dbSave(supabase.from('ai_chat_messages').insert({ client_id: profile.id, role: 'user', content: userText }), 'la chat', 'salvare', { silent: true })
+    let acc = '', recipe = null, err = null, gap = false
     try {
+      const ctx = await freshContext()
       const res = await authFetch('/api/ai-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          clientContext
-        })
+        body: JSON.stringify({ messages: newMessages.slice(-14).map(m => ({ role: m.role, content: m.content })), clientContext: ctx })
       })
-      const data = await res.json()
-      const reply = data.reply || 'Errore. Riprova!'
-      const recipe = data.recipe || null
-
-      const aiMsg = { role: 'assistant', content: reply, id: Date.now().toString() + '_ai', recipe }
-      setMessages(prev => [...prev, aiMsg])
-
-      await dbSave(supabase.from('ai_chat_messages').insert({
-        client_id: profile.id, role: 'assistant', content: reply
-      }), 'la chat', 'salvare', { silent: true })
-    } catch(e) {
-      setMessages(prev => [...prev, { role:'assistant', content:'Errore di connessione. Riprova.', id:'err' }])
-    }
-    setLoading(false)
+      if (!res.ok) { let m = ''; try { m = (await res.json())?.error } catch {} throw new Error(m || 'Errore. Riprova!') }
+      await readSse(res, ev => {
+        if (ev.t === 'text') { acc += (gap && acc && !/\s$/.test(acc) ? '\n\n' : '') + ev.text; gap = false; setStatus(''); setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: acc } : m)) }
+        else if (ev.t === 'status') { setStatus(ev.text); gap = true }
+        else if (ev.t === 'recipe') recipe = ev.recipe
+        else if (ev.t === 'error') err = ev.error
+      })
+    } catch (e) { err = e?.message && e.message !== 'Failed to fetch' ? e.message : 'Errore di connessione. Riprova.' }
+    const reply = acc || err || 'Errore. Riprova!'
+    setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: acc ? (err ? acc + '\n\n(Risposta interrotta: riprova se manca qualcosa.)' : acc) : reply, recipe } : m))
+    setLoading(false); setStatus('')
+    await savedUser
+    if (acc) await saveAssistant(acc, recipe)
   }
 
   function handleKeyDown(e) {
@@ -271,24 +270,26 @@ export default function AssistenteAI() {
 
       {/* MESSAGGI */}
       <div style={s.page}>
-        {messages.map(msg => (
+        {messages.filter(msg => msg.content || msg.recipe).map(msg => (
           <div key={msg.id}>
-            <div style={msg.role==='user'?s.msgUser:s.msgAI}>
+            {msg.content && <div style={msg.role==='user'?s.msgUser:s.msgAI}>
               {msg.role==='assistant' ? formatAIText(msg.content) : msg.content}
-            </div>
+            </div>}
             {/* Card ricetta se presente */}
             {msg.role==='assistant' && msg.recipe && (
               <RecipeCard recipe={msg.recipe} onAdd={addRecipeToDiary}/>
             )}
           </div>
         ))}
-        {loading && (
-          <div style={s.msgLoading}>
+        {loading && !messages.some(m => m.id?.endsWith('_ai') && m.content) && (
+          <div style={s.msgLoading} role="status" aria-label={status || 'Sto scrivendo'}>
             {[0,1,2].map(i=>(
               <div key={i} style={{width:7,height:7,borderRadius:'50%',background:'#D4570A',animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite`}}/>
             ))}
+            {status && <span style={{fontSize:11,color:'#AAA',marginLeft:6}}>{status}</span>}
           </div>
         )}
+        {loading && status && messages.some(m => m.id?.endsWith('_ai') && m.content) && <div style={{fontSize:11,color:'#AAA',paddingLeft:6}} role="status">{status}</div>}
         <div ref={bottomRef}/>
       </div>
 
