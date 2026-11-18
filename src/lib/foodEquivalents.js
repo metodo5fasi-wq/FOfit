@@ -15,7 +15,7 @@ import { BASE_FOODS } from '../data/alimentiBase.js'
 const BASE_DB = BASE_FOODS.map(f => ({ ...f, _base: true }))
 const BASE_KEYS = new Set(BASE_FOODS.map(f => String(f.name).toLowerCase().replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim()))      // la lista del coach: prima scelta nelle alternative
 
-export const EQ = { minKcal: 40, minRatio: 0.35, maxRatio: 3, maxRatioProt: 2, maxRatioDairy: 1.8, maxRatioCarb: 4.5, maxG: 600, perCategory: 2, total: 8, pool: 18, perMeal: 6, poolPerCategory: 7, candShare: 0.55, mainPer100: 5, tolPct: 0.08, tolKcal: 12, lightKcal: 60, minCerealDensity: 120, dominantShare: 0.5 }
+export const EQ = { minKcal: 40, minRatio: 0.35, maxRatio: 3, maxRatioProt: 2, maxRatioDairy: 1.8, maxRatioCarb: 4.5, maxG: 600, perCategory: 2, total: 10, pool: 20, perMeal: 8, poolPerCategory: 8, candShare: 0.55, mainPer100: 5, tolPct: 0.08, tolKcal: 12, lightKcal: 60, minCerealDensity: 120, dominantShare: 0.5 }
 
 const FAM_MAIN = { cereali: 'c', frutta: 'c', zuccheri: 'c', proteine: 'p', latticini: 'p', grassi: 'g' }
 export const norm = s => String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
@@ -36,6 +36,7 @@ export const kcalOf = f => n(f.p) * 4 + n(f.c) * 4 + n(f.g) * 9 || n(f.kcal100) 
 export function familyOf(f) {
   const role = mainOf(f.p, f.c, f.g).main
   if (/^(miele|marmellata|zucchero|sciroppo d)/i.test(f.name)) return 'zuccheri'      // dolcificanti da colazione: si cambiano tra loro
+  if (/^(biscotti (oro saiwa|digestive|secchi|integrali)|frollini)/i.test(f.name)) return 'cereali'      // biscotti secchi: colazione e spuntino
   if (/^avocado/i.test(f.name)) return 'grassi'                                       // grasso buono, non frutta
   switch (f.cat) {
     case 'Pasta': case 'Riso': case 'Pane e forno': case 'Cereali colazione': return 'cereali'
@@ -54,12 +55,12 @@ export function familyOf(f) {
 // Il database ha anche azuki, topinambur, daikon, cinghiale… non sono alternative da proporre: si pesca solo da questi alimenti comuni.
 // (L'alimento che il cliente ha nel piano può essere qualsiasi cosa; la lista vale per le PROPOSTE.)
 export const COMMON = {
-  cereali: /^(pasta|spaghetti|penne|fusilli|rigatoni|farfalle|linguine|mezze maniche|orecchiette|bucatini|paccheri|tagliatelle|gnocchi|riso|orzo perlato|farro perlato|cous cous|pane|pan bauletto|pan carr|pan sandwich|piadina|tortilla|wrap|grissini|cracker|fette biscottate|gallette|fiocchi (di )?avena|corn flakes|special k|muesli classico|rice krispies|fitness|lenticchie (secche|in scatola)|ceci (secchi|in scatola)|fagioli (borlotti|cannellini|secchi)|farro|patate|mais dolce)/i,
+  cereali: /^(pasta|spaghetti|penne|fusilli|rigatoni|farfalle|linguine|mezze maniche|orecchiette|bucatini|paccheri|tagliatelle|gnocchi|riso|orzo perlato|farro perlato|cous cous|pane|pan bauletto|pan carr|pan sandwich|piadina|tortilla|wrap|grissini|cracker|fette biscottate|gallette|fiocchi (di )?avena|corn flakes|special k|muesli|bircher|weetabix|all-bran|biscotti (oro saiwa|digestive|secchi|integrali)|frollini|rice krispies|fitness|lenticchie (secche|in scatola)|ceci (secchi|in scatola)|fagioli (borlotti|cannellini|secchi)|farro|patate|mais dolce|polenta|farina di mais polenta|bulgur)/i,
   proteine: /^(petto di pollo|petto di tacchino|fesa|fettine di vitello|manzo magro|macinato manzo magro|filetto di manzo|bistecca manzo|controfiletto|vitello fesa|vitello magro|lonza|maiale lonza|bresaola|prosciutto (cotto|crudo)|speck|salmone fresco|tonno al naturale|tonno leggero|tonno fresco|merluzzo|nasello|orata|branzino|sogliola|pesce spada|trota|gamberetti|gamberi|calamari|uovo intero|albume|tofu)/i,
-  latticini: /^(yogurt greco|yogurt naturale|yogurt bianco|yogurt proteico|skyr|latte (intero|parz|scremato|senza lattosio|di soia|di avena|di mandorla)|ricotta (vaccina|light)|fiocchi di latte|mozzarella|parmigiano|grana padano|scamorza|stracchino|caprino|cottage|quark|philadelphia|sottilette|formaggio light|cagliata)/i,
+  latticini: /^(yogurt greco|yogurt naturale|yogurt bianco|yogurt proteico|skyr|kefir|latte (intero|parz|scremato|senza lattosio|di soia|di avena|di mandorla)|ricotta (vaccina|light)|fiocchi di latte|mozzarella|parmigiano|grana padano|scamorza|stracchino|caprino|cottage|quark|philadelphia|sottilette|formaggio light|cagliata)/i,
   frutta: /^(banana$|mela( |$)|pera( |$)|arancia|mandarino|clementine|pompelmo|fragole|mirtilli$|lamponi|kiwi$|uva( bianca| nera)?$|ananas|mango|pesche|nettarine|albicocche$|ciliegie|susine|cocomero|melone|fichi freschi|melograno)/i,
   grassi: /^(olio extravergine|olio di semi di girasole|olio di semi girasole|olio di girasole|olio di arachidi|olio di oliva|margarina|avocado$|burro$|burro (di )?(arachidi|mandorle)|crema di arachidi|mandorle|noci$|nocciole|anacardi|pistacchi|arachidi|mix frutta secca|semi di (chia|lino|girasole|zucca))/i,
-  zuccheri: /^(miele|marmellata|zucchero)/i,
+  zuccheri: /^(miele|marmellata|zucchero|sciroppo d)/i,
   verdura: /^(spinaci|broccoli|zucchine|pomodori (freschi|datterini|ciliegia)|insalata|lattuga|rucola|carote|peperon|melanzan|cavolfiore|cetrioli$|finocchio|funghi champignon|carciofi$|bietole|zucca$|verza|cavolo cappuccio|radicchio|asparagi|sedano$|cicoria|indivia|fagiolini|verdure miste)/i,
 }
 const RARE = /altamura|senza glutine|azzimo|gluten free|konjac|proteic|rosso|venere|selvatico|thai|jasmine|surgelat|affumicat|sott'olio|in scatola salmone/i      // varianti poco comuni di alimenti comuni
@@ -73,8 +74,9 @@ const BASE_SYN = [
   [/^riso soffiato|^soffiat/, 'riso soffiato'], [/^riso\b/, 'riso'],
   [/^(spaghetti|penne|fusilli|rigatoni|farfalle|linguine|mezze maniche|trofie|orecchiette|bucatini|paccheri|tagliatelle|ditalini|conchiglie|strozzapreti|vermicelli|trecce|pasta)\b/, 'pasta'],
   [/^(pane|pan bauletto|pan carr|pan sandwich|panino)/, 'pane'], [/^(fiocchi (di )?avena|avena|porridge)/, 'avena'], [/^gallette/, 'gallette'], [/^fette biscottate/, 'fette biscottate'],
-  [/^(corn flakes|rice krispies|special k|fitness)/, 'cereali da colazione'],
+  [/^corn flakes/, 'corn flakes'], [/^(rice krispies|special k|fitness|weetabix|all-bran)/, 'cereali integrali'], [/^(muesli|bircher|granola)/, 'muesli'], [/^(biscotti|frollini)/, 'biscotti secchi'],
   [/^(lenticchie|ceci|fagioli)/, ''],            // sotto: prima parola
+  [/^bresaola di tacchino/, 'bresaola di tacchino'], [/^(fesa|arrosto)( di)? tacchino|^tacchino a fette|^petto di tacchino \(/, 'tacchino affettato'],
   [/tacchino/, 'tacchino'], [/pollo/, 'pollo'], [/vitello|vitellone/, 'vitello'], [/manzo|bistecca|controfiletto|macinato|roast beef/, 'manzo'], [/maiale|lonza/, 'maiale'],
   [/^uov|^albume/, 'uovo'], [/^salmone/, 'salmone'], [/^tonno/, 'tonno'], [/^merluzzo/, 'merluzzo'], [/^gamberett|^gamberi|^mazzancolle/, 'gamberi'],
   [/^(yogurt|budino)/, 'yogurt'], [/fiocchi di latte|cottage/, 'fiocchi di latte'], [/^latte (di )?(soia|avena|mandorla)/, 'latte vegetale'], [/^latte/, 'latte'],
@@ -113,11 +115,18 @@ export function snackOk(f, rowTier, rowKind) {
 
 // ── il pasto ────────────────────────────────────────────────
 export const mealGroup = type => ({ colazione: 'breakfast', spuntino: 'snack', merenda: 'snack', 'pre-workout': 'pre', pranzo: 'main', cena: 'main' })[String(type || '').toLowerCase()] || null
-const MORNING_CARB = /\bpane\b|fett[ae] biscottat|gallett|cracker|bagel|wasa|toast|grissin|avena|porridge|soffiat|crema di riso|fiocchi|segale|pancarr/i
+const MORNING_CARB = /biscott|frollin|\bpane\b|fett[ae] biscottat|gallett|cracker|bagel|wasa|toast|grissin|avena|porridge|soffiat|crema di riso|fiocchi|segale|pancarr/i
 const COOKED = /\bcott[oae]\b|in scatola|scolat|bollit|alla griglia|arrosto|al forno|al vapore|alla piastra/i
 const LIGHT_BREAD = /fette biscottate|gallette|cracker|grissini|wasa|fibra|soffiat/i
 const SALTY_BAKERY = /cracker|grissini|taralli|schiacciatina|focaccia|piadina|wrap|tortilla|carasau/i      // a colazione non sono un'alternativa sensata
-const SALUMI_MAGRI = /bresaola|prosciutto cotto|fesa (di )?tacchino|fesa tacchino|tacchino a fette|speck/i
+const SALUMI_MAGRI = /bresaola|prosciutto cotto|prosciutto crudo sgrassato|fesa (di )?tacchino|fesa tacchino|arrosto di tacchino|tacchino a fette|speck/i
+// Latticini ricchi di proteine: a colazione e a spuntino sostituiscono uova e affettati; a pranzo e cena (formaggi freschi magri) fanno da secondo piatto
+// Biscotti secchi e muesli: nel database comune sono «dolci», ma a colazione sono un classico
+const BREAKFAST_OK = /^(biscotti (oro saiwa|digestive|secchi|integrali)|frollini|muesli|bircher)/i
+const PLAIN_DAIRY = /^(?!.*(fragola|vaniglia|miele|frutti|frutta|cioccol|caramel|cocco|limone|pesca|banana|mirtill))/i
+const PROT_DAIRY = /^(fiocchi di latte|skyr|quark|yogurt greco|cottage|ricotta light)/i
+const PROT_CHEESE = /^(fiocchi di latte|cottage|ricotta light|mozzarella light)/i
+const VEG_PROT = /^(lenticchie (secche|rosse)|ceci secchi|fagioli (borlotti|cannellini|secchi)|piselli (secchi|spezzati)|soia edamame)/i
 const YOGURTISH = /yogurt|skyr|kefir|budino|dessert|gelato|\blatte (intero|parz|scremato|fresco|uht|di )|bevanda|drink/i
 const LIGHT_DAIRY = /yogurt|skyr|kefir|ricotta|quark|fiocchi di latte|formaggio light|\blatte\b/i
 // Ha senso mangiarlo in quel pasto? (grp null = pasto sconosciuto: nessun filtro)
@@ -126,13 +135,13 @@ export function suitableForMeal(f, fam, grp) {
   const name = String(f.name || '')
   switch (fam) {
     case 'cereali':
-      if (grp === 'main') return f.cat !== 'Cereali colazione' && !/soffiat|proteic|fitness|special k|corn flakes|muesli|avena/i.test(name)
+      if (grp === 'main') return f.cat !== 'Cereali colazione' && !/soffiat|proteic|fitness|special k|corn flakes|muesli|avena|biscott|frollin|weetabix|bran/i.test(name)
       if (grp === 'pre') return f.cat !== 'Legumi'
       return f.cat === 'Cereali colazione' || MORNING_CARB.test(name)           // colazione e spuntini: pane, fette biscottate, gallette, fiocchi d'avena… non riso, pasta, legumi, patate
     case 'proteine':
       if (grp === 'main') return true
-      if (grp === 'breakfast') return f.cat === 'Uova' || SALUMI_MAGRI.test(name)
-      if (grp === 'snack') return SALUMI_MAGRI.test(name)
+      if (grp === 'breakfast') return f.cat === 'Uova' || SALUMI_MAGRI.test(name) || PROT_DAIRY.test(name)
+      if (grp === 'snack') return SALUMI_MAGRI.test(name) || PROT_DAIRY.test(name)
       return false
     case 'latticini': return grp === 'main' ? !YOGURTISH.test(name) : LIGHT_DAIRY.test(name)
     case 'verdura': return grp === 'main'
@@ -205,11 +214,16 @@ export function equivalents(row, db, { mealType, day, exclude } = {}) {
   const rowLightBread = LIGHT_BREAD.test(row.food_name), rowSeed = /^semi\b/i.test(norm(row.food_name))
   const base = profile(row.protein_g, row.carbs_g, row.fat_g)
   const seen = new Set([norm(row.food_name)]), cands = [], baseSelf = baseKey(row.food_name)
+  // Alimenti di un'altra famiglia che qui sono comunque una scelta sensata: latticini proteici al posto di uova e affettati a colazione/spuntino, formaggi freschi magri come secondo piatto, legumi al posto del tofu
+  const crossOk = f => fam === 'proteine' && !origSalumi && (
+    isVegan ? (VEG_PROT.test(f.name) && (!grp || grp === 'main'))
+      : familyOf(f) === 'latticini' && PLAIN_DAIRY.test(f.name) && (grp === 'main' ? PROT_CHEESE.test(f.name) : PROT_DAIRY.test(f.name)))
   for (const f of all) {
+    const cross = crossOk(f)
     const nutForSnack = isSnackFam && f.cat === 'Frutta secca' && /^(mandorle|noci$|nocciole|anacardi|pistacchi|arachidi|mix frutta secca)/i.test(f.name) && isCommon(f, 'grassi')      // allo spuntino dolce la frutta secca è un'alternativa sensata
-    if (!nutForSnack && (familyOf(f) !== fam || !isCommon(f, fam))) continue
+    if (!nutForSnack && !cross && (familyOf(f) !== fam || !isCommon(f, fam))) continue
     if (origSalumi && fam === 'proteine' && !AFFETTATI.test(f.name)) continue      // un salume si cambia con altri affettati magri, non con bistecca o salmone
-    if (isVegan && fam === 'proteine' && !['Vegan', 'Uova'].includes(f.cat)) continue      // tofu e simili: alternative vegetali o uova
+    if (isVegan && fam === 'proteine' && !['Vegan', 'Uova'].includes(f.cat) && !cross) continue      // tofu e simili: alternative vegetali o uova
     if (isMilk && !/^(latte|yogurt|skyr|kefir)/i.test(f.name)) continue                    // il latte si cambia con yogurt, skyr o latte vegetale
     if (fam === 'cereali' && grp === 'main' && LIGHT_BREAD.test(f.name) && !rowLightBread) continue      // a pranzo e cena fette biscottate, cracker e gallette non sostituiscono un piatto
     if (fam === 'cereali' && grp === 'breakfast' && SALTY_BAKERY.test(f.name) && !SALTY_BAKERY.test(row.food_name)) continue      // a colazione niente grissini, cracker, wrap…
@@ -218,17 +232,18 @@ export function equivalents(row, db, { mealType, day, exclude } = {}) {
     if (baseKey(f.name) === baseSelf || (mine && baseKey(mine.name) === baseKey(f.name))) continue      // lo stesso alimento (altra marca, bio, integrale…) non è un'alternativa
     if (!isSnackFam && !isMilk && n(f[main]) < EQ.mainPer100) continue
     if (isSnackFam) { /* per gli spuntini conta la sensatezza (livello e tipo) e le calorie, non il macro principale */ }
-    else if (fam === 'proteine' || fam === 'latticini') { if (main === 'p' && n(f.p) < (isMilk ? 3 : 10)) continue }      // fonti di proteine: contano le proteine, anche se per kcal prevalgono i grassi
+    else if (fam === 'proteine' || fam === 'latticini') { if (main === 'p' && n(f.p) < (isMilk ? 3 : fam === 'latticini' ? 8 : 10)) continue }      // fonti di proteine: contano le proteine, anche se per kcal prevalgono i grassi
     else { const r = mainOf(f.p, f.c, f.g); if (r.main !== main || r.share < EQ.candShare) continue }
     if (!suitableForMeal(f, fam, grp)) continue                                   // ha senso in questo pasto?
     const per100 = kcalOf(f), raw = kcal0 / per100 * 100          // grammi che portano le STESSE calorie
+    if (grp === 'main' && !origSalumi && /a fette|affettat|bresaola|prosciutto|speck|arrosto di tacchino/i.test(f.name)) continue      // gli affettati non sono un secondo piatto (280 g di fesa a fette…)
     if (f.cat === 'Maiale e salumi' && !origSalumi && (grp === 'main' || !SALUMI_MAGRI.test(f.name) || raw > 130)) continue      // i salumi grassi non sostituiscono carne o pesce
-    if (fam === 'proteine' && grp && grp !== 'main' && f.cat !== 'Uova' && raw > 130) continue      // a colazione/spuntino un salume o una fesa non si porzionano a 190 g
-    if (isOil && !/^olio|ghee|burro chiarificato/i.test(f.name)) continue          // l'olio si cambia con un altro olio
+    if (fam === 'proteine' && grp && grp !== 'main' && f.cat !== 'Uova' && !cross && raw > 130) continue      // a colazione/spuntino un salume o una fesa non si porzionano a 190 g
+    if (isOil && !/^(olio|ghee|burro chiarificato|burro$|avocado)/i.test(f.name)) continue          // l'olio si cambia con un altro olio, burro o avocado (stesso grasso, stesse calorie)
     if (!f._base && COOKED.test(f.name) && !rowCooked) continue      // la lista base è a crudo/secco: i piatti già cotti o in scatola si confondono con i grammi a crudo
-    const key = norm(f.name); if (seen.has(key) || (!isSnackFam && fam !== 'zuccheri' && NOT_STAPLE.test(f.name))) continue
+    const key = norm(f.name); if (seen.has(key) || (!isSnackFam && fam !== 'zuccheri' && NOT_STAPLE.test(f.name) && !BREAKFAST_OK.test(f.name))) continue
     const sig = `${f.cat}|${f.kcal100}|${f.p}|${f.c}|${f.g}`; if (seen.has(sig)) continue      // stessi valori nella stessa categoria (formati di pasta, marche): ne basta uno
-    if (raw < grams * EQ.minRatio || raw > grams * (fam === 'proteine' ? EQ.maxRatioProt : fam === 'latticini' ? EQ.maxRatioDairy : fam === 'cereali' ? EQ.maxRatioCarb : EQ.maxRatio) || raw > EQ.maxG) continue
+    if (raw < grams * ((fam === 'cereali' && density < 120) || (cross && isVegan) ? 0.2 : EQ.minRatio) || raw > grams * (fam === 'proteine' ? EQ.maxRatioProt : fam === 'latticini' ? EQ.maxRatioDairy : fam === 'cereali' ? EQ.maxRatioCarb : EQ.maxRatio) || raw > EQ.maxG) continue
     const tol = Math.max(EQ.tolPct * kcal0, EQ.tolKcal)
     let g = niceGrams(raw)
     if (Math.abs(per100 * g / 100 - kcal0) > tol && raw < 40) g = Math.round(raw)      // porzioni piccole (noci, olio): se i 5 g di arrotondamento sballano le calorie, si va al grammo
