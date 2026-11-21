@@ -37,6 +37,7 @@ const ModificaAllenamento = lazyPage(() => import('./pages/ModificaAllenamento')
 const SelezionaPianoCliente = lazyPage(() => import('./pages/SelezionaPianoCliente'))
 const SelezionaAllenamentoCliente = lazyPage(() => import('./pages/SelezionaAllenamentoCliente'))
 const Abbonamenti = lazyPage(() => import('./pages/Abbonamenti'))
+const Economia = lazyPage(() => import('./pages/Economia'))
 const MessaggiProgrammati = lazyPage(() => import('./pages/MessaggiProgrammati'))
 const ReportPDF = lazyPage(() => import('./pages/ReportPDF'))
 const ListaSpesa = lazyPage(() => import('./pages/ListaSpesa'))
@@ -372,6 +373,7 @@ export default function App() {
             <Route path="documenti" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <Documenti />} />
             <Route path="report-allenamento" element={profile?.role==='admin' ? <Navigate to="/admin"/> : <ReportAllenamentoPage />} />
             <Route path="abbonamenti" element={!profile ? null : profile.role === 'admin' ? <Abbonamenti /> : <Navigate to="/" />} />
+            <Route path="economia" element={!profile ? null : profile.role === 'admin' ? <Economia /> : <Navigate to="/" />} />
             <Route path="messaggi-programmati" element={!profile ? null : profile.role === 'admin' ? <MessaggiProgrammati /> : <Navigate to="/" />} />
             <Route path="report-pdf" element={!profile ? null : profile.role === 'admin' ? <ReportPDF /> : <Navigate to="/" />} />
             <Route path="modifica-allenamento-cliente" element={!profile ? null : profile.role === 'admin' ? <SelezionaAllenamentoCliente /> : <Navigate to="/" />} />
