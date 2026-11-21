@@ -5,7 +5,10 @@ import { dbMust, dbSave } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { askConfirm } from '../lib/confirm'
 import { fetchAllRows } from '../lib/pagedQuery'
+import { Link } from 'react-router-dom'
 import EconomyPanel from '../components/EconomyPanel'
+import IncassoForm from '../components/IncassoForm'
+import { planPaymentSync, paidForSubscription, missingPrices, isMissingEconomy, kindLabel } from '../lib/ledger'
 import { num, MAX_RATE, addMonths, addDays, effectiveDue, rateState, generateRates, validateRates, planRates, ratesTotal, ratesPaid, coachBadge, usesProroga, isMissingProrogaColumn, MISSING_PROROGA_MSG, fmtDate, money, GRACE_DAYS } from '../lib/installments'
 
 const s = {
@@ -54,16 +57,27 @@ export default function Abbonamenti() {
   const [saving, setSaving] = useState(false)
   const [editReady, setEditReady] = useState(false)               // le rate del cliente aperto sono state lette
   const openTok = useRef(0)
+  const [eco, setEco] = useState({ ready: false, payments: [], priceList: [] })   // prezzi e incassi (servono le tabelle di fofit-economia.sql)
+  const [incassoOpen, setIncassoOpen] = useState(false)
   const today = localDateStr()
 
   useEffect(() => { fetchClients() }, [])
 
+  async function loadEco() {
+    const pay = await fetchAllRows(() => supabase.from('payments').select('*').order('paid_on', { ascending: false }).order('id'), { maxRows: 20000 })
+    if (pay.error) { setEco({ ready: false, payments: [], priceList: [] }); return false }
+    const pl = await supabase.from('price_list').select('*').eq('active', true).order('sort').order('name')
+    setEco({ ready: true, payments: pay.data || [], priceList: pl.data || [] })
+    return true
+  }
+
   async function fetchClients() {
     setLoading(true)
-    const { data } = await supabase.from('profiles')
-      .select('id,full_name,subscription_start,subscription_end,subscription_type,subscription_notes,payment_type,installments,installment_amount,installments_paid')
-      .eq('role','client').order('full_name')
+    const COLS = 'id,full_name,subscription_start,subscription_end,subscription_type,subscription_notes,payment_type,installments,installment_amount,installments_paid'
+    let { data, error: e1 } = await supabase.from('profiles').select(COLS + ',price_agreed,price_note').eq('role','client').order('full_name')
+    if (e1 && isMissingEconomy(e1)) ({ data } = await supabase.from('profiles').select(COLS).eq('role','client').order('full_name'))   // script economia non ancora eseguito: tutto il resto funziona
     setClients(data||[])
+    await loadEco()
     const { data: rr } = await fetchAllRows(() => supabase.from('subscription_installments').select('*').order('due_date').order('id'), { maxRows: 10000 })
     const by = {}; (rr||[]).forEach(r => { (by[r.client_id] = by[r.client_id] || []).push(r) })
     setAllRates(by)
@@ -110,7 +124,10 @@ export default function Abbonamenti() {
       payment_type: c.payment_type||'unica',
       installments: c.installments || 2,
       installment_amount: c.installment_amount ?? '',
+      price_agreed: c.price_agreed ?? '',
+      price_note: c.price_note || '',
     })
+    setIncassoOpen(false)
     setInstallments([]); setFirstDate(c.subscription_start||''); setEditing(c.id)
     const { data, error } = await supabase.from('subscription_installments').select('*').eq('client_id',c.id).order('due_date')
     if (token !== openTok.current) return                                   // nel frattempo si è aperto un altro cliente
@@ -183,7 +200,9 @@ export default function Abbonamenti() {
       } catch(e) { if (isMissingProrogaColumn(e?.cause || e)) throw new Error(MISSING_PROROGA_MSG); throw e }
       if (plan.toDelete.length) await dbMust(supabase.from('subscription_installments').delete().in('id', plan.toDelete), 'le rate', 'eliminare')
 
+      const price = eco.ready ? { price_agreed: num(form.price_agreed) > 0 ? num(form.price_agreed) : null, price_note: (form.price_note||'').trim() || null } : {}
       await dbMust(supabase.from('profiles').update({
+        ...price,
         subscription_start: form.subscription_start||null,
         subscription_end: form.subscription_end||null,
         subscription_type: form.subscription_type,
@@ -194,11 +213,38 @@ export default function Abbonamenti() {
         installments_paid: isRate ? installments.filter(r=>r.paid_at).length : null,
       }).eq('id', editing), 'i dati del cliente', 'salvare')
 
+      // le rate pagate entrano nel registro incassi (e quelle tornate «non pagate» ne escono)
+      let syncFailed = false
+      if (eco.ready && isRate) {
+        try {
+          const [{ data: rr, error: e1 }, { data: pp, error: e2 }] = await Promise.all([
+            supabase.from('subscription_installments').select('*').eq('client_id', editing),
+            supabase.from('payments').select('*').eq('client_id', editing).eq('kind', 'rata')])
+          if (e1 || e2) throw new Error('lettura')
+          const cl = clients.find(c => c.id === editing) || { id: editing }
+          const sp = planPaymentSync({ client: cl, rates: rr||[], payments: (pp||[]).filter(x => x.installment_id != null) })
+          if (sp.toInsert.length) await dbMust(supabase.from('payments').insert(sp.toInsert), 'gli incassi', 'salvare')
+          for (const u of sp.toUpdate) await dbMust(supabase.from('payments').update({ amount: u.amount }).eq('id', u.id), 'gli incassi', 'salvare')
+          if (sp.toDelete.length) await dbMust(supabase.from('payments').delete().in('id', sp.toDelete), 'gli incassi', 'eliminare')
+        } catch { syncFailed = true }
+      }
       setEditing(null)
       fetchClients()
-      done('Abbonamento salvato')
+      if (syncFailed) notify('Abbonamento salvato, ma il registro incassi non è stato aggiornato: riapri il cliente e salva di nuovo.', 'error')
+      else done('Abbonamento salvato')
     } catch(e) { notify(e.message || 'Salvataggio non riuscito. Riprova.', 'error') }
     setSaving(false)
+  }
+
+  async function addIncasso(payload) {
+    const r = await dbSave(supabase.from('payments').insert(payload), 'l\'incasso', 'salvare', { done: 'Incasso registrato' })
+    if (!r.ok) return false
+    setIncassoOpen(false); await loadEco(); return true
+  }
+  async function removeIncasso(p) {
+    if (!(await askConfirm(`Eliminare l'incasso di ${money(p.amount)} del ${fmtDate(p.paid_on)}?`, { title: 'Eliminare l\'incasso?', confirmLabel: 'Elimina', danger: true }))) return
+    const r = await dbSave(supabase.from('payments').delete().eq('id', p.id), 'l\'incasso', 'eliminare')
+    if (r.ok) await loadEco()
   }
 
   async function renew(c) {
@@ -268,6 +314,18 @@ export default function Abbonamenti() {
           </div>
         )}
 
+        {eco.ready && clients.length > 0 && missingPrices(clients).length > 0 && (
+          <div data-testid="banner-prezzi" style={{background:'rgba(212,87,10,0.12)',border:'0.5px solid #D4570A',borderRadius:12,padding:'12px',marginBottom:14,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+            <span style={{fontSize:12,color:'#F4894A',fontWeight:700,flex:1}}>💶 {missingPrices(clients).length} client{missingPrices(clients).length===1?'e':'i'} senza prezzo: senza non posso calcolare gli incassi.</span>
+            <Link to="/economia?tab=prezzi" style={{...s.btnSm,textDecoration:'none'}}>Completa i prezzi</Link>
+          </div>
+        )}
+        {!eco.ready && !loading && (
+          <div data-testid="avviso-sql-economia" style={{background:'rgba(232,160,32,0.1)',border:'0.5px solid rgba(232,160,32,0.4)',borderRadius:12,padding:'10px 12px',marginBottom:14,fontSize:11,color:'#E8C050',lineHeight:1.5}}>
+            Prezzi e incassi non sono ancora attivi: esegui lo script <b>fofit-economia.sql</b> su Supabase (SQL Editor → incolla → Run), poi ricarica la pagina.
+          </div>
+        )}
+
         <EconomyPanel clients={clients} rates={Object.values(allRates).flat()} today={today} onOpen={async id=>{ const c=clients.find(x=>x.id===id); if(!c) return; await openEdit(c); try { document.querySelector(`[data-cliente="${id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}) } catch {} }}/>
 
         {/* STATS */}
@@ -313,6 +371,7 @@ export default function Abbonamenti() {
                     <div style={{fontSize:11,color:'#CCC',marginTop:2}}>
                       {c.subscription_type||'—'}
                       {c.payment_type==='rate' && ` · Rate ${paidInst}/${totalInst}`}
+                      {num(c.price_agreed)>0 && ` · ${money(c.price_agreed)}`}
                       {c.subscription_end && ` · Scade ${new Date(c.subscription_end+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})}`}
                     </div>
                   </div>
@@ -351,6 +410,51 @@ export default function Abbonamenti() {
                         <input style={s.input} type="date" value={form.subscription_end} onChange={e=>setForm(p=>({...p,subscription_end:e.target.value}))}/>
                       </div>
                     </div>
+
+                    {/* PREZZO E INCASSI */}
+                    {eco.ready && (() => {
+                      const cl = clients.find(x=>x.id===c.id) || c
+                      const mine = eco.payments.filter(p=>p.client_id===c.id)
+                      const price = num(form.price_agreed)
+                      const paid = paidForSubscription({ ...cl, subscription_start: form.subscription_start }, eco.payments)
+                      const left = Math.max(0, Math.round((price-paid)*100)/100)
+                      return (
+                        <div data-testid="sezione-prezzo" style={{background:'rgba(59,140,90,0.08)',border:'0.5px solid rgba(59,140,90,0.35)',borderRadius:10,padding:'14px',marginTop:12}}>
+                          <div style={{fontSize:12,fontWeight:700,color:'#6FCF97',marginBottom:8}}>💶 Prezzo e incassi</div>
+                          <div style={s.grid2}>
+                            <div><label style={s.label}>Prezzo concordato (€)</label>
+                              <input aria-label="Prezzo concordato" inputMode="decimal" style={s.input} placeholder="es. 270" value={form.price_agreed} onChange={e=>setForm(p=>({...p,price_agreed:e.target.value}))}/></div>
+                            <div><label style={s.label}>Dal listino</label>
+                              <select aria-label="Prezzo dal listino" style={s.select} value="" onChange={e=>{ const it=eco.priceList.find(x=>x.id===e.target.value); if(it) setForm(p=>({...p,price_agreed:it.amount})) }}>
+                                <option value="">{eco.priceList.length?'Scegli…':'Listino vuoto'}</option>
+                                {eco.priceList.map(it=><option key={it.id} value={it.id}>{it.name} — {money(it.amount)}</option>)}
+                              </select></div>
+                          </div>
+                          <div style={{marginTop:8}}><label style={s.label}>Nota sul prezzo</label>
+                            <input aria-label="Nota sul prezzo" style={s.input} placeholder="es. sconto amico, omaggio, prezzo bloccato…" value={form.price_note} onChange={e=>setForm(p=>({...p,price_note:e.target.value}))}/></div>
+                          {price>0 && form.payment_type!=='rate' && (
+                            <div data-testid="saldo-cliente" style={{marginTop:10,fontSize:12,color:'#F0F0F0',display:'flex',gap:12,flexWrap:'wrap'}}>
+                              <span>Prezzo {money(price)}</span><span style={{color:'#6FCF97'}}>Incassato {money(paid)}</span>
+                              <span style={{color:left>0?'#E8A020':'#6FCF97',fontWeight:700}}>{left>0?`Da incassare ${money(left)}`:'✓ Saldato'}</span>
+                            </div>
+                          )}
+                          <div style={{marginTop:10,fontSize:11,color:'#CCC',fontWeight:600}}>Incassi di questo cliente ({mine.length})</div>
+                          {mine.slice(0,8).map(p=>(
+                            <div key={p.id} data-testid="incasso-cliente" style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderTop:'0.5px solid #151515',fontSize:12}}>
+                              <span style={{color:'#AAA',minWidth:84}}>{fmtDate(p.paid_on)}</span>
+                              <span style={{flex:1,color:'#CCC'}}>{kindLabel(p.kind)}{p.method?` · ${p.method}`:''}{p.note?` · ${p.note}`:''}</span>
+                              <span style={{fontWeight:700,color:'#6FCF97'}}>{money(p.amount)}</span>
+                              {p.installment_id==null ? <button type="button" aria-label="Elimina incasso" onClick={()=>removeIncasso(p)} style={{...s.btnGray,color:'#E24B4A'}}>✕</button> : <span title="Per toglierlo segna la rata «non pagata»" style={{fontSize:10,color:'#777',width:30,textAlign:'center'}}>rata</span>}
+                            </div>
+                          ))}
+                          {mine.length>8 && <div style={{fontSize:10,color:'#888',marginTop:4}}>…e altri {mine.length-8}: li trovi tutti nel registro di Economia.</div>}
+                          {!incassoOpen
+                            ? <button type="button" onClick={()=>setIncassoOpen(true)} style={{...s.btnGreen,marginTop:8}}>+ Registra incasso</button>
+                            : <IncassoForm fixedClient={cl} defaultAmount={left>0&&form.payment_type!=='rate'?left:''} defaultKind={form.payment_type==='rate'?'rata':'abbonamento'} onSave={addIncasso} onCancel={()=>setIncassoOpen(false)}/>}
+                          <div style={{fontSize:10,color:'#888',marginTop:8}}>Gli incassi si registrano subito (non serve «Salva»). Le rate segnate «pagata» entrano nel registro quando salvi.</div>
+                        </div>
+                      )
+                    })()}
 
                     {/* SEZIONE RATE */}
                     {form.payment_type==='rate' && (
@@ -433,6 +537,9 @@ export default function Abbonamenti() {
                             <span style={{color:'#6FCF97'}}>Pagato: {money(ratesPaid(installments))}</span>
                             <span style={{color:'#E8A020'}}>Da incassare: {money(ratesTotal(installments)-ratesPaid(installments))}</span>
                           </div>
+                        )}
+                        {eco.ready && num(form.price_agreed)>0 && installments.length>0 && Math.abs(ratesTotal(installments)-num(form.price_agreed))>0.009 && (
+                          <div data-testid="avviso-rate-prezzo" style={{fontSize:11,color:'#E8A020',marginTop:6}}>⚠ Le rate sommano {money(ratesTotal(installments))} ma il prezzo concordato è {money(form.price_agreed)}: controlla importi o prezzo (puoi salvare comunque, ad esempio per uno sconto).</div>
                         )}
                       </div>
                     )}
