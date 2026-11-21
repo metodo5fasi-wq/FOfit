@@ -35,6 +35,7 @@ const ADMIN_NAV_MODIFICA = [
   { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
   { to:'/giro-settimanale', icon:'ti-checklist', label:'Giro settimanale', color:'#14B8A6' },
   { to:'/abbonamenti', icon:'ti-credit-card', label:'Abbonamenti', color:'#9B59B6' },
+  { to:'/economia', icon:'ti-chart-line', label:'Economia', color:'#6FCF97' },
   { to:'/messaggi-programmati', icon:'ti-calendar-time', label:'Messaggi programmati', color:'#E8A020' },
   { to:'/report-pdf', icon:'ti-file-type-pdf', label:'Report PDF', color:'#E24B4A' },
   { to:'/errori', icon:'ti-alert-triangle', label:'Errori dell\'app', color:'#E24B4A' },

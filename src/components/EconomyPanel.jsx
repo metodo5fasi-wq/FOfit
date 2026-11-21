@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { buildEconomy } from '../lib/economy'
 import { money, fmtShort } from '../lib/installments'
 
@@ -23,7 +24,7 @@ export default function EconomyPanel({ clients, rates, today, onOpen }) {
   const list = { overdue: e.overdue, upcoming: e.upcoming }[open]
   return (
     <div data-testid="riepilogo-economico" style={card}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F0F0', marginBottom: 10 }}>💶 Riepilogo economico <span style={{ fontWeight: 400, color: '#AAA' }}>(solo rate)</span></div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F0F0', marginBottom: 10 }}>💶 Riepilogo economico <span style={{ fontWeight: 400, color: '#AAA' }}>(rate)</span></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 8 }}>
         <Tile testid="eco-incassato" label="Incassato questo mese" value={money(e.collectedMonth)} color="#6FCF97" sub={e.collectedPrev ? `mese scorso ${money(e.collectedPrev)}${diff ? ` (${diff > 0 ? '+' : '−'}${money(Math.abs(diff))})` : ''}` : `${e.collectedMonthCount} ${e.collectedMonthCount === 1 ? 'rata' : 'rate'}`} />
         <Tile testid="eco-previsto" label="Previsto a fine mese" value={money(e.expectedMonth)} sub="incassato + da incassare" />
@@ -54,7 +55,7 @@ export default function EconomyPanel({ clients, rates, today, onOpen }) {
           </div>}
       </div>
       {e.noDateCount > 0 && <div style={{ fontSize: 10, color: '#E8A020', marginTop: 10 }}>⚠ {e.noDateCount} {e.noDateCount === 1 ? 'rata senza scadenza non è inclusa' : 'rate senza scadenza non sono incluse'} nei totali «in arrivo».</div>}
-      <div style={{ fontSize: 10, color: '#888', marginTop: 8 }}>I pagamenti in un'unica soluzione non hanno un importo registrato e non compaiono nei totali.</div>
+      <div style={{ fontSize: 10, color: '#888', marginTop: 8 }}>Qui solo le rate. Incassi complessivi (anche a soluzione unica), andamento e registro: <Link to="/economia" style={{ color: '#F4894A' }}>sezione Economia</Link>.</div>
     </div>
   )
 }
