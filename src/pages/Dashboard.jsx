@@ -262,13 +262,6 @@ export default function Dashboard() {
               <GraficoPeso compact={true} />
             </div>
           </>)}
-
-          {plan?.notes && (
-            <div style={{ background: '#120800', borderRadius: 14, padding: '14px 16px', border: '0.5px solid rgba(212,87,10,0.25)', margin: '18px 0 0' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#F4894A', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}><i className="ti ti-message-circle" style={{ fontSize: 13 }} /> Note del coach</div>
-              <div style={{ fontSize: 13, color: '#E8A06A', lineHeight: 1.6 }}>{plan.notes}</div>
-            </div>
-          )}
         </>)}
       </div>
     </>
