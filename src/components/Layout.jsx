@@ -61,7 +61,8 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#050505'}}>
 
       {/* LOGO */}
-      <div style={{padding:'28px 20px 20px',borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
+      {/* Su iPhone l'app a schermo intero parte SOTTO l'orologio/tacca: senza questo margine di sicurezza il logo finiva coperto */}
+      <div data-testid="menu-logo" style={{flexShrink:0,paddingTop:'calc(28px + env(safe-area-inset-top, 0px))',paddingRight:20,paddingBottom:20,paddingLeft:20,borderBottom:'0.5px solid rgba(255,255,255,0.05)',display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
         <img src="/logo-mark.png" alt="FOfit" style={{height:34,objectFit:'contain',display:'block'}}/>
         <div style={{background:'rgba(212,87,10,0.15)',border:'0.5px solid rgba(212,87,10,0.3)',borderRadius:20,padding:'3px 9px',fontSize:9,fontWeight:800,color:'#F4894A',letterSpacing:'0.08em',marginBottom:2}}>
           {isAdmin ? 'ADMIN' : 'PRO'}
@@ -164,8 +165,8 @@ function Sidebar({ profile, onClose, onLogout, theme, darkMode, onToggleTheme })
         )}
       </div>
 
-            {/* FOOTER */}
-      <div style={{padding:'10px 16px',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',background:'rgba(0,0,0,0.3)'}}>
+      {/* FOOTER */}
+      <div data-testid="menu-footer" style={{flexShrink:0,paddingTop:10,paddingRight:16,paddingLeft:16,paddingBottom:'calc(10px + env(safe-area-inset-bottom, 0px))',borderTop:'0.5px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',background:'rgba(0,0,0,0.3)'}}>
         <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#A0A0A0',cursor:'pointer',background:'none',border:'none',fontFamily:'inherit'}}>
           <i className="ti ti-logout" style={{fontSize:13,color:'#CCC'}}/>Esci
         </button>
