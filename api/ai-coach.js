@@ -1,5 +1,5 @@
 import { applyCors, guard } from '../server/auth.js'
-import { TOOLS, runTool } from '../server/assistantTools.js'
+import { TOOLS, runTool, poolWith } from '../server/assistantTools.js'
 import { contextToPrompt, restrictionKeys, pickModel, todayInfo } from '../src/lib/assistantContext.js'
 
 // Assistente nutrizionale FO Coach.
@@ -87,6 +87,7 @@ export default async function handler(req, res) {
 
   const ctx = clientContext && typeof clientContext === 'object' ? clientContext : {}
   const keys = restrictionKeys(ctx)
+  const pool = poolWith(ctx.alimentiMiei)      // database + alimenti inseriti dal coach
   const rome = todayInfo(new Date(), 'Europe/Rome'), ora = ctx.oggi?.ora && /^\d\d:\d\d$/.test(ctx.oggi.ora) ? ctx.oggi.ora : rome.ora
   // il blocco lungo (piano, anamnesi…) resta uguale tra un messaggio e l'altro e si mette in cache; l'ora cambia sempre, quindi sta in un blocco a parte
   const system = [{ type: 'text', text: BASE_PROMPT + '\n\n' + contextToPrompt(ctx, rome).slice(0, 30000), cache_control: { type: 'ephemeral' } }, { type: 'text', text: `ORA ATTUALE: ${ora} (usala per capire quale pasto è il prossimo).` }]
@@ -114,7 +115,7 @@ export default async function handler(req, res) {
       const results = []
       for (const u of uses) {
         send({ t: 'status', text: u.name === 'crea_ricetta' ? 'Calcolo i valori della ricetta…' : 'Cerco le alternative giuste…' })
-        const out = runTool(u.name, u.input, { keys })
+        const out = runTool(u.name, u.input, { keys, pool })
         if (out.recipe) recipe = out.recipe
         results.push({ type: 'tool_result', tool_use_id: u.id, content: JSON.stringify(out.result) })
       }
