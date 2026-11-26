@@ -48,6 +48,14 @@ export function findFood(name, pool = POOL) {
   return all[0] || null
 }
 
+// Alimenti inseriti dal coach (arrivano dal client: si ripuliscono) in testa al database: a parità di nome vincono loro
+export function poolWith(extra) {
+  const num = v => { const x = Number(v); return Number.isFinite(x) ? Math.min(Math.max(x, 0), 900) : 0 }
+  const mine = (Array.isArray(extra) ? extra : []).slice(0, 300).map(f => ({ cat: String(f?.cat || 'Altro').slice(0, 40), name: String(f?.n || f?.name || '').slice(0, 80), brand: String(f?.b || f?.brand || '—').slice(0, 40) || '—', kcal100: num(f?.k ?? f?.kcal100), p: Math.min(num(f?.p), 100), c: Math.min(num(f?.c), 100), g: Math.min(num(f?.g), 100) }))
+    .filter(f => f.name.trim().length >= 2 && (f.kcal100 > 0 || f.p + f.c + f.g > 0))
+  return mine.length ? [...mine, ...POOL] : POOL
+}
+
 export function runTool(name, input, { keys = [], pool = POOL } = {}) {
   try {
     if (name === 'crea_ricetta') return creaRicetta(input || {}, keys, pool)
