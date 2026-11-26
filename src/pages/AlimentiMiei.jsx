@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { dbSave } from '../lib/db'
 import { askConfirm } from '../lib/confirm'
 import { done } from '../lib/toast'
-import { useCustomFoods, refreshCustomFoods } from '../lib/useCustomFoods'
+import { useCustomFoods, refreshCustomFoods, customFoodsStatus } from '../lib/useCustomFoods'
 import { searchCustom, macroKcal } from '../lib/customFoods'
 import NuovoAlimentoForm from '../components/NuovoAlimentoForm'
 
@@ -14,6 +14,7 @@ const btnGray = { background: '#161616', color: '#CCC', border: '0.5px solid #1C
 // «I miei alimenti»: gli alimenti inseriti a mano dal coach (valori per 100 g). Compaiono nella ricerca dei piani, nelle alternative, nel diario e per l'assistente.
 export default function AlimentiMiei() {
   const { foods } = useCustomFoods()
+  const st = customFoodsStatus()
   const [q, setQ] = useState('')
   const [edit, setEdit] = useState(null)            // null | 'new' | alimento
   const list = useMemo(() => (q.trim().length >= 2 ? searchCustom(foods, q) : foods), [foods, q])
@@ -37,9 +38,12 @@ export default function AlimentiMiei() {
             {edit !== 'new' && <div style={{ padding: '0 14px 12px', fontSize: 10, color: '#888' }}>I piani già salvati non cambiano: i valori restano quelli di quando hai inserito l'alimento nel piano.</div>}
           </div>
         )}
+        {!st.loaded && foods.length === 0 && <div data-testid="alimenti-caricamento" style={{ ...card, fontSize: 12, color: '#AAA' }}>Carico i tuoi alimenti…</div>}
+        {st.error === 'sql' && <div role="alert" data-testid="alimenti-sql" style={{ ...card, fontSize: 12, color: '#E8C050', lineHeight: 1.6 }}>Manca la tabella degli alimenti su Supabase. Apri Supabase → SQL Editor, incolla il contenuto del file <b>fofit-alimenti-miei.sql</b> e premi Run (una volta sola), poi ricarica questa pagina.</div>}
+        {st.error === 'rete' && <div role="alert" data-testid="alimenti-rete" style={{ ...card, fontSize: 12, color: '#E8C050', lineHeight: 1.6 }}>Non riesco a leggere i tuoi alimenti (connessione o permessi). <button onClick={() => refreshCustomFoods()} style={btnGray}>Riprova</button></div>}
         <input aria-label="Cerca tra i miei alimenti" style={{ width: '100%', padding: '9px 12px', border: '0.5px solid #1C1C1C', borderRadius: 8, fontSize: 13, color: '#F0F0F0', background: '#161616', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 12 }} placeholder="Cerca tra i miei alimenti" value={q} onChange={e => setQ(e.target.value)} />
         <div style={card} data-testid="elenco-alimenti-miei">
-          {foods.length === 0 && <div style={{ fontSize: 12, color: '#AAA', lineHeight: 1.6 }}>Non hai ancora inserito nessun alimento. Premi «+ Nuovo alimento», oppure aggiungilo direttamente dalla ricerca quando costruisci un piano.<div style={{ marginTop: 6, fontSize: 11, color: '#888' }}>Se il salvataggio non funziona, esegui prima lo script fofit-alimenti-miei.sql su Supabase.</div></div>}
+          {foods.length === 0 && st.loaded && !st.error && <div style={{ fontSize: 12, color: '#AAA', lineHeight: 1.6 }}>Non hai ancora inserito nessun alimento. Premi «+ Nuovo alimento», oppure aggiungilo direttamente dalla ricerca quando costruisci un piano.<div style={{ marginTop: 6, fontSize: 11, color: '#888' }}>Se il salvataggio non funziona, esegui prima lo script fofit-alimenti-miei.sql su Supabase.</div></div>}
           {foods.length > 0 && list.length === 0 && <div style={{ fontSize: 12, color: '#AAA' }}>Nessun alimento con questo nome.</div>}
           {list.map(f => (
             <div key={f.id} data-testid="alimento-mio" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderTop: '0.5px solid #151515', flexWrap: 'wrap' }}>
