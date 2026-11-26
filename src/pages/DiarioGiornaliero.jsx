@@ -9,6 +9,8 @@ import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../App'
 import { searchFoods } from '../lib/foodDatabase'
+import { searchCustom, mergeFoods } from '../lib/customFoods'
+import { useCustomFoods, getCustomFoods } from '../lib/useCustomFoods'
 import { Toast } from '../components/Animations'
 
 const MEAL_SLOTS = ['Colazione','Spuntino','Pranzo','Pre-workout','Cena','Merenda']
@@ -28,6 +30,7 @@ export default function DiarioGiornaliero() {
   const [diary, setDiary] = useState({})
   const [plan, setPlan] = useState(null)
   const [search, setSearch] = useState('')
+  useCustomFoods()                      // «I miei alimenti» del coach: compaiono nella ricerca
   const [results, setResults] = useState([])
   const [selectedFood, setSelectedFood] = useState(null)
   const [qty, setQty] = useState(100)
@@ -115,7 +118,7 @@ export default function DiarioGiornaliero() {
     if (val.length < 2) { setResults([]); return }
     clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(() => {
-      setResults(searchFoods(val))
+      setResults(mergeFoods(searchCustom(getCustomFoods(), val), searchFoods(val), 30))
     }, 150)
   }
 
@@ -334,7 +337,7 @@ export default function DiarioGiornaliero() {
                     <div key={i} onClick={()=>selectFood(f)}
                       style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:2,background:'#161616'}}>
                       <div>
-                        <div style={{fontSize:12,color:'#F0F0F0',fontWeight:500}}>{f.name}</div>
+                        <div style={{fontSize:12,color:'#F0F0F0',fontWeight:500}}>{f.custom&&<span style={{color:'#F4894A'}}>★ </span>}{f.name}</div>
                         <div style={{fontSize:10,color:'#AAA'}}>{f.brand} · P{f.p} C{f.c} G{f.g}/100g</div>
                       </div>
                       <div style={{fontSize:11,color:'#F4894A',fontWeight:600}}>{f.kcal100}</div>

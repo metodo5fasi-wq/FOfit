@@ -7,6 +7,7 @@ import { useAuth } from '../App'
 import { useNavigate } from 'react-router-dom'
 import { PulseDot } from '../components/Animations'
 import { buildContext } from '../lib/assistantContext'
+import { refreshCustomFoods } from '../lib/useCustomFoods'
 import { readSse } from '../lib/assistantStream'
 
 const SUGGERIMENTI = [
@@ -123,19 +124,20 @@ export default function AssistenteAI() {
   const rowsRef = useRef({})
   const safe = p => Promise.resolve(p).then(r => r?.data ?? null, () => null)
   async function loadContext() {
-    const [plan, progress, anamnesi, diary, wplan, sessions] = await Promise.all([
+    const [plan, progress, anamnesi, diary, wplan, sessions, customFoods] = await Promise.all([
       safe(supabase.from('meal_plans').select('*').eq('client_id', profile.id).eq('is_active', true).limit(1).maybeSingle()),
       safe(supabase.from('progress_entries').select('entry_date,weight_kg,waist_cm').eq('client_id', profile.id).order('entry_date', { ascending: false }).limit(8)),
       safe(supabase.from('anamnesi').select('*').eq('client_id', profile.id).maybeSingle()),
       safe(supabase.from('diary_entries').select('meal_type,food_name,quantity_g,kcal,protein_g,carbs_g,fat_g').eq('client_id', profile.id).eq('entry_date', today)),
       safe(supabase.from('workout_plans').select('id,title').eq('client_id', profile.id).eq('is_active', true).limit(1)),
       safe(supabase.from('workout_sessions').select('session_date').eq('client_id', profile.id).order('session_date', { ascending: false }).limit(6)),
+      Promise.resolve(refreshCustomFoods()).catch(() => []),          // alimenti inseriti dal coach (se la tabella non c'è: elenco vuoto)
     ])
     const [meals, exercises] = await Promise.all([
       plan ? safe(supabase.from('plan_meals').select('*, plan_meal_foods(*)').eq('plan_id', plan.id).order('meal_order')) : null,
       wplan?.[0] ? safe(supabase.from('workout_exercises').select('day_label').eq('plan_id', wplan[0].id)) : null,
     ])
-    rowsRef.current = { profile, plan, meals: meals || [], anamnesi, diary: diary || [], progress: progress || [], workoutPlan: wplan?.[0], workoutDays: (exercises || []).map(e => e.day_label), sessions: sessions || [] }
+    rowsRef.current = { profile, plan, meals: meals || [], anamnesi, diary: diary || [], progress: progress || [], workoutPlan: wplan?.[0], workoutDays: (exercises || []).map(e => e.day_label), sessions: sessions || [], customFoods: Array.isArray(customFoods) ? customFoods : [] }
     setClientContext(buildContext(rowsRef.current))
   }
   // il diario cambia durante la giornata: prima di ogni domanda lo rileggo (una sola lettura)

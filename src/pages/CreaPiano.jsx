@@ -5,10 +5,15 @@ import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../App'
 import { searchFoods } from '../data/foodDatabase.js'
+import { searchCustom, mergeFoods } from '../lib/customFoods'
+import { useCustomFoods, getCustomFoods } from '../lib/useCustomFoods'
+import { NuovoAlimentoModal } from '../components/NuovoAlimentoForm'
 import { askConfirm } from '../lib/confirm'
 import { NotesEditor, PLACEHOLDER_PIANO } from '../components/CoachNotes'
 import { normalizeNotes, hasNotes } from '../lib/coachNotes'
 import AlternativePicker from '../components/AlternativePicker'
+import AltMealsEditor from '../components/AltMealsEditor'
+import { normAltMeals, altMealsToSave } from '../lib/altMeals'
 import { normAlts, planPropagation } from '../lib/alternatives'
 import { roundGrams } from '../lib/mealPlan'
 
@@ -89,6 +94,8 @@ export default function CreaPiano(){
   // Food search
   const [addingTo,setAddingTo]=useState(null)
   const [foodSearch,setFoodSearch]=useState('')
+  useCustomFoods()                                   // carica «I miei alimenti» (compaiono per primi nella ricerca)
+  const [newFoodModal,setNewFoodModal]=useState(null)   // nome scritto nella ricerca quando si crea un alimento
   const [foodResults,setFoodResults]=useState([])
   const [newQty,setNewQty]=useState('100')
   const searchTimer=useRef(null)
@@ -202,7 +209,7 @@ export default function CreaPiano(){
     setFoodSearch(q)
     clearTimeout(searchTimer.current)
     if(q.length<2){setFoodResults([]);return}
-    searchTimer.current=setTimeout(()=>setFoodResults(searchFoods(q).slice(0,14)),200)
+    searchTimer.current=setTimeout(()=>setFoodResults(mergeFoods(searchCustom(getCustomFoods(),q),searchFoods(q),14)),200)
   }
 
   function addMeal(di){setDays(p=>{const d={...p};d[di]=[...d[di],{meal_type:'Colazione',foods:[],note_pasto:''}];return d})}
@@ -318,7 +325,7 @@ export default function CreaPiano(){
     const nd={};for(let i=0;i<7;i++)nd[i]=[]
     meals.forEach(m=>{
       const di=Math.min(6,Math.max(0,(parseInt(m.day_of_week)||1)-1))
-      nd[di]=[...(nd[di]||[]),{meal_type:mealLabelFromDb(m),note_pasto:m.coach_note||'',foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:'',alternatives:normAlts(f.alternatives)}))}]
+      nd[di]=[...(nd[di]||[]),{meal_type:mealLabelFromDb(m),note_pasto:m.coach_note||'',alt_meals:normAltMeals(m.alt_meals),foods:(m.plan_meal_foods||[]).map(f=>({food_name:f.food_name,quantity_g:parseFloat(f.quantity_g)||0,kcal:parseFloat(f.kcal)||0,protein_g:parseFloat(f.protein_g)||0,carbs_g:parseFloat(f.carbs_g)||0,fat_g:parseFloat(f.fat_g)||0,_k100:(f.kcal/(f.quantity_g/100))||0,_p100:(f.protein_g/(f.quantity_g/100))||0,_c100:(f.carbs_g/(f.quantity_g/100))||0,_g100:(f.fat_g/(f.quantity_g/100))||0,prep:'',alternatives:normAlts(f.alternatives)}))}]
     })
     setDays(nd);setShowCopyPlan(false)
     toast('Piano importato!','success')
@@ -473,7 +480,7 @@ export default function CreaPiano(){
     if(!hasMeals){toast('Aggiungi almeno un pasto con degli alimenti','error');return}
     if(!profile?.id){toast('Sessione scaduta, ricarica la pagina','error');return}
     setSaving(true)
-    let newPlanId=null, altLost=false
+    let newPlanId=null, altLost=false, altMealsLost=false
     try{
       // 1) crea il nuovo piano NON ancora attivo: il piano attuale del cliente resta intatto
       const{data:plan,error:planErr}=await supabase.from('meal_plans').insert({
@@ -490,11 +497,16 @@ export default function CreaPiano(){
         let order=0
         for(const meal of meals){
           if(!meal.foods.length) continue
-          const{data:md,error:me}=await supabase.from('plan_meals').insert({
+          const mealRow={
             plan_id:plan.id, day_of_week:parseInt(di)+1, meal_type:mealTypeToDb(meal.meal_type), meal_name:meal.meal_type,
             meal_order:order++, day_label:DAY_NAMES[parseInt(di)],
             coach_note:[meal.note_pasto,meal.note_cliente].map(x=>String(x||'').trim()).filter(Boolean).join('\n\n')||null,
-          }).select().single()
+          }
+          const altM=altMealsToSave(meal.alt_meals)
+          let{data:md,error:me}=await supabase.from('plan_meals').insert(altM.length?{...mealRow,alt_meals:altM}:mealRow).select().single()
+          if(me&&altM.length&&/alt_meals/i.test(me.message||'')){      // la colonna dei pasti alternativi non c'è ancora su Supabase: il piano si salva lo stesso, senza
+            altMealsLost=true; ;({data:md,error:me}=await supabase.from('plan_meals').insert(mealRow).select().single())
+          }
           if(me) throw me
           const rows=meal.foods.map((f,fi)=>({
             plan_meal_id:md.id, food_name:f.food_name, quantity_g:Math.round(f.quantity_g), kcal:Math.round(f.kcal),
@@ -516,6 +528,7 @@ export default function CreaPiano(){
       if(onErr) throw onErr
       clearDraft()
       if(altLost) toast('Piano salvato, ma le alternative NON sono state salvate: esegui lo script fofit-alternative.sql su Supabase e scegli di nuovo le alternative in Modifica piano.','error')
+      else if(altMealsLost) toast('Piano salvato, ma i pasti alternativi NON sono stati salvati: esegui lo script fofit-alimenti-miei.sql su Supabase e riaggiungili in Modifica piano.','error')
       else toast('Piano salvato! 🎉','success')
       setTimeout(()=>navigate(`/modifica-piano/${plan.id}`),800)
     }catch(e){
@@ -865,6 +878,8 @@ export default function CreaPiano(){
                 </div>
               )}
 
+              {meal.foods.length>0&&<AltMealsEditor options={meal.alt_meals} mealFoods={meal.foods} mealKcal={mt.kcal} onChange={list=>setDays(p=>{const d={...p};d[selectedDay]=d[selectedDay].map((m2,j)=>j!==mi?m2:{...m2,alt_meals:list});return d})}/>}
+
               {/* Note coach per il cliente */}
               <input value={meal.note_cliente||''} onChange={e=>setDays(p=>{const d={...p};d[selectedDay][mi]={...d[selectedDay][mi],note_cliente:e.target.value};return d})}
                 placeholder="Note per il cliente..." style={{...s.input,fontSize:11,padding:'6px 10px',color:'#888',marginBottom:8}}/>
@@ -922,12 +937,13 @@ export default function CreaPiano(){
               </div>
             </div>
             <div style={{flex:1,overflowY:'auto'}}>
+              {foodSearch.trim().length>=2&&<button type="button" data-testid="crea-alimento" onClick={()=>setNewFoodModal(foodSearch.trim())} style={{display:'flex',alignItems:'center',gap:6,width:'100%',textAlign:'left',background:'rgba(212,87,10,0.08)',border:'none',borderBottom:'0.5px solid #1A1A1A',padding:'11px 16px',cursor:'pointer',fontFamily:'inherit',fontSize:12,color:'#F4894A'}}><i className="ti ti-plus" style={{fontSize:13}}/>Non lo trovi? Aggiungi «{foodSearch.trim()}» ai tuoi alimenti (valori per 100 g)</button>}
               {foodSearch.length<2&&<div style={{padding:'30px 16px',textAlign:'center',color:'#AAA',fontSize:12}}>Digita almeno 2 lettere</div>}
               {foodSearch.length>=2&&foodResults.length===0&&<div style={{padding:'30px 16px',textAlign:'center',color:'#AAA',fontSize:12}}>Nessun risultato</div>}
               {foodResults.map((f,i)=>(
                 <div key={i} onClick={()=>addFood(f)} style={{padding:'11px 16px',cursor:'pointer',borderBottom:'0.5px solid #111',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{f.name}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#F0F0F0'}}>{f.custom&&<span title="Tuo alimento" style={{color:'#F4894A'}}>★ </span>}{f.name}</div>
                     <div style={{fontSize:10,color:'#AAA'}}>{f.cat}{f.brand&&f.brand!=='—'?` · ${f.brand}`:''}</div>
                   </div>
                   <div style={{textAlign:'right',flexShrink:0,marginLeft:12}}>
@@ -940,6 +956,8 @@ export default function CreaPiano(){
           </div>
         </div>
       )}
+
+      {newFoodModal!=null&&<NuovoAlimentoModal defaultName={newFoodModal} onClose={()=>setNewFoodModal(null)} onSaved={f=>{setNewFoodModal(null);addFood(f)}}/>}
 
       {/* MODAL TEMPLATE */}
       {showTemplates&&(

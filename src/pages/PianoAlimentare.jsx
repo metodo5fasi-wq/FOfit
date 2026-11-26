@@ -8,6 +8,7 @@ import { useRefreshOnReturn } from '../lib/useRefreshOnReturn'
 import { ClientNotesCard } from '../components/CoachNotes'
 import { sortFoods } from '../lib/mealPlan'
 import { normAlts, scaleChoices, foodKcal } from '../lib/alternatives'
+import { describeOptions } from '../lib/altMeals'
 import { equivalents, weekWindow } from '../lib/foodEquivalents'
 
 const DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
@@ -220,6 +221,7 @@ export default function PianoAlimentare() {
                     {(meal.alternatives?.length > 0) && (
                       <AlternativeSection alternatives={meal.alternatives}/>
                     )}
+                    <AltMealOptions options={meal.alt_meals} mealKcal={mealKcal}/>
                   </div>
                 )}
               </div>
@@ -244,7 +246,8 @@ function FoodAlternatives({ food, mealType, day }) {
   }
   const res = React.useMemo(() => (open && !byCoach && db ? equivalents(food, db, { mealType, day }) : null), [open, byCoach, db, food, mealType, day])
   const MSG = { misto: 'Questo alimento è un piatto o un mix: non propongo equivalenze automatiche. Chiedi al tuo coach.', piccolo: 'La quantità è piccola: non serve un cambio preciso.', dati: 'Mancano i dati per calcolare le alternative.', pasto: 'Per questo pasto non propongo alternative automatiche. Chiedi al tuo coach.' }
-  const coachShown = byCoach ? weekWindow(coach, day, mealType) : []
+  // le alternative scelte a mano dal coach (quantità fissata da lui) si vedono sempre; le altre ruotano nella settimana
+  const coachShown = byCoach ? [...coach.filter(a => a.mode), ...weekWindow(coach.filter(a => !a.mode), day, mealType)] : []
   const list = byCoach ? coachShown.map(a => ({ grams: a.grams, name: a.name, brand: a.brand, kcal: a.kcal, dKcal: a.dKcal })) : (res?.ok ? res.items : [])
   const kcal0 = byCoach ? foodKcal(food) : res?.kcal
   return (
@@ -273,6 +276,43 @@ function FoodAlternatives({ food, mealType, day }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// Pasti alternativi scelti dal coach (Opzione B…): il cliente ne sceglie uno AL POSTO del pasto. Non entrano nei totali del giorno.
+function AltMealOptions({ options, mealKcal }) {
+  const [openId, setOpenId] = React.useState(null)
+  const list = React.useMemo(() => describeOptions(options, mealKcal), [options, mealKcal])
+  if (!list.length) return null
+  return (
+    <div data-testid="pasti-alternativi" style={{marginTop:8,paddingTop:8,borderTop:'0.5px dashed #2A2A2A'}}>
+      <div style={{fontSize:11,color:'#AAA',fontWeight:500,marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
+        <i className="ti ti-repeat" style={{fontSize:12,color:'#F4894A'}}/>
+        Puoi scegliere anche questo, al posto del pasto
+      </div>
+      {list.map(o => (
+        <div key={o.id} style={{marginBottom:6}}>
+          <button onClick={()=>setOpenId(openId===o.id?null:o.id)} aria-expanded={openId===o.id} data-testid="opzione-pasto" style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'8px 10px',borderRadius:8,border:'0.5px solid rgba(212,87,10,0.35)',background:openId===o.id?'rgba(212,87,10,0.14)':'rgba(212,87,10,0.10)',cursor:'pointer',fontFamily:'inherit'}}>
+            <span style={{fontSize:12,fontWeight:600,color:'#F4894A',textAlign:'left'}}>{o.name}</span>
+            <span style={{fontSize:11,color:'#CCC',whiteSpace:'nowrap'}}>{o.totals.kcal} kcal <i className={`ti ti-chevron-${openId===o.id?'up':'down'}`} style={{fontSize:12,color:'#F4894A'}}/></span>
+          </button>
+          {openId === o.id && (
+            <div style={{padding:'8px 10px',background:'rgba(212,87,10,0.10)',borderRadius:'0 0 8px 8px',border:'0.5px solid rgba(212,87,10,0.35)',borderTop:'none'}}>
+              {o.foods.map((f, i) => (
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid rgba(212,87,10,0.08)'}}>
+                  <div style={{width:5,height:5,borderRadius:'50%',background:'#F4894A',flexShrink:0}}/>
+                  <div style={{flex:1,fontSize:12,color:'#F0F0F0'}}>{f.food_name}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{f.quantity_g} g</div>
+                  <div style={{fontSize:10,color:'#AAA',minWidth:52,textAlign:'right'}}>{f.kcal} kcal</div>
+                </div>
+              ))}
+              <div style={{fontSize:11,color:'#AAA',marginTop:6}}>Totale {o.totals.kcal} kcal · P {o.totals.p}g · C {o.totals.c}g · G {o.totals.g}g{o.dKcal != null && <span style={{color:Math.abs(o.dKcal) <= 50 ? '#6FCF97' : '#E8C050'}}> ({o.dKcal > 0 ? '+' : o.dKcal < 0 ? '−' : '±'}{Math.abs(o.dKcal)} kcal rispetto al pasto)</span>}</div>
+              {o.note && <div style={{fontSize:11,color:'#E8A06A',marginTop:6,lineHeight:1.5}}>{o.note}</div>}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

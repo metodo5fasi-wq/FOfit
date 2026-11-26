@@ -11,10 +11,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PlanPdfButton from '../components/PlanPdfButton'
 import AlternativePicker from '../components/AlternativePicker'
+import AltMealsEditor from '../components/AltMealsEditor'
 import { planPropagation } from '../lib/alternatives'
 import { useToast } from '../components/Toast'
 import * as MT from '../lib/mealTemplates'
 import { searchFoods } from '../data/foodDatabase.js'
+import { searchCustom, mergeFoods } from '../lib/customFoods'
+import { useCustomFoods, getCustomFoods } from '../lib/useCustomFoods'
+import { NuovoAlimentoModal } from '../components/NuovoAlimentoForm'
 
 const MEAL_ICONS = { colazione:'ti-sun', spuntino:'ti-apple', pranzo:'ti-tools-kitchen-2', 'pre-workout':'ti-bolt', cena:'ti-moon', merenda:'ti-apple', altro:'ti-circle' }
 const MEAL_TYPES = ['colazione','spuntino','pranzo','pre-workout','merenda','cena']
@@ -130,6 +134,8 @@ export default function ModificaPiano() {
   const [newFood, setNewFood] = useState({ food_name:'', quantity_g:100, kcal:0, protein_g:0, carbs_g:0, fat_g:0 })
   const [foodSearch, setFoodSearch] = useState('')
   const [foodResults, setFoodResults] = useState([])
+  useCustomFoods()                                   // carica «I miei alimenti» (compaiono per primi nella ricerca)
+  const [newFoodModal, setNewFoodModal] = useState(null)   // { mealId, name } quando si crea un alimento dalla ricerca
   const [searchingFood, setSearchingFood] = useState(false)
   const searchTimeoutRef = React.useRef(null)
   const [savedTemplates, setSavedTemplates] = useState([])
@@ -240,7 +246,8 @@ export default function ModificaPiano() {
       setSearchingFood(true)
       try {
         // Prima cerca nel database locale (778+ alimenti italiani verificati)
-        const localResults = searchFoods(query).map(f => ({
+        const localResults = mergeFoods(searchCustom(getCustomFoods(), query), searchFoods(query), 30).map(f => ({
+          custom: !!f.custom,
           name: f.name,
           brand: f.brand || '',
           category: f.cat || '',
@@ -416,6 +423,8 @@ export default function ModificaPiano() {
 
   // ── ALTERNATIVE SCELTE ───────────────────────────────────
   // Quantità al multiplo di 5 g più vicino (17 → 15, 148 → 150), con kcal e macro riproporzionati. Nulla si salva finché non premi Salva.
+  // pasti alternativi di un pasto (Opzione B…): stanno dentro il pasto e non contano nei totali
+  function setMealAlt(mealId, list) { setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, alt_meals: list })); setDirty(true) }
   function roundQty(mealId, foodId) {
     setMeals(prev => prev.map(m => m.id !== mealId ? m : { ...m, plan_meal_foods: m.plan_meal_foods.map(f => { const q = roundGrams(f.quantity_g); return f.id === foodId && q !== f.quantity_g ? { ...f, ...recalc(f, q) } : f }) }))
   }
@@ -483,6 +492,7 @@ export default function ModificaPiano() {
       await fetchPlan({ quiet: true })
     } catch(e) {
       console.error('saveAll:', e)
+      if (/alt_meals/i.test(e.cause?.message || '')) { notify('Per salvare i pasti alternativi serve eseguire lo script fofit-alimenti-miei.sql su Supabase (una volta sola). Poi premi di nuovo Salva.', 'error'); setSaving(false); return }
       if (/alternatives/i.test(e.cause?.message || '')) { notify('Per salvare le alternative serve eseguire lo script fofit-alternative.sql su Supabase (una volta sola). Poi premi di nuovo Salva.', 'error'); setSaving(false); return }
       notify(e.message || 'Non sono riuscito a salvare il piano. Riprova.', 'error')       // la pagina resta com'era: le modifiche sono ancora lì
     }
@@ -841,6 +851,10 @@ export default function ModificaPiano() {
                   </div>
                 ))}
 
+                {(meal.plan_meal_foods||[]).length>0 && (
+                  <AltMealsEditor options={meal.alt_meals} mealFoods={meal.plan_meal_foods} mealKcal={(meal.plan_meal_foods||[]).reduce((a,f)=>a+(parseFloat(f.kcal)||0),0)} onChange={list=>setMealAlt(meal.id,list)}/>
+                )}
+
                 {/* AGGIUNGI ALIMENTO */}
                 {addingFoodToMeal===meal.id ? (
                   <div style={{padding:'10px 12px',background:'#161616',borderTop:'0.5px solid #1A1A1A'}}>
@@ -865,6 +879,12 @@ export default function ModificaPiano() {
                       )}
                       {searchingFood && !newFood.food_name && <i className="ti ti-loader-2" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'#AAA'}}/>}
                      </div>
+                      {newFood.food_name.trim().length>=2 && !newFood._k100 && (
+                        <button type="button" data-testid="crea-alimento" onMouseDown={e=>e.preventDefault()} onClick={()=>setNewFoodModal({mealId:meal.id,name:newFood.food_name.trim()})}
+                          style={{marginTop:4,background:'none',border:'none',padding:'6px 2px',minHeight:32,cursor:'pointer',fontFamily:'inherit',fontSize:11,color:'#F4894A',display:'inline-flex',alignItems:'center',gap:5}}>
+                          <i className="ti ti-plus" style={{fontSize:12}}/>Non lo trovi? Aggiungi «{newFood.food_name.trim()}» ai tuoi alimenti (valori per 100 g)
+                        </button>
+                      )}
                       {foodResults.length>0 && (
                         <div data-testid="risultati-alimenti" style={{marginTop:4,background:'#0D0D0D',border:'0.5px solid #1C1C1C',borderRadius:9,maxHeight:isMobile?'40vh':220,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
                           {foodResults.map((food,i)=>(
@@ -874,7 +894,7 @@ export default function ModificaPiano() {
                               onMouseEnter={e=>e.currentTarget.style.background='rgba(212,87,10,0.14)'}
                               onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                               <div>
-                                <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.name||food.food_name}</div>
+                                <div style={{fontSize:12,fontWeight:600,color:'#F0F0F0'}}>{food.custom&&<span title="Tuo alimento" style={{color:'#F4894A'}}>★ </span>}{food.name||food.food_name}</div>
                                 {food.brand&&<div style={{fontSize:10,color:'#AAA'}}>{food.brand}</div>}
                               </div>
                               <div style={{fontSize:10,color:'#F4894A',fontWeight:600,textAlign:'right',flexShrink:0}}>
@@ -952,6 +972,8 @@ export default function ModificaPiano() {
         </div>
       </div>
       </div>
+      {newFoodModal && <NuovoAlimentoModal defaultName={newFoodModal.name} onClose={()=>setNewFoodModal(null)}
+        onSaved={f=>{ setNewFoodModal(null); selectFoodFromSearch({ custom:true, name:f.name, brand:f.brand==='—'?'':f.brand, category:f.cat, kcal_100:f.kcal100, protein_100:f.p, carbs_100:f.c, fat_100:f.g }) }}/>}
     </div>
   )
 }
