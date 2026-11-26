@@ -59,9 +59,20 @@ export function todayInfo(d = new Date(), tz = null) {
   return { data: `${y}-${p2(m)}-${p2(day)}`, n, giorno: DAY[n - 1], label: `${DAY[n - 1]} ${day} ${MESI[m - 1]} ${y}`, ora: `${p2(hh)}:${p2(mm)}`, domani: { n: (n % 7) + 1, giorno: DAY[n % 7] }, ieri: { n: ((n + 5) % 7) + 1, giorno: DAY[(n + 5) % 7] } }
 }
 
+// pasti alternativi (plan_meals.alt_meals) → [{ nome, k, alimenti: [{ n, g, k }] }]; non entrano mai nei totali del giorno
+function altOptions(v) {
+  let a = v
+  if (typeof a === 'string') { try { a = JSON.parse(a) } catch { a = [] } }
+  if (!Array.isArray(a)) return []
+  return a.filter(o => o && Array.isArray(o.foods) && o.foods.length).slice(0, 4).map(o => {
+    const alimenti = o.foods.slice(0, 20).filter(f => f && f.food_name).map(f => ({ n: txt(f.food_name), g: nz(f.quantity_g), k: Math.round(nz(f.kcal)) }))
+    return { nome: txt(o.name) || 'Opzione', k: alimenti.reduce((x, f) => x + f.k, 0), alimenti }
+  })
+}
+
 // ── costruzione del contesto (lato pagina) ────────────────────
 // rows: { profile, plan, meals (plan_meals con plan_meal_foods), anamnesi, diary (voci di oggi), progress (ultime misure, dalla più recente), workoutPlan, workoutDays, sessions }
-export function buildContext({ profile, plan, meals, anamnesi, diary, progress, workoutPlan, workoutDays, sessions, now } = {}) {
+export function buildContext({ profile, plan, meals, anamnesi, diary, progress, workoutPlan, workoutDays, sessions, now, customFoods } = {}) {
   const A = anamnesi || {}
   const giorni = []
   const alt = new Map()
@@ -70,7 +81,7 @@ export function buildContext({ profile, plan, meals, anamnesi, diary, progress, 
     if (!dm.length) continue
     giorni.push({
       giorno: DAY[d - 1], pasti: dm.map(m => ({
-        tipo: m.meal_type, nota: txt(m.coach_note || m.note_pasto),
+        tipo: m.meal_type, nota: txt(m.coach_note || m.note_pasto), opzioni: altOptions(m.alt_meals),
         alimenti: [...(m.plan_meal_foods || [])].sort((a, b) => nz(a.sort_order) - nz(b.sort_order)).map(f => {
           const names = (Array.isArray(f.alternatives) ? f.alternatives : []).map(x => x?.name).filter(Boolean)
           if (names.length && !alt.has(f.food_name)) alt.set(f.food_name, names)
@@ -86,6 +97,7 @@ export function buildContext({ profile, plan, meals, anamnesi, diary, progress, 
     nome: txt(profile?.full_name), obiettivo: txt(profile?.goal || A.obiettivo),
     target: { kcal: nz(plan?.kcal_target) || null, p: nz(plan?.protein_target_g) || null, c: nz(plan?.carbs_target_g) || null, g: nz(plan?.fat_target_g) || null },
     pianoNote: txt(plan?.notes),
+    alimentiMiei: (customFoods || []).slice(0, 300).map(f => ({ n: txt(f.name), b: f.brand && f.brand !== '—' ? txt(f.brand) : '', cat: txt(f.cat), k: nz(f.kcal100), p: nz(f.p), c: nz(f.c), g: nz(f.g) })).filter(f => f.n),
     piano: giorni.length ? { giorni, alternative: [...alt].map(([n, a]) => ({ n, a })) } : null,
     anamnesi: {
       allergie: txt(A.allergie_alimentari), intolleranze: txt(A.intolleranze_diagnosticate), reazioni: txt(A.reazioni_avverse_cibi),
@@ -111,7 +123,8 @@ function dayText(g, tag = '') {
   const pasti = g.pasti.map(p => {
     const k = p.alimenti.reduce((a, f) => a + f.k, 0); dk += k
     p.alimenti.forEach(f => { dp += f.p; dc += f.c; dg += f.gr })
-    return `  ${p.tipo} (${k} kcal)${p.nota ? ` — nota: ${cut(p.nota, 160)}` : ''}: ` + p.alimenti.map(f => `${f.n} ${f.g}g [${f.k} kcal P${f.p} C${f.c} G${f.gr}]`).join('; ')
+    const opz = (Array.isArray(p.opzioni) ? p.opzioni : []).map(o => `\n    ↳ ${o.nome} (alternativa all'intero pasto, ${o.k} kcal, NON si somma al totale del giorno): ` + (o.alimenti || []).map(f => `${f.n} ${f.g}g [${f.k} kcal]`).join('; ')).join('')
+    return `  ${p.tipo} (${k} kcal)${p.nota ? ` — nota: ${cut(p.nota, 160)}` : ''}: ` + p.alimenti.map(f => `${f.n} ${f.g}g [${f.k} kcal P${f.p} C${f.c} G${f.gr}]`).join('; ') + opz
   }).join('\n')
   return `${g.giorno.toUpperCase()}${tag} — totale ${Math.round(dk)} kcal · P${Math.round(dp)} C${Math.round(dc)} G${Math.round(dg)}\n${pasti}`
 }
@@ -146,6 +159,7 @@ export function contextToPrompt(ctx = {}, fallbackToday = null) {
   out += '\nPREFERENZE E VITA REALE\n' + (line('Piatti e cibi che ama', A.preferiti) + line('Chi cucina', A.chiCucina) + line('Tempo per preparare i pasti', A.tempo) + line('Pasti fuori casa / al lavoro', A.fuori) || '- (non indicato)\n')
   out += `\nPIANO ALIMENTARE ATTIVO (tutti i giorni; valori per la quantità indicata, alimenti crudi/secchi dove non scritto diversamente)\n${planText(ctx.piano, oggi)}\n`
   if (ctx.piano?.alternative?.length) out += `\nALTERNATIVE SCELTE DAL COACH (hanno la precedenza quando il cliente chiede un cambio)\n` + ctx.piano.alternative.slice(0, 60).map(x => `- ${x.n}: ${x.a.slice(0, 12).join(', ')}`).join('\n') + '\n'
+  if (Array.isArray(ctx.alimentiMiei) && ctx.alimentiMiei.length) out += `\nALIMENTI INSERITI DAL COACH (valori per 100 g; gli strumenti li conoscono: puoi usarli in ricette e alternative)\n` + ctx.alimentiMiei.slice(0, 80).map(f => `- ${cut(f.n, 60)}${f.b ? ' (' + cut(f.b, 30) + ')' : ''}: ${Math.round(Number(f.k) || 0)} kcal P${Number(f.p) || 0} C${Number(f.c) || 0} G${Number(f.g) || 0}`).join('\n') + '\n'
   const D = ctx.diario
   if (D) out += `\nDIARIO DI OGGI\n` + (D.voci?.length ? `- Già mangiato: ${D.kcal} kcal · P${D.p} C${D.c} G${D.g}${T.kcal ? ` — restano circa ${Math.max(0, T.kcal - D.kcal)} kcal` : ''}\n` + D.voci.map(v => `  · ${v.pasto}: ${v.n} ${v.g}g (${v.k} kcal)`).join('\n') + '\n' : '- Oggi non ha ancora registrato nulla nel diario.\n')
   if (ctx.peso?.length) out += `\nPESO E MISURE (dalla più recente)\n` + ctx.peso.map(p => `- ${p.d}: ${p.kg ? p.kg + ' kg' : ''}${p.vita ? ` · vita ${p.vita} cm` : ''}`).join('\n') + '\n'

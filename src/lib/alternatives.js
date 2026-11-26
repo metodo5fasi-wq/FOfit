@@ -18,6 +18,8 @@ export function normAlts(v) {
   for (const x of a) {
     if (!x || typeof x !== 'object' || !String(x.name || '').trim()) continue
     const c = { name: String(x.name).trim(), brand: String(x.brand || '').trim(), cat: String(x.cat || ''), p: n(x.p), c: n(x.c), g: n(x.g) }
+    // alternativa scelta A MANO con quantità voluta dal coach: mode 'g' = grammi fissi, 'kcal' = kcal fisse (i grammi si calcolano). Senza: a pari calorie
+    if ((x.mode === 'g' || x.mode === 'kcal') && n(x.value) > 0) { c.mode = x.mode; c.value = Math.round(n(x.value) * 10) / 10 }
     if (!(kcalOf(c) > 0)) continue
     const k = altKey(c); if (seen.has(k)) continue
     seen.add(k); out.push(c)
@@ -37,10 +39,13 @@ export function foodKcal(food) {
   return m > 0 ? Math.round(m) : n(food.kcal)
 }
 
-// La scelta, alla quantità giusta per avere le STESSE calorie dell'alimento. null se non si può calcolare.
+// La scelta, alla quantità giusta per avere le STESSE calorie dell'alimento (oppure i grammi/le kcal fissati a mano dal coach). null se non si può calcolare.
 export function scaleChoice(choice, kcal0) {
   const per100 = kcalOf(choice); if (!(per100 > 0) || !(kcal0 > 0)) return null
-  const grams = niceGrams(kcal0 / per100 * 100); if (grams < 1) return null
+  const grams = choice.mode === 'g' && n(choice.value) > 0 ? Math.round(n(choice.value))
+    : choice.mode === 'kcal' && n(choice.value) > 0 ? niceGrams(n(choice.value) / per100 * 100)
+    : niceGrams(kcal0 / per100 * 100)
+  if (grams < 1) return null
   const k = per100 * grams / 100
   return { ...choice, grams, kcal: Math.round(k), dKcal: Math.round(k) - kcal0, pG: Math.round(choice.p * grams / 100), cG: Math.round(choice.c * grams / 100), gG: Math.round(choice.g * grams / 100) }
 }

@@ -7,6 +7,7 @@
 //  • bozza sul telefono (modifiche non salvate)
 // ─────────────────────────────────────────────────────────────
 import { normAlts, sameAlts } from './alternatives'
+import { altMealsToSave, sameAltMeals } from './altMeals'
 export const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
 export const MAX_FOOD_G = 2000            // oltre questa quantità per un singolo alimento si chiede conferma (di solito è un refuso)
 
@@ -87,10 +88,13 @@ export function planSave({ planId, meals, dbMeals, dbFoods }) {
     const withTotals = tot.first === m.id ? { day_kcal_target: Math.round(tot.kcal), day_protein_target_g: Math.round(tot.p), day_carbs_target_g: Math.round(tot.c), day_fat_target_g: Math.round(tot.g) } : {}
     const db = dbMealMap.get(m.id)
     if (!db) {
-      insertMeals.push({ id: m.id, plan_id: planId, ...base, day_label: m.day_label || DAY_NAMES[m.day_of_week - 1] || null, ...(m.meal_name != null ? { meal_name: m.meal_name } : {}), ...(m.coach_note != null ? { coach_note: m.coach_note } : {}), ...withTotals })
+      insertMeals.push({ id: m.id, plan_id: planId, ...base, day_label: m.day_label || DAY_NAMES[m.day_of_week - 1] || null, ...(m.meal_name != null ? { meal_name: m.meal_name } : {}), ...(m.coach_note != null ? { coach_note: m.coach_note } : {}), ...withTotals, ...(altMealsToSave(m.alt_meals).length ? { alt_meals: altMealsToSave(m.alt_meals) } : {}) })
     } else {
       const next = { ...base, ...withTotals }
-      if (Object.keys(next).some(k => typeof next[k] === 'number' ? !same(db[k], next[k]) : String(db[k] ?? '') !== String(next[k] ?? ''))) updateMeals.push({ id: m.id, ...next })
+      // pasti alternativi: la colonna si scrive solo se sono cambiati (finché non si usano, il salvataggio non dipende da essa)
+      const altCh = !sameAltMeals(db.alt_meals, m.alt_meals), alt = altMealsToSave(m.alt_meals)
+      const baseCh = Object.keys(next).some(k => typeof next[k] === 'number' ? !same(db[k], next[k]) : String(db[k] ?? '') !== String(next[k] ?? ''))
+      if (baseCh || altCh) updateMeals.push({ id: m.id, ...(baseCh ? next : {}), ...(altCh ? { alt_meals: alt.length ? alt : null } : {}) })
     }
     ;(m.plan_meal_foods || []).forEach((f, i) => {
       const p = foodPayload(f, i), db = dbFoodMap.get(f.id)
