@@ -32,6 +32,7 @@ const ADMIN_NAV_IMPORTA = [
 
 const ADMIN_NAV_MODIFICA = [
   { to:'/modifica-piano-cliente', icon:'ti-tools-kitchen-2', label:'Modifica piano alimentare', color:'#3B8C5A' },
+  { to:'/alimenti-miei', icon:'ti-salad', label:'I miei alimenti', color:'#8BC34A' },
   { to:'/modifica-allenamento-cliente', icon:'ti-pencil', label:'Modifica scheda allenamento', color:'#4A90D4' },
   { to:'/giro-settimanale', icon:'ti-checklist', label:'Giro settimanale', color:'#14B8A6' },
   { to:'/abbonamenti', icon:'ti-credit-card', label:'Abbonamenti', color:'#9B59B6' },

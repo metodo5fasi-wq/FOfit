@@ -1,4 +1,6 @@
 import React from 'react'
+import AltManualForm from './AltManualForm'
+import { useCustomFoods } from '../lib/useCustomFoods'
 import { equivalents, baseKey, EQ } from '../lib/foodEquivalents'
 import { normAlts, altKey, choiceFromItem, foodKcal, scaleChoice, toggleChoice } from '../lib/alternatives'
 
@@ -8,6 +10,8 @@ import { normAlts, altKey, choiceFromItem, foodKcal, scaleChoice, toggleChoice }
 //   onChange(nuoveScelte)            onApplyAll(): riporta le scelte sugli stessi alimenti degli altri giorni (se manca il pulsante non compare)
 export default function AlternativePicker({ food, mealType, onChange, onApplyAll, compact = false }) {
   const [open, setOpen] = React.useState(false)
+  const [manual, setManual] = React.useState(false)
+  const { foods: mine } = useCustomFoods()          // «I miei alimenti» entrano tra le alternative proponibili
   const [db, setDb] = React.useState(null), [failed, setFailed] = React.useState(false)
   const chosen = normAlts(food.alternatives)
   function toggle() {
@@ -15,8 +19,8 @@ export default function AlternativePicker({ food, mealType, onChange, onApplyAll
     if (next && !db && !failed) import('../data/foodDatabase.js').then(m => setDb(m.FOOD_DB || m.default || []), () => setFailed(true))
   }
   const kcal0 = foodKcal(food)
-  const sugg = React.useMemo(() => (open && db ? equivalents({ food_name: food.food_name, brand: food.brand, quantity_g: food.quantity_g, kcal: food.kcal, protein_g: food.protein_g, carbs_g: food.carbs_g, fat_g: food.fat_g }, db, { mealType }) : null),
-    [open, db, food.food_name, food.brand, food.quantity_g, food.kcal, food.protein_g, food.carbs_g, food.fat_g, mealType])
+  const sugg = React.useMemo(() => (open && db ? equivalents({ food_name: food.food_name, brand: food.brand, quantity_g: food.quantity_g, kcal: food.kcal, protein_g: food.protein_g, carbs_g: food.carbs_g, fat_g: food.fat_g }, mine.length ? [...mine, ...db] : db, { mealType }) : null),
+    [open, db, mine, food.food_name, food.brand, food.quantity_g, food.kcal, food.protein_g, food.carbs_g, food.fat_g, mealType])
   // righe: prima le scelte già fatte, poi i suggerimenti non ancora scelti
   const rows = []
   for (const c of chosen) { const sc = scaleChoice(c, kcal0); if (sc) rows.push({ choice: c, sc, on: true }) }
@@ -56,6 +60,9 @@ export default function AlternativePicker({ food, mealType, onChange, onApplyAll
               {chosen.length > 0 && onApplyAll && <button type="button" data-testid="alt-applica" onClick={onApplyAll} style={{ ...miniBtn, background: 'rgba(212,87,10,0.15)', borderColor: '#D4570A', color: '#F4894A' }}>Applica a tutti i giorni</button>}
             </div>
           )}
+          {db && (manual
+            ? <AltManualForm food={food} onAdd={c => onChange(toggleChoice(chosen.filter(x => altKey(x) !== altKey(c)), c))} onClose={() => setManual(false)} />
+            : <button type="button" data-testid="alt-aggiungi-mano" onClick={() => setManual(true)} style={{ ...miniBtn, marginTop: 8, color: '#F4894A' }}>+ Aggiungi alternativa</button>)}
           <div style={{ fontSize: 10, color: '#888', marginTop: 6, lineHeight: 1.4 }}>Il cliente vedrà solo le alternative spuntate. Le quantità si adeguano da sole se cambi i grammi dell'alimento. {chosen.length > EQ.perMeal ? `Con più di ${EQ.perMeal} scelte ne vede ${EQ.perMeal} al giorno, a rotazione nella settimana.` : ''}</div>
         </div>
       )}
